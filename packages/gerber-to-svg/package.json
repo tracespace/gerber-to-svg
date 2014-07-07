@@ -22,5 +22,9 @@
   "bugs": {
     "url": "https://github.com/mcous/gerber-to-svg/issues"
   },
-  "homepage": "https://github.com/mcous/gerber-to-svg"
+  "homepage": "https://github.com/mcous/gerber-to-svg",
+  "devDependencies": {
+    "coffee-script": "^1.7.1",
+    "gulp": "^3.8.5"
+  }
 }
