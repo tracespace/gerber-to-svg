@@ -2,7 +2,7 @@
   "name": "gerber-to-svg",
   "version": "0.0.0",
   "description": "Gerber and excellon drill file to SVG converter",
-  "main": "lib/index.js",
+  "main": "lib/gerber-to-svg.js",
   "scripts": {
     "test": "gulp test"
   },
@@ -25,6 +25,10 @@
   "homepage": "https://github.com/mcous/gerber-to-svg",
   "devDependencies": {
     "coffee-script": "^1.7.1",
-    "gulp": "^3.8.5"
+    "gulp": "^3.8.5",
+    "gulp-mocha": "^0.4.1",
+    "gulp-util": "^2.2.19",
+    "mocha": "^1.20.1",
+    "should": "^4.0.4"
   }
 }
