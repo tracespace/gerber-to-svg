@@ -15,6 +15,7 @@ gulp.task 'default', ->
 gulp.task 'test', ->
   gulp.src './test/*_test.coffee', { read: false }
     .pipe mocha {
+      reporter: 'spec'
       globals: {
         should: require('should')
         coffee: require('coffee-script/register')

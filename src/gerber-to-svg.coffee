@@ -16,7 +16,6 @@ class GerberToSvg
     }
 
   convert: (gerber) ->
-
     @svg.end()
 
 module.exports = new GerberToSvg
