@@ -31,18 +31,21 @@ INVALIDPOLYPARAMS = [
 class Tool
   constructor: (params) ->
     for key, value of params
-      if key in VALIDPARAMS then @["#{key}"] = value
-      else throw new TypeError "#{key} is an invalid parameter for a tool"
+      unless key in VALIDPARAMS
+        throw new TypeError "#{key} is an invalid parameter for a tool"
 
-    if @code? then @code = parseInt @code, 10
+    if params.code? then @code = parseInt params.code, 10
     else throw new RangeError 'code required for tools'
-    if @code < 10 then throw new RangeError "#{@code} is an invalid code for a tool"
+    if @code < 10
+      throw new RangeError "#{@code} is an invalid code for a tool"
 
-    switch @shape
+    switch params.shape
       when 'C'
-        unless @dia? then throw new RangeError 'diameter required for circle tools'
+        unless @dia?
+          throw new RangeError 'diameter required for circle tools'
         for p in INVALIDCIRCLEPARAMS
-          if @["#{p}"]? then throw new TypeError "#{p} is an invalid circle parameter"
+          if @["#{p}"]?
+            throw new TypeError "#{p} is an invalid circle parameter"
         @shape = 'circle'
         @dia = parseFloat @dia
 
