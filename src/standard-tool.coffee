@@ -8,6 +8,7 @@ standardTool = (tool, p) ->
   p.cx = p.cx ? 0
   p.cy = p.cy ? 0
   # figure out the tool
+  padShape = ''
   if p.dia? and not p.verticies?
     # we've got a circle tool unless there's confusion
     if p.obround? or p.width? or p.height? or p.degrees?
@@ -21,16 +22,20 @@ standardTool = (tool, p) ->
     }
 
   else if p.width? and p.height?
-    # rectangle tool unless bad params
+    # rectangle or obround tool unless bad params
     if p.dia? or p.verticies? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
-    padShape = ''
+    padShape = rectangle p
+    unless p.hole? or p.obround then result.trace = { 'stroke-width': 0 }
 
   else if p.dia? and p.verticies?
     # we've got a polygon tool unless there's confusion
     if p.obround? or p.width? or p.height?
       throw new Error "incompatible parameters for tool #{tool}"
     padShape = ''
+
+  else
+    console.log 'unidentified shape'
 
   # apply the hole if necessary
   if p.hole?
@@ -65,8 +70,8 @@ rectangle = (p) ->
          y=\"#{p.cy - p.height/2}\"
          width=\"#{p.width}\"
          height=\"#{p.height}\""
-  if p.obround? and p.obround
-    radius = 0.5 * Math.min [p.width, p.height]
+  if p.obround
+    radius = 0.5 * Math.min p.width, p.height
     r += " rx=\"#{radius}\" ry=\"#{radius}\""
   # return r
   r
