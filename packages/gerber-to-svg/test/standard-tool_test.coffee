@@ -50,6 +50,8 @@ describe 'standard tool function', ->
       result = standard tool, CIRCLE_R_HOLE
       result.pad.should.equal CIRCLE_R_HOLE_PAD
       result.trace.should.equal CIRCLE_R_HOLE_TRACE
+    it 'should throw an error if the diameter is negative', ->
+      (-> standard tool, {dia: -3.4}).should.throw /diameter out of range/
 
   describe 'for rectangle tools', ->
     # input and output for a rectangle tool with no hole
@@ -93,6 +95,9 @@ describe 'standard tool function', ->
       result = standard tool, RECT_R_HOLE
       result.pad.should.equal RECT_R_HOLE_PAD
       result.trace.should.equal RECT_R_HOLE_TRACE
+    it 'should throw an error for non-positive side lengths', ->
+      (-> standard tool, {width: -23, height: 4}).should.throw /out of range/
+      (-> standard tool, {width: 2.3, height: 0}).should.throw /out of range/
 
   describe 'for obround tools', ->
     # input and output for a rectangle tool with no hole
