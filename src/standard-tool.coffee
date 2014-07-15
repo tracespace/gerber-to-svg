@@ -32,20 +32,16 @@ standardTool = (tool, p) ->
     # we've got a polygon tool unless there's confusion
     if p.obround? or p.width? or p.height?
       throw new Error "incompatible parameters for tool #{tool}"
-    padShape = ''
+    padShape = polygon p
 
   else
-    console.log 'unidentified shape'
+    throw new Error 'unidentified standard tool shape'
 
   # apply the hole if necessary
   if p.hole?
     result.pad += "<mask id=\"tool#{tool}pad_hole\">#{padShape} fill=\"#fff\" />"
     if p.hole.dia?
-      result.pad += circle {
-        dia: p.hole.dia
-        cx: p.cx
-        cy: p.cy
-      }
+      result.pad += circle { dia: p.hole.dia, cx: p.cx, cy: p.cy }
     else if p.hole.width? and p.hole.height?
       result.pad += rectangle {
         cx: p.cx
@@ -75,5 +71,23 @@ rectangle = (p) ->
     r += " rx=\"#{radius}\" ry=\"#{radius}\""
   # return r
   r
+
+# regular polygon
+polygon = (p) ->
+  if p.verticies < 3 or p.verticies > 12
+    throw new RangeError "number of polygon points out of range"
+  start = if p.degrees? then p.degrees * Math.PI/180 else 0
+  step = 2*Math.PI / p.verticies
+  r = p.dia / 2
+  poly = '<polygon points="'
+
+  for i in [0...p.verticies]
+    theta = start + i*step
+    poly += "#{p.cx+r*Math.cos theta},#{p.cy+r*Math.sin theta}"
+    poly += if i isnt p.verticies-1 then ' ' else '"'
+
+  # return poly
+  poly
+
 
 module.exports = standardTool
