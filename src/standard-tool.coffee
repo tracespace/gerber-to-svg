@@ -51,15 +51,24 @@ standardTool = (tool, p) ->
   # apply the hole if necessary
   if p.hole?
     result.pad += "<mask id=\"tool#{tool}pad_hole\">#{padShape} fill=\"#fff\" />"
-    if p.hole.dia?
+    if p.hole.dia? and not p.hole.width? and not p.hole.height?
+      unless p.hole.dia >= 0
+        throw new RangeError 'D#{tool} hole diameter out of range (#{p.hole.dia}<0)'
       result.pad += circle { dia: p.hole.dia, cx: p.cx, cy: p.cy }
     else if p.hole.width? and p.hole.height?
+      unless p.hole.width >= 0
+        throw new RangeError 'D#{tool} hole width out of range (#{p.hole.width}<0)'
+      unless p.hole.height >= 0
+        throw new RangeError 'D#{tool} hole height out of range (#{p.hole.height}<0)'
       result.pad += rectangle {
         cx: p.cx
         cy: p.cy
         width: p.hole.width
         height: p.hole.height
       }
+
+    else
+      throw new Error "D#{tool} has invalid hole parameters"
     # close the mask
     result.pad += ' fill="#000" /></mask>'
 
