@@ -38,21 +38,17 @@ describe 'standard tool function', ->
     CIRCLE_R_HOLE_TRACE = false
 
     it 'should return the svg for a circle with no hole', ->
-      result = standard.circle tool, CIRCLE_NO_HOLE
+      result = standard tool, CIRCLE_NO_HOLE
       result.pad.should.equal CIRCLE_NO_HOLE_PAD
       for key, value of CIRCLE_NO_HOLE_TRACE
         result.trace["#{key}"].should.equal value
     it 'should return the svg for a circle with a circle hole', ->
-      result = standard.circle tool, CIRCLE_C_HOLE
+      result = standard tool, CIRCLE_C_HOLE
       result.pad.should.equal CIRCLE_C_HOLE_PAD
       result.trace.should.equal CIRCLE_C_HOLE_TRACE
     it 'should return the svg for a circle with a rectangular hole', ->
-      result = standard.circle tool, CIRCLE_R_HOLE
+      result = standard tool, CIRCLE_R_HOLE
       result.pad.should.equal CIRCLE_R_HOLE_PAD
       result.trace.should.equal CIRCLE_R_HOLE_TRACE
-    it 'should throw an error if the diamter is negative', ->
-      (-> result = standard.circle tool, {dia: '-1.2'})
-        .should.throw /negative diameter/
-    it 'should throw an error if the diameter is missing', ->
-      (-> result = standard.circle tool, {})
-        .should.throw /missing diameter/
+
+  describe 'for rectangle tools', ->
