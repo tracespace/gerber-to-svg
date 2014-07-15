@@ -178,3 +178,22 @@ describe 'standard tool function', ->
       result = standard tool, POLY_DEG
       result.pad.should.equal POLY_DEG_PAD
       result.trace.should.be.false
+
+  describe 'with holes', ->
+    it 'should throw an error if the diameter is negative', ->
+      (-> standard tool, { dia: 10, hole: { dia: -3 } })
+        .should.throw /hole diameter out of range/
+    it 'should throw an error if the hole sides are negative', ->
+      (-> standard tool, { dia: 10, hole: { width: -3, height: 2 } })
+        .should.throw /hole width out of range/
+      (-> standard tool, { dia: 10, hole: { width: 1, height: -5 } })
+        .should.throw /hole height out of range/
+    it 'should throw an error if parameters are invalid', ->
+      (-> standard tool, { dia: 10, hole: { width: 1 } })
+        .should.throw /invalid hole/
+      (-> standard tool, { dia: 10, hole: { height: 1 } })
+        .should.throw /invalid hole/
+      (-> standard tool, { dia: 10, hole: { dia: 2, width: 1 } })
+        .should.throw /invalid hole/
+      (-> standard tool, { dia: 10, hole: { dia: 2, height: 1 } })
+        .should.throw /invalid hole/
