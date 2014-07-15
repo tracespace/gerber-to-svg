@@ -13,6 +13,9 @@ standardTool = (tool, p) ->
     # we've got a circle tool unless there's confusion
     if p.obround? or p.width? or p.height? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
+    # make sure diamter is in range
+    if p.dia < 0
+      throw new RangeError "D#{tool} circle diameter out of range (#{p.dia}<0)"
     # get the initial shape of the pad and apply the stroke properties
     padShape = circle p
     unless p.hole? then result.trace = {
@@ -25,6 +28,11 @@ standardTool = (tool, p) ->
     # rectangle or obround tool unless bad params
     if p.dia? or p.verticies? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
+    # make sure side lengths are in range
+    if p.width <= 0
+      throw new RangeError "D#{tool} rect width out of range (#{p.width}<=0)"
+    if p.height <= 0
+      throw new RangeError "D#{tool} rect height out of range (#{p.height}<=0)"
     padShape = rectangle p
     unless p.hole? or p.obround then result.trace = { 'stroke-width': 0 }
 
@@ -32,6 +40,9 @@ standardTool = (tool, p) ->
     # we've got a polygon tool unless there's confusion
     if p.obround? or p.width? or p.height?
       throw new Error "incompatible parameters for tool #{tool}"
+    # make sure verticies are in range
+    if p.verticies < 3 or p.verticies > 12
+      throw new RangeError "D#{tool} polygon points out of range (#{p.verticies}<3 or >12)]"
     padShape = polygon p
 
   else
@@ -74,8 +85,6 @@ rectangle = (p) ->
 
 # regular polygon
 polygon = (p) ->
-  if p.verticies < 3 or p.verticies > 12
-    throw new RangeError "number of polygon points out of range"
   start = if p.degrees? then p.degrees * Math.PI/180 else 0
   step = 2*Math.PI / p.verticies
   r = p.dia / 2
@@ -88,6 +97,5 @@ polygon = (p) ->
 
   # return poly
   poly
-
 
 module.exports = standardTool
