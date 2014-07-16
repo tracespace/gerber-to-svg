@@ -66,7 +66,6 @@ standardTool = (tool, p) ->
         width: p.hole.width
         height: p.hole.height
       }
-
     else
       throw new Error "D#{tool} has invalid hole parameters"
     # close the mask
@@ -98,12 +97,11 @@ polygon = (p) ->
   step = 2*Math.PI / p.verticies
   r = p.dia / 2
   poly = '<polygon points="'
-
+  # loop over the verticies and add them to the points string
   for i in [0...p.verticies]
     theta = start + i*step
     poly += "#{p.cx+r*Math.cos theta},#{p.cy+r*Math.sin theta}"
     poly += if i isnt p.verticies-1 then ' ' else '"'
-
   # return poly
   poly
 
