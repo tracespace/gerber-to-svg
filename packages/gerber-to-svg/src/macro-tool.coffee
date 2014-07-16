@@ -10,6 +10,9 @@ macros = {}
 # macro id number (incremented for unique mask ids)
 id = 0
 
+functionOrValue = (thing) ->
+  if typeof thing is 'function' then thing() else thing
+
 # macro primitive functions
 # tool is the tool number
 # pad is the existing pad
@@ -21,15 +24,15 @@ circle = (pad, params) ->
   t = "_macro#{id++}_"
   # first parameter is exposure, and if it's off, we need to mask
   maskId = false
-  if params[0]() is 0
+  if functionOrValue params[0] is '0'
     maskId = "#{t}clear"
     pad = "<g mask=\"url(##{maskId})\">#{pad}</g><mask id=\"#{maskId}\">"
     pad += "<rect width=\"100%\" height=\"100%\" fill=\"#fff\" />"
   # second parameter is diameter
-  cir.dia = params[1]()
+  cir.dia = functionOrValue params[1]
   # third and fourth are x and y of center
-  cir.cx = params[2]()
-  cir.cy = params[3]()
+  cir.cx = functionOrValue params[2]
+  cir.cy = functionOrValue params[3]
   # tack the circle on
   pad += standard(t, cir).pad
   # finish mask if applicable
@@ -62,6 +65,7 @@ class MacroTool
     # loop through the block
     for b in blocks[1..]
       # check the first character of the block
+      call = { fn: null, p: [] }
       switch b[0]
         when '0'
           # ignore comments
@@ -71,7 +75,25 @@ class MacroTool
           console.log 'modifier definition'
         else
           # primitive
+          console.log 'primitive'
+          # split at commas to get parameters
+          mods = b.split ','
+          console.log mods
+          call.fn = primitives[mods[0]]
+          for m in mods[1..]
+            # if it's only numbers, that's easy
+            if m.match /[\d.]+/
+              number = parseFloat m
+              call.p.push number
+      @calls.push call
+      console.log call.p
 
+  # run the macro and return the pad
+  run: (tool) ->
+    pad = ''
+    pad = c.fn(pad, c.p) for c in @calls
+    # group with proper id and return
+    "<g id=\"tool#{tool}pad\">#{pad}</g>"
 
 
 module.exports = {
