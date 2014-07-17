@@ -1,9 +1,8 @@
 # tests for the aperture macro class
 
-mt = require('../src/macro-tool')
+mt = require '../src/macro-tool'
 Macro = mt.MacroTool
 macros = mt.macros
-primitives = mt.primitives
 
 describe 'tool macro class', ->
   it 'should add itself to the macro list', ->
@@ -11,40 +10,33 @@ describe 'tool macro class', ->
     macros.MACRONAME.should.equal m
 
   describe 'run method', ->
-    it 'should be able to macro up a circle', ->
-      circleBlocks = ['CMAC', '1,1,1.5,0,0']
-      circleSvg = '<g id="tool10pad">\
-                  <circle cx="0" cy="0" r="0.75" id="tool_macro0_pad" /></g>'
-      m = new Macro circleBlocks
-      result = m.run '10'
-      result.should.equal circleSvg
+    it 'should set modifiers that are passed in', ->
+      MODIFIERS = ['1', '1.5', '0', '-0.76']
+      m = new Macro ['MACRONAME']
+      result = m.run '10', MODIFIERS
+      m.modifiers['$1'].should.equal 1
+      m.modifiers['$2'].should.equal 1.5
+      m.modifiers['$3'].should.equal 0
+      m.modifiers['$4'].should.equal -0.76
 
-    it 'should be able to recieve modifiers that are passed in', ->
-      circleBlocks = ['CMAC', '1,$1,$2,$3,$4']
-      circleSvg = '<g id="tool10pad">\
-                  <circle cx="0" cy="0" r="0.75" id="tool_macro1_pad" /></g>'
-      m = new Macro circleBlocks
-      result = m.run '10', ['1', '1.5', '0', '0']
-      result.should.equal circleSvg
-
-
-describe 'macro primitive', ->
-  tool = '10'
-  pad = ''
-  describe 'circles', ->
-    CIRCLE = [ '1', '4', '1', '2' ]
-    CIRCLE_PAD = '<circle cx="1" cy="2" r="2" id="tool_macro2_pad" />'
-
-    CIRCLE_CLEAR = [ '0', '8', '3', '2' ]
-    CIRCLE_CLEAR_PAD = '<g mask="url(#_macro3_clear)"></g>\
-                        <mask id="_macro3_clear">\
-                        <rect width="100%" height="100%" fill="#fff" />\
-                        <circle cx="3" cy="2" r="4" id="tool_macro3_pad"
-                        fill="#000" /></mask>'
-    it 'should return the svg for a circle', ->
-      result = primitives['1'] pad, CIRCLE
-      result.should.equal CIRCLE_PAD
-
-    it 'should return a masked group if exposure if off', ->
-      result = primitives['1'] pad, CIRCLE_CLEAR
-      result.should.equal CIRCLE_CLEAR_PAD
+  describe 'getNumber method', ->
+    m = new Macro ['MACRONAME']
+    it 'should return a number if passed a string of a number', ->
+      m.getNumber('2.4').should.equal 2.4
+    it 'should return the modifier if passed a reference to a modifier', ->
+      m.modifiers.$2 = 3.5
+      m.getNumber('$2').should.equal 3.5
+    it 'should return a number if passed a string with arithmetic', ->
+      m.modifiers.$1 = 2.6
+      m.getNumber('$1+5').should.equal 7.6
+    describe 'arithmetic', ->
+      it 'should obey order of operations', ->
+        m.getNumber('1+2x3').should.equal 7
+        m.getNumber('1-2x3').should.equal -5
+        m.getNumber('1+1/2').should.equal 1.5
+        m.getNumber('1-1/2').should.equal 0.5
+      it 'should allow parentheses to overide order of operations', ->
+        m.getNumber('(1+2)x3').should.equal 9
+        m.getNumber('(1-2)x3').should.equal -3
+        m.getNumber('(1+1)/2').should.equal 1
+        m.getNumber('(1-1)/2').should.equal 0

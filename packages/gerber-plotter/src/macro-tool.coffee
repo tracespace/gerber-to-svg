@@ -10,9 +10,6 @@ macros = {}
 # macro id number (incremented for unique ids)
 id = 0
 
-functionOrValue = (thing) ->
-  if typeof thing is 'function' then thing() else thing
-
 # macro primitive functions
 # tool is the tool number
 # pad is the existing pad
@@ -57,8 +54,7 @@ primitives = {
 class MacroTool
   # constructor takes in macro blocks
   constructor: (blocks) ->
-    # macro calls and modifiers
-    @calls = []
+    # macro modifiers
     @modifiers = {}
     # block 0 is the name of the macro
     macros[blocks[0]] = this
@@ -86,20 +82,22 @@ class MacroTool
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
-    @modifiers["$#{i+1}"] = m for m, i in modifiers
+    @modifiers["$#{i+1}"] = parseFloat m for m, i in modifiers
     pad = ''
-    pad = c.fn(pad, c.p) for c in @calls
-    # group with proper id and return
-    "<g id=\"tool#{tool}pad\">#{pad}</g>"
 
-  primitive: ()
+  getNumber: (s) ->
+    result = NaN
+    # normal number all by itself
+    if s.match /^[+-]?[\d.]+$/ then result = parseFloat s
+    # modifier all by its lonesome
+    else if s.match /^\$\d+$/ then result = parseFloat @modifiers[s]
+    # else we got us some maths
+    else
 
-  getMod: (key) ->
-    console.log "getting modifier of #{key}"
-    parseFloat @modifiers["#{key}"]
+    # retrun the result
+    result
 
 module.exports = {
   MacroTool: MacroTool
   macros: macros
-  primitives: primitives
 }
