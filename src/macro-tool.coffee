@@ -7,7 +7,7 @@ standard = require '../src/standard-tool'
 # aperture macro list
 macros = {}
 
-# macro id number (incremented for unique mask ids)
+# macro id number (incremented for unique ids)
 id = 0
 
 functionOrValue = (thing) ->
@@ -74,27 +74,29 @@ class MacroTool
           # modifier definition
           console.log 'modifier definition'
         else
-          # primitive
-          console.log 'primitive'
-          # split at commas to get parameters
+          # primative; split at commas to get parameters
           mods = b.split ','
-          console.log mods
           call.fn = primitives[mods[0]]
           for m in mods[1..]
             # if it's only numbers, that's easy
-            if m.match /[\d.]+/
-              number = parseFloat m
-              call.p.push number
+            if m.match /[\d.]+/ then call.p.push parseFloat m
+            # else we could be dealing with a call to a variable (e.g. $4)
+            else if m.match /^\$\d+$/ then call.p.push => @getMod m
       @calls.push call
-      console.log call.p
 
   # run the macro and return the pad
-  run: (tool) ->
+  run: (tool, modifiers = []) ->
+    @modifiers["$#{i+1}"] = m for m, i in modifiers
     pad = ''
     pad = c.fn(pad, c.p) for c in @calls
     # group with proper id and return
     "<g id=\"tool#{tool}pad\">#{pad}</g>"
 
+  primitive: ()
+
+  getMod: (key) ->
+    console.log "getting modifier of #{key}"
+    parseFloat @modifiers["#{key}"]
 
 module.exports = {
   MacroTool: MacroTool
