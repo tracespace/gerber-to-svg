@@ -2,7 +2,9 @@
 # parses an aperture macro and then returns the pad when the tool is defined
 
 # uses the standard tool functions
-standard = require '../src/standard-tool'
+standard = require './standard-tool'
+# calculator parsing for macro arithmetic
+calc = require './macro-calc'
 
 # aperture macro list
 macros = {}
@@ -86,16 +88,20 @@ class MacroTool
     pad = ''
 
   getNumber: (s) ->
-    result = NaN
     # normal number all by itself
-    if s.match /^[+-]?[\d.]+$/ then result = parseFloat s
+    if s.match /^[+-]?[\d.]+$/ then parseFloat s
     # modifier all by its lonesome
-    else if s.match /^\$\d+$/ then result = parseFloat @modifiers[s]
+    else if s.match /^\$\d+$/ then parseFloat @modifiers[s]
     # else we got us some maths
-    else
+    else @evaluate calc.parse s
 
-    # retrun the result
-    result
+  evaluate: (op) ->
+    switch op.type
+      when 'n' then @getNumber op.val
+      when '+' then @evaluate(op.left) + @evaluate(op.right)
+      when '-' then @evaluate(op.left) - @evaluate(op.right)
+      when 'x' then @evaluate(op.left) * @evaluate(op.right)
+      when '/' then @evaluate(op.left) / @evaluate(op.right)
 
 module.exports = {
   MacroTool: MacroTool
