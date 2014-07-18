@@ -21,7 +21,6 @@ parse = (arith) ->
   # some helper functions
   peek = -> tokens[index]
   consume = (t) -> if t is peek() then index++
-
   # recursive parsing functions
   # highest priority - numbers and parentheses
   parsePrimary = ->
