@@ -22,5 +22,5 @@ gulp.task 'test', ->
       }
     }
 
-gulp.task 'test:watch', ['test'], ->
+gulp.task 'testwatch', ['test'], ->
   gulp.watch ['./src/*', './test/*'], ['test']
