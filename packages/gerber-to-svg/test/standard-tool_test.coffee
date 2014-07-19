@@ -4,6 +4,12 @@ standard = require '../src/standard-tool'
 
 describe 'standard tool function', ->
   tool = '10'
+  it 'should not populate the id field if the tool is empty', ->
+    result = standard '', {dia: 10}
+    result.pad.should.equal '<circle "cx=0" cy="0" r="5" />'
+    result = standard null, {dia: 10}
+    result.pad.should.equal '<circle "cx=0" cy="0" r="5" />'  
+
   describe 'for circle tools', ->
     # input and output for a circle tool with no hole
     CIRCLE_NO_HOLE = { dia: 10 }
