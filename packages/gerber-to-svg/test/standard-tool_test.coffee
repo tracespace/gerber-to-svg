@@ -25,14 +25,12 @@ describe 'standard tool function', ->
       result.pad.circle._attr.cy.should.equal '3'
     it 'should be traceable if there is no hole', ->
       result = standard {dia: 10}
-      result.trace.should.equal {
-        'stroke-width': '10'
-        'stroke-linecap': 'round'
-        'stroke-linejoin': 'round'
-      }
+      result.trace['stroke-width'].should.equal '10'
+      result.trace['stroke-linecap'].should.equal 'round'
+      result.trace['stroke-linejoin'].should.equal 'round'
     it 'should throw an error if the diameter is negative', ->
-      (-> standard tool, {dia: -3.4}).should.throw /diameter out of range/
-      (-> standard tool, {dia: 0}).should.not.throw
+      (-> standard {dia: -3.4}).should.throw /diameter out of range/
+      (-> standard {dia: 0}).should.not.throw
 
   describe 'for rectangle tools', ->
     it 'should set the width and height', ->
@@ -49,10 +47,10 @@ describe 'standard tool function', ->
       result.pad.rect._attr.y.should.equal '2.9'
     it 'should be traceable if there is no hole', ->
       result = standard { width: 1.2, height: 2.2 }
-      result.trace.should.equal { 'stroke-width': '0' }
+      result.trace['stroke-width'].should.equal '0'
     it 'should throw an error for non-positive side lengths', ->
-      (-> standard tool, {width: -23, height: 4}).should.throw /out of range/
-      (-> standard tool, {width: 2.3, height: 0}).should.throw /out of range/
+      (-> standard {width: -23, height: 4}).should.throw /out of range/
+      (-> standard {width: 2.3, height: 0}).should.throw /out of range/
 
   describe 'for obround tools', ->
     it 'should return a rect with radiused corners', ->
@@ -71,7 +69,7 @@ describe 'standard tool function', ->
       for v in [0..4]
         theta = v*step
         points += "#{2*Math.cos theta},#{2*Math.sin theta}"
-        if v isnt 4 then POLY_NO_DEG_PAD += ' '
+        if v isnt 4 then points += ' '
       result.pad.polygon._attr.points.should.equal points
     it 'should return the correct points with rotation specified', ->
       result = standard { dia: 42.6, verticies: 7, degrees: 42 }
@@ -81,7 +79,7 @@ describe 'standard tool function', ->
       for v in [0..6]
         theta = start+v*step
         points += "#{21.3*Math.cos theta},#{21.3*Math.sin theta}"
-        if v isnt 6 then POLY_DEG_PAD += ' '
+        if v isnt 6 then points += ' '
       result.pad.polygon._attr.points.should.equal points
     it 'should not be traceable', ->
       result = standard { dia: 4, verticies: 5 }
@@ -89,26 +87,26 @@ describe 'standard tool function', ->
       result = standard { dia: 42.6, verticies: 7, degrees: 42 }
       result.trace.should.be.false
     it 'should throw if the number of points is not between 3 and 12', ->
-      (-> result = standard tool, {dia: 10, verticies: 2})
+      (-> result = standard {dia: 10, verticies: 2})
         .should.throw /points out of range/
-      (-> result = standard tool, {dia: 10, verticies: 13})
+      (-> result = standard {dia: 10, verticies: 13})
         .should.throw /points out of range/
 
   describe 'with holes', ->
     it 'should throw an error if the diameter is negative', ->
-      (-> standard tool, { dia: 10, hole: { dia: -3 } })
+      (-> standard { dia: 10, hole: { dia: -3 } })
         .should.throw /hole diameter out of range/
     it 'should throw an error if the hole sides are negative', ->
-      (-> standard tool, { dia: 10, hole: { width: -3, height: 2 } })
+      (-> standard { dia: 10, hole: { width: -3, height: 2 } })
         .should.throw /hole width out of range/
-      (-> standard tool, { dia: 10, hole: { width: 1, height: -5 } })
+      (-> standard { dia: 10, hole: { width: 1, height: -5 } })
         .should.throw /hole height out of range/
     it 'should throw an error if parameters are invalid', ->
-      (-> standard tool, { dia: 10, hole: { width: 1 } })
+      (-> standard { dia: 10, hole: { width: 1 } })
         .should.throw /invalid hole/
-      (-> standard tool, { dia: 10, hole: { height: 1 } })
+      (-> standard { dia: 10, hole: { height: 1 } })
         .should.throw /invalid hole/
-      (-> standard tool, { dia: 10, hole: { dia: 2, width: 1 } })
+      (-> standard { dia: 10, hole: { dia: 2, width: 1 } })
         .should.throw /invalid hole/
-      (-> standard tool, { dia: 10, hole: { dia: 2, height: 1 } })
+      (-> standard { dia: 10, hole: { dia: 2, height: 1 } })
         .should.throw /invalid hole/
