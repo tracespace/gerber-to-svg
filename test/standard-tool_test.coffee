@@ -3,7 +3,7 @@
 standard = require '../src/standard-tool'
 
 describe 'standard tool function', ->
-  it 'should not populate the id field if the tool is empty', ->
+  it 'should not populate the id if passed a tool', ->
     result = standard { dia: 10 }, 'D12'
     result.pad.circle._attr.id.should.match /tool-D12-pad/
     result = standard { dia: 10 }, ''
@@ -93,20 +93,50 @@ describe 'standard tool function', ->
         .should.throw /points out of range/
 
   describe 'with holes', ->
+    tool = 'D10'
+    it 'should require a tool to be passed in if theres a hole', ->
+      (-> standard { dia: 10, hole: { dia: 3 } }).should.throw /tool required/
+    it 'should not allow tracing if theres a hole', ->
+      result = standard { dia: 10, hole: { dia: 3 } }, tool
+      result.trace.should.be.false
+    it 'should create a mask with a circle if the hole is circular', ->
+      result = standard { dia: 10, hole: { dia: 4 } }, tool
+      # result pad should be an array of two objects where there mask is first
+      result.pad.should.containDeep [ { mask: [
+          { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
+          { circle: { _attr: { cx: '0', cy: '0', r: '2', fill: '#000' } } }
+        ]
+      } ]
+    it 'should create a mask with a rect if the hole is rectangular', ->
+      result = standard { dia: 10, hole: { width: 4, height: 2 } }, tool
+      # result pad should be an array of two objects where there mask is first
+      result.pad.should.containDeep [ { mask: [
+          { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
+          {
+            rect: {
+              _attr: { x: '-2', y: '-1', width: '4', height: '2', fill: '#000' }
+            }
+          }
+        ]
+      } ]
+    it 'should set the mask of the pad properly', ->
+      result = standard { dia: 10, hole: { dia: 4 } }, tool
+      id = result.pad[0].mask[0]._attr.id
+      result.pad[1].circle._attr.mask.should.equal 'url(#' + id + ')'
     it 'should throw an error if the diameter is negative', ->
-      (-> standard { dia: 10, hole: { dia: -3 } })
+      (-> standard { dia: 10, hole: { dia: -3 } }, tool)
         .should.throw /hole diameter out of range/
     it 'should throw an error if the hole sides are negative', ->
-      (-> standard { dia: 10, hole: { width: -3, height: 2 } })
+      (-> standard { dia: 10, hole: { width: -3, height: 2 } }, tool)
         .should.throw /hole width out of range/
-      (-> standard { dia: 10, hole: { width: 1, height: -5 } })
+      (-> standard { dia: 10, hole: { width: 1, height: -5 } }, tool)
         .should.throw /hole height out of range/
     it 'should throw an error if parameters are invalid', ->
-      (-> standard { dia: 10, hole: { width: 1 } })
+      (-> standard { dia: 10, hole: { width: 1 } }, tool)
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { height: 1 } })
+      (-> standard { dia: 10, hole: { height: 1 } }, tool)
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { dia: 2, width: 1 } })
+      (-> standard { dia: 10, hole: { dia: 2, width: 1 } }, tool)
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { dia: 2, height: 1 } })
+      (-> standard { dia: 10, hole: { dia: 2, height: 1 } }, tool)
         .should.throw /invalid hole/

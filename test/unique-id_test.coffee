@@ -11,9 +11,8 @@ describe 'unique id generator', ->
 
   it 'should keep those ids unique even in different closures', ->
     counter = 0
-    while counter++ < 200
-      uniqueId = id()
-      do (uniqueId) ->
-        otherIdFunc = require '../src/unique-id'
-        otherId = otherIdFunc()
-        otherId.should.not.equal uniqueId
+    uniqueId = id()
+    do (uniqueId) ->
+      otherIdFunc = require '../src/unique-id'
+      otherId = otherIdFunc()
+      otherId.should.not.equal uniqueId
