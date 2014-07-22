@@ -3,6 +3,8 @@
 # functions return an object with the svg of the pad as an object and the
 #   trace stroke properties as an object (or false if tool is untraceable)
 
+# unique number generator to avoid id collisions
+unique = require './unique-id'
 
 circle = (p) ->
   { circle: { _attr: { cx: "#{p.cx}", cy: "#{p.cy}", r: "#{p.dia/2}" } } }
@@ -53,7 +55,7 @@ standardTool = (p, tool) ->
   p.cx = p.cx ? 0
   p.cy = p.cy ? 0
   # pad id
-  id = if tool then "tool-#{tool}-pad" else false
+  id = if tool then "tool-#{tool}-pad-#{unique()}" else false
   # figure out the tool
   shape = ''
   if p.dia? and not p.verticies?
@@ -99,36 +101,44 @@ standardTool = (p, tool) ->
   result.pad = shapeMap[shape] p
   # set the id
   if id then result.pad[shape]._attr.id = id
+
+  # if there's a fill, apply it
+  if p.fill? then result.pad[shape]._attr.fill = p.fill
+
+  # mask accordingly if there's a hole
+  if p.hole?
+    # check parameters
+    if p.hole.dia? and not p.hole.width? and not p.hole.height?
+      unless p.hole.dia >= 0
+        throw new RangeError "#{tool} hole diameter out of range (#{p.hole.dia}<0)"
+    else if p.hole.width? and p.hole.height?
+      unless p.hole.width >= 0
+        throw new RangeError "#{tool} hole width out of range (#{p.hole.width}<0)"
+      unless p.hole.height >= 0
+        throw new RangeError "#{tool} hole height out of range"
+    else
+      throw new Error "#{tool} has invalid hole parameters"
+
+    # give it a fill
+    p.hole.fill = '#000'
+    # throw an error if there's no tool
+    unless id then throw new SyntaxError 'tool required for tool with hole'
+    # turn pad into an array
+    result.pad = [
+      { mask: [
+        { _attr: { id: id + "-mask" } }
+        result.pad
+        standardTool(p.hole).pad
+        ]
+      }
+      result.pad
+    ]
+    # get the fills right
+    result.pad[0].mask[1][shape]._attr.fill = '#fff'
+    # set the mask
+    result.pad[1][shape]._attr.mask = 'url(#' + id + '-mask)'
+
   # return the results
   result
-
-  # apply the hole if necessary
-  # if p.hole?
-  #   result.pad += "<mask id=\"#{tool}-pad_hole\">#{padShape} fill=\"#fff\" />"
-  #   if p.hole.dia? and not p.hole.width? and not p.hole.height?
-  #     unless p.hole.dia >= 0
-  #       throw new RangeError '#{tool} hole diameter out of range (#{p.hole.dia}<0)'
-  #     result.pad += circle { dia: p.hole.dia, cx: p.cx, cy: p.cy }
-  #   else if p.hole.width? and p.hole.height?
-  #     unless p.hole.width >= 0
-  #       throw new RangeError '#{tool} hole width out of range (#{p.hole.width}<0)'
-  #     unless p.hole.height >= 0
-  #       throw new RangeError '#{tool} hole height out of range (#{p.hole.height}<0)'
-  #     result.pad += rectangle {
-  #       cx: p.cx
-  #       cy: p.cy
-  #       width: p.hole.width
-  #       height: p.hole.height
-  #     }
-  #   else
-  #     throw new Error "#{tool} has invalid hole parameters"
-  #   # close the mask
-  #   result.pad += ' fill="#000" /></mask>'
-  #
-  # # finsish the pad string, and add mask url if necessary
-  # result.pad += "#{padShape} id=\"tool#{tool}pad\""
-  # if p.hole? then result.pad += " mask=\"url(#tool#{tool}pad_hole)\""
-  # result.pad += ' />'
-  #result
 
 module.exports = standardTool
