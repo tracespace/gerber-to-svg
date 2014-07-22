@@ -2,13 +2,13 @@
 # functions take an object with tool parameters
 # functions return an object with the svg pad string and the svg stroke properties if applicable
 
-standardTool = (tool, p) ->
-  result = { pad: '', trace: false }
+standardTool = (p, tool) ->
+  result = { pad: {}, trace: false }
   # pad center
   p.cx = p.cx ? 0
   p.cy = p.cy ? 0
   # pad id
-  id = if tool then "#{tool}-pad" else false
+  id = if tool then "tool-#{tool}-pad" else false
   # figure out the tool
   padShape = ''
   if p.dia? and not p.verticies?

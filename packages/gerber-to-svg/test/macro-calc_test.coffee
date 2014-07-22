@@ -7,7 +7,7 @@ parse = calc.parse
 describe 'macro arithmetic calculator', ->
   describe 'tokenize function', ->
     it 'should break apart a string into tokens', ->
-      tokenize('1').should.be.eql [ '1' ]
+      tokenize('1').should.eql [ '1' ]
       tokenize('1.2').should.eql [ '1.2' ]
       tokenize('$3').should.eql [ '$3' ]
       tokenize('+-/x').should.eql [ '+', '-', '/', 'x' ]

@@ -1,7 +1,6 @@
 # tests for the aperture macro class
 
 Macro = require '../src/macro-tool'
-parseXML = require('xml2js').parseString
 
 describe 'tool macro class', ->
   it 'should identify itself', ->
@@ -39,7 +38,7 @@ describe 'tool macro class', ->
 
 
   describe 'primitve methode', ->
-    
+
 
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
