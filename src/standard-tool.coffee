@@ -5,49 +5,7 @@
 
 # unique number generator to avoid id collisions
 unique = require './unique-id'
-
-circle = (p) ->
-  { circle: { _attr: { cx: "#{p.cx}", cy: "#{p.cy}", r: "#{p.dia/2}" } } }
-
-rectangle = (p) ->
-  r = {
-    rect: {
-      _attr: {
-        x:      "#{p.cx - p.width/2}"
-        y:      "#{p.cy - p.height/2}"
-        width:  "#{p.width}"
-        height: "#{p.height}"
-      }
-    }
-  }
-
-  if p.obround
-    radius = 0.5 * Math.min p.width, p.height
-    r.rect._attr.rx = "#{radius}"
-    r.rect._attr.ry = "#{radius}"
-  # return r
-  r
-
-# regular polygon
-polygon = (p) ->
-  start = if p.degrees? then p.degrees * Math.PI/180 else 0
-  step = 2*Math.PI / p.verticies
-  r = p.dia / 2
-  points = ''
-  # loop over the verticies and add them to the points string
-  for i in [0...p.verticies]
-    theta = start + i*step
-    points += " #{p.cx+r*Math.cos theta},#{p.cy+r*Math.sin theta}"
-  # return polygon object
-  { polygon: { _attr: { points: points[1..] } } }
-
-
-# map standard shapes to functions
-shapeMap = {
-  circle: circle
-  rect: rectangle
-  polygon: polygon
-}
+shapes = require './pad-shapes'
 
 standardTool = (p, tool) ->
   result = { pad: {}, trace: false }
@@ -98,12 +56,12 @@ standardTool = (p, tool) ->
     throw new Error 'unidentified standard tool shape'
 
   # get the object
-  result.pad = shapeMap[shape] p
+  result.pad = shapes[shape] p
   # set the id
-  if id then result.pad[shape]._attr.id = id
+  if id then result.pad.shape[shape]._attr.id = id
 
   # if there's a fill, apply it
-  if p.fill? then result.pad[shape]._attr.fill = p.fill
+  if p.fill? then result.pad.shape[shape]._attr.fill = p.fill
 
   # mask accordingly if there's a hole
   if p.hole?
@@ -124,19 +82,19 @@ standardTool = (p, tool) ->
     # throw an error if there's no tool
     unless id then throw new SyntaxError 'tool required for tool with hole'
     # turn pad into an array
-    result.pad = [
+    result.pad.shape = [
       { mask: [
         { _attr: { id: id + "-mask" } }
-        result.pad
-        standardTool(p.hole).pad
+        result.pad.shape
+        standardTool(p.hole).pad.shape
         ]
       }
-      result.pad
+      result.pad.shape
     ]
     # get the fills right
-    result.pad[0].mask[1][shape]._attr.fill = '#fff'
+    result.pad.shape[0].mask[1][shape]._attr.fill = '#fff'
     # set the mask
-    result.pad[1][shape]._attr.mask = 'url(#' + id + '-mask)'
+    result.pad.shape[1][shape]._attr.mask = 'url(#' + id + '-mask)'
 
   # return the results
   result
