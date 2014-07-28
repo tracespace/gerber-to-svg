@@ -1,8 +1,8 @@
 # aperture macro class
 # parses an aperture macro and then returns the pad when the tool is defined
 
-# uses the standard tool functions
-standard = require './standard-tool'
+# uses the pad shapes functions
+shapes = require './pad-shapes'
 # calculator parsing for macro arithmetic
 calc = require './macro-calc'
 
@@ -57,26 +57,13 @@ class MacroTool
     @name = blocks[0][2..]
     # save the rest of the blocks
     @blocks = blocks[1..]
-    # for b in blocks[1..]
-    #   # check the first character of the block
-    #   call = { fn: null, p: [] }
-    #   switch b[0]
-    #     when '0'
-    #       # ignore comments
-    #       console.log 'ignoring aperture macro comment'
-    #     when '$'
-    #       # modifier definition
-    #       console.log 'modifier definition'
-    #     else
-    #       # primative; split at commas to get parameters
-    #       mods = b.split ','
-    #       call.fn = primitives[mods[0]]
-    #       for m in mods[1..]
-    #         # if it's only numbers, that's easy
-    #         if m.match /[\d.]+/ then call.p.push parseFloat m
-    #         # else we could be dealing with a call to a variable (e.g. $4)
-    #         else if m.match /^\$\d+$/ then call.p.push => @getMod m
-    #   @calls.push call
+    # array of shape objects
+    @shapes = []
+    # array of mask objects
+    @masks = []
+    # bounding box [xMin, yMin, xMax, yMax] of macro
+    @bbox = [ null, null, null, null ]
+
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
@@ -84,28 +71,52 @@ class MacroTool
     pad = ''
 
   # run a block and return the modified pad string
-  runBlock: (block, pad) ->
+  runBlock: (block) ->
     # check the first character of the block
     switch block[0]
-      # if it's a comment (starts with 0), we can ignore
-      when '0'
-        pad
       # if we got ourselves a modifier, we should set it
       when '$'
         mod = block.match(/^\$\d+(?=\=)/)?[0]
         val = block[1+mod.length..]
         @modifiers[mod] = @getNumber val
-        pad
       # or it's a primitive
       when '1', '2', '20', '21', '22', '4', '5', '6', '7'
-
-
+        args = block.split ','
+        args[i] = getNumber a for a,i in args
       else
         # throw an error because I don't know what's going on
-        throw new SyntaxError "'#{block}' unrecognized tool macro block"
+        # unless it's a comment; in that case carry on
+        unless block[0] is '0'
+          throw new SyntaxError "'#{block}' unrecognized tool macro block"
 
+  primitive: (args) ->
+    mask = false
+    rotation = false
+    shape = null
+    switch args[0]
+      # circle primitive
+      when 1
+        shape = shapes.circle { dia: args[2], cx: args[3], cy: args[4] }
+        if args[1] is 0 then mask = true else @addBbox shape.bbox
+      # vector line primitive
+      when 2, 20
+        shape = shapes.vector {
+          width: args[2]
+          x1: args[3]
+          y1: args[4]
+          x2: args[5]
+          y2: args[6]
+        }
+        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[7]
 
-      # or it's a primitive that's always exposure on
+    @shapes.push shape.shape
+
+  addBbox: (bbox, rotation=0) ->
+    unless rotation
+      if @bbox[0] is null or bbox[0] < @bbox[0] then @bbox[0] = bbox[0]
+      if @bbox[1] is null or bbox[1] < @bbox[1] then @bbox[1] = bbox[1]
+      if @bbox[2] is null or bbox[2] > @bbox[2] then @bbox[2] = bbox[2]
+      if @bbox[3] is null or bbox[3] > @bbox[3] then @bbox[3] = bbox[3]
 
   getNumber: (s) ->
     # normal number all by itself

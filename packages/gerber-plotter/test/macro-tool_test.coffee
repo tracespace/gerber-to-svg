@@ -24,21 +24,39 @@ describe 'tool macro class', ->
       m.modifiers.$4.should.equal '-0.76'
 
   describe 'run block method', ->
-    it 'should not modify the pad string if block is a comment', ->
+    it 'should not modify the pad if block is a comment', ->
       m = new Macro ['AMNAME']
-      m.runBlock('0 some comment', 'existing').should.equal 'existing'
+      m.runBlock '0 some comment'
+      m.shapes.should.eql []
+      m.masks.should.eql []
     it 'should set a modifier but leave the pad alone', ->
       m = new Macro ['AMNAME']
-      m.runBlock('$1=(1+2)x(3+4)', 'existing').should.equal 'existing'
+      m.runBlock '$1=(1+2)x(3+4)'
       m.modifiers.$1.should.equal 21
-    describe 'for primitives', ->
-      it 'should wrap previous pad in masked group if exposure is off', ->
-        m = new Macro ['AMNAME']
-        result = m.runBlock('1,0,0,0,0', '<pad />')
-
+      m.shapes.should.eql []
+      m.masks.should.eql []
 
   describe 'primitve methode', ->
-
+    it 'should add a circle to the shapes and the bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [1, 1, 5, 1, 2]
+      m.shapes.should.containDeep [
+        { circle: { _attr: { cx: '1', cy: '2', r: '2.5' } } }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ -1.5, -0.5, 3.5, 4.5 ]
+    it 'should add a vector line to the shapes and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [2, 1, 5, 1, 1, 15, 1, 0]
+      m.shapes.should.containDeep [
+        {
+          line: {
+            _attr: { x1: '1', y1: '1', x2: '15', y2: '1', 'stroke-width': '5' }
+          }
+        }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ 1, -1.5, 15, 3.5 ]
 
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
