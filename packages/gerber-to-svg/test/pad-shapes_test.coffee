@@ -142,4 +142,171 @@ describe 'shape functions', ->
     it 'should calculate the bounding box', ->
       result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
       result.bbox.should.eql [ 0, 0, 1, 1 ]
-  
+
+  describe 'for moirés', ->
+    it 'should return an array of objects that creates a moiré', ->
+      result = shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }
+      result.shape.should.containDeep [ {
+        circle: {
+          _attr: {
+            cx: '0', cy: '0', r: '4.5', 'stroke-width': '2', fill: 'none'
+          }
+        }
+      }
+      {
+        circle: {
+          _attr: {
+            cx: '0', cy: '0', r: '2.5', 'stroke-width': '2', fill: 'none'
+          }
+        }
+      }
+      {
+        line: {
+          _attr: { x1: '-6', y1: '0', x2: '6', y2: '0', 'stroke-width': '0.5' }
+        }
+      }
+      {
+        line: {
+          _attr: { x1: '0', y1: '-6', x2: '0', y2: '6', 'stroke-width': '0.5' }
+        }
+      } ]
+    it 'should throw errors for missing parameters', ->
+      (-> shapes.moire {
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires x center/
+      (-> shapes.moire {
+        cx: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires y center/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires outer diameter/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires ring thickness/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires ring gap/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossThx: 0.5
+      }).should.throw /requires crosshair length/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+      }).should.throw /requires crosshair thickness/
+    it 'should calculate the bounding box', ->
+      result = shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }
+      result.bbox.should.eql [ -6, -6, 6, 6 ]
+      result = shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        crossLength: 8
+        crossThx: 0.5
+      }
+      result.bbox.should.eql [ -5, -5, 5, 5 ]
+
+  describe 'for thermals', ->
+    it 'should return a thermal given proper parameters', ->
+      result = shapes.thermal {cx: 0, cy: 0, outerDia: 10, innerDia: 8, gap: 3}
+      for obj in result.shape
+        for key, val of obj
+          if key is 'mask'
+            for o in val
+              for k, v of o
+                if k is '_attr' then maskId = v.id
+      result.shape.should.containDeep [
+        {
+          mask: [ {
+              circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } }
+            }
+            {
+              rect: {
+                _attr: {x:'-5', y:'-1.5', width:'10', height:'3', fill:'#000'}
+              }
+            }
+            {
+              rect: {
+                _attr: {x:'-1.5', y:'-5', width:'3', height:'10', fill:'#000'}
+              }
+            }
+          ]
+        }
+        {
+          circle: {
+            _attr: {
+              cx: '0'
+              cy: '0'
+              r: '4.5'
+              fill: 'none'
+              'stroke-width': '1'
+              mask: 'url(#' + maskId + ')'
+            }
+          }
+        }
+      ]
+    it 'should throw errors if parameters are missing', ->
+      (-> shapes.thermal { cy: 0, outerDia: 10, innerDia: 8, gap: 3 })
+        .should.throw /requires x center/
+      (-> shapes.thermal { cx: 0, outerDia: 10, innerDia: 8, gap: 3 })
+        .should.throw /requires y center/
+      (-> shapes.thermal { cx: 0, cy: 0, innerDia: 8, gap: 3 })
+        .should.throw /requires outer diameter/
+      (-> shapes.thermal { cx: 0, cy: 0, outerDia: 10, gap: 3 })
+        .should.throw /requires inner diameter/
+      (-> shapes.thermal { cx: 0, cy: 0, outerDia: 10, innerDia: 8 })
+        .should.throw /requires gap/
+    it 'should calculate the bounding box', ->
+      r = shapes.thermal { cx: 0, cy: 0, outerDia: 10, innerDia: 8, gap: 3 }
+      r.bbox.should.eql [ -5, -5, 5, 5 ]
