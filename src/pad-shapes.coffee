@@ -111,10 +111,63 @@ vector = (p) ->
     ]
   }
 
+lowerLeftRect = (p) ->
+  unless p.width? then throw new SyntaxError 'lower left rect requires width'
+  unless p.height? then throw new SyntaxError 'lower left rect requires height'
+  unless p.x? then throw new SyntaxError 'lower left rectangle requires x'
+  unless p.y? then throw new SyntaxError 'lower left rectangle requires y'
+
+  # return shape and bbox
+  {
+    shape: {
+      rect: {
+        _attr: {
+          x: "#{p.x}"
+          y: "#{p.y}"
+          width: "#{p.width}"
+          height: "#{p.height}"
+        }
+      }
+    }
+    bbox: [ p.x, p.y, p.x + p.width, p.y + p.height ]
+  }
+
+outline = (p) ->
+  unless Array.isArray(p.points) and p.points.length > 1
+    throw new SyntaxError 'outline function requires points array'
+
+  xMin = null
+  yMin = null
+  xMax = null
+  yMax = null
+  pointString = ''
+  for point in p.points
+    unless (Array.isArray(point) and point.length is 2)
+      throw new SyntaxError 'outline function requires points array'
+    x = point[0]
+    y = point[1]
+    if x < xMin or xMin is null then xMin = x
+    if x > xMax or xMax is null then xMax = x
+    if y < yMin or yMin is null then yMin = y
+    if y > yMax or yMax is null then yMax = y
+    pointString += " #{x},#{y}"
+  # check the last point matches the first
+  xLast = p.points[p.points.length - 1][0]
+  yLast = p.points[p.points.length - 1][1]
+  unless xLast is p.points[0][0] and yLast is p.points[0][1]
+    throw new RangeError 'last point must match first point of outline'
+
+  # return the object
+  {
+    shape: { polygon: { _attr: { points: pointString[1..] } } }
+    bbox: [ xMin, yMin, xMax, yMax ]
+  }
 # export
 module.exports = {
   circle: circle
   rect: rect
   polygon: polygon
   vector: vector
+  lowerLeftRect: lowerLeftRect
+  outline: outline
 }

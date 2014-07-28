@@ -104,3 +104,42 @@ describe 'shape functions', ->
       result.bbox.should.eql [ -1, 0, 1, 5 ]
       result = shapes.vector { x1: 0, y1: 5, x2: 0, y2: 0, width: 2 }
       result.bbox.should.eql [ -1, 0, 1, 5 ]
+
+  describe 'for lower left rectangles', ->
+    it 'should return a rectangle given the proper parameters', ->
+      result = shapes.lowerLeftRect { x: 1, y: 3, width: 10, height: 5 }
+      result.shape.rect._attr.x.should.equal '1'
+      result.shape.rect._attr.y.should.equal '3'
+      result.shape.rect._attr.width.should.equal '10'
+      result.shape.rect._attr.height.should.equal '5'
+    it 'should throw errors for missing parameters', ->
+      (-> shapes.lowerLeftRect { y: 3, width: 10, height: 5 })
+        .should.throw /requires x/
+      (-> shapes.lowerLeftRect { x: 1, width: 10, height: 5 })
+        .should.throw /requires y/
+      (-> shapes.lowerLeftRect { x: 1, y: 3, height: 5 })
+        .should.throw /requires width/
+      (-> shapes.lowerLeftRect { x: 1, y: 3, width: 10 })
+        .should.throw /requires height/
+    it 'should calculate the bounding box', ->
+      result = shapes.lowerLeftRect { x: 1, y: 3, width: 10, height: 5 }
+      result.bbox.should.eql [ 1, 3, 11, 8 ]
+
+  describe 'for outline polygons', ->
+    it 'should return a polygon given proper parameters', ->
+      result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
+      result.shape.polygon._attr.points.should.eql '0,0 1,0 1,1 0,0'
+    it 'should throw an error if the paramter isnt an array or is missing', ->
+      (-> shapes.outline {}).should.throw /requires points array/
+      (-> shapes.outline { points: 5 }).should.throw /requires points array/
+      (-> shapes.outline { points: [ [5,2] ] })
+        .should.throw /requires points array/
+      (-> shapes.outline { points: [ [5,2], 6] })
+        .should.throw /requires points array/
+    it 'should throw an error if the last point doesnt match the first', ->
+      (-> shapes.outline { points: [ [1,0], [0,1] ] })
+        .should.throw /last point must match first point/
+    it 'should calculate the bounding box', ->
+      result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
+      result.bbox.should.eql [ 0, 0, 1, 1 ]
+  
