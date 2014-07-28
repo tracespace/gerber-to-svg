@@ -1,6 +1,9 @@
 # shape functions for standard apertures and aperture macros
 # returns an array of shape objects and the bounding box of the shape
 
+# unique id because thermals need a mask
+unique = require './unique-id'
+
 circle = (p) ->
   unless p.dia? then throw new SyntaxError 'circle function requires diameter'
   unless p.cx? then throw new SyntaxError 'circle function requires x center'
@@ -162,6 +165,147 @@ outline = (p) ->
     shape: { polygon: { _attr: { points: pointString[1..] } } }
     bbox: [ xMin, yMin, xMax, yMax ]
   }
+
+moire = (p) ->
+  unless p.cx? then throw new SyntaxError 'moiré requires x center'
+  unless p.cy? then throw new SyntaxError 'moiré requires y center'
+  unless p.outerDia? then throw new SyntaxError 'moiré requires outer diameter'
+  unless p.ringThx? then throw new SyntaxError 'moiré requires ring thickness'
+  unless p.ringGap? then throw new SyntaxError 'moiré requires ring gap'
+  unless p.crossLength?
+    throw new SyntaxError 'moiré requires crosshair length'
+  unless p.crossThx?
+    throw new SyntaxError 'moiré requires crosshair thickness'
+
+  {
+    shape: [ {
+        circle: {
+          _attr: {
+            cx: "#{p.cx}"
+            cy: "#{p.cy}"
+            r: "#{(p.outerDia-p.ringThx/2)/2}"
+            'stroke-width': "#{p.ringThx}"
+            fill: 'none'
+          }
+        }
+      }
+      {
+        circle: {
+          _attr: {
+            cx: "#{p.cx}"
+            cy: "#{p.cy}"
+            r: "#{(p.outerDia-1.5*p.ringThx-p.ringGap)/2}"
+            'stroke-width': "#{p.ringThx}"
+            fill: 'none'
+          }
+        }
+      }
+      {
+        line: {
+          _attr: {
+            x1: "#{p.cx - p.crossLength/2}"
+            y1: '0'
+            x2: "#{p.cx + p.crossLength/2}"
+            y2: '0'
+            'stroke-width': "#{p.crossThx}"
+          }
+        }
+      }
+      {
+        line: {
+          _attr: {
+            y1: "#{p.cy - p.crossLength/2}"
+            x1: '0'
+            y2: "#{p.cy + p.crossLength/2}"
+            x2: '0'
+            'stroke-width': "#{p.crossThx}"
+          }
+        }
+      }
+    ]
+    bbox: [
+      Math.min (p.cx - p.crossLength/2), (p.cx - p.outerDia/2)
+      Math.min (p.cy - p.crossLength/2), (p.cy - p.outerDia/2)
+      Math.max (p.cx + p.crossLength/2), (p.cx + p.outerDia/2)
+      Math.max (p.cy + p.crossLength/2), (p.cy + p.outerDia/2)
+    ]
+  }
+
+thermal = (p) ->
+  unless p.cx? then throw new SyntaxError 'thermal requires x center'
+  unless p.cy? then throw new SyntaxError 'thermal requires y center'
+  unless p.outerDia?
+    throw new SyntaxError 'thermal requires outer diameter'
+  unless p.innerDia?
+    throw new SyntaxError 'thermal requires inner diameter'
+  unless p.gap? then throw new SyntaxError 'thermal requires gap'
+
+  maskId = "thermal-mask-#{unique()}"
+  thx = (p.outerDia - p.innerDia) / 2
+  outerR = p.outerDia / 2
+  r = outerR - thx / 2
+  xMin = p.cx - outerR
+  xMax = p.cx + outerR
+  yMin = p.cy - outerR
+  yMax = p.cy + outerR
+  halfGap = p.gap/2
+  {
+    shape: [
+      {
+        mask: [
+          {
+            _attr: { id: maskId }
+          }
+          {
+            circle: {
+              _attr: {
+                cx: "#{p.cx}"
+                cy: "#{p.cy}"
+                r: "#{outerR}"
+                fill: '#fff'
+              }
+            }
+          }
+          {
+            rect: {
+              _attr: {
+                x: "#{xMin}"
+                y: "#{-halfGap}"
+                width: "#{p.outerDia}"
+                height: "#{p.gap}"
+                fill: "#000"
+              }
+            }
+          }
+          {
+            rect: {
+              _attr: {
+                x: "#{-halfGap}"
+                y: "#{yMin}"
+                width: "#{p.gap}"
+                height: "#{p.outerDia}"
+                fill: "#000"
+              }
+            }
+          }
+        ]
+      }
+      {
+        circle: {
+          _attr: {
+            cx: "#{p.cx}"
+            cy: "#{p.cy}"
+            r: "#{r}"
+            fill: 'none'
+            'stroke-width': "#{thx}"
+            mask: "url(##{maskId})"
+          }
+        }
+      }
+    ]
+    bbox: [ xMin, yMin, xMax, yMax]
+  }
+
 # export
 module.exports = {
   circle: circle
@@ -170,4 +314,6 @@ module.exports = {
   vector: vector
   lowerLeftRect: lowerLeftRect
   outline: outline
+  moire: moire
+  thermal: thermal
 }
