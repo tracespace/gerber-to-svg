@@ -66,8 +66,13 @@ polygon = (p) ->
   # loop over the verticies and add them to the points string
   for i in [0...p.verticies]
     theta = start + i*step
-    x = p.cx + r*Math.cos theta
-    y = p.cy + r*Math.sin theta
+    rx = r*Math.cos theta
+    ry = r*Math.sin theta
+    # take care of floating point errors
+    if Math.abs(rx) < 0.000000001 then rx = 0
+    if Math.abs(ry) < 0.000000001 then ry = 0
+    x = p.cx + rx
+    y = p.cy + ry
     if x < xMin or xMin is null then xMin = x
     if x > xMax or xMax is null then xMax = x
     if y < yMin or yMin is null then yMin = y
@@ -172,57 +177,70 @@ moire = (p) ->
   unless p.outerDia? then throw new SyntaxError 'moiré requires outer diameter'
   unless p.ringThx? then throw new SyntaxError 'moiré requires ring thickness'
   unless p.ringGap? then throw new SyntaxError 'moiré requires ring gap'
+  unless p.maxRings? then throw new SyntaxError 'moiré requires max rings'
   unless p.crossLength?
     throw new SyntaxError 'moiré requires crosshair length'
   unless p.crossThx?
     throw new SyntaxError 'moiré requires crosshair thickness'
 
+  # add crosshair to shape
+  shape = [
+    {
+      line: {
+        _attr: {
+          x1: "#{p.cx - p.crossLength/2}"
+          y1: '0'
+          x2: "#{p.cx + p.crossLength/2}"
+          y2: '0'
+          'stroke-width': "#{p.crossThx}"
+        }
+      }
+    }
+    {
+      line: {
+        _attr: {
+          y1: "#{p.cy - p.crossLength/2}"
+          x1: '0'
+          y2: "#{p.cy + p.crossLength/2}"
+          x2: '0'
+          'stroke-width': "#{p.crossThx}"
+        }
+      }
+    }
+  ]
+
+  # add rings to shape
+  r = (p.outerDia - p.ringThx)/2
+  rings = 0
+  while r >= p.ringThx and rings <= p.maxRings
+    shape.push {
+      circle: {
+        _attr: {
+          cx: "#{p.cx}"
+          cy: "#{p.cy}"
+          r: "#{r}"
+          'stroke-width': "#{p.ringThx}"
+          fill: 'none'
+        }
+      }
+    }
+    rings++
+    r -= p.ringThx + p.ringGap
+
+  # if there's still some room left, a disc goes in the center
+  if r > 0 and rings <= maxRings then shape.push {
+    circle: {
+      _attr: {
+        cx: "#{p.cx}"
+        cy: "#{p.cy}"
+        r: "#{r}"
+        'stroke-width': 0
+      }
+    }
+  }
+
   {
-    shape: [ {
-        circle: {
-          _attr: {
-            cx: "#{p.cx}"
-            cy: "#{p.cy}"
-            r: "#{(p.outerDia-p.ringThx/2)/2}"
-            'stroke-width': "#{p.ringThx}"
-            fill: 'none'
-          }
-        }
-      }
-      {
-        circle: {
-          _attr: {
-            cx: "#{p.cx}"
-            cy: "#{p.cy}"
-            r: "#{(p.outerDia-1.5*p.ringThx-p.ringGap)/2}"
-            'stroke-width': "#{p.ringThx}"
-            fill: 'none'
-          }
-        }
-      }
-      {
-        line: {
-          _attr: {
-            x1: "#{p.cx - p.crossLength/2}"
-            y1: '0'
-            x2: "#{p.cx + p.crossLength/2}"
-            y2: '0'
-            'stroke-width': "#{p.crossThx}"
-          }
-        }
-      }
-      {
-        line: {
-          _attr: {
-            y1: "#{p.cy - p.crossLength/2}"
-            x1: '0'
-            y2: "#{p.cy + p.crossLength/2}"
-            x2: '0'
-            'stroke-width': "#{p.crossThx}"
-          }
-        }
-      }
-    ]
+    shape: shape
     bbox: [
       Math.min (p.cx - p.crossLength/2), (p.cx - p.outerDia/2)
       Math.min (p.cy - p.crossLength/2), (p.cy - p.outerDia/2)

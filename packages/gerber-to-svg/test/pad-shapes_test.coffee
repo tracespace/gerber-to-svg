@@ -48,7 +48,11 @@ describe 'shape functions', ->
       step = 2*Math.PI/5
       for v in [0..4]
         theta = v*step
-        points += "#{2*Math.cos theta},#{2*Math.sin theta}"
+        x = 2*Math.cos theta
+        y = 2*Math.sin theta
+        if Math.abs(x) < 0.000000001 then x = 0
+        if Math.abs(y) < 0.000000001 then y = 0
+        points += "#{x},#{y}"
         if v isnt 4 then points += ' '
       result.shape.polygon._attr.points.should.equal points
     it 'should return the correct points with rotation specified', ->
@@ -148,42 +152,46 @@ describe 'shape functions', ->
       result = shapes.moire {
         cx: 0
         cy: 0
-        outerDia: 10
+        outerDia: 16
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }
-      result.shape.should.containDeep [ {
-        circle: {
-          _attr: {
-            cx: '0', cy: '0', r: '4.5', 'stroke-width': '2', fill: 'none'
+      result.shape.should.containDeep [
+        {
+          line: {
+            _attr: { x1: '-6', y1: '0', x2: '6', y2: '0', 'stroke-width': '0.5'}
           }
         }
-      }
-      {
-        circle: {
-          _attr: {
-            cx: '0', cy: '0', r: '2.5', 'stroke-width': '2', fill: 'none'
+        {
+          line: {
+            _attr: { x1: '0', y1: '-6', x2: '0', y2: '6', 'stroke-width': '0.5'}
           }
         }
-      }
-      {
-        line: {
-          _attr: { x1: '-6', y1: '0', x2: '6', y2: '0', 'stroke-width': '0.5' }
+        {
+          circle: {
+            _attr: {
+              cx: '0', cy: '0', r: '7', 'stroke-width': '2', fill: 'none'
+            }
+          }
         }
-      }
-      {
-        line: {
-          _attr: { x1: '0', y1: '-6', x2: '0', y2: '6', 'stroke-width': '0.5' }
+        {
+          circle: {
+            _attr: {
+              cx: '0', cy: '0', r: '3', 'stroke-width': '2', fill: 'none'
+            }
+          }
         }
-      } ]
+      ]
     it 'should throw errors for missing parameters', ->
       (-> shapes.moire {
         cy: 0
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }).should.throw /requires x center/
@@ -192,6 +200,7 @@ describe 'shape functions', ->
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }).should.throw /requires y center/
@@ -200,6 +209,7 @@ describe 'shape functions', ->
         cy: 0
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }).should.throw /requires outer diameter/
@@ -208,6 +218,7 @@ describe 'shape functions', ->
         cy: 0
         outerDia: 10
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }).should.throw /requires ring thickness/
@@ -216,6 +227,7 @@ describe 'shape functions', ->
         cy: 0
         outerDia: 10
         ringThx: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }).should.throw /requires ring gap/
@@ -225,6 +237,16 @@ describe 'shape functions', ->
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        crossLength: 12
+        crossThx: 0.5
+      }).should.throw /requires max rings/
+      (-> shapes.moire {
+        cx: 0
+        cy: 0
+        outerDia: 10
+        ringThx: 2
+        ringGap: 2
+        maxRings: 2
         crossThx: 0.5
       }).should.throw /requires crosshair length/
       (-> shapes.moire {
@@ -233,6 +255,7 @@ describe 'shape functions', ->
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
       }).should.throw /requires crosshair thickness/
     it 'should calculate the bounding box', ->
@@ -242,6 +265,7 @@ describe 'shape functions', ->
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 12
         crossThx: 0.5
       }
@@ -252,6 +276,7 @@ describe 'shape functions', ->
         outerDia: 10
         ringThx: 2
         ringGap: 2
+        maxRings: 2
         crossLength: 8
         crossThx: 0.5
       }
