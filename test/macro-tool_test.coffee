@@ -6,7 +6,6 @@ describe 'tool macro class', ->
   it 'should identify itself', ->
     m = new Macro ['AMMACRONAME']
     m.name.should.equal 'MACRONAME'
-
   it 'should save the blocks for processing', ->
     m = new Macro ['AMNAME', '0 block 0', '0 block 1', '0 block 2']
     m.blocks[0].should.equal '0 block 0'
@@ -49,6 +48,15 @@ describe 'tool macro class', ->
         result = m.run 'D10'
         result.id.should.match /D10/
         result.id.should.eql result.pad[0].circle._attr.id
+      it 'should return the bounding box', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0']
+        result = m.run 'D10'
+        result.bbox.should.eql [ -4, -4, 4, 4]
+      it 'should return any masks in the pad array', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0', '1,0,2,0,0' ]
+        result = m.run 'D10'
+        result.pad.length.should.equal 2
+        result.pad.should.containDeep [ { mask: [] }, { circle: {} } ]
 
   describe 'run block method', ->
     it 'should not modify the pad if block is a comment', ->

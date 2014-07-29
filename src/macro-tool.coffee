@@ -8,48 +8,6 @@ calc = require './macro-calc'
 # unique id generator
 unique = require './unique-id'
 
-# aperture macro list
-macros = {}
-
-# macro id number (incremented for unique ids)
-id = 0
-
-# macro primitive functions
-# tool is the tool number
-# pad is the existing pad
-# params is an array of functions
-circle = (params) ->
-  # parameters to pass into standard circle function
-  cir = {}
-  # first parameter is exposure
-  # if exposure is off, we're masking, and we'll need to take on a fill
-  mask = params[0] is '0'
-  # second parameter is diameter
-  cir.dia = functionOrValue params[1]
-  # third and fourth are x and y of center
-  cir.cx = functionOrValue params[2]
-  cir.cy = functionOrValue params[3]
-  # tack the circle on
-  result += standard(t, cir).pad
-  # finish mask if applicable
-  if maskId
-    pad = pad[0...-2] + 'fill="#000" /></mask>'
-  # return
-  pad
-
-# macro primitives
-primitives = {
-  1: circle
-  # 2: line
-  # 20: line
-  # 21: lowerLeftRect
-  # 22: rectangle
-  # 4: outline
-  # 5: polygon
-  # 6: moire
-  # 7: thermal
-}
-
 class MacroTool
   # constructor takes in macro blocks
   constructor: (blocks) ->
@@ -65,7 +23,6 @@ class MacroTool
     @masks = []
     # bounding box [xMin, yMin, xMax, yMax] of macro
     @bbox = [ null, null, null, null ]
-
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
@@ -114,6 +71,7 @@ class MacroTool
         unless block[0] is '0'
           throw new SyntaxError "'#{block}' unrecognized tool macro block"
 
+  # identify the primitive and add shapes and masks to the macro
   primitive: (args) ->
     mask = false
     rotation = false
@@ -245,6 +203,7 @@ class MacroTool
         for s in shape.shape
           if s.mask? then @masks.push s else @shapes.push s
 
+  # add a new bbox to the macro's exsisting bbox
   addBbox: (bbox, rotation=0) ->
     unless rotation
       if @bbox[0] is null or bbox[0] < @bbox[0] then @bbox[0] = bbox[0]
@@ -274,6 +233,7 @@ class MacroTool
         if @bbox[2] is null or x > @bbox[2] then @bbox[2] = x
         if @bbox[3] is null or y > @bbox[3] then @bbox[3] = y
 
+  # parse a number in the format of a float string, a modifier, or a math string
   getNumber: (s) ->
     # normal number all by itself
     if s.match /^[+-]?[\d.]+$/ then parseFloat s
@@ -282,6 +242,7 @@ class MacroTool
     # else we got us some maths
     else @evaluate calc.parse s
 
+  # evaluate a math string
   evaluate: (op) ->
     switch op.type
       when 'n' then @getNumber op.val
