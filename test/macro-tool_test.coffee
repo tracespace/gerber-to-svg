@@ -22,6 +22,33 @@ describe 'tool macro class', ->
       m.modifiers.$2.should.equal '1.5'
       m.modifiers.$3.should.equal '0'
       m.modifiers.$4.should.equal '-0.76'
+    describe 'creating a tool', ->
+      it 'should return an object with an array with one non-mask item', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0', '1,1,4,5,5']
+        result = m.run 'D10'
+        items = 0
+        if k isnt 'mask' for k of p then items++ for p in result.pad
+        items.should.equal 1
+      it 'should return a group if there were several primitives', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0', '1,1,4,5,5']
+        result = m.run 'D10'
+        result.pad[0].should.containDeep {
+          g: [
+            { circle: { _attr: { cx: '0', cy: '0' } } }
+            { circle: { _attr: { cx: '5', cy: '5' } } }
+          ]
+        }
+      it 'should return the primitive if it is the only one', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0']
+        result = m.run 'D10'
+        result.pad[0].should.containDeep {
+          circle: { _attr: { cx: '0', cy: '0' } }
+        }
+      it 'should set the id and return id', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0']
+        result = m.run 'D10'
+        result.id.should.match /D10/
+        result.id.should.eql result.pad[0].circle._attr.id
 
   describe 'run block method', ->
     it 'should not modify the pad if block is a comment', ->
@@ -35,6 +62,20 @@ describe 'tool macro class', ->
       m.modifiers.$1.should.equal 21
       m.shapes.should.eql []
       m.masks.should.eql []
+    describe 'primitive blocks', ->
+      it 'should split up a primitive block and pass it to @primitive', ->
+        m = new Macro ['AMNAME']
+        m.runBlock '1,1,10,0,0'
+        m.shapes.should.containDeep [
+          { circle: { _attr: { cx: '0', cy: '0', r: '5' } } }
+        ]
+      it 'should parse modifiers properly', ->
+        m = new Macro ['AMNAME']
+        m.modifiers = { $1: '1', $2: '10', $3: '4', $4: '4' }
+        m.runBlock '1,$1,$2,$3-$4,$4-$3'
+        m.shapes.should.containDeep [
+          { circle: { _attr: { cx: '0', cy: '0', r: '5' } } }
+        ]
 
   describe 'primitive method', ->
     describe 'for circles', ->
@@ -275,6 +316,7 @@ describe 'tool macro class', ->
           { circle: { _attr: { r: '5' } } }
           { circle: { _attr: { r: '4.5'} } }
         ]
+
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
     it 'should return a number if passed a string of a number', ->
