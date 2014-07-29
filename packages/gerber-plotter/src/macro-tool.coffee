@@ -44,7 +44,7 @@ class MacroTool
       pad.push @shapes[0]
     # return the pad, the bbox, and the pad id
     {
-      id: padId
+      padId: padId
       bbox: @bbox
       pad: pad
     }
