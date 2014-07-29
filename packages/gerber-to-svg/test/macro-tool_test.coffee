@@ -36,7 +36,7 @@ describe 'tool macro class', ->
       m.shapes.should.eql []
       m.masks.should.eql []
 
-  describe 'primitve methode', ->
+  describe 'primitve method', ->
     it 'should add a circle to the shapes and the bbox', ->
       m = new Macro ['AMNAME']
       m.primitive [1, 1, 5, 1, 2]
@@ -57,6 +57,91 @@ describe 'tool macro class', ->
       ]
       m.masks.should.eql []
       m.bbox.should.eql [ 1, -1.5, 15, 3.5 ]
+    it 'should add a center rect to the shapes and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [21, 1, 4, 5, 1, 2, 0]
+      m.shapes.should.containDeep [
+        { rect: { _attr: { x: '-1', y: '-0.5', width: '4', height: '5' } } }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ -1, -0.5, 3, 4.5 ]
+    it 'should add a lower left rect to the shapes and box', ->
+      m = new Macro ['AMNAME']
+      m.primitive [22, 1, 6, 6, -1, -1, 0]
+      m.shapes.should.containDeep [
+        { rect: { _attr: { x: '-1', y: '-1', width: '6', height: '6' } } }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ -1, -1, 5, 5 ]
+    it 'should add an outline polygon to the shapes and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [4, 1, 4, 1,1, 2,2, 1,3, 0,2, 1,1, 0 ]
+      m.shapes.should.containDeep [
+        { polygon: { _attr: { points: '1,1 2,2 1,3 0,2 1,1' } } }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ 0, 1, 2, 3 ]
+    it 'should add a regular polygon to the shapes and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [5, 1, 4, 0, 0, 5, 0]
+      m.shapes.should.containDeep [
+        { polygon: { _attr: { points: '2.5,0 0,2.5 -2.5,0 0,-2.5' } } }
+      ]
+      m.masks.should.eql []
+      m.bbox.should.eql [ -2.5, -2.5, 2.5, 2.5 ]
+    it 'should add a moiré to the shapes and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [6, 0, 0, 20, 2, 2, 3, 2, 22, 0]
+      m.shapes.should.containEql {
+        line: { _attr: {
+              x1: '-11', y1: '0', x2: '11', y2: '0', 'stroke-width': '2'
+            }
+          }
+        }
+      m.shapes.should.containEql {
+        line: { _attr: {
+              x1: '0', y1: '-11', x2: '0', y2: '11', 'stroke-width': '2'
+            }
+          }
+        }
+      m.shapes.should.containDeep [
+        { circle: { _attr: {
+              cx: '0', cy: '0', r: '9', fill: 'none', 'stroke-width': '2'
+            }
+          }
+        }
+        { circle: { _attr: {
+              cx: '0', cy: '0', r: '5', fill: 'none', 'stroke-width': '2'
+            }
+          }
+        }
+        { circle: { _attr: { cx: '0', cy: '0', r: '1', 'stroke-width': '0' } } }
+      ]
+    it 'should add a thermal to the shapes, mask, and bbox', ->
+      m = new Macro ['AMNAME']
+      m.primitive [ 7, 0, 0, 10, 8, 2, 0 ]
+      m.masks.should.containDeep [{
+        mask: [
+          { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
+          { rect: { _attr: {
+                x: '-5', y: '-1', width: '10', height: '2', fill: '#000'
+              }
+            }
+          }
+          { rect: { _attr: {
+                x: '-1', y: '-5', width: '2', height: '10', fill: '#000'
+              }
+            }
+          }
+        ]
+      }]
+      m.shapes.should.containDeep [{
+        circle: {
+          _attr: {
+            cx: '0', cy: '0', r: '4.5', fill: 'none', 'stroke-width': '1'
+          }
+        }
+      }]
 
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
