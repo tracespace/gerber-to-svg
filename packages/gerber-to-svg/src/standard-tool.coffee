@@ -7,11 +7,11 @@
 unique = require './unique-id'
 shapes = require './pad-shapes'
 
-standardTool = (p, tool) ->
-  result = { pad: {}, trace: false }
+standardTool = (tool, p) ->
+  result = { pad: [], trace: false }
   # pad center
-  p.cx = p.cx ? 0
-  p.cy = p.cy ? 0
+  p.cx = 0
+  p.cy = 0
   # pad id
   id = if tool then "tool-#{tool}-pad-#{unique()}" else false
   # figure out the tool
@@ -56,45 +56,59 @@ standardTool = (p, tool) ->
     throw new Error 'unidentified standard tool shape'
 
   # get the object
-  result.pad = shapes[shape] p
-  # set the id
-  if id then result.pad.shape[shape]._attr.id = id
-
-  # if there's a fill, apply it
-  if p.fill? then result.pad.shape[shape]._attr.fill = p.fill
+  pad = shapes[shape] p
 
   # mask accordingly if there's a hole
   if p.hole?
-    # check parameters
+    # check parameters and get shape
+    hole = null
+    # if it's a circle
     if p.hole.dia? and not p.hole.width? and not p.hole.height?
       unless p.hole.dia >= 0
         throw new RangeError "#{tool} hole diameter out of range (#{p.hole.dia}<0)"
+      hole = shapes.circle { cx: p.cx, cy: p.cy, dia: p.hole.dia }
+      hole = hole.shape
+      hole.circle._attr.fill = '#000'
     else if p.hole.width? and p.hole.height?
       unless p.hole.width >= 0
         throw new RangeError "#{tool} hole width out of range (#{p.hole.width}<0)"
       unless p.hole.height >= 0
         throw new RangeError "#{tool} hole height out of range"
+      hole = shapes.rect {
+        cx: p.cx, cy: p.cy, width: p.hole.width, height: p.hole.height
+      }
+      hole = hole.shape
+      hole.rect._attr.fill = '#000'
     else
       throw new Error "#{tool} has invalid hole parameters"
 
-    # give it a fill
-    p.hole.fill = '#000'
-    # throw an error if there's no tool
-    unless id then throw new SyntaxError 'tool required for tool with hole'
-    # turn pad into an array
-    result.pad.shape = [
-      { mask: [
+    # generate the mask
+    maskId = id + '-mask'
+    mask = {
+      mask: [
         { _attr: { id: id + "-mask" } }
-        result.pad.shape
-        standardTool(p.hole).pad.shape
-        ]
-      }
-      result.pad.shape
-    ]
-    # get the fills right
-    result.pad.shape[0].mask[1][shape]._attr.fill = '#fff'
+        { rect: { _attr: {
+              x: "#{pad.bbox[0]}"
+              y: "#{pad.bbox[1]}"
+              width: "#{pad.bbox[2] - pad.bbox[0]}"
+              height: "#{pad.bbox[3] - pad.bbox[1]}"
+              fill: '#fff'
+            }
+          }
+        }
+        hole
+      ]
+    }
     # set the mask
-    result.pad.shape[1][shape]._attr.mask = 'url(#' + id + '-mask)'
+    pad.shape[shape]._attr.mask = "url(##{maskId})"
+    result.pad.push mask
+
+  # set the id and push the shape to the array
+  if id then pad.shape[shape]._attr.id = id
+  result.pad.push pad.shape
+  # set the bbox and id
+  result.bbox = pad.bbox
+  result.padId = id
 
   # return the results
   result

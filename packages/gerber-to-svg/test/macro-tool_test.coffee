@@ -46,8 +46,8 @@ describe 'tool macro class', ->
       it 'should set the id and return id', ->
         m = new Macro ['AMNAME', '1,1,8,0,0']
         result = m.run 'D10'
-        result.id.should.match /D10/
-        result.id.should.eql result.pad[0].circle._attr.id
+        result.padId.should.match /D10/
+        result.padId.should.eql result.pad[0].circle._attr.id
       it 'should return the bounding box', ->
         m = new Macro ['AMNAME', '1,1,8,0,0']
         result = m.run 'D10'
@@ -57,6 +57,10 @@ describe 'tool macro class', ->
         result = m.run 'D10'
         result.pad.length.should.equal 2
         result.pad.should.containDeep [ { mask: [] }, { circle: {} } ]
+      it 'should return a false flag for being traceable', ->
+        m = new Macro ['AMNAME', '1,1,8,0,0', '1,0,2,0,0' ]
+        result = m.run 'D10'
+        result.trace.should.be.false
 
   describe 'run block method', ->
     it 'should not modify the pad if block is a comment', ->

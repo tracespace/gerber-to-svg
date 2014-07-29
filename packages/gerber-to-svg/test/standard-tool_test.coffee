@@ -2,77 +2,72 @@
 
 standard = require '../src/standard-tool'
 
+tool = 'D10'
 describe 'standard tool function', ->
-  it 'should not populate the id if passed a tool', ->
-    result = standard { dia: 10 }, 'D12'
-    result.pad.shape.circle._attr.id.should.match /tool-D12-pad/
-    result = standard { dia: 10 }, ''
-    (result.pad.shape.circle._attr.id?).should.be.false
-    result = standard { dia: 10 }
-    (result.pad.shape.circle._attr.id?).should.be.false
+  it 'should return the pad id', ->
+    result = standard tool, { dia: 10 }
+    result.padId.should.match /D10/
+
+  it 'should return an array of shapes for the pad', ->
+    result = standard 'D10', { dia: 10 }
+    result.pad.length.should.equal 1
+    result = standard tool, { dia: 10, hole: { dia: 2 } }
+    result.pad.length.should.equal 2
 
   describe 'for circle tools', ->
     it 'should half the diameter to get the radius', ->
-      result = standard {dia: 10}
-      result.pad.shape.circle._attr.r.should.equal '5'
+      result = standard tool, {dia: 10}
+      result.pad[0].circle._attr.r.should.equal '5'
     it 'should set the center to 0 by defualt', ->
-      result = standard {dia: 10}
-      result.pad.shape.circle._attr.cx.should.equal '0'
-      result.pad.shape.circle._attr.cy.should.equal '0'
-    it 'should set the center to the paramters passed in', ->
-      result = standard {dia: 10, cx: 4, cy: 3}
-      result.pad.shape.circle._attr.cx.should.equal '4'
-      result.pad.shape.circle._attr.cy.should.equal '3'
+      result = standard tool, {dia: 10}
+      result.pad[0].circle._attr.cx.should.equal '0'
+      result.pad[0].circle._attr.cy.should.equal '0'
     it 'should be traceable if there is no hole', ->
-      result = standard {dia: 10}
+      result = standard tool, {dia: 10}
       result.trace['stroke-width'].should.equal '10'
       result.trace['stroke-linecap'].should.equal 'round'
       result.trace['stroke-linejoin'].should.equal 'round'
     it 'should throw an error if the diameter is negative', ->
-      (-> standard {dia: -3.4}).should.throw /diameter out of range/
-      (-> standard {dia: 0}).should.not.throw
+      (-> standard tool, {dia: -3.4}).should.throw /diameter out of range/
+      (-> standard tool, {dia: 0}).should.not.throw
 
   describe 'for rectangle tools', ->
     it 'should set the width and height', ->
-      result = standard { width: 1.2, height: 2.2 }
-      result.pad.shape.rect._attr.width.should.equal '1.2'
-      result.pad.shape.rect._attr.height.should.equal '2.2'
-    it 'should offset the top left corner if not given a center position', ->
-      result = standard { width: 1.2, height: 2.2 }
-      result.pad.shape.rect._attr.x.should.equal '-0.6'
-      result.pad.shape.rect._attr.y.should.equal '-1.1'
-    it 'should offset the top left corner if given a center', ->
-      result = standard { width: 1.2, height: 2.2, cx: 1, cy: 4 }
-      result.pad.shape.rect._attr.x.should.equal '0.4'
-      result.pad.shape.rect._attr.y.should.equal '2.9'
+      result = standard tool, { width: 1.2, height: 2.2 }
+      result.pad[0].rect._attr.width.should.equal '1.2'
+      result.pad[0].rect._attr.height.should.equal '2.2'
+    it 'should offset the top left corner', ->
+      result = standard tool, { width: 1.2, height: 2.2 }
+      result.pad[0].rect._attr.x.should.equal '-0.6'
+      result.pad[0].rect._attr.y.should.equal '-1.1'
     it 'should be traceable if there is no hole', ->
-      result = standard { width: 1.2, height: 2.2 }
+      result = standard tool, { width: 1.2, height: 2.2 }
       result.trace['stroke-width'].should.equal '0'
     it 'should throw an error for non-positive side lengths', ->
-      (-> standard {width: -23, height: 4}).should.throw /out of range/
-      (-> standard {width: 2.3, height: 0}).should.throw /out of range/
+      (-> standard tool, {width: -23, height: 4}).should.throw /out of range/
+      (-> standard tool, {width: 2.3, height: 0}).should.throw /out of range/
 
   describe 'for obround tools', ->
     it 'should return a rect with radiused corners', ->
-      result = standard { width: 3.4, height: 2.2, obround: true }
-      result.pad.shape.rect._attr.rx.should.equal '1.1'
-      result.pad.shape.rect._attr.ry.should.equal '1.1'
-      result = standard { width: 6.6, height: 6.7, obround: true }
-      result.pad.shape.rect._attr.rx.should.equal '3.3'
-      result.pad.shape.rect._attr.ry.should.equal '3.3'
+      result = standard tool, { width: 3.4, height: 2.2, obround: true }
+      result.pad[0].rect._attr.rx.should.equal '1.1'
+      result.pad[0].rect._attr.ry.should.equal '1.1'
+      result = standard tool, { width: 6.6, height: 6.7, obround: true }
+      result.pad[0].rect._attr.rx.should.equal '3.3'
+      result.pad[0].rect._attr.ry.should.equal '3.3'
 
   describe 'for polygon tools', ->
     it 'should return the correct points with no rotation specified', ->
-      result = standard { dia: 4, verticies: 5 }
+      result = standard tool, { dia: 4, verticies: 5 }
       points = ''
       step = 2*Math.PI/5
       for v in [0..4]
         theta = v*step
         points += "#{2*Math.cos theta},#{2*Math.sin theta}"
         if v isnt 4 then points += ' '
-      result.pad.shape.polygon._attr.points.should.equal points
+      result.pad[0].polygon._attr.points.should.equal points
     it 'should return the correct points with rotation specified', ->
-      result = standard { dia: 42.6, verticies: 7, degrees: 42 }
+      result = standard tool, { dia: 42.6, verticies: 7, degrees: 42 }
       points = ''
       start = 42 * Math.PI / 180
       step = 2*Math.PI/7
@@ -80,63 +75,78 @@ describe 'standard tool function', ->
         theta = start+v*step
         points += "#{21.3*Math.cos theta},#{21.3*Math.sin theta}"
         if v isnt 6 then points += ' '
-      result.pad.shape.polygon._attr.points.should.equal points
+      result.pad[0].polygon._attr.points.should.equal points
     it 'should not be traceable', ->
-      result = standard { dia: 4, verticies: 5 }
+      result = standard tool, { dia: 4, verticies: 5 }
       result.trace.should.be.false
-      result = standard { dia: 42.6, verticies: 7, degrees: 42 }
+      result = standard tool, { dia: 42.6, verticies: 7, degrees: 42 }
       result.trace.should.be.false
     it 'should throw if the number of points is not between 3 and 12', ->
-      (-> result = standard {dia: 10, verticies: 2})
+      (-> result = standard tool, {dia: 10, verticies: 2})
         .should.throw /points out of range/
-      (-> result = standard {dia: 10, verticies: 13})
+      (-> result = standard tool, {dia: 10, verticies: 13})
         .should.throw /points out of range/
 
   describe 'with holes', ->
-    tool = 'D10'
-    it 'should require a tool to be passed in if theres a hole', ->
-      (-> standard { dia: 10, hole: { dia: 3 } }).should.throw /tool required/
     it 'should not allow tracing if theres a hole', ->
-      result = standard { dia: 10, hole: { dia: 3 } }, tool
+      result = standard tool, { dia: 10, hole: { dia: 3 } }
       result.trace.should.be.false
     it 'should create a mask with a circle if the hole is circular', ->
-      result = standard { dia: 10, hole: { dia: 4 } }, tool
+      result = standard tool, { dia: 10, hole: { dia: 4 } }
       # result pad should be an array of two objects where there mask is first
-      result.pad.shape.should.containDeep [ { mask: [
-          { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
+      result.pad.should.containDeep [ { mask: [
+          { rect: { _attr: {
+                x: '-5', y: '-5', width: '10', height: '10', fill: '#fff'
+              }
+            }
+          }
           { circle: { _attr: { cx: '0', cy: '0', r: '2', fill: '#000' } } }
         ]
       } ]
     it 'should create a mask with a rect if the hole is rectangular', ->
-      result = standard { dia: 10, hole: { width: 4, height: 2 } }, tool
+      result = standard tool, { dia: 10, hole: { width: 4, height: 2 } }
       # result pad should be an array of two objects where there mask is first
-      result.pad.shape.should.containDeep [ { mask: [
-          { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
-          {
-            rect: {
-              _attr: { x: '-2', y: '-1', width: '4', height: '2', fill: '#000' }
+      result.pad.should.containDeep [
+        {
+          mask: [
+            { rect: { _attr: {
+                  x: '-5', y: '-5', width: '10', height: '10', fill: '#fff'
+                }
+              }
             }
-          }
-        ]
-      } ]
+            { rect: { _attr: {
+                  x: '-2', y: '-1', width: '4', height: '2', fill: '#000'
+                }
+              }
+            }
+          ]
+        }
+      ]
     it 'should set the mask of the pad properly', ->
-      result = standard { dia: 10, hole: { dia: 4 } }, tool
-      id = result.pad.shape[0].mask[0]._attr.id
-      result.pad.shape[1].circle._attr.mask.should.equal 'url(#' + id + ')'
+      result = standard tool, { dia: 10, hole: { dia: 4 } }
+      for thing in result.pad
+        for key, val of thing
+          if key is 'mask'
+            for obj in val
+              for k, v of obj
+                if k is '_attr' then maskId = v.id
+      result.pad.should.containDeep [
+        { circle: { _attr: { mask: "url(##{maskId})"} } }
+      ]
     it 'should throw an error if the diameter is negative', ->
-      (-> standard { dia: 10, hole: { dia: -3 } }, tool)
+      (-> standard tool, { dia: 10, hole: { dia: -3 } })
         .should.throw /hole diameter out of range/
     it 'should throw an error if the hole sides are negative', ->
-      (-> standard { dia: 10, hole: { width: -3, height: 2 } }, tool)
+      (-> standard tool, { dia: 10, hole: { width: -3, height: 2 } })
         .should.throw /hole width out of range/
-      (-> standard { dia: 10, hole: { width: 1, height: -5 } }, tool)
+      (-> standard tool, { dia: 10, hole: { width: 1, height: -5 } })
         .should.throw /hole height out of range/
     it 'should throw an error if parameters are invalid', ->
-      (-> standard { dia: 10, hole: { width: 1 } }, tool)
+      (-> standard tool, { dia: 10, hole: { width: 1 } })
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { height: 1 } }, tool)
+      (-> standard tool, { dia: 10, hole: { height: 1 } })
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { dia: 2, width: 1 } }, tool)
+      (-> standard tool, { dia: 10, hole: { dia: 2, width: 1 } })
         .should.throw /invalid hole/
-      (-> standard { dia: 10, hole: { dia: 2, height: 1 } }, tool)
+      (-> standard tool, { dia: 10, hole: { dia: 2, height: 1 } })
         .should.throw /invalid hole/
