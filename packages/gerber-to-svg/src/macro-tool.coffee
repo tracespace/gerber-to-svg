@@ -70,7 +70,27 @@ class MacroTool
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
     @modifiers["$#{i+1}"] = m for m, i in modifiers
-    pad = ''
+    # run the blocks
+    @runBlock b for b in @blocks
+    # generate an id for the pad
+    padId = "tool-#{tool}-pad-#{unique()}"
+    pad = []
+    # get all the masks together first
+    pad.push m for m in @masks
+    # bundle the shapes if necessary
+    if @shapes.length > 1
+      group = [ { _attr: { id: padId } } ]
+      group.push s for s in @shapes
+      pad = [ { g: group } ]
+    else if @shapes.length is 1
+      @shapes[0][key]._attr.id = padId for key of @shapes[0]
+      pad.push @shapes[0]
+    # return the pad, the bbox, and the pad id
+    {
+      id: padId
+      bbox: @bbox
+      pad: pad
+    }
 
   # run a block and return the modified pad string
   runBlock: (block) ->
@@ -83,9 +103,11 @@ class MacroTool
         @modifiers[mod] = @getNumber val
       # or it's a primitive
       when '1', '2', '20', '21', '22', '4', '5', '6', '7'
-        # ignore comments after a pipe and split string at commas for arguments
-        args = (block.split '|')[0].split ','
-        args[i] = getNumber a for a,i in args
+        # split string at commas for arguments
+        args = block.split ','
+        # get the actual numbers and pass to the primitive method
+        args[i] = @getNumber a for a,i in args
+        @primitive args
       else
         # throw an error because I don't know what's going on
         # unless it's a comment; in that case carry on
@@ -251,7 +273,6 @@ class MacroTool
         if @bbox[1] is null or y < @bbox[1] then @bbox[1] = y
         if @bbox[2] is null or x > @bbox[2] then @bbox[2] = x
         if @bbox[3] is null or y > @bbox[3] then @bbox[3] = y
-
 
   getNumber: (s) ->
     # normal number all by itself
