@@ -199,10 +199,10 @@ moire = (p) ->
     {
       line: {
         _attr: {
-          y1: "#{p.cy - p.crossLength/2}"
           x1: '0'
-          y2: "#{p.cy + p.crossLength/2}"
+          y1: "#{p.cy - p.crossLength/2}"
           x2: '0'
+          y2: "#{p.cy + p.crossLength/2}"
           'stroke-width': "#{p.crossThx}"
         }
       }
@@ -219,8 +219,8 @@ moire = (p) ->
           cx: "#{p.cx}"
           cy: "#{p.cy}"
           r: "#{r}"
-          'stroke-width': "#{p.ringThx}"
           fill: 'none'
+          'stroke-width': "#{p.ringThx}"
         }
       }
     }
@@ -228,7 +228,7 @@ moire = (p) ->
     r -= p.ringThx + p.ringGap
 
   # if there's still some room left, a disc goes in the center
-  if r > 0 and rings <= maxRings then shape.push {
+  if r > 0 and rings <= p.maxRings then shape.push {
     circle: {
       _attr: {
         cx: "#{p.cx}"
