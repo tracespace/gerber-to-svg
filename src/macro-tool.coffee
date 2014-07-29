@@ -108,8 +108,66 @@ class MacroTool
           y2: args[6]
         }
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[7]
+      when 21
+        shape = shapes.rect {
+          cx: args[4], cy: args[5], width: args[2], height: args[3]
+        }
+        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
+      when 22
+        shape = shapes.lowerLeftRect {
+          x: args[4], y: args[5], width: args[2], height: args[3]
+        }
+        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
+      when 4
+        points = []
+        points.push [ args[i], args[i+1] ] for i in [ 3..3+2*args[2] ] by 2
+        shape = shapes.outline { points: points }
+        if args[1] is 0 then mask = true
+        else @addBbox shape.bbox, args[args.length-1]
+      when 5
+        # rotation only allowed if center is on the origin
+        if args[6] isnt 0 and (args[3] isnt 0 or args[4] isnt 0)
+          throw new RangeError 'polygon center must be 0,0 if rotated in macro'
+        shape = shapes.polygon {
+          cx: args[3]
+          cy: args[4]
+          dia: args[5]
+          verticies: args[2]
+          degrees: args[6]
+        }
+        if args[1] is 0 then mask = true else @addBbox shape.bbox
+      when 6
+        # rotation only allowed if center is on the origin
+        if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
+          throw new RangeError 'moiré center must be 0,0 if rotated in macro'
+        shape = shapes.moire {
+          cx: args[1]
+          cy: args[2]
+          outerDia: args[3]
+          ringThx: args[4]
+          ringGap: args[5]
+          maxRings: args[6]
+          crossThx: args[7]
+          crossLength: args[8]
+        }
+        @addBbox shape.bbox, args[9]
+      when 7
+        # rotation only allowed if center is on the origin
+        if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
+          throw new RangeError 'thermal center must be 0,0 if rotated in macro'
+        shape = shapes.thermal {
+          cx: args[1]
+          cy: args[2]
+          outerDia: args[3]
+          innerDia: args[4]
+          gap: args[5]
+        }
+        @addBbox shape.bbox, args[6]
 
-    @shapes.push shape.shape
+    unless Array.isArray shape.shape then @shapes.push shape.shape
+    else
+      for s in shape.shape
+        if s.mask? then @masks.push s else @shapes.push s
 
   addBbox: (bbox, rotation=0) ->
     unless rotation
