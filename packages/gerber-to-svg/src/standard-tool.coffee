@@ -5,6 +5,7 @@
 
 # unique number generator to avoid id collisions
 unique = require './unique-id'
+# standard pad shapes
 shapes = require './pad-shapes'
 
 standardTool = (tool, p) ->
