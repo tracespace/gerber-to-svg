@@ -44,9 +44,10 @@ class MacroTool
       pad.push @shapes[0]
     # return the pad, the bbox, and the pad id
     {
+      pad: pad
       padId: padId
       bbox: @bbox
-      pad: pad
+      trace: false
     }
 
   # run a block and return the modified pad string
