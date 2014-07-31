@@ -14,7 +14,7 @@ standardTool = (tool, p) ->
   p.cx = 0
   p.cy = 0
   # pad id
-  id = if tool then "tool-#{tool}-pad-#{unique()}" else false
+  id = "tool-#{tool}-pad-#{unique()}"
   # figure out the tool
   shape = ''
   if p.dia? and not p.verticies?
