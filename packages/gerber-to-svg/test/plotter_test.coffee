@@ -3,9 +3,24 @@
 Plotter = require '../src/plotter'
 
 describe 'Plotter class', ->
+
   describe 'parameter method', ->
     p = null
     beforeEach () -> p = new Plotter()
+
+    describe 'with setting the units', ->
+      it 'should set the units to inches if given an MOIN parameter', ->
+        p.parameter [ '%', 'MOIN', '%' ]
+        p.units.should.eql 'in'
+      it 'should set the units to millimeters if given an MOMM parameter', ->
+        p.parameter [ '%', 'MOMM', '%' ]
+        p.units.should.eql 'mm'
+      it 'should throw an error if the units are redifined', ->
+        p.parameter [ '%', 'MOMM', '%' ]
+        (-> p.parameter [ '%', 'MOIN', '%' ]).should.throw /redifine units/
+      it 'should throw an error if the units are wrong', ->
+        (-> p.parameter [ '%', 'MOKM', '%' ]).should.throw /unrecognized units/
+
     describe 'with aperture macros', ->
       it 'should add aperture macros to the macro list', ->
         p.parameter [ '%', 'AMUNIQUENAME', '1,1,1.5,0,0', '%' ]
@@ -13,6 +28,7 @@ describe 'Plotter class', ->
       it 'should throw an error if the command block has more than the AM', ->
         p.parameter [ '%', 'AMUNIQUENAME', '1,1,1.5,0,0', 'MOIN', '%' ]
         (-> p.macros.UNIQUENAME.run('D10')).should.throw /unrecognized tool/
+
     describe 'with aperture definitions', ->
       it 'should add the pad shapes to the defs list', ->
         p.defs.length.should.equal 0
@@ -127,3 +143,37 @@ describe 'Plotter class', ->
           p.parameter [ '%', 'ADD10CIRC,1.6', '%' ]
           (p.tools.D10?).should.be.true
           p.defs.should.containDeep [ { circle: { _attr: { r: '0.8' } } } ]
+          p.parameter [ '%', 'AMRECT', '21,1,1,1,0,0,0', '%' ]
+          p.parameter [ '%', 'ADD11RECT', '%' ]
+          (p.tools.D11?).should.be.true
+          p.defs.should.containDeep [ { rect: { _attr: { width: '1' } } } ]
+
+    describe 'changing layer polarity', ->
+      it 'shouldnt do anything if the polarity doesnt change', ->
+        p.layer.level.should.equal 0
+        p.layer.type.should.eql 'g'
+        p.parameter [ '%', 'LPD', '%' ]
+        p.layer.level.should.equal 0
+        p.layer.type.should.eql 'g'
+      it 'should change to a mask if polarity switches to clear', ->
+        p.parameter [ '%', 'LPC', '%' ]
+        p.defs[0].mask[0]._attr.should.match /layer-1/
+        p.group.g[0]._attr.mask.should.match /url\(#.*-layer-1\)/
+        p.layer.current.should.equal p.defs[0]
+        p.layer.type.should.eql 'mask'
+      it 'should change back to wrapped group if polarity switches to dark', ->
+        p.parameter [ '%', 'LPC', '%' ]
+        p.parameter [ '%', 'LPD', '%' ]
+        p.defs[0].mask[0]._attr.should.match /layer-1/
+        p.group.should.containDeep {
+          g: [ { _attr: {} }, { g: [ { _attr: {} } ] } ]
+        }
+        p.layer.current.should.equal p.group
+        p.layer.level.should.equal 2
+        p.layer.type.should.eql 'g'
+      it 'should undefine the current position', ->
+        p.parameter [ '%', 'LPD', '%' ]
+        p.position.should.eql { x: null, y: null }
+      it 'should throw an error for bad polarity', ->
+        (-> p.parameter [ '%', 'LPXXX', '%' ] )
+          .should.throw /unrecognized level polarity/
