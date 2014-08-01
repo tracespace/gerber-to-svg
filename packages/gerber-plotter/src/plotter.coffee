@@ -90,8 +90,9 @@ class Plotter
     }
     # are we done with the file yet? no
     @done = false
-    # unit system and coordinate system
+    # unit system and coordinate format system
     @units = null
+    @format = null
     @position = { x: 0, y: 0 }
 
   plot: () ->
