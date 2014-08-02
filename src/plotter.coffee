@@ -94,12 +94,16 @@ class Plotter
     @units = null
     @format = { set: false, zero: null, notation: null, places: null }
     @position = { x: 0, y: 0 }
+    # operating mode
+    @mode = null
+    @region = { on: false }
+    @quad = null
 
   plot: () ->
     until @done
       current = @parser.nextCommand()
       # if it's a parameter command
-      if current[0] is '%' then @parameter current else @operation current[0]
+      if current[0] is '%' then @parameter current else @operate current[0]
 
   parameter: (blocks) ->
     done = false
@@ -120,9 +124,8 @@ class Plotter
             if block[3] is 'A' or block[3] is 'I'
               @format.notation = block[3]
             else invalid = true
-            if (
-              block[4] is 'X' and block[7] is 'Y' and block[5..6] is block[8..9]
-            )
+            if block[4] is 'X' and block[7] is 'Y' and
+            block[5..6] is block[8..9]
               @format.places = [ parseInt(block[5],10), parseInt(block[6],10) ]
               if @format.places[0]>7 or @format.places[1]>7 then invalid = true
             else invalid = true
@@ -175,7 +178,43 @@ class Plotter
 
       if blocks[++index] is '%' then done = true
 
-  operation: (block) ->
+  operate: (block) ->
+    valid = false
+    # code for operations
+    code = block[0..2]
+    # check for end of file or deprecated M command
+    if block[0] is 'M'
+      if code is 'M02'
+        @done = true
+        block = ''
+      else unless (code is 'M00' or code is 'M01')
+        throw new SyntaxError 'invalid operation M code'
+      valid = true
+    # else check for a G code
+    else if block[0] is 'G'
+      # set interpolation mode
+      if block.match /^G0?1/
+        @mode = 'i'
+      else if block.match /^G0?2/
+        @mode = 'cw'
+      else if block.match /^G0?3(?![67])/
+        @mode = 'ccw'
+      # set region mode
+      else if code is 'G36'
+        @region.on = true
+      else if code is 'G37'
+        @region.on = false
+      else if code is 'G74'
+        @quad = 's'
+      else if code is 'G75'
+        @quad = 'm'
+      # check for comments or deprecated, else throw
+      else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
+        throw new SyntaxError 'invalid operation G code'
+      valid = true
+    # now let's check for a coordinate block
+    if block.match /^G0?[123](X\d+)?(Y\d+)?D0?[123]$/
+      console.log block
 
 
 module.exports = Plotter
