@@ -92,7 +92,7 @@ class Plotter
     @done = false
     # unit system and coordinate format system
     @units = null
-    @format = null
+    @format = { set: false, zero: null, notation: null, places: null }
     @position = { x: 0, y: 0 }
 
   plot: () ->
@@ -111,7 +111,25 @@ class Plotter
       block = blocks[index]
       switch block[0...2]
         when 'FS'
-          throw new Error 'format spec unimplimented'
+          invalid = false
+          if @format.set
+            throw new SyntaxError 'format spec cannot be redefined'
+          try
+            if block[2] is 'L' or block[2] is 'T' then @format.zero = block[2]
+            else invalid = true
+            if block[3] is 'A' or block[3] is 'I'
+              @format.notation = block[3]
+            else invalid = true
+            if (
+              block[4] is 'X' and block[7] is 'Y' and block[5..6] is block[8..9]
+            )
+              @format.places = [ parseInt(block[5],10), parseInt(block[6],10) ]
+              if @format.places[0]>7 or @format.places[1]>7 then invalid = true
+            else invalid = true
+          catch error
+            invalid = true
+          if invalid then throw new SyntaxError 'invalid format spec'
+          else @format.set = true
         when 'MO'
           u = block[2..]
           unless @units?
