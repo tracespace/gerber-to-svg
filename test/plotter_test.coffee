@@ -10,35 +10,38 @@ describe 'Plotter class', ->
 
     describe 'with format specification', ->
       it 'should set the zero ommision mode', ->
-        p.paramter [ '%', 'FSLAX34Y34', '%' ]
+        p.parameter [ '%', 'FSLAX34Y34', '%' ]
         p.format.zero.should.eql 'L'
         p = new Plotter()
-        p.paramter [ '%', 'FSTAX34Y34', '%' ]
+        p.parameter [ '%', 'FSTAX34Y34', '%' ]
         p.format.zero.should.eql 'T'
       it 'should set the absolute / incremental notation mode', ->
-        p.paramter [ '%', 'FSLAX34Y34', '%' ]
+        p.parameter [ '%', 'FSLAX34Y34', '%' ]
         p.format.notation.should.eql 'A'
         p = new Plotter()
-        p.paramter [ '%', 'FSLIX34Y34', '%' ]
+        p.parameter [ '%', 'FSLIX34Y34', '%' ]
         p.format.notation.should.eql 'I'
       it 'should set the coordinate format', ->
-        p.paramter [ '%', 'FSLAX34Y34', '%' ]
+        p.parameter [ '%', 'FSLAX34Y34', '%' ]
         p.format.places.should.eql [ 3, 4 ]
         p = new Plotter()
-        p.paramter [ '%', 'FSLAX55Y55', '%' ]
+        p.parameter [ '%', 'FSLAX55Y55', '%' ]
         p.format.places.should.eql [ 5, 5 ]
       it 'should throw if information is missing or invalid', ->
-        (-> p.paramter [ '%', 'FSAX34Y34', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSAX34Y34', '%' ]).should.throw /invalid format/
         p = new Plotter()
-        (-> p.paramter [ '%', 'FSLX34Y34', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSLX34Y34', '%' ]).should.throw /invalid format/
         p = new Plotter()
-        (-> p.paramter [ '%', 'FSLAX34', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSLAX34', '%' ]).should.throw /invalid format/
         p = new Plotter()
-        (-> p.paramter [ '%', 'FSLAY34', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSLAY34', '%' ]).should.throw /invalid format/
       it 'should throw if x and y format is invalid', ->
-        (-> p.paramter [ '%', 'FSLAX34Y56', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSLAX34Y56', '%']).should.throw /invalid format/
         p = new Plotter()
-        (-> p.paramter [ '%', 'FSLAX88Y88', '%' ]).should.throw /invalid format/
+        (-> p.parameter [ '%', 'FSLAX88Y88', '%']).should.throw /invalid format/
+      it 'can only be called once', ->
+        p.parameter [ '%', 'FSLAX34Y34', '%' ]
+        (-> p.parameter [ '%', 'FSLAX34Y34', '%' ]).should.throw /redefined/
     describe 'with setting the units', ->
       it 'should set the units to inches if given an MOIN parameter', ->
         p.parameter [ '%', 'MOIN', '%' ]
