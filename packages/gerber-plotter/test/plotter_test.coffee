@@ -7,7 +7,6 @@ describe 'Plotter class', ->
   describe 'parameter method', ->
     p = null
     beforeEach () -> p = new Plotter()
-
     describe 'with format specification', ->
       it 'should set the zero ommision mode', ->
         p.parameter [ '%', 'FSLAX34Y34', '%' ]
@@ -42,6 +41,7 @@ describe 'Plotter class', ->
       it 'can only be called once', ->
         p.parameter [ '%', 'FSLAX34Y34', '%' ]
         (-> p.parameter [ '%', 'FSLAX34Y34', '%' ]).should.throw /redefined/
+
     describe 'with setting the units', ->
       it 'should set the units to inches if given an MOIN parameter', ->
         p.parameter [ '%', 'MOIN', '%' ]
@@ -211,3 +211,60 @@ describe 'Plotter class', ->
       it 'should throw an error for bad polarity', ->
         (-> p.parameter [ '%', 'LPXXX', '%' ] )
           .should.throw /unrecognized level polarity/
+
+  describe 'operate method', ->
+    p = null
+    beforeEach () -> p = new Plotter()
+
+    it 'should handle comments gracefully', ->
+      (-> p.operate 'G04 this is a comment').should.not.throw
+    it 'should ignore deprecated commands', ->
+      (-> p.operate 'G54').should.not.throw
+      (-> p.operate 'G55').should.not.throw
+      (-> p.operate 'G70').should.not.throw
+      (-> p.operate 'G71').should.not.throw
+      (-> p.operate 'G90').should.not.throw
+      (-> p.operate 'G91').should.not.throw
+      (-> p.operate 'M00').should.not.throw
+      (-> p.operate 'M01').should.not.throw
+    it 'should throw for invalid commands', ->
+      (-> p.operate 'G56').should.throw /invalid operation/
+      (-> p.operate 'asdfgh').should.throw /invalid operation/
+      (-> p.operate 'G01asdfgh').should.throw /invalid operation/
+    it 'should declare the file done at M02', ->
+      p.operate 'M02'
+      p.done.should.be.true
+    it 'should set the interpolation mode to linear with a G1 or G01', ->
+      p.operate 'G1'
+      p.mode.should.eql 'i'
+      p.mode = null
+      p.operate 'G01'
+      p.mode.should.eql 'i'
+    it 'should set the mode to clockwise with a G2 or G02', ->
+      p.operate 'G2'
+      p.mode.should.eql 'cw'
+      p.mode = null
+      p.operate 'G02'
+      p.mode.should.eql 'cw'
+    it 'should set the mode to counter clockwise with a G3 or G03', ->
+      p.operate 'G3'
+      p.mode.should.eql 'ccw'
+      p.mode = null
+      p.operate 'G03'
+      p.mode.should.eql 'ccw'
+    it 'should turn region mode on or off with a G36 or G37', ->
+      p.region.on.should.be.false
+      p.operate 'G36'
+      p.region.on.should.be.true
+      p.operate 'G37'
+      p.region.on.should.be.false
+      p.mode?.should.be.false
+    it 'should set arc mode G74 and G75', ->
+      p.quad?.should.be.false
+      p.operate 'G74'
+      p.quad.should.eql 's'
+      p.operate 'G75'
+      p.quad.should.eql 'm'
+
+    describe 'with interpolation blocks', ->
+      it 'should simply move with a D2/D02', ->
