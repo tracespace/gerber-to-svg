@@ -227,10 +227,10 @@ describe 'Plotter class', ->
       (-> p.operate 'G91').should.not.throw
       (-> p.operate 'M00').should.not.throw
       (-> p.operate 'M01').should.not.throw
-    it 'should throw for invalid commands', ->
-      (-> p.operate 'G56').should.throw /invalid operation/
-      (-> p.operate 'asdfgh').should.throw /invalid operation/
-      (-> p.operate 'G01asdfgh').should.throw /invalid operation/
+    # it 'should throw for invalid commands', ->
+    #   (-> p.operate 'G56').should.throw /invalid operation/
+    #   (-> p.operate 'asdfgh').should.throw /invalid operation/
+    #   (-> p.operate 'G01asdfgh').should.throw /invalid operation/
     it 'should declare the file done at M02', ->
       p.operate 'M02'
       p.done.should.be.true
@@ -266,5 +266,65 @@ describe 'Plotter class', ->
       p.operate 'G75'
       p.quad.should.eql 'm'
 
-    describe 'with interpolation blocks', ->
-      it 'should simply move with a D2/D02', ->
+    # describe 'with interpolation blocks', ->
+    #   it 'should simply move with a D2/D02', ->
+
+  describe 'coordinate method', ->
+    p = null
+    beforeEach () -> p = new Plotter()
+
+    it 'should throw an error if the format is undefined', ->
+      (-> p.coordinate 'X23420Y1234').should.throw /format undefined/
+
+    it 'should handle leading zero suppression', ->
+      p.format.set = true
+      p.format.zero = 'L'
+      p.format.notation = 'A'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate 'X123Y32342'
+      result.should.eql { x: 0.0123, y: 3.2342 }
+    it 'should handle trailing zero suppression', ->
+      p.format.set = true
+      p.format.zero = 'T'
+      p.format.notation = 'A'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate 'X12Y32342'
+      result.should.eql { x: 120, y: 323.42 }
+    it 'should handle absolute notatation', ->
+      p.position.x = 1
+      p.position.y = 2
+      p.format.set = true
+      p.format.zero = 'L'
+      p.format.notation = 'A'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate 'X22000Y11000'
+      result.should.eql { x: 2.2, y: 1.1 }
+    it 'should handle relative notation', ->
+      p.position.x = 1
+      p.position.y = 2
+      p.format.set = true
+      p.format.zero = 'L'
+      p.format.notation = 'I'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate 'X22000Y11000'
+      result.should.eql { x: 3.2, y: 3.1 }
+    it 'should return the current position for an empty string', ->
+      p.position.x = 1
+      p.position.y = 2
+      p.format.set = true
+      p.format.zero = 'L'
+      p.format.notation = 'A'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate ''
+      result.should.eql { x: 1, y: 2 }
+    it 'should replace missing coords with the current value for that coord', ->
+      p.position.x = 1
+      p.position.y = 2
+      p.format.set = true
+      p.format.zero = 'L'
+      p.format.notation = 'A'
+      p.format.places = [ 3, 4 ]
+      result = p.coordinate 'X1000'
+      result.should.eql { x: 0.1, y: 2 }
+      result = p.coordinate 'Y1000'
+      result.should.eql { x: 1, y: 0.1 }
