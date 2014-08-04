@@ -216,5 +216,32 @@ class Plotter
     if block.match /^G0?[123](X\d+)?(Y\d+)?D0?[123]$/
       console.log block
 
+  # take a coordinate string with format given by the format spec
+  # return an absolute position
+  coordinate: (coord) ->
+    unless @format.set then throw new SyntaxError 'format undefined'
+    result = { x: 0, y: 0 }
+    # pull out the x and y
+    x = coord.match(/X\d+/)?[0]?[1..]
+    y = coord.match(/Y\d+/)?[0]?[1..]
+    # leading zero suppression
+    if @format.zero is 'L'
+      divisor = Math.pow 10, @format.places[1]
+      xDivisor = divisor
+      yDivisor = divisor
+    # else trailing zero suppression
+    else if @format.zero is 'T'
+      xDivisor = Math.pow 10, (x.length - @format.places[0])
+      yDivisor = Math.pow 10, (y.length - @format.places[0])
+    else throw new SyntaxError 'invalid zero suppression format'
+    # calculate the result
+    result.x = if x? then (Number(x) / xDivisor) else @position.x
+    result.y = if y? then (Number(y) / yDivisor) else @position.y
+    # adjust to absolute if incremental coordinates
+    if @format.notation is 'I'
+      result.x += if x? then @position.x else 0
+      result.y += if y? then @position.y else 0
+    # return
+    result
 
 module.exports = Plotter
