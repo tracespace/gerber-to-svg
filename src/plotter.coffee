@@ -147,7 +147,14 @@ class Plotter
             ad.tool = @macros[ad.macro.name].run ad.code, ad.macro.mods
           @tools[ad.code] = {
             stroke: ad.tool.trace
-            flash: { use: { _attr: { 'xlink:href': '#'+ad.tool.padId } } }
+            flash: (x, y) ->
+              {
+                use: {
+                  _attr: {
+                    x: "#{x}", y: "#{y}", 'xlink:href': '#'+ad.tool.padId
+                  }
+                }
+              }
           }
           @defs.push obj for obj in ad.tool.pad
         when 'AM'
@@ -223,10 +230,19 @@ class Plotter
 
     # now let's check for a coordinate block
     if block.match /^(G0?[123])?(X\d+)?(Y\d+)?D0?[123]$/
-      console.log block
       # if the last char is a 2, we've got a move
-      if block[block.length - 1] is '2'
-        @move ((block.match /X\d+/)?[0] ? '') + ((block.match /Y\d+/)?[0] ? '')
+      op = block[block.length - 1]
+      coord = ((block.match /X\d+/)?[0] ? '') + ((block.match /Y\d+/)?[0] ? '')
+      if op is '2'
+        @move coord
+      # if it's a 3, we've got a flash
+      else if op is '3'
+        @move coord
+        @layer.current[@layer.type].push(
+          @tools[@currentTool].flash @position.x, @position.y
+        )
+
+
 
   move: (coord) ->
     newPosition = @coordinate coord
