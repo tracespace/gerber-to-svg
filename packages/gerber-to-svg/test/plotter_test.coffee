@@ -266,9 +266,26 @@ describe 'Plotter class', ->
       p.operate 'G75'
       p.quad.should.eql 'm'
 
-    # describe 'with interpolation blocks', ->
-    #   it 'should simply move with a D2/D02', ->
+    # tool changes
+    describe 'with tool changes', ->
+      it 'should change the tool if it exists', ->
+        p.parameter [ '%', 'ADD10C,10', '%' ]
+        p.operate 'D10'
+        p.currentTool.should.eql 'D10'
+      it 'should throw an error if the tool doesnt exist', ->
+        (-> p.operate  'D10').should.throw /does not exist/
+      it 'should throw an error if region mode is on', ->
+        p.parameter [ '%', 'ADD10C,10', '%' ]
+        p.operate 'G36'
+        (-> p.operate 'D10').should.throw /cannot change tool/
 
+    describe 'with interpolation blocks', ->
+      it 'a D2/D02 should move the current point', ->
+        p.parameter [ '%', 'FSLAX34Y34', '%' ]
+        p.operate 'X1000Y1000D02'
+        p.position.should.containEql { x: 0.1, y: 0.1 }
+        p.operate 'X2000Y2000D2'
+        p.position.should.containEql { x: 0.2, y: 0.2 }
   describe 'coordinate method', ->
     p = null
     beforeEach () -> p = new Plotter()

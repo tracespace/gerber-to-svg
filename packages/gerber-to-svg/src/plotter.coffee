@@ -78,6 +78,7 @@ class Plotter
     # tools
     @macros = {}
     @tools = {}
+    @currentTool = ''
     # array for pad and mask definitions
     @defs = []
     # svg identification, image group, and current layers
@@ -212,9 +213,25 @@ class Plotter
       else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
         throw new SyntaxError 'invalid operation G code'
       valid = true
+    # else check for a tool change
+    else if block[0] is 'D' and not block.match /D0?[123]$/
+      unless @tools[block]?
+        throw new SyntaxError "tool #{block} does not exist"
+      if @region.on
+        throw new SyntaxError "cannot change tool while region mode is on"
+      @currentTool = block
+
     # now let's check for a coordinate block
-    if block.match /^G0?[123](X\d+)?(Y\d+)?D0?[123]$/
+    if block.match /^(G0?[123])?(X\d+)?(Y\d+)?D0?[123]$/
       console.log block
+      # if the last char is a 2, we've got a move
+      if block[block.length - 1] is '2'
+        @move ((block.match /X\d+/)?[0] ? '') + ((block.match /Y\d+/)?[0] ? '')
+
+  move: (coord) ->
+    newPosition = @coordinate coord
+    @position.x = newPosition.x
+    @position.y = newPosition.y
 
   # take a coordinate string with format given by the format spec
   # return an absolute position
