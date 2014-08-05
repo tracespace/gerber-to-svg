@@ -70,7 +70,8 @@ describe 'Plotter class', ->
         p.defs[0].should.containDeep { circle: {} }
       it 'should set the tools flash object to a use object', ->
         p.parameter [ '%', 'ADD10C,1.1', '%' ]
-        p.tools.D10.flash.should.containDeep { use: { _attr: { } } }
+        result = p.tools.D10.flash 0, 0
+        result.should.containDeep { use: { _attr: { } } }
       it 'should set the tools stroke object to the stroke properties', ->
         p.parameter [ '%', 'ADD10C,1.1', '%' ]
         p.tools.D10.stroke.should.containDeep {
@@ -281,11 +282,20 @@ describe 'Plotter class', ->
 
     describe 'with interpolation blocks', ->
       it 'a D2/D02 should move the current point', ->
-        p.parameter [ '%', 'FSLAX34Y34', '%' ]
+        p.parameter [ '%', 'FSLAX34Y34', 'MOIN', '%' ]
         p.operate 'X1000Y1000D02'
         p.position.should.containEql { x: 0.1, y: 0.1 }
         p.operate 'X2000Y2000D2'
         p.position.should.containEql { x: 0.2, y: 0.2 }
+      it 'a D3/D03 should add a pad to the current layer', ->
+        p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
+        p.operate 'D10'
+        p.operate 'X100Y100D03'
+        p.layer.current.g.should.containDeep [
+          { use: { _attr: { x: '0.01', y: '0.01' } } }
+        ]
+    describe 'in region mode', ->
+
   describe 'coordinate method', ->
     p = null
     beforeEach () -> p = new Plotter()
