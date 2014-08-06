@@ -97,14 +97,27 @@ class Plotter
     @position = { x: 0, y: 0 }
     # operating mode
     @mode = null
-    @region = { on: false }
+    @trace = { region: false, path: '' }
     @quad = null
 
+  # go through the gerber file and return an xml object with the svg
   plot: () ->
     until @done
+      # grab the next command
       current = @parser.nextCommand()
+      console.log "next command is #{current}"
       # if it's a parameter command
       if current[0] is '%' then @parameter current else @operate current[0]
+    # finish and return the xml object
+    @finish()
+
+  finish: () ->
+    @finishPath()
+    xml = { svg: [ { _attr: { id: @gerberId } } ] }
+    if @defs.length then xml.svg.push { defs: @defs }
+    xml.svg.push @group
+    # return xml
+    xml
 
   parameter: (blocks) ->
     done = false
@@ -209,9 +222,11 @@ class Plotter
         @mode = 'ccw'
       # set region mode
       else if code is 'G36'
-        @region.on = true
+        @finishPath()
+        @trace.region = true
       else if code is 'G37'
-        @region.on = false
+        @finishPath()
+        @trace.region = false
       else if code is 'G74'
         @quad = 's'
       else if code is 'G75'
@@ -224,57 +239,116 @@ class Plotter
     else if block[0] is 'D' and not block.match /D0?[123]$/
       unless @tools[block]?
         throw new SyntaxError "tool #{block} does not exist"
-      if @region.on
+      if @trace.region
         throw new SyntaxError "cannot change tool while region mode is on"
       @currentTool = block
 
     # now let's check for a coordinate block
-    if block.match /^(G0?[123])?(X\d+)?(Y\d+)?D0?[123]$/
+    if block.match /^(G0?[123])?([XYIJ][+-]?\d+){0,4}D0?[123]$/
       # if the last char is a 2, we've got a move
       op = block[block.length - 1]
-      coord = ((block.match /X\d+/)?[0] ? '') + ((block.match /Y\d+/)?[0] ? '')
-      if op is '2'
-        @move coord
+      coord = (block.match /[XYIJ][+-]?\d+/g)?.join ''
+      start = { x: @position.x, y: @position.y }
+      end = @move coord
       # if it's a 3, we've got a flash
-      else if op is '3'
-        @move coord
-        @layer.current[@layer.type].push(
-          @tools[@currentTool].flash @position.x, @position.y
-        )
+      if op is '3'
+        @finishPath()
+        @layer.current[@layer.type]
+          .push @tools[@currentTool].flash @position.x, @position.y
+      # finally, if it's a 1, we've got an interpolate
+      else if op is '1'
+        # if there's no path yet, we need to move to the current point
+        unless @trace.path then @trace.path = "M#{start.x} #{start.y}"
+        # check what kind of interpolate we're doing
+        # linear interpolation adds an absolute line to the path
+        if @mode is 'i'
+          @trace.path += "L#{end.x} #{end.y}"
+        # are interpolation adds an eliptical (circular) arc to the path
+        else if @mode is 'cw' or @mode is 'ccw'
+          r = Math.sqrt end.i**2 + end.j**2
+          sweep = if @mode is 'cw' then 0 else 1
+          # svg large arc flag hinges at 180 rather than 90
+          large = if @quad is 's' then 0 else
+            cen = { x: start.x + end.i, y: start.y + end.j }
+            # check the arc angle
+            thetaE = Math.atan2 end.y-cen.y, end.x-cen.x
+            if thetaE < 0 then thetaE = 2*Math.PI + thetaE
+            thetaS = Math.atan2 start.y-cen.y, start.x-cen.x
+            if thetaS < 0 then thetaS = 2*Math.PI + thetaS
+            theta = Math.abs thetaE - thetaS
+            # get the arc for CW vs CCW
+            if @mode is 'ccw' then theta = 2*Math.PI - theta
+            # check for the special condition of a full circle
+            if (Math.abs(start.x - end.x) < 0.000001) and
+            (Math.abs(start.y - end.y) < 0.000001)
+              # we'll need two paths (180 deg each)
+              @trace.path +=
+                "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
+            # set the large arc flag if it's greater than 180 (pi radians)
+            if theta >= Math.PI then 1 else 0
+          # add the arc to the path
+          @trace.path += "A#{r} #{r} 0 #{large} #{sweep} #{end.x} #{end.y}"
+        # if there wasn't a mode set then we're in trouble
+        else throw new SyntaxError 'cannot interpolate without a G01/2/3'
+      else if op is '2'
+        @finishPath()
+      else
+        throw new SyntaxError "#{op} is an invalid operation (D) code"
 
-
+  finishPath: () ->
+    # if there's a trace going on
+    if @trace.path
+      p = { path: { _attr: { d: @trace.path } } }
+      # apply proper path attributes
+      if @trace.region
+        p.path._attr['stroke-width'] = '0'
+        p.path._attr.fill = 'currentColor'
+      else
+        for key, val of @tools[@currentTool].stroke
+          p.path._attr[key] = val
+      # push the path to the current layer
+      @layer.current[@layer.type].push p
+      # empty the path out
+      @trace.path = ''
 
   move: (coord) ->
+    unless @units? then throw new Error 'units have not been set'
     newPosition = @coordinate coord
     @position.x = newPosition.x
     @position.y = newPosition.y
+    # return the new position
+    newPosition
 
   # take a coordinate string with format given by the format spec
   # return an absolute position
   coordinate: (coord) ->
     unless @format.set then throw new SyntaxError 'format undefined'
     result = { x: 0, y: 0 }
-    # pull out the x and y
-    x = coord.match(/X\d+/)?[0]?[1..]
-    y = coord.match(/Y\d+/)?[0]?[1..]
-    # leading zero suppression
-    if @format.zero is 'L'
-      divisor = Math.pow 10, @format.places[1]
-      xDivisor = divisor
-      yDivisor = divisor
-    # else trailing zero suppression
-    else if @format.zero is 'T'
-      xDivisor = Math.pow 10, (x.length - @format.places[0])
-      yDivisor = Math.pow 10, (y.length - @format.places[0])
-    else throw new SyntaxError 'invalid zero suppression format'
-    # calculate the result
-    result.x = if x? then (Number(x) / xDivisor) else @position.x
-    result.y = if y? then (Number(y) / yDivisor) else @position.y
-    # adjust to absolute if incremental coordinates
-    if @format.notation is 'I'
-      result.x += if x? then @position.x else 0
-      result.y += if y? then @position.y else 0
-    # return
+    # pull out the x, y, i, and j
+    result.x = coord.match(/X[+-]?\d+/)?[0]?[1..]
+    result.y = coord.match(/Y[+-]?\d+/)?[0]?[1..]
+    result.i = coord.match(/I[+-]?\d+/)?[0]?[1..]
+    result.j = coord.match(/J[+-]?\d+/)?[0]?[1..]
+    # loop through matched coordinates
+    for key, val of result
+      if val?
+        divisor = 1
+        if val[0] is '+' or val[0] is '-'
+          divisor = -1 if val[0] is '-'
+          val = val[1..]
+        if @format.zero is 'L' then divisor *= 10 ** @format.places[1]
+        else if @format.zero is 'T'
+          divisor *= 10 ** (val.length - @format.places[0])
+        else throw new SyntaxError 'invalid zero suppression format'
+        result[key] = Number(val) / divisor
+        # incremental coordinate support
+        if @format.notation is 'I' then result[key] += (@position[key] ? 0)
+    # apply defaults to missing
+    unless result.x? then result.x = @position.x
+    unless result.y? then result.y = @position.y
+    unless result.i? then result.i = 0
+    unless result.j? then result.j = 0
+    # return the result
     result
 
 module.exports = Plotter

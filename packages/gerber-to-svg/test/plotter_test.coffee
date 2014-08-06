@@ -3,7 +3,6 @@
 Plotter = require '../src/plotter'
 
 describe 'Plotter class', ->
-
   describe 'parameter method', ->
     p = null
     beforeEach () -> p = new Plotter()
@@ -254,11 +253,11 @@ describe 'Plotter class', ->
       p.operate 'G03'
       p.mode.should.eql 'ccw'
     it 'should turn region mode on or off with a G36 or G37', ->
-      p.region.on.should.be.false
+      p.trace.region.should.be.false
       p.operate 'G36'
-      p.region.on.should.be.true
+      p.trace.region.should.be.true
       p.operate 'G37'
-      p.region.on.should.be.false
+      p.trace.region.should.be.false
       p.mode?.should.be.false
     it 'should set arc mode G74 and G75', ->
       p.quad?.should.be.false
@@ -309,14 +308,14 @@ describe 'Plotter class', ->
       p.format.notation = 'A'
       p.format.places = [ 3, 4 ]
       result = p.coordinate 'X123Y32342'
-      result.should.eql { x: 0.0123, y: 3.2342 }
+      result.should.containEql { x: 0.0123, y: 3.2342 }
     it 'should handle trailing zero suppression', ->
       p.format.set = true
       p.format.zero = 'T'
       p.format.notation = 'A'
       p.format.places = [ 3, 4 ]
       result = p.coordinate 'X12Y32342'
-      result.should.eql { x: 120, y: 323.42 }
+      result.should.containEql { x: 120, y: 323.42 }
     it 'should handle absolute notatation', ->
       p.position.x = 1
       p.position.y = 2
@@ -325,7 +324,7 @@ describe 'Plotter class', ->
       p.format.notation = 'A'
       p.format.places = [ 3, 4 ]
       result = p.coordinate 'X22000Y11000'
-      result.should.eql { x: 2.2, y: 1.1 }
+      result.should.containEql { x: 2.2, y: 1.1 }
     it 'should handle relative notation', ->
       p.position.x = 1
       p.position.y = 2
@@ -334,7 +333,7 @@ describe 'Plotter class', ->
       p.format.notation = 'I'
       p.format.places = [ 3, 4 ]
       result = p.coordinate 'X22000Y11000'
-      result.should.eql { x: 3.2, y: 3.1 }
+      result.should.containEql { x: 3.2, y: 3.1 }
     it 'should return the current position for an empty string', ->
       p.position.x = 1
       p.position.y = 2
@@ -343,7 +342,7 @@ describe 'Plotter class', ->
       p.format.notation = 'A'
       p.format.places = [ 3, 4 ]
       result = p.coordinate ''
-      result.should.eql { x: 1, y: 2 }
+      result.should.containEql { x: 1, y: 2 }
     it 'should replace missing coords with the current value for that coord', ->
       p.position.x = 1
       p.position.y = 2
@@ -352,6 +351,73 @@ describe 'Plotter class', ->
       p.format.notation = 'A'
       p.format.places = [ 3, 4 ]
       result = p.coordinate 'X1000'
-      result.should.eql { x: 0.1, y: 2 }
+      result.should.containEql { x: 0.1, y: 2 }
       result = p.coordinate 'Y1000'
-      result.should.eql { x: 1, y: 0.1 }
+      result.should.containEql { x: 1, y: 0.1 }
+
+  describe 'finish path method', ->
+    p = null
+    beforeEach () ->
+      p = new Plotter()
+      p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
+      p.operate 'D10'
+      p.trace.path = 'M0 0L1 1L1 2L0 0Z'
+
+    it 'should take the existing path string and turn it into a path object', ->
+      p.finishPath()
+      p.layer.current.g.should.containDeep [
+        { path: { _attr: { d: 'M0 0L1 1L1 2L0 0Z' }}}
+      ]
+    it 'should apply the stroke properties if region mode is off', ->
+      p.finishPath()
+      p.layer.current.g.should.containDeep [
+        { path: { _attr: {
+              'stroke-linecap': 'round'
+              'stroke-linejoin': 'round'
+              'stroke-width': '1'
+            }
+          }
+        }
+      ]
+    it 'should apply region properties if region mode is on', ->
+      p.trace.region = true
+      p.finishPath()
+      p.layer.current.g.should.containDeep [
+        { path: { _attr: { 'stroke-width': '0', fill: 'currentColor' } } }
+      ]
+
+  describe 'creating paths', ->
+    p = null
+    beforeEach () ->
+      p = new Plotter()
+      p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
+      p.operate 'D10'
+
+    it 'should start a new path with a moveto on the first D01', ->
+      p.operate 'G01X10000Y10000D01'
+      p.trace.path.should.containEql 'M0 0'
+
+    it 'should add a line with a G01', ->
+      p.operate 'G01X10000Y10000D01'
+      p.trace.path.should.containEql 'M0 0L1 1'
+
+    describe 'single quadrant arc mode', ->
+      beforeEach () -> p.operate 'G74'
+      it 'should add a CW arc with a G02', ->
+        p.operate 'G02X10000Y10000I10000D01'
+        p.trace.path.should.containEql 'A1 1 0 0 0 1 1'
+      it 'should add a CCW arc with a G03', ->
+        p.operate 'G03X10000Y10000I10000D01'
+        p.trace.path.should.containEql 'A1 1 0 0 1 1 1'
+
+    describe 'multi quadrant arc mode', ->
+      beforeEach () -> p.operate 'G75'
+      it 'should add a CW arc with a G02', ->
+        p.operate 'G02X10000Y10000J10000D01'
+        p.trace.path.should.containEql 'A1 1 0 1 0 1 1'
+      it 'should add a CCW arc with a G03', ->
+        p.operate 'G03X10000Y10000I10000D01'
+        p.trace.path.should.containEql 'A1 1 0 1 1 1 1'
+      it 'should add full circle (2 paths) if start and end are the same', ->
+        p.operate 'G02I10000D01'
+        p.trace.path.should.containEql 'A1 1 0 0 0 2 0A1 1 0 0 0 0 0'
