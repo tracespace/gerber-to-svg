@@ -286,13 +286,21 @@ describe 'Plotter class', ->
         p.position.should.containEql { x: 0.1, y: 0.1 }
         p.operate 'X2000Y2000D2'
         p.position.should.containEql { x: 0.2, y: 0.2 }
-      it 'a D3/D03 should add a pad to the current layer', ->
-        p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
-        p.operate 'D10'
-        p.operate 'X100Y100D03'
-        p.layer.current.g.should.containDeep [
-          { use: { _attr: { x: '0.01', y: '0.01' } } }
-        ]
+      describe 'flashing a pad', ->
+        it 'a D3/D03 should add a pad to the current layer', ->
+          p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
+          p.operate 'D10'
+          p.operate 'X100Y100D03'
+          p.layer.current.g.should.containDeep [
+            { use: { _attr: { x: '0.01', y: '0.01' } } }
+          ]
+        it 'should add the pad to the board bounding box', ->
+          p.parameter [ '%', 'FSLAX33Y33', 'MOIN', 'ADD10C,1', '%' ]
+          p.operate 'D10'
+          p.operate 'X-100Y2000D03'
+          p.bbox.should.eql { xMin: -0.6, yMin: 1.5, xMax: 0.4, yMax: 2.5 }
+          p.operate 'X-1000Y200D03'
+          p.bbox.should.eql { xMin: -1.5, yMin: -0.3, xMax: 0.4, yMax: 2.5 }
     describe 'in region mode', ->
 
   describe 'coordinate method', ->
@@ -364,12 +372,12 @@ describe 'Plotter class', ->
       p.trace.path = 'M0 0L1 1L1 2L0 0Z'
 
     it 'should take the existing path string and turn it into a path object', ->
-      p.finishPath()
+      p.finishTrace()
       p.layer.current.g.should.containDeep [
         { path: { _attr: { d: 'M0 0L1 1L1 2L0 0Z' }}}
       ]
     it 'should apply the stroke properties if region mode is off', ->
-      p.finishPath()
+      p.finishTrace()
       p.layer.current.g.should.containDeep [
         { path: { _attr: {
               'stroke-linecap': 'round'
@@ -381,7 +389,7 @@ describe 'Plotter class', ->
       ]
     it 'should apply region properties if region mode is on', ->
       p.trace.region = true
-      p.finishPath()
+      p.finishTrace()
       p.layer.current.g.should.containDeep [
         { path: { _attr: { 'stroke-width': '0', fill: 'currentColor' } } }
       ]
@@ -397,9 +405,15 @@ describe 'Plotter class', ->
       p.operate 'G01X10000Y10000D01'
       p.trace.path.should.containEql 'M0 0'
 
-    it 'should add a line with a G01', ->
-      p.operate 'G01X10000Y10000D01'
-      p.trace.path.should.containEql 'M0 0L1 1'
+    describe 'adding line segments', ->
+      it 'should add a line with a G01', ->
+        p.operate 'G01X10000Y10000D01'
+        p.trace.path.should.containEql 'M0 0L1 1'
+
+      describe 'adjusting the bbox', ->
+        it 'should use the end points and tool size in trace mode', ->
+          p.operate 'G01X10000Y10000D01'
+          p.bbox.should.eql { xMin: -0.5, yMin: -0.5, xMax: 1.5, yMax: 1.5 }
 
     describe 'single quadrant arc mode', ->
       beforeEach () -> p.operate 'G74'

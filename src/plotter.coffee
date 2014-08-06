@@ -99,6 +99,8 @@ class Plotter
     @mode = null
     @trace = { region: false, path: '' }
     @quad = null
+    # bounding box
+    @bbox = { xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity }
 
   # go through the gerber file and return an xml object with the svg
   plot: () ->
@@ -112,8 +114,21 @@ class Plotter
     @finish()
 
   finish: () ->
-    @finishPath()
-    xml = { svg: [ { _attr: { id: @gerberId } } ] }
+    @finishTrace()
+    width = parseFloat (@bbox.xMax - @bbox.xMin).toPrecision 10
+    height = parseFloat (@bbox.yMax - @bbox.yMin).toPrecision 10
+    xml = {
+      svg: [
+        {
+          _attr: {
+            id: @gerberId
+            width: "#{width}#{@units}"
+            height: "#{height}#{@units}"
+            viewBox: "#{@bbox.xMin} #{@bbox.yMin} #{width} #{height}"
+          }
+        }
+      ]
+    }
     if @defs.length then xml.svg.push { defs: @defs }
     xml.svg.push @group
     # return xml
@@ -167,6 +182,13 @@ class Plotter
                     x: "#{x}", y: "#{y}", 'xlink:href': '#'+ad.tool.padId
                   }
                 }
+              }
+            bbox: (x, y) ->
+              {
+                xMin: x + ad.tool.bbox[0]
+                yMin: y + ad.tool.bbox[1]
+                xMax: x + ad.tool.bbox[2]
+                yMax: y + ad.tool.bbox[3]
               }
           }
           @defs.push obj for obj in ad.tool.pad
@@ -222,10 +244,10 @@ class Plotter
         @mode = 'ccw'
       # set region mode
       else if code is 'G36'
-        @finishPath()
+        @finishTrace()
         @trace.region = true
       else if code is 'G37'
-        @finishPath()
+        @finishTrace()
         @trace.region = false
       else if code is 'G74'
         @quad = 's'
@@ -252,17 +274,38 @@ class Plotter
       end = @move coord
       # if it's a 3, we've got a flash
       if op is '3'
-        @finishPath()
+        # finish any in progress path
+        @finishTrace()
+        # add the pad to the layer
         @layer.current[@layer.type]
           .push @tools[@currentTool].flash @position.x, @position.y
+        # update the board's bounding box
+        @addBbox @tools[@currentTool].bbox @position.x, @position.y
+
       # finally, if it's a 1, we've got an interpolate
       else if op is '1'
         # if there's no path yet, we need to move to the current point
-        unless @trace.path then @trace.path = "M#{start.x} #{start.y}"
+        unless @trace.path
+          @trace.path = "M#{start.x} #{start.y}"
+          # also add the start to the bounding box
+          if @trace.region
+            @addBbox {
+              xMin: start.x, yMin: start.y, xMax: start.x, yMax: start.y
+            }
+          else
+            @addBbox @tools[@currentTool].bbox start.x, start.y
         # check what kind of interpolate we're doing
         # linear interpolation adds an absolute line to the path
         if @mode is 'i'
+          # add the segment to the path
           @trace.path += "L#{end.x} #{end.y}"
+          # add the segment to the bbox
+          if @trace.region
+            @addBbox {
+              xMin: end.x, yMin: end.y, xMax: end.x, yMax: end.y
+            }
+          else
+            @addBbox @tools[@currentTool].bbox end.x, end.y
         # are interpolation adds an eliptical (circular) arc to the path
         else if @mode is 'cw' or @mode is 'ccw'
           r = Math.sqrt end.i**2 + end.j**2
@@ -291,11 +334,11 @@ class Plotter
         # if there wasn't a mode set then we're in trouble
         else throw new SyntaxError 'cannot interpolate without a G01/2/3'
       else if op is '2'
-        @finishPath()
+        @finishTrace()
       else
         throw new SyntaxError "#{op} is an invalid operation (D) code"
 
-  finishPath: () ->
+  finishTrace: () ->
     # if there's a trace going on
     if @trace.path
       p = { path: { _attr: { d: @trace.path } } }
@@ -350,5 +393,11 @@ class Plotter
     unless result.j? then result.j = 0
     # return the result
     result
+
+  addBbox: (bbox) ->
+    if bbox.xMin < @bbox.xMin then @bbox.xMin = bbox.xMin
+    if bbox.yMin < @bbox.yMin then @bbox.yMin = bbox.yMin
+    if bbox.xMax > @bbox.xMax then @bbox.xMax = bbox.xMax
+    if bbox.yMax > @bbox.yMax then @bbox.yMax = bbox.yMax
 
 module.exports = Plotter
