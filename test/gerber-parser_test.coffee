@@ -25,3 +25,14 @@ describe 'gerber parser class', ->
       p = new Parser 'abcd*efgh*'
       (p.nextCommand()).should.eql [ 'abcd' ]
       (p.nextCommand()).should.eql [ 'efgh' ]
+  describe 'keeping track of lines', ->
+    it 'should know about where in the gerber file it is', ->
+      p = new Parser '%MOIN*%\n%LPD*%\n%ADD10C,1*%\nD10*\nD03*\nM02*\n'
+      p.nextCommand()
+      p.line.should.equal 1
+      p.nextCommand()
+      p.line.should.equal 2
+      p.nextCommand()
+      p.line.should.equal 3
+      p.nextCommand()
+      p.line.should.equal 4

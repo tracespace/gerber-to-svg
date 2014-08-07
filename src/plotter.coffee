@@ -63,7 +63,7 @@ parseAD = (block) ->
       ad = tool code, params
     else
       def = block[2+code.length..]
-      name = (def.match /[a-zA-Z_$][a-zA-Z_$.]{0,126}(?=,)?/)?[0]
+      name = (def.match /[a-zA-Z_$][a-zA-Z_$.0-9]{0,126}(?=,)?/)?[0]
       unless name then throw new SyntaxError 'invalid definition with macro'
       mods = (def[name.length+1..]).split 'X'
       if mods.length is 1 and mods[0] is '' then mods = null
@@ -84,11 +84,9 @@ class Plotter
     # svg identification, image group, and current layers
     @gerberId = "gerber-#{unique()}"
     @group = { g: [ { _attr: { id: "#{@gerberId}-layer-0" } } ] }
-    @layer = {
-      level: 0
-      type: 'g'
-      current: @group
-    }
+    @layer = { level: 0, type: 'g', current: @group }
+    # step and repeat, initially set to no repeat
+    @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null, block: 0 }
     # are we done with the file yet? no
     @done = false
     # unit system and coordinate format system
@@ -114,23 +112,30 @@ class Plotter
 
   finish: () ->
     @finishTrace()
+    @finishStepRepeat()
     width = parseFloat (@bbox.xMax - @bbox.xMin).toPrecision 10
     height = parseFloat (@bbox.yMax - @bbox.yMin).toPrecision 10
     xml = {
       svg: [
         {
           _attr: {
-            id: @gerberId
+            xmlns: 'http://www.w3.org/2000/svg'
+            version: '1.1'
+            'xmlns:xlink': 'http://www.w3.org/1999/xlink'
             width: "#{width}#{@units}"
             height: "#{height}#{@units}"
             viewBox: "#{@bbox.xMin} #{@bbox.yMin} #{width} #{height}"
+            id: @gerberId
           }
         }
       ]
     }
     if @defs.length then xml.svg.push { defs: @defs }
+    # flip it in the y and translate back to origin
+    @group.g[0]._attr.transform =
+      "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
+    # return xml object
     xml.svg.push @group
-    # return xml
     xml
 
   parameter: (blocks) ->
@@ -196,7 +201,27 @@ class Plotter
           @macros[m.name] = m
           done = true
         when 'SR'
-          throw new Error 'step repeat unimplimented'
+          # finish any in progress SR
+          @finishStepRepeat()
+          # get the steps and stuff
+          @stepRepeat.x = Number (block.match /X\d+/)?[0][1..] ? 1
+          @stepRepeat.y = Number (block.match /Y\d+/)?[0][1..] ? 1
+          if @stepRepeat.x > 1
+            @stepRepeat.xStep = Number (block.match /I[\d\.]+/)?[0][1..]
+          if @stepRepeat.y > 1
+            @stepRepeat.yStep = Number (block.match /J[\d\.]+/)?[0][1..]
+          # if we've got steps in any direction, we need a new SR block
+          if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
+            # easiest case: no clear levels
+            if @layer.level is 0
+              srBlock = {
+                g: [
+                  { _attr: { id: "#{@gerberId}-sr-block-#{@stepRepeat.block}"}}
+                ]
+              }
+              @layer.current[@layer.type].push srBlock
+              @layer.current = srBlock
+          #throw new Error 'step repeat unimplimented'
         when 'LP'
           p = block[2]
           unless p is 'D' or p is 'C'
@@ -210,21 +235,28 @@ class Plotter
           # else if switching from dark to clear
           else if p is 'C' and @layer.type is 'g'
             maskId = "#{@gerberId}-layer-#{++@layer.level}"
+            x = "#{@bbox.xMin}"
+            y = "#{@bbox.yMin}"
+            width = "#{@bbox.xMax - @bbox.xMin}"
+            height = "#{@bbox.yMax - @bbox.yMin}"
             # add the mask to the definitions
-            @defs.push {
+            m = {
               mask: [
                 { _attr: { id: maskId, color: '#000' } }
                 {
                   rect: {
-                    x: "#{@bbox.xMin}"
-                    y: "#{@bbox.yMin}"
-                    width: "#{@bbox.xMax - @bbox.xMin}"
-                    height: "#{@bbox.yMax - @bbox.yMin}"
-                    fill: '#fff'
+                    _attr: {
+                      x: x
+                      y: y
+                      width: width
+                      height: height
+                      fill: '#fff'
+                    }
                   }
                 }
               ]
             }
+            @defs.push m
             @layer.current.g[0]._attr.mask = "url(##{maskId})"
             @layer.current = @defs[@defs.length-1]
             @layer.type = 'mask'
@@ -270,13 +302,19 @@ class Plotter
       else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
         throw new SyntaxError 'invalid operation G code'
       valid = true
-    # else check for a tool change
-    else if block[0] is 'D' and not block.match /D0?[123]$/
-      unless @tools[block]?
-        throw new SyntaxError "tool #{block} does not exist"
+
+    # check for a tool change
+    t = (block.match /D[1-9]\d{1,}$/)?[0]
+    if t?
+      # finish any in progress path
+      @finishTrace()
+      # check that tool exists and we're not in region mode
+      unless @tools[t]?
+        throw new SyntaxError "tool #{t} does not exist"
       if @trace.region
         throw new SyntaxError "cannot change tool while region mode is on"
-      @currentTool = block
+      # change the tool
+      @currentTool = t
 
     # now let's check for a coordinate block
     if block.match /^(G0?[123])?([XYIJ][+-]?\d+){0,4}D0?[123]$/
@@ -350,6 +388,26 @@ class Plotter
         @finishTrace()
       else
         throw new SyntaxError "#{op} is an invalid operation (D) code"
+
+  finishStepRepeat: () ->
+    if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
+      if @layer.level isnt 0
+        throw new Error 'step repeat with clear levels is unimplimented'
+      srId = @layer.current.g[0]._attr.id
+      @layer.current = @group
+      for x in [ 0...@stepRepeat.x ]
+        for y in [ 0...@stepRepeat.y ]
+          unless x is 0 and y is 0
+            @layer.current[@layer.type].push {
+              use: {
+                _attr: {
+                  x: "#{x*@stepRepeat.xStep}"
+                  y: "#{y*@stepRepeat.yStep}"
+                  'xlink:href': srId
+                }
+              }
+            }
+
 
   finishTrace: () ->
     # if there's a trace going on
