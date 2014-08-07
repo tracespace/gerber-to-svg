@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+var gerber2svg = require('../lib/gerber-to-svg.js');
+var fs = require('fs');
+var args = process.argv.slice(2);
+
+// read the file
+fs.readFile(args[args.length - 1], 'utf-8', function(err, data){
+  if (err) throw err
+  process.stdout.write(gerber2svg(data));
+  process.exit(0);
+});

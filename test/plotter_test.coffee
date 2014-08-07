@@ -191,14 +191,14 @@ describe 'Plotter class', ->
         p.layer.type.should.eql 'g'
       it 'should change to a mask if polarity switches to clear', ->
         p.parameter [ '%', 'LPC', '%' ]
-        p.defs[0].mask[0]._attr.should.match /layer-1/
+        p.defs[0].mask[0]._attr.id.should.match /layer-1/
         p.group.g[0]._attr.mask.should.match /url\(#.*-layer-1\)/
         p.layer.current.should.equal p.defs[0]
         p.layer.type.should.eql 'mask'
       it 'should change back to wrapped group if polarity switches to dark', ->
         p.parameter [ '%', 'LPC', '%' ]
         p.parameter [ '%', 'LPD', '%' ]
-        p.defs[0].mask[0]._attr.should.match /layer-1/
+        p.defs[0].mask[0]._attr.id.should.match /layer-1/
         p.group.should.containDeep {
           g: [ { _attr: {} }, { g: [ { _attr: {} } ] } ]
         }
