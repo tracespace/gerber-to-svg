@@ -30,6 +30,8 @@ standardTool = (tool, p) ->
       'stroke-linecap': 'round'
       'stroke-linejoin': 'round'
       'stroke-width': "#{p.dia}"
+      stroke: 'currentColor'
+      fill: 'none'
     }
 
   else if p.width? and p.height?

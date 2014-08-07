@@ -191,18 +191,20 @@ describe 'tool macro class', ->
       it 'should add a moiré to the shapes and bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [6, 0, 0, 20, 2, 2, 3, 2, 22, 0]
-        m.shapes.should.containEql {
-          line: { _attr: {
+        m.shapes.should.containDeep [
+          { line: { _attr: {
                 x1: '-11', y1: '0', x2: '11', y2: '0', 'stroke-width': '2'
               }
             }
           }
-        m.shapes.should.containEql {
-          line: { _attr: {
+        ]
+        m.shapes.should.containDeep [
+          { line: { _attr: {
                 x1: '0', y1: '-11', x2: '0', y2: '11', 'stroke-width': '2'
               }
             }
           }
+        ]
         m.shapes.should.containDeep [
           { circle: { _attr: {
                 cx: '0', cy: '0', r: '9', fill: 'none', 'stroke-width': '2'

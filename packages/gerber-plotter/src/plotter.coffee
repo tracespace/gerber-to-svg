@@ -107,7 +107,6 @@ class Plotter
     until @done
       # grab the next command
       current = @parser.nextCommand()
-      console.log "next command is #{current}"
       # if it's a parameter command
       if current[0] is '%' then @parameter current else @operate current[0]
     # finish and return the xml object
@@ -211,7 +210,21 @@ class Plotter
           # else if switching from dark to clear
           else if p is 'C' and @layer.type is 'g'
             maskId = "#{@gerberId}-layer-#{++@layer.level}"
-            @defs.push { mask: [ { _attr: { id: maskId } } ] }
+            # add the mask to the definitions
+            @defs.push {
+              mask: [
+                { _attr: { id: maskId, color: '#000' } }
+                {
+                  rect: {
+                    x: "#{@bbox.xMin}"
+                    y: "#{@bbox.yMin}"
+                    width: "#{@bbox.xMax - @bbox.xMin}"
+                    height: "#{@bbox.yMax - @bbox.yMin}"
+                    fill: '#fff'
+                  }
+                }
+              ]
+            }
             @layer.current.g[0]._attr.mask = "url(##{maskId})"
             @layer.current = @defs[@defs.length-1]
             @layer.type = 'mask'
