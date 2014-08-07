@@ -1,8 +1,11 @@
 {
   "name": "gerber-to-svg",
-  "version": "0.0.0",
-  "description": "Gerber and excellon drill file to SVG converter",
+  "version": "0.0.1",
+  "description": "Gerber file to SVG converter",
   "main": "lib/gerber-to-svg.js",
+  "bin": {
+    "gerber2svg": "bin/gerber2svg"
+  },
   "scripts": {
     "test": "gulp test"
   },
@@ -13,11 +16,10 @@
   "keywords": [
     "svg",
     "gerber",
-    "excellon",
-    "drill",
-    "pcb"
+    "pcb",
+    "circuit"
   ],
-  "author": "Mike Cousins",
+  "author": "Mike Cousins <mike@cousins.io> (http://cousins.io)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mcous/gerber-to-svg/issues"
