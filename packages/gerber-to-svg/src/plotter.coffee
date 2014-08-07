@@ -423,10 +423,10 @@ class Plotter
             @trace.path +=
               "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
             # bbox is going to just be a rectangle
-            xMin = cen.x - r
-            yMin = cen.y - r
-            xMax = cen.x + r
-            yMax = cen.y + r
+            xMin = cen.x - r - rTool
+            yMin = cen.y - r - rTool
+            xMax = cen.x + r + rTool
+            yMax = cen.y + r + rTool
           # add the arc to the path
           @trace.path += "A#{r} #{r} 0 #{large} #{sweep} #{end.x} #{end.y}"
           # add the bounding box
