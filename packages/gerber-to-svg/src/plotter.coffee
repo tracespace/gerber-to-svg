@@ -201,6 +201,8 @@ class Plotter
           @macros[m.name] = m
           done = true
         when 'SR'
+          # finish any trace that's in progress
+          @finishTrace()
           # finish any in progress SR
           @finishStepRepeat()
           # get the steps and stuff
@@ -223,6 +225,9 @@ class Plotter
               @layer.current = srBlock
           #throw new Error 'step repeat unimplimented'
         when 'LP'
+          # finish any trace that's in progress
+          @finishTrace()
+          # get the level
           p = block[2]
           unless p is 'D' or p is 'C'
             throw new SyntaxError "#{block} is an unrecognized level polarity"

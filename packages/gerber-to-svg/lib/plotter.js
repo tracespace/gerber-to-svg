@@ -325,6 +325,7 @@
             done = true;
             break;
           case 'SR':
+            this.finishTrace();
             this.finishStepRepeat();
             this.stepRepeat.x = Number((_ref1 = (_ref2 = block.match(/X\d+/)) != null ? _ref2[0].slice(1) : void 0) != null ? _ref1 : 1);
             this.stepRepeat.y = Number((_ref3 = (_ref4 = block.match(/Y\d+/)) != null ? _ref4[0].slice(1) : void 0) != null ? _ref3 : 1);
@@ -351,6 +352,7 @@
             }
             break;
           case 'LP':
+            this.finishTrace();
             p = block[2];
             if (!(p === 'D' || p === 'C')) {
               throw new SyntaxError("" + block + " is an unrecognized level polarity");
