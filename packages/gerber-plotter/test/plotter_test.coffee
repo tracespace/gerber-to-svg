@@ -177,8 +177,8 @@ describe 'Plotter class', ->
           p.parameter [ '%', 'ADD10CIRC,1.6', '%' ]
           (p.tools.D10?).should.be.true
           p.defs.should.containDeep [ { circle: { _attr: { r: '0.8' } } } ]
-          p.parameter [ '%', 'AMRECT', '21,1,1,1,0,0,0', '%' ]
-          p.parameter [ '%', 'ADD11RECT', '%' ]
+          p.parameter [ '%', 'AMRECT1', '21,1,1,1,0,0,0', '%' ]
+          p.parameter [ '%', 'ADD11RECT1', '%' ]
           (p.tools.D11?).should.be.true
           p.defs.should.containDeep [ { rect: { _attr: { width: '1' } } } ]
 
@@ -195,6 +195,10 @@ describe 'Plotter class', ->
         p.group.g[0]._attr.mask.should.match /url\(#.*-layer-1\)/
         p.layer.current.should.equal p.defs[0]
         p.layer.type.should.eql 'mask'
+        p.layer.current.mask.should.containDeep [
+          { _attr: { color: '#000' } }
+          { rect: { _attr: { fill: '#fff' } } }
+        ]
       it 'should change back to wrapped group if polarity switches to dark', ->
         p.parameter [ '%', 'LPC', '%' ]
         p.parameter [ '%', 'LPD', '%' ]
@@ -212,6 +216,55 @@ describe 'Plotter class', ->
         (-> p.parameter [ '%', 'LPXXX', '%' ] )
           .should.throw /unrecognized level polarity/
 
+    describe 'step and repeat', ->
+      it 'shouldnt do anything with SRX1Y1', ->
+        p.parameter [ '%', 'FSLAX23Y23', 'MOIN', 'ADD10C,1', '%' ]
+        # default SR of no steps
+        p.parameter [ '%', 'SRX1Y1I0.0J0.0', '%' ]
+        p.operate 'D10'
+        # add a 1" round pad at 1,1
+        p.operate 'X1000Y1000D03'
+        # end file
+        p.operate 'M02'
+        p.finish()
+        # result
+        p.group.g.should.containDeep [
+          { _attr: {} }
+          { use: {} }
+        ]
+        p.group.g[0]._attr.should.match /layer-0/
+      describe 'no clear levels', ->
+        it 'with only 1 SR should wrap the current layer and repeat it', ->
+          p.parameter [ '%', 'FSLAX23Y23', 'MOIN', 'ADD10C,1', '%' ]
+          # step 3 times in the y at 2" and 2 times in the x at 3"
+          p.parameter [ '%', 'SRX2Y3I3.0J2.0', '%' ]
+          p.operate 'D10'
+          # add a 1" round pad at 1,1
+          p.operate 'X1000Y1000D03'
+          # end file
+          p.operate 'M02'
+          p.finish()
+          # result
+          p.group.g.should.containDeep [
+            { _attr: {} }
+            { g: [ { _attr: {} }, { use: {} } ] }
+            { use: { _attr: { x: '0', y: '2' } } }
+            { use: { _attr: { x: '0', y: '4' } } }
+            { use: { _attr: { x: '3', y: '0' } } }
+            { use: { _attr: { x: '3', y: '2' } } }
+            { use: { _attr: { x: '3', y: '4' } } }
+          ]
+          p.group.g[0]._attr.id.should.match /layer-0/
+          p.group.g[1].g[0]._attr.id.should.match /sr-block-0/
+          p.group.g[2].use._attr['xlink:href'].should.match /sr-block-0/
+          p.group.g[3].use._attr['xlink:href'].should.match /sr-block-0/
+          p.group.g[4].use._attr['xlink:href'].should.match /sr-block-0/
+          p.group.g[5].use._attr['xlink:href'].should.match /sr-block-0/
+          p.group.g[6].use._attr['xlink:href'].should.match /sr-block-0/
+        it 'with multiple SRs it should keep the blocks separate', ->
+
+      #describe 'with overlaping clear levels', ->
+        # this gets tricky, see http://codepen.io/mcous/pen/IqGlf
   describe 'operate method', ->
     p = null
     beforeEach () -> p = new Plotter()
@@ -271,6 +324,10 @@ describe 'Plotter class', ->
       it 'should change the tool if it exists', ->
         p.parameter [ '%', 'ADD10C,10', '%' ]
         p.operate 'D10'
+        p.currentTool.should.eql 'D10'
+      it 'should change the tool even with deprecated commands', ->
+        p.parameter [ '%', 'ADD10C,10', '%' ]
+        p.operate 'G54D10'
         p.currentTool.should.eql 'D10'
       it 'should throw an error if the tool doesnt exist', ->
         (-> p.operate  'D10').should.throw /does not exist/

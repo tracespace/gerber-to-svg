@@ -6,10 +6,18 @@
   Plotter = require('./plotter');
 
   gerberToSvg = function(gerber) {
-    var p, xmlObject;
+    var e, p, xmlObject;
     p = new Plotter(gerber);
-    xmlObject = p.plot();
-    return builder(xmlObject);
+    try {
+      xmlObject = p.plot();
+    } catch (_error) {
+      e = _error;
+      console.log("error at gerber line " + p.parser.line);
+      throw e;
+    }
+    return builder(xmlObject, {
+      indent: '  '
+    });
   };
 
   module.exports = gerberToSvg;

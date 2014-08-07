@@ -95,7 +95,7 @@
         break;
       default:
         def = block.slice(2 + code.length);
-        name = (_ref2 = def.match(/[a-zA-Z_$][a-zA-Z_$.]{0,126}(?=,)?/)) != null ? _ref2[0] : void 0;
+        name = (_ref2 = def.match(/[a-zA-Z_$][a-zA-Z_$.0-9]{0,126}(?=,)?/)) != null ? _ref2[0] : void 0;
         if (!name) {
           throw new SyntaxError('invalid definition with macro');
         }
@@ -140,6 +140,13 @@
         type: 'g',
         current: this.group
       };
+      this.stepRepeat = {
+        x: 1,
+        y: 1,
+        xStep: null,
+        yStep: null,
+        block: 0
+      };
       this.done = false;
       this.units = null;
       this.format = {
@@ -182,16 +189,20 @@
     Plotter.prototype.finish = function() {
       var height, width, xml;
       this.finishTrace();
+      this.finishStepRepeat();
       width = parseFloat((this.bbox.xMax - this.bbox.xMin).toPrecision(10));
       height = parseFloat((this.bbox.yMax - this.bbox.yMin).toPrecision(10));
       xml = {
         svg: [
           {
             _attr: {
-              id: this.gerberId,
+              xmlns: 'http://www.w3.org/2000/svg',
+              version: '1.1',
+              'xmlns:xlink': 'http://www.w3.org/1999/xlink',
               width: "" + width + this.units,
               height: "" + height + this.units,
-              viewBox: "" + this.bbox.xMin + " " + this.bbox.yMin + " " + width + " " + height
+              viewBox: "" + this.bbox.xMin + " " + this.bbox.yMin + " " + width + " " + height,
+              id: this.gerberId
             }
           }
         ]
@@ -201,12 +212,13 @@
           defs: this.defs
         });
       }
+      this.group.g[0]._attr.transform = "translate(0," + (this.bbox.yMin + this.bbox.yMax) + ") scale(1,-1)";
       xml.svg.push(this.group);
       return xml;
     };
 
     Plotter.prototype.parameter = function(blocks) {
-      var ad, block, done, error, groupId, index, invalid, m, maskId, obj, p, u, _i, _len, _ref, _results;
+      var ad, block, done, error, groupId, height, index, invalid, m, maskId, obj, p, srBlock, u, width, x, y, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
       done = false;
       if (blocks[0] === '%' && blocks[blocks.length - 1] !== '%') {
         throw new SyntaxError('@parameter should only be called with paramters');
@@ -307,7 +319,30 @@
             done = true;
             break;
           case 'SR':
-            throw new Error('step repeat unimplimented');
+            this.finishStepRepeat();
+            this.stepRepeat.x = Number((_ref1 = (_ref2 = block.match(/X\d+/)) != null ? _ref2[0].slice(1) : void 0) != null ? _ref1 : 1);
+            this.stepRepeat.y = Number((_ref3 = (_ref4 = block.match(/Y\d+/)) != null ? _ref4[0].slice(1) : void 0) != null ? _ref3 : 1);
+            if (this.stepRepeat.x > 1) {
+              this.stepRepeat.xStep = Number((_ref5 = block.match(/I[\d\.]+/)) != null ? _ref5[0].slice(1) : void 0);
+            }
+            if (this.stepRepeat.y > 1) {
+              this.stepRepeat.yStep = Number((_ref6 = block.match(/J[\d\.]+/)) != null ? _ref6[0].slice(1) : void 0);
+            }
+            if (this.stepRepeat.x !== 1 || this.stepRepeat.y !== 1) {
+              if (this.layer.level === 0) {
+                srBlock = {
+                  g: [
+                    {
+                      _attr: {
+                        id: "" + this.gerberId + "-sr-block-" + this.stepRepeat.block
+                      }
+                    }
+                  ]
+                };
+                this.layer.current[this.layer.type].push(srBlock);
+                this.layer.current = srBlock;
+              }
+            }
             break;
           case 'LP':
             p = block[2];
@@ -329,7 +364,11 @@
               this.layer.type = 'g';
             } else if (p === 'C' && this.layer.type === 'g') {
               maskId = "" + this.gerberId + "-layer-" + (++this.layer.level);
-              this.defs.push({
+              x = "" + this.bbox.xMin;
+              y = "" + this.bbox.yMin;
+              width = "" + (this.bbox.xMax - this.bbox.xMin);
+              height = "" + (this.bbox.yMax - this.bbox.yMin);
+              m = {
                 mask: [
                   {
                     _attr: {
@@ -338,15 +377,18 @@
                     }
                   }, {
                     rect: {
-                      x: "" + this.bbox.xMin,
-                      y: "" + this.bbox.yMin,
-                      width: "" + (this.bbox.xMax - this.bbox.xMin),
-                      height: "" + (this.bbox.yMax - this.bbox.yMin),
-                      fill: '#fff'
+                      _attr: {
+                        x: x,
+                        y: y,
+                        width: width,
+                        height: height,
+                        fill: '#fff'
+                      }
                     }
                   }
                 ]
-              });
+              };
+              this.defs.push(m);
               this.layer.current.g[0]._attr.mask = "url(#" + maskId + ")";
               this.layer.current = this.defs[this.defs.length - 1];
               this.layer.type = 'mask';
@@ -364,7 +406,7 @@
     };
 
     Plotter.prototype.operate = function(block) {
-      var cen, code, coord, end, large, op, r, start, sweep, theta, thetaE, thetaS, valid, _ref;
+      var cen, code, coord, end, large, op, r, start, sweep, t, theta, thetaE, thetaS, valid, _ref, _ref1;
       valid = false;
       code = block.slice(0, 3);
       if (block[0] === 'M') {
@@ -396,18 +438,21 @@
           throw new SyntaxError('invalid operation G code');
         }
         valid = true;
-      } else if (block[0] === 'D' && !block.match(/D0?[123]$/)) {
-        if (this.tools[block] == null) {
-          throw new SyntaxError("tool " + block + " does not exist");
+      }
+      t = (_ref = block.match(/D[1-9]\d{1,}$/)) != null ? _ref[0] : void 0;
+      if (t != null) {
+        this.finishTrace();
+        if (this.tools[t] == null) {
+          throw new SyntaxError("tool " + t + " does not exist");
         }
         if (this.trace.region) {
           throw new SyntaxError("cannot change tool while region mode is on");
         }
-        this.currentTool = block;
+        this.currentTool = t;
       }
       if (block.match(/^(G0?[123])?([XYIJ][+-]?\d+){0,4}D0?[123]$/)) {
         op = block[block.length - 1];
-        coord = (_ref = block.match(/[XYIJ][+-]?\d+/g)) != null ? _ref.join('') : void 0;
+        coord = (_ref1 = block.match(/[XYIJ][+-]?\d+/g)) != null ? _ref1.join('') : void 0;
         start = {
           x: this.position.x,
           y: this.position.y
@@ -459,6 +504,41 @@
         } else {
           throw new SyntaxError("" + op + " is an invalid operation (D) code");
         }
+      }
+    };
+
+    Plotter.prototype.finishStepRepeat = function() {
+      var srId, x, y, _i, _ref, _results;
+      if (this.stepRepeat.x !== 1 || this.stepRepeat.y !== 1) {
+        if (this.layer.level !== 0) {
+          throw new Error('step repeat with clear levels is unimplimented');
+        }
+        srId = this.layer.current.g[0]._attr.id;
+        this.layer.current = this.group;
+        _results = [];
+        for (x = _i = 0, _ref = this.stepRepeat.x; 0 <= _ref ? _i < _ref : _i > _ref; x = 0 <= _ref ? ++_i : --_i) {
+          _results.push((function() {
+            var _j, _ref1, _results1;
+            _results1 = [];
+            for (y = _j = 0, _ref1 = this.stepRepeat.y; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; y = 0 <= _ref1 ? ++_j : --_j) {
+              if (!(x === 0 && y === 0)) {
+                _results1.push(this.layer.current[this.layer.type].push({
+                  use: {
+                    _attr: {
+                      x: "" + (x * this.stepRepeat.xStep),
+                      y: "" + (y * this.stepRepeat.yStep),
+                      'xlink:href': srId
+                    }
+                  }
+                }));
+              } else {
+                _results1.push(void 0);
+              }
+            }
+            return _results1;
+          }).call(this));
+        }
+        return _results;
       }
     };
 
