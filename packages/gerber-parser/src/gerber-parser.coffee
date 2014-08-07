@@ -5,6 +5,8 @@ class GerberParser
   constructor: (@file) ->
     # track progress
     @index = 0
+    # track line number
+    @line = 1
 
   # get the next commmand
   nextCommand: () ->
@@ -24,6 +26,8 @@ class GerberParser
         unless parameter then done = true
       else if ' ' <= char <= '~'
         current += char
+      else if char is '\n'
+        @line++
       @index++
     blocks
 
