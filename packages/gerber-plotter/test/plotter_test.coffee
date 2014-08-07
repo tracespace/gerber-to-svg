@@ -232,7 +232,7 @@ describe 'Plotter class', ->
           { _attr: {} }
           { use: {} }
         ]
-        p.group.g[0]._attr.should.match /layer-0/
+        p.group.g[0]._attr.id.should.match /layer-0/
       describe 'no clear levels', ->
         it 'with only 1 SR should wrap the current layer and repeat it', ->
           p.parameter [ '%', 'FSLAX23Y23', 'MOIN', 'ADD10C,1', '%' ]
@@ -265,6 +265,7 @@ describe 'Plotter class', ->
 
       #describe 'with overlaping clear levels', ->
         # this gets tricky, see http://codepen.io/mcous/pen/IqGlf
+
   describe 'operate method', ->
     p = null
     beforeEach () -> p = new Plotter()
@@ -473,13 +474,43 @@ describe 'Plotter class', ->
           p.bbox.should.eql { xMin: -0.5, yMin: -0.5, xMax: 1.5, yMax: 1.5 }
 
     describe 'single quadrant arc mode', ->
-      beforeEach () -> p.operate 'G74'
+      beforeEach () ->
+        p.operate 'G74'
       it 'should add a CW arc with a G02', ->
         p.operate 'G02X10000Y10000I10000D01'
         p.trace.path.should.containEql 'A1 1 0 0 0 1 1'
       it 'should add a CCW arc with a G03', ->
         p.operate 'G03X10000Y10000I10000D01'
         p.trace.path.should.containEql 'A1 1 0 0 1 1 1'
+      describe 'adjusting the bbox', ->
+        it 'sweeping past 180 deg determines min X', ->
+          p.operate 'X-7071Y-7071D02'
+          p.operate 'G02X-7071Y7071I7071J7071D01'
+          result = Math.abs -1.5-p.bbox.xMin
+          result.should.be.lessThan 0.0001
+        it 'sweeping past 270 deg determines min Y', ->
+          p.operate 'X7071Y-7071D02'
+          p.operate 'G02X-7071Y-7071I7071J7071D01'
+          result = Math.abs -1.5-p.bbox.yMin
+          result.should.be.lessThan 0.0001
+        it 'sweeping past 90 deg determines max Y', ->
+          p.operate 'X-7071Y7071D02'
+          p.operate 'G02X7071Y7071I7071J7071D01'
+          result = Math.abs 1.5-p.bbox.yMax
+          result.should.be.lessThan 0.0001
+        it 'sweeping past 0 deg determines max X', ->
+          p.operate 'X7071Y7071D02'
+          p.operate 'G02X7071Y-7071I7071J7071D01'
+          result = Math.abs 1.5-p.bbox.xMax
+          result.should.be.lessThan 0.0001
+        it 'if its just hanging out, use the end points', ->
+          p.operate 'X5000Y8660D02'
+          p.operate 'G02X8660Y5000I5000J8660D01'
+          p.bbox.xMin.should.equal 0
+          p.bbox.yMin.should.equal 0
+          p.bbox.xMax.should.equal 1.3660
+          p.bbox.yMax.should.equal 1.3660
+
 
     describe 'multi quadrant arc mode', ->
       beforeEach () -> p.operate 'G75'

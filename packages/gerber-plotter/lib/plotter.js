@@ -299,6 +299,12 @@
                 };
               },
               bbox: function(x, y) {
+                if (x == null) {
+                  x = 0;
+                }
+                if (y == null) {
+                  y = 0;
+                }
                 return {
                   xMin: x + ad.tool.bbox[0],
                   yMin: y + ad.tool.bbox[1],
@@ -406,7 +412,7 @@
     };
 
     Plotter.prototype.operate = function(block) {
-      var cen, code, coord, end, large, op, r, start, sweep, t, theta, thetaE, thetaS, valid, _ref, _ref1;
+      var c, cen, code, coord, cx, cy, dist, end, large, op, r, rTool, start, sweep, t, theta, thetaE, thetaS, valid, xMax, xMin, yMax, yMin, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref10, _ref11, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       valid = false;
       code = block.slice(0, 3);
       if (block[0] === 'M') {
@@ -465,15 +471,17 @@
         } else if (op === '1') {
           if (!this.trace.path) {
             this.trace.path = "M" + start.x + " " + start.y;
-            if (this.trace.region) {
-              this.addBbox({
-                xMin: start.x,
-                yMin: start.y,
-                xMax: start.x,
-                yMax: start.y
-              });
-            } else {
-              this.addBbox(this.tools[this.currentTool].bbox(start.x, start.y));
+            if (this.mode === 'i') {
+              if (this.trace.region) {
+                this.addBbox({
+                  xMin: start.x,
+                  yMin: start.y,
+                  xMax: start.x,
+                  yMax: start.y
+                });
+              } else {
+                this.addBbox(this.tools[this.currentTool].bbox(start.x, start.y));
+              }
             }
           }
           if (this.mode === 'i') {
@@ -491,11 +499,96 @@
           } else if (this.mode === 'cw' || this.mode === 'ccw') {
             r = Math.sqrt(Math.pow(end.i, 2) + Math.pow(end.j, 2));
             sweep = this.mode === 'cw' ? 0 : 1;
-            large = this.quad === 's' ? 0 : (cen = {
-              x: start.x + end.i,
-              y: start.y + end.j
-            }, thetaE = Math.atan2(end.y - cen.y, end.x - cen.x), thetaE < 0 ? thetaE = 2 * Math.PI + thetaE : void 0, thetaS = Math.atan2(start.y - cen.y, start.x - cen.x), thetaS < 0 ? thetaS = 2 * Math.PI + thetaS : void 0, theta = Math.abs(thetaE - thetaS), this.mode === 'ccw' ? theta = 2 * Math.PI - theta : void 0, (Math.abs(start.x - end.x) < 0.000001) && (Math.abs(start.y - end.y) < 0.000001) ? this.trace.path += "A" + r + " " + r + " 0 0 " + sweep + " " + (end.x + 2 * end.i) + " " + (end.y + 2 * end.j) : void 0, theta >= Math.PI ? 1 : 0);
-            return this.trace.path += "A" + r + " " + r + " 0 " + large + " " + sweep + " " + end.x + " " + end.y;
+            large = 0;
+            cen = [];
+            thetaE = 0;
+            thetaS = 0;
+            if (this.quad === 's') {
+              _ref2 = [start.x - end.i, start.x + end.i];
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                cx = _ref2[_i];
+                _ref3 = [start.y - end.j, start.y + end.j];
+                for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+                  cy = _ref3[_j];
+                  dist = Math.sqrt(Math.pow(cx - end.x, 2) + Math.pow(cy - end.y, 2));
+                  if ((Math.abs(r - dist)) < 0.0000001) {
+                    cen.push({
+                      x: cx,
+                      y: cy
+                    });
+                  }
+                }
+              }
+            } else if (this.quad === 'm') {
+              cen.push({
+                x: start.x + end.i,
+                y: start.y + end.j
+              });
+            }
+            for (_k = 0, _len2 = cen.length; _k < _len2; _k++) {
+              c = cen[_k];
+              thetaE = Math.atan2(end.y - c.y, end.x - c.x);
+              if (thetaE < 0) {
+                thetaE += 2 * Math.PI;
+              }
+              thetaS = Math.atan2(start.y - c.y, start.x - c.x);
+              if (thetaS < 0) {
+                thetaS += 2 * Math.PI;
+              }
+              if (this.mode === 'cw' && thetaS < thetaE) {
+                thetaS += 2 * Math.PI;
+              } else if (this.mode === 'ccw' && thetaE < thetaS) {
+                thetaE += 2 * Math.PI;
+              }
+              theta = Math.abs(thetaE - thetaS);
+              if (this.quad === 's' && Math.abs(thetaE - thetaS) > Math.PI / 2) {
+                continue;
+              } else {
+                if (this.quad === 'm' && theta >= Math.PI) {
+                  large = 1;
+                }
+                cen = {
+                  x: c.x,
+                  y: c.y
+                };
+                break;
+              }
+            }
+            rTool = this.trace.region ? 0 : this.tools[this.currentTool].bbox().xMax;
+            if ((thetaS <= (_ref4 = Math.PI) && _ref4 <= thetaE) || (thetaS >= (_ref5 = Math.PI) && _ref5 >= thetaE)) {
+              xMin = cen.x - r - rTool;
+            } else {
+              xMin = (Math.min(start.x, end.x)) - rTool;
+            }
+            if ((thetaS <= (_ref6 = 2 * Math.PI) && _ref6 <= thetaE) || (thetaS >= (_ref7 = 2 * Math.PI) && _ref7 >= thetaE) || (thetaS <= 0 && 0 <= thetaE) || (thetaS >= 0 && 0 >= thetaE)) {
+              xMax = cen.x + r + rTool;
+            } else {
+              xMax = (Math.max(start.x, end.x)) + rTool;
+            }
+            if ((thetaS <= (_ref8 = 3 * Math.PI / 2) && _ref8 <= thetaE) || (thetaS >= (_ref9 = 3 * Math.PI / 2) && _ref9 >= thetaE)) {
+              yMin = cen.y - r - rTool;
+            } else {
+              yMin = (Math.min(start.y, end.y)) - rTool;
+            }
+            if ((thetaS <= (_ref10 = Math.PI / 2) && _ref10 <= thetaE) || (thetaS >= (_ref11 = Math.PI / 2) && _ref11 >= thetaE)) {
+              yMax = cen.y + r + rTool;
+            } else {
+              yMax = (Math.max(start.y, end.y)) + rTool;
+            }
+            if (this.quad === 'm' && (Math.abs(start.x - end.x) < 0.000001) && (Math.abs(start.y - end.y) < 0.000001)) {
+              this.trace.path += "A" + r + " " + r + " 0 0 " + sweep + " " + (end.x + 2 * end.i) + " " + (end.y + 2 * end.j);
+              xMin = cen.x - r;
+              yMin = cen.y - r;
+              xMax = cen.x + r;
+              yMax = cen.y + r;
+            }
+            this.trace.path += "A" + r + " " + r + " 0 " + large + " " + sweep + " " + end.x + " " + end.y;
+            return this.addBbox({
+              xMin: xMin,
+              yMin: yMin,
+              xMax: xMax,
+              yMax: yMax
+            });
           } else {
             throw new SyntaxError('cannot interpolate without a G01/2/3');
           }
