@@ -577,10 +577,10 @@
             }
             if (this.quad === 'm' && (Math.abs(start.x - end.x) < 0.000001) && (Math.abs(start.y - end.y) < 0.000001)) {
               this.trace.path += "A" + r + " " + r + " 0 0 " + sweep + " " + (end.x + 2 * end.i) + " " + (end.y + 2 * end.j);
-              xMin = cen.x - r;
-              yMin = cen.y - r;
-              xMax = cen.x + r;
-              yMax = cen.y + r;
+              xMin = cen.x - r - rTool;
+              yMin = cen.y - r - rTool;
+              xMax = cen.x + r + rTool;
+              yMax = cen.y + r + rTool;
             }
             this.trace.path += "A" + r + " " + r + " 0 " + large + " " + sweep + " " + end.x + " " + end.y;
             return this.addBbox({
