@@ -13,7 +13,13 @@ circle = (p) ->
   {
     shape: {
       circle: {
-        _attr: { cx: "#{p.cx}", cy: "#{p.cy}", r: "#{r}" }
+        _attr: {
+          cx: "#{p.cx}"
+          cy: "#{p.cy}"
+          r: "#{r}"
+          'stroke-width': '0'
+          fill: 'currentColor'
+        }
       }
     }
     bbox: [ p.cx - r, p.cy - r, p.cx + r, p.cy + r ]
@@ -35,6 +41,8 @@ rect = (p) ->
           y:      "#{y}"
           width:  "#{p.width}"
           height: "#{p.height}"
+          'stroke-width': '0'
+          fill: 'currentColor'
         }
       }
     }
@@ -80,7 +88,13 @@ polygon = (p) ->
     points += " #{x},#{y}"
   # return polygon object
   {
-    shape: { polygon: { _attr: { points: points[1..] } } }
+    shape: {
+      polygon: {
+        _attr: {
+          points: points[1..], 'stroke-width': '0', fill: 'currentColor'
+        }
+      }
+    }
     bbox: [ xMin, yMin, xMax, yMax ]
   }
 
@@ -108,6 +122,7 @@ vector = (p) ->
           y1: "#{p.y1}"
           y2: "#{p.y2}"
           'stroke-width': "#{p.width}"
+          stroke: 'currentColor'
         }
       }
     }
@@ -134,6 +149,8 @@ lowerLeftRect = (p) ->
           y: "#{p.y}"
           width: "#{p.width}"
           height: "#{p.height}"
+          'stroke-width': '0'
+          fill: 'currentColor'
         }
       }
     }
@@ -167,7 +184,13 @@ outline = (p) ->
 
   # return the object
   {
-    shape: { polygon: { _attr: { points: pointString[1..] } } }
+    shape: {
+      polygon: {
+        _attr: {
+          points: pointString[1..], 'stroke-width': '0', fill: 'currentColor'
+        }
+      }
+    }
     bbox: [ xMin, yMin, xMax, yMax ]
   }
 
@@ -193,6 +216,7 @@ moire = (p) ->
           x2: "#{p.cx + p.crossLength/2}"
           y2: '0'
           'stroke-width': "#{p.crossThx}"
+          stroke: 'currentColor'
         }
       }
     }
@@ -204,6 +228,7 @@ moire = (p) ->
           x2: '0'
           y2: "#{p.cy + p.crossLength/2}"
           'stroke-width': "#{p.crossThx}"
+          stroke: 'currentColor'
         }
       }
     }
@@ -221,6 +246,7 @@ moire = (p) ->
           r: "#{r}"
           fill: 'none'
           'stroke-width': "#{p.ringThx}"
+          stroke: 'currentColor'
         }
       }
     }
@@ -235,6 +261,7 @@ moire = (p) ->
         cy: "#{p.cy}"
         r: "#{r}"
         'stroke-width': 0
+        fill: 'currentColor'
       }
     }
   }
@@ -280,6 +307,7 @@ thermal = (p) ->
                 cx: "#{p.cx}"
                 cy: "#{p.cy}"
                 r: "#{outerR}"
+                'stroke-width': '0'
                 fill: '#fff'
               }
             }
@@ -291,6 +319,7 @@ thermal = (p) ->
                 y: "#{-halfGap}"
                 width: "#{p.outerDia}"
                 height: "#{p.gap}"
+                'stroke-width': 0
                 fill: "#000"
               }
             }
@@ -302,6 +331,7 @@ thermal = (p) ->
                 y: "#{yMin}"
                 width: "#{p.gap}"
                 height: "#{p.outerDia}"
+                'stroke-width': 0
                 fill: "#000"
               }
             }
@@ -316,6 +346,7 @@ thermal = (p) ->
             r: "#{r}"
             fill: 'none'
             'stroke-width': "#{thx}"
+            stroke: 'currentColor'
             mask: "url(##{maskId})"
           }
         }
