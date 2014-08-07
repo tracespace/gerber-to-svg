@@ -3,8 +3,8 @@ gutil = require 'gulp-util'
 mocha = require 'gulp-mocha'
 coffee = require 'gulp-coffee'
 
-SRCDIR = './coffee/*.coffee'
-DESTDIR = './dist'
+SRCDIR = './src/*.coffee'
+DESTDIR = './lib'
 
 gulp.task 'default', ->
   gulp.src SRCDIR
@@ -23,5 +23,5 @@ gulp.task 'test', ->
       }
     }
 
-gulp.task 'testwatch', ['test'], ->
-  gulp.watch ['./src/*', './test/*'], ['test']
+gulp.task 'testwatch', ['test', 'default'], ->
+  gulp.watch ['./src/*', './test/*'], ['test', 'default']
