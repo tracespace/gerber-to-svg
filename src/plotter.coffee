@@ -187,7 +187,7 @@ class Plotter
                   }
                 }
               }
-            bbox: (x, y) ->
+            bbox: (x=0, y=0) ->
               {
                 xMin: x + ad.tool.bbox[0]
                 yMin: y + ad.tool.bbox[1]
@@ -338,13 +338,14 @@ class Plotter
         # if there's no path yet, we need to move to the current point
         unless @trace.path
           @trace.path = "M#{start.x} #{start.y}"
-          # also add the start to the bounding box
-          if @trace.region
-            @addBbox {
-              xMin: start.x, yMin: start.y, xMax: start.x, yMax: start.y
-            }
-          else
-            @addBbox @tools[@currentTool].bbox start.x, start.y
+          # also add the start to the bounding box if it's a line
+          if @mode is 'i'
+            if @trace.region
+              @addBbox {
+                xMin: start.x, yMin: start.y, xMax: start.x, yMax: start.y
+              }
+            else
+              @addBbox @tools[@currentTool].bbox start.x, start.y
         # check what kind of interpolate we're doing
         # linear interpolation adds an absolute line to the path
         if @mode is 'i'
@@ -361,27 +362,75 @@ class Plotter
         else if @mode is 'cw' or @mode is 'ccw'
           r = Math.sqrt end.i**2 + end.j**2
           sweep = if @mode is 'cw' then 0 else 1
-          # svg large arc flag hinges at 180 rather than 90
-          large = if @quad is 's' then 0 else
-            cen = { x: start.x + end.i, y: start.y + end.j }
-            # check the arc angle
-            thetaE = Math.atan2 end.y-cen.y, end.x-cen.x
-            if thetaE < 0 then thetaE = 2*Math.PI + thetaE
-            thetaS = Math.atan2 start.y-cen.y, start.x-cen.x
-            if thetaS < 0 then thetaS = 2*Math.PI + thetaS
-            theta = Math.abs thetaE - thetaS
-            # get the arc for CW vs CCW
-            if @mode is 'ccw' then theta = 2*Math.PI - theta
-            # check for the special condition of a full circle
-            if (Math.abs(start.x - end.x) < 0.000001) and
-            (Math.abs(start.y - end.y) < 0.000001)
-              # we'll need two paths (180 deg each)
-              @trace.path +=
-                "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
-            # set the large arc flag if it's greater than 180 (pi radians)
-            if theta >= Math.PI then 1 else 0
+          large = 0
+          # if we're in single quadrant mode, work to get the center
+          # signs are implicit on i and j in single quad, so test them
+          cen = []
+          thetaE = 0
+          thetaS = 0
+          if @quad is 's'
+            for cx in [ start.x - end.i, start.x + end.i ]
+              for cy in [start.y - end.j, start.y + end.j ]
+                dist = Math.sqrt (cx-end.x)**2 + (cy-end.y)**2
+                if (Math.abs r - dist) < 0.0000001 then cen.push {x: cx, y: cy }
+          else if @quad is 'm'
+            cen.push { x: start.x + end.i, y: start.y + end.j }
+          # at most, we'll have two candidates
+          # check the points to make sure we have a valid arc
+          for c in cen
+            thetaE = Math.atan2 end.y-c.y, end.x-c.x
+            if thetaE < 0 then thetaE += 2*Math.PI
+            thetaS = Math.atan2 start.y-c.y, start.x-c.x
+            if thetaS < 0 then thetaS += 2*Math.PI
+            # adjust angles so math comes out right
+            if @mode is 'cw' and thetaS < thetaE then thetaS+=2*Math.PI
+            else if @mode is 'ccw' and thetaE < thetaS then thetaE+=2*Math.PI
+            # take it if it's less than 90
+            theta = Math.abs(thetaE - thetaS)
+            if @quad is 's' and Math.abs(thetaE - thetaS) > Math.PI/2
+              continue
+            else
+             if @quad is 'm' and theta >= Math.PI then large = 1
+             cen = { x: c.x, y: c.y }
+             break
+          # bounding box calculations
+          rTool = if @trace.region then 0 else @tools[@currentTool].bbox().xMax
+          # minimum x is either at 180 degress or an endpoint
+          if thetaS <= Math.PI <= thetaE or thetaS >= Math.PI >= thetaE
+            xMin = cen.x - r - rTool
+          else
+            xMin = (Math.min start.x, end.x) - rTool
+          # max x is going to be at 2*pi or 0
+          if thetaS <= 2*Math.PI <= thetaE or thetaS >= 2*Math.PI >= thetaE or
+          thetaS <= 0 <= thetaE or thetaS >= 0 >= thetaE
+            xMax = cen.x + r + rTool
+          else
+            xMax = (Math.max start.x, end.x) + rTool
+          # minimum y is either at 270 degress or an endpoint
+          if thetaS <= 3*Math.PI/2 <= thetaE or thetaS >= 3*Math.PI/2 >= thetaE
+            yMin = cen.y - r - rTool
+          else
+            yMin = (Math.min start.y, end.y) - rTool
+          # max y is going to be at pi/2
+          if thetaS <= Math.PI/2 <= thetaE or thetaS >= Math.PI/2 >= thetaE
+            yMax = cen.y + r + rTool
+          else
+            yMax = (Math.max start.y, end.y) + rTool
+          # check for special case: full circle
+          if @quad is 'm' and (Math.abs(start.x - end.x) < 0.000001) and
+          (Math.abs(start.y - end.y) < 0.000001)
+            # we'll need two paths (180 deg each)
+            @trace.path +=
+              "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
+            # bbox is going to just be a rectangle
+            xMin = cen.x - r
+            yMin = cen.y - r
+            xMax = cen.x + r
+            yMax = cen.y + r
           # add the arc to the path
           @trace.path += "A#{r} #{r} 0 #{large} #{sweep} #{end.x} #{end.y}"
+          # add the bounding box
+          @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
         # if there wasn't a mode set then we're in trouble
         else throw new SyntaxError 'cannot interpolate without a G01/2/3'
       else if op is '2'
