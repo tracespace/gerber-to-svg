@@ -70,11 +70,11 @@ describe 'Plotter class', ->
       it 'should set the tools flash object to a use object', ->
         p.parameter [ '%', 'ADD10C,1.1', '%' ]
         result = p.tools.D10.flash 0, 0
-        result.should.containDeep { use: { _attr: { } } }
+        result.should.containDeep { use: {} }
       it 'should set the tools stroke object to the stroke properties', ->
         p.parameter [ '%', 'ADD10C,1.1', '%' ]
         p.tools.D10.stroke.should.containDeep {
-          'stroke-width': '1.1'
+          'stroke-width': 1.1
           'stroke-linecap': 'round'
           'stroke-linejoin': 'round'
         }
@@ -87,20 +87,20 @@ describe 'Plotter class', ->
           (p.tools.D10?).should.be.false
           p.parameter [ '%', 'ADD10C,1.2', '%' ]
           (p.tools.D10?).should.be.true
-          p.defs.should.containDeep [ { circle: { _attr: { r: '0.6' } } } ]
+          p.defs.should.containDeep [ { circle: { r: 0.6 } } ]
           (p.tools.D11?).should.be.false
           p.parameter [ '%', 'ADD11C,1.4X0.5', '%' ]
           (p.tools.D11?).should.be.true
           p.defs.should.containDeep [
-            { mask: [ { circle: { _attr: { r: '0.25' } } } ] }
-            { circle: { _attr: { r: '0.7' } } }
+            { mask: { _: [ { circle: { r: 0.25 } } ] } }
+            { circle: { r: 0.7 } }
           ]
           (p.tools.D12?).should.be.false
           p.parameter [ '%', 'ADD12C,1.6X0.5X0.5', '%' ]
           (p.tools.D12?).should.be.true
           p.defs.should.containDeep [
-            { mask: [ { rect: {} }, { rect: {} } ] }
-            { circle: { _attr: { r: '0.8' } } }
+            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { circle: { r: 0.8 } }
           ]
         it 'should add standard rectangles to the tools list', ->
           (p.tools.D10?).should.be.false
@@ -117,11 +117,11 @@ describe 'Plotter class', ->
           (p.tools.D11?).should.be.true
           (p.tools.D12?).should.be.true
           p.defs.should.containDeep [
-            { rect: { _attr: { width: '1' } } }
-            { mask: [ { circle: { _attr: { r: '0.25' } } } ] }
-            { rect: { _attr: { width: '1.1' } } }
-            { mask: [ { rect: {} }, { rect: {} } ] }
-            { rect: { _attr: { width: '1.2' } } }
+            { rect:  { width: 1 } }
+            { mask: { _: [ { circle: { r: 0.25 } } ] } }
+            { rect: { width: 1.1 } }
+            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { rect: { width: 1.2 } }
           ]
 
         it 'should add standard obrounds to the tools list', ->
@@ -139,11 +139,11 @@ describe 'Plotter class', ->
           (p.tools.D11?).should.be.true
           (p.tools.D12?).should.be.true
           p.defs.should.containDeep [
-            { rect: { _attr: { width: '1', rx: '0.5' } } }
-            { mask: [ { circle: { _attr: { r: '0.25' } } } ] }
-            { rect: { _attr: { width: '1.2', rx: '0.6' } } }
-            { mask: [ { rect: {} }, { rect: {} } ] }
-            { rect: { _attr: { width: '1.4', rx:'0.7' } } }
+            { rect: { width: 1, rx: 0.5 } }
+            { mask: { _: [ { circle: { r: 0.25 } } ] } }
+            { rect: { width: 1.2, rx: 0.6 } }
+            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { rect: { width: 1.4, rx: 0.7 } }
           ]
         it 'should add standard polygons to the tools list', ->
           (p.tools.D10?).should.be.false
@@ -165,9 +165,9 @@ describe 'Plotter class', ->
           p.defs.should.containDeep [
             { polygon: {} }
             { polygon: {} }
-            { mask: [ { circle: { _attr: { r: '0.3' } } } ] }
+            { mask: { _: [ { circle: { r: 0.3 } } ] } }
             { polygon: {} }
-            { mask: [ { rect: {} }, { rect: {} } ] }
+            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
             { polygon: {} }
           ]
 
@@ -176,11 +176,11 @@ describe 'Plotter class', ->
           p.parameter [ '%', 'AMCIRC', '1,1,$1,0,0', '%' ]
           p.parameter [ '%', 'ADD10CIRC,1.6', '%' ]
           (p.tools.D10?).should.be.true
-          p.defs.should.containDeep [ { circle: { _attr: { r: '0.8' } } } ]
+          p.defs.should.containDeep [ { circle: { r: 0.8 } } ]
           p.parameter [ '%', 'AMRECT1', '21,1,1,1,0,0,0', '%' ]
           p.parameter [ '%', 'ADD11RECT1', '%' ]
           (p.tools.D11?).should.be.true
-          p.defs.should.containDeep [ { rect: { _attr: { width: '1' } } } ]
+          p.defs.should.containDeep [ { rect: { width: 1 } } ]
 
     describe 'changing layer polarity', ->
       it 'shouldnt do anything if the polarity doesnt change', ->
@@ -191,21 +191,19 @@ describe 'Plotter class', ->
         p.layer.type.should.eql 'g'
       it 'should change to a mask if polarity switches to clear', ->
         p.parameter [ '%', 'LPC', '%' ]
-        p.defs[0].mask[0]._attr.id.should.match /layer-1/
-        p.group.g[0]._attr.mask.should.match /url\(#.*-layer-1\)/
+        p.defs[0].mask.id.should.match /layer-1/
+        p.group.g.mask.should.match /url\(#.*-layer-1\)/
         p.layer.current.should.equal p.defs[0]
         p.layer.type.should.eql 'mask'
-        p.layer.current.mask.should.containDeep [
-          { _attr: { color: '#000' } }
-          { rect: { _attr: { fill: '#fff' } } }
-        ]
+        p.layer.current.mask.should.containDeep {
+          color: '#000'
+          _: [ { rect: { fill: '#fff' } } ]
+        }
       it 'should change back to wrapped group if polarity switches to dark', ->
         p.parameter [ '%', 'LPC', '%' ]
         p.parameter [ '%', 'LPD', '%' ]
-        p.defs[0].mask[0]._attr.id.should.match /layer-1/
-        p.group.should.containDeep {
-          g: [ { _attr: {} }, { g: [ { _attr: {} } ] } ]
-        }
+        p.defs[0].mask.id.should.match /layer-1/
+        p.group.should.containDeep { g: { _: [ { g: {} } ] } }
         p.layer.current.should.equal p.group
         p.layer.level.should.equal 2
         p.layer.type.should.eql 'g'
@@ -228,11 +226,8 @@ describe 'Plotter class', ->
         p.operate 'M02'
         p.finish()
         # result
-        p.group.g.should.containDeep [
-          { _attr: {} }
-          { use: {} }
-        ]
-        p.group.g[0]._attr.id.should.match /layer-0/
+        p.group.g.should.containDeep { _: [ { use: {} } ] }
+        p.group.g.id.should.match /layer-0/
       describe 'no clear levels', ->
         it 'with only 1 SR should wrap the current layer and repeat it', ->
           p.parameter [ '%', 'FSLAX23Y23', 'MOIN', 'ADD10C,1', '%' ]
@@ -245,23 +240,22 @@ describe 'Plotter class', ->
           p.operate 'M02'
           p.finish()
           # result
-          p.group.g.should.containDeep [
-            { _attr: {} }
-            { g: [ { _attr: {} }, { use: {} } ] }
-            { use: { _attr: { x: '0', y: '2' } } }
-            { use: { _attr: { x: '0', y: '4' } } }
-            { use: { _attr: { x: '3', y: '0' } } }
-            { use: { _attr: { x: '3', y: '2' } } }
-            { use: { _attr: { x: '3', y: '4' } } }
+          p.group.g._.should.containDeep [
+            { g: { _: [ { use: {} } ] } }
+            { use: { x: '0', y: '2' } }
+            { use: { x: '0', y: '4' } }
+            { use: { x: '3', y: '0' } }
+            { use: { x: '3', y: '2' } }
+            { use: { x: '3', y: '4' } }
           ]
-          p.group.g[0]._attr.id.should.match /layer-0/
-          p.group.g[1].g[0]._attr.id.should.match /sr-block-0/
-          p.group.g[2].use._attr['xlink:href'].should.match /sr-block-0/
-          p.group.g[3].use._attr['xlink:href'].should.match /sr-block-0/
-          p.group.g[4].use._attr['xlink:href'].should.match /sr-block-0/
-          p.group.g[5].use._attr['xlink:href'].should.match /sr-block-0/
-          p.group.g[6].use._attr['xlink:href'].should.match /sr-block-0/
-        it 'with multiple SRs it should keep the blocks separate', ->
+          p.group.g.id.should.match /layer-0/
+          p.group.g._[0].g.id.should.match /sr-block-0/
+          p.group.g._[1].use['xlink:href'].should.match /sr-block-0/
+          p.group.g._[2].use['xlink:href'].should.match /sr-block-0/
+          p.group.g._[3].use['xlink:href'].should.match /sr-block-0/
+          p.group.g._[4].use['xlink:href'].should.match /sr-block-0/
+          p.group.g._[5].use['xlink:href'].should.match /sr-block-0/
+        #it 'with multiple SRs it should keep the blocks separate', ->
 
       #describe 'with overlaping clear levels', ->
         # this gets tricky, see http://codepen.io/mcous/pen/IqGlf
@@ -349,8 +343,8 @@ describe 'Plotter class', ->
           p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1', '%' ]
           p.operate 'D10'
           p.operate 'X100Y100D03'
-          p.layer.current.g.should.containDeep [
-            { use: { _attr: { x: '0.01', y: '0.01' } } }
+          p.layer.current.g._.should.containDeep [
+            { use: { x: '0.01', y: '0.01' } }
           ]
         it 'should add the pad to the board bounding box', ->
           p.parameter [ '%', 'FSLAX33Y33', 'MOIN', 'ADD10C,1', '%' ]
@@ -359,7 +353,6 @@ describe 'Plotter class', ->
           p.bbox.should.eql { xMin: -0.6, yMin: 1.5, xMax: 0.4, yMax: 2.5 }
           p.operate 'X-1000Y200D03'
           p.bbox.should.eql { xMin: -1.5, yMin: -0.3, xMax: 0.4, yMax: 2.5 }
-    describe 'in region mode', ->
 
   describe 'coordinate method', ->
     p = null
@@ -431,25 +424,25 @@ describe 'Plotter class', ->
 
     it 'should take the existing path string and turn it into a path object', ->
       p.finishTrace()
-      p.layer.current.g.should.containDeep [
-        { path: { _attr: { d: 'M0 0L1 1L1 2L0 0Z' }}}
+      p.layer.current.g._.should.containDeep [
+        { path: { d: 'M0 0L1 1L1 2L0 0Z' } }
       ]
     it 'should apply the stroke properties if region mode is off', ->
       p.finishTrace()
-      p.layer.current.g.should.containDeep [
-        { path: { _attr: {
-              'stroke-linecap': 'round'
-              'stroke-linejoin': 'round'
-              'stroke-width': '1'
-            }
+      p.layer.current.g._.should.containDeep [
+        {
+          path: {
+            'stroke-linecap': 'round'
+            'stroke-linejoin': 'round'
+            'stroke-width': 1
           }
         }
       ]
     it 'should apply region properties if region mode is on', ->
       p.trace.region = true
       p.finishTrace()
-      p.layer.current.g.should.containDeep [
-        { path: { _attr: { 'stroke-width': '0', fill: 'currentColor' } } }
+      p.layer.current.g._.should.containDeep [
+        { path: { 'stroke-width': 0, fill: 'currentColor' } }
       ]
 
   describe 'creating paths', ->

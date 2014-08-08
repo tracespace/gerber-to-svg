@@ -27,7 +27,7 @@
         result.trace = {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
-          'stroke-width': "" + p.dia,
+          'stroke-width': p.dia,
           stroke: 'currentColor',
           fill: 'none'
         };
@@ -45,7 +45,7 @@
       shape = 'rect';
       if (!((p.hole != null) || p.obround)) {
         result.trace = {
-          'stroke-width': '0'
+          'stroke-width': 0
         };
       }
     } else if ((p.dia != null) && (p.verticies != null)) {
@@ -72,7 +72,7 @@
           dia: p.hole.dia
         });
         hole = hole.shape;
-        hole.circle._attr.fill = '#000';
+        hole.circle.fill = '#000';
       } else if ((p.hole.width != null) && (p.hole.height != null)) {
         if (!(p.hole.width >= 0)) {
           throw new RangeError("" + tool + " hole width out of range (" + p.hole.width + "<0)");
@@ -87,35 +87,32 @@
           height: p.hole.height
         });
         hole = hole.shape;
-        hole.rect._attr.fill = '#000';
+        hole.rect.fill = '#000';
       } else {
         throw new Error("" + tool + " has invalid hole parameters");
       }
       maskId = id + '-mask';
       mask = {
-        mask: [
-          {
-            _attr: {
-              id: id + "-mask"
-            }
-          }, {
-            rect: {
-              _attr: {
-                x: "" + pad.bbox[0],
-                y: "" + pad.bbox[1],
-                width: "" + (pad.bbox[2] - pad.bbox[0]),
-                height: "" + (pad.bbox[3] - pad.bbox[1]),
+        mask: {
+          id: id + "-mask",
+          _: [
+            {
+              rect: {
+                x: pad.bbox[0],
+                y: pad.bbox[1],
+                width: pad.bbox[2] - pad.bbox[0],
+                height: pad.bbox[3] - pad.bbox[1],
                 fill: '#fff'
               }
-            }
-          }, hole
-        ]
+            }, hole
+          ]
+        }
       };
-      pad.shape[shape]._attr.mask = "url(#" + maskId + ")";
+      pad.shape[shape].mask = "url(#" + maskId + ")";
       result.pad.push(mask);
     }
     if (id) {
-      pad.shape[shape]._attr.id = id;
+      pad.shape[shape].id = id;
     }
     result.pad.push(pad.shape);
     result.bbox = pad.bbox;
