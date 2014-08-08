@@ -29,7 +29,7 @@ standardTool = (tool, p) ->
     unless p.hole? then result.trace = {
       'stroke-linecap': 'round'
       'stroke-linejoin': 'round'
-      'stroke-width': "#{p.dia}"
+      'stroke-width': p.dia
       stroke: 'currentColor'
       fill: 'none'
     }
@@ -44,7 +44,7 @@ standardTool = (tool, p) ->
     if p.height <= 0
       throw new RangeError "#{tool} rect height out of range (#{p.height}<=0)"
     shape = 'rect'
-    unless p.hole? or p.obround then result.trace = { 'stroke-width': '0' }
+    unless p.hole? or p.obround then result.trace = { 'stroke-width': 0 }
 
   else if p.dia? and p.verticies?
     # we've got a polygon tool unless there's confusion
@@ -71,7 +71,7 @@ standardTool = (tool, p) ->
         throw new RangeError "#{tool} hole diameter out of range (#{p.hole.dia}<0)"
       hole = shapes.circle { cx: p.cx, cy: p.cy, dia: p.hole.dia }
       hole = hole.shape
-      hole.circle._attr.fill = '#000'
+      hole.circle.fill = '#000'
     else if p.hole.width? and p.hole.height?
       unless p.hole.width >= 0
         throw new RangeError "#{tool} hole width out of range (#{p.hole.width}<0)"
@@ -81,33 +81,36 @@ standardTool = (tool, p) ->
         cx: p.cx, cy: p.cy, width: p.hole.width, height: p.hole.height
       }
       hole = hole.shape
-      hole.rect._attr.fill = '#000'
+      hole.rect.fill = '#000'
     else
       throw new Error "#{tool} has invalid hole parameters"
 
     # generate the mask
     maskId = id + '-mask'
     mask = {
-      mask: [
-        { _attr: { id: id + "-mask" } }
-        { rect: { _attr: {
-              x: "#{pad.bbox[0]}"
-              y: "#{pad.bbox[1]}"
-              width: "#{pad.bbox[2] - pad.bbox[0]}"
-              height: "#{pad.bbox[3] - pad.bbox[1]}"
+      mask: {
+        id: id + "-mask"
+        _: [
+          {
+            rect: {
+              x: pad.bbox[0]
+              y: pad.bbox[1]
+              width: pad.bbox[2] - pad.bbox[0]
+              height: pad.bbox[3] - pad.bbox[1]
               fill: '#fff'
             }
           }
-        }
-        hole
-      ]
+          hole
+        ]
+      }
     }
+
     # set the mask
-    pad.shape[shape]._attr.mask = "url(##{maskId})"
+    pad.shape[shape].mask = "url(##{maskId})"
     result.pad.push mask
 
   # set the id and push the shape to the array
-  if id then pad.shape[shape]._attr.id = id
+  if id then pad.shape[shape].id = id
   result.pad.push pad.shape
   # set the bbox and id
   result.bbox = pad.bbox
