@@ -127,13 +127,10 @@
       this.defs = [];
       this.gerberId = "gerber-" + (unique());
       this.group = {
-        g: [
-          {
-            _attr: {
-              id: "" + this.gerberId + "-layer-0"
-            }
-          }
-        ]
+        g: {
+          id: "" + this.gerberId + "-layer-0",
+          _: []
+        }
       };
       this.layer = {
         level: 0,
@@ -193,32 +190,31 @@
       width = parseFloat((this.bbox.xMax - this.bbox.xMin).toPrecision(10));
       height = parseFloat((this.bbox.yMax - this.bbox.yMin).toPrecision(10));
       xml = {
-        svg: [
-          {
-            _attr: {
-              xmlns: 'http://www.w3.org/2000/svg',
-              version: '1.1',
-              'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-              width: "" + width + this.units,
-              height: "" + height + this.units,
-              viewBox: "" + this.bbox.xMin + " " + this.bbox.yMin + " " + width + " " + height,
-              id: this.gerberId
-            }
-          }
-        ]
+        svg: {
+          xmlns: 'http://www.w3.org/2000/svg',
+          version: '1.1',
+          'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+          width: "" + width + this.units,
+          height: "" + height + this.units,
+          viewBox: "" + this.bbox.xMin + " " + this.bbox.yMin + " " + width + " " + height,
+          id: this.gerberId,
+          _: []
+        }
       };
       if (this.defs.length) {
-        xml.svg.push({
-          defs: this.defs
+        xml.svg._.push({
+          defs: {
+            _: this.defs
+          }
         });
       }
-      this.group.g[0]._attr.transform = "translate(0," + (this.bbox.yMin + this.bbox.yMax) + ") scale(1,-1)";
-      xml.svg.push(this.group);
+      this.group.g.transform = "translate(0," + (this.bbox.yMin + this.bbox.yMax) + ") scale(1,-1)";
+      xml.svg._.push(this.group);
       return xml;
     };
 
     Plotter.prototype.parameter = function(blocks) {
-      var ad, block, done, error, groupId, height, index, invalid, m, maskId, obj, p, srBlock, u, width, x, y, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
+      var ad, block, done, error, groupId, hgt, index, invalid, m, maskId, obj, p, srBlock, u, wid, x, y, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
       done = false;
       if (blocks[0] === '%' && blocks[blocks.length - 1] !== '%') {
         throw new SyntaxError('@parameter should only be called with paramters');
@@ -290,11 +286,9 @@
               flash: function(x, y) {
                 return {
                   use: {
-                    _attr: {
-                      x: "" + x,
-                      y: "" + y,
-                      'xlink:href': '#' + ad.tool.padId
-                    }
+                    x: x,
+                    y: y,
+                    'xlink:href': '#' + ad.tool.padId
                   }
                 };
               },
@@ -338,15 +332,12 @@
             if (this.stepRepeat.x !== 1 || this.stepRepeat.y !== 1) {
               if (this.layer.level === 0) {
                 srBlock = {
-                  g: [
-                    {
-                      _attr: {
-                        id: "" + this.gerberId + "-sr-block-" + this.stepRepeat.block
-                      }
-                    }
-                  ]
+                  g: {
+                    id: "" + this.gerberId + "-sr-block-" + this.stepRepeat.block,
+                    _: []
+                  }
                 };
-                this.layer.current[this.layer.type].push(srBlock);
+                this.layer.current[this.layer.type]._.push(srBlock);
                 this.layer.current = srBlock;
               }
             }
@@ -360,44 +351,38 @@
             if (p === 'D' && this.layer.type === 'mask') {
               groupId = "" + this.gerberId + "-layer-" + (++this.layer.level);
               this.group = {
-                g: [
-                  {
-                    _attr: {
-                      id: groupId
-                    }
-                  }, this.group
-                ]
+                g: {
+                  id: groupId,
+                  _: [this.group]
+                }
               };
               this.layer.current = this.group;
               this.layer.type = 'g';
             } else if (p === 'C' && this.layer.type === 'g') {
               maskId = "" + this.gerberId + "-layer-" + (++this.layer.level);
-              x = "" + this.bbox.xMin;
-              y = "" + this.bbox.yMin;
-              width = "" + (this.bbox.xMax - this.bbox.xMin);
-              height = "" + (this.bbox.yMax - this.bbox.yMin);
+              x = this.bbox.xMin;
+              y = this.bbox.yMin;
+              wid = this.bbox.xMax - this.bbox.xMin;
+              hgt = this.bbox.yMax - this.bbox.yMin;
               m = {
-                mask: [
-                  {
-                    _attr: {
-                      id: maskId,
-                      color: '#000'
-                    }
-                  }, {
-                    rect: {
-                      _attr: {
+                mask: {
+                  id: maskId,
+                  color: '#000',
+                  _: [
+                    {
+                      rect: {
                         x: x,
                         y: y,
-                        width: width,
-                        height: height,
+                        width: wid,
+                        height: hgt,
                         fill: '#fff'
                       }
                     }
-                  }
-                ]
+                  ]
+                }
               };
               this.defs.push(m);
-              this.layer.current.g[0]._attr.mask = "url(#" + maskId + ")";
+              this.layer.current.g.mask = "url(#" + maskId + ")";
               this.layer.current = this.defs[this.defs.length - 1];
               this.layer.type = 'mask';
             }
@@ -472,7 +457,7 @@
         end = this.move(coord);
         if (op === '3') {
           this.finishTrace();
-          this.layer.current[this.layer.type].push(this.tools[this.currentTool].flash(this.position.x, this.position.y));
+          this.layer.current[this.layer.type]._.push(this.tools[this.currentTool].flash(this.position.x, this.position.y));
           return this.addBbox(this.tools[this.currentTool].bbox(this.position.x, this.position.y));
         } else if (op === '1') {
           if (!this.trace.path) {
@@ -616,7 +601,7 @@
         if (this.layer.level !== 0) {
           throw new Error('step repeat with clear levels is unimplimented');
         }
-        srId = this.layer.current.g[0]._attr.id;
+        srId = this.layer.current.g.id;
         this.layer.current = this.group;
         _results = [];
         for (x = _i = 0, _ref = this.stepRepeat.x; 0 <= _ref ? _i < _ref : _i > _ref; x = 0 <= _ref ? ++_i : --_i) {
@@ -625,13 +610,11 @@
             _results1 = [];
             for (y = _j = 0, _ref1 = this.stepRepeat.y; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; y = 0 <= _ref1 ? ++_j : --_j) {
               if (!(x === 0 && y === 0)) {
-                _results1.push(this.layer.current[this.layer.type].push({
+                _results1.push(this.layer.current[this.layer.type]._.push({
                   use: {
-                    _attr: {
-                      x: "" + (x * this.stepRepeat.xStep),
-                      y: "" + (y * this.stepRepeat.yStep),
-                      'xlink:href': srId
-                    }
+                    x: x * this.stepRepeat.xStep,
+                    y: y * this.stepRepeat.yStep,
+                    'xlink:href': srId
                   }
                 }));
               } else {
@@ -650,22 +633,20 @@
       if (this.trace.path) {
         p = {
           path: {
-            _attr: {
-              d: this.trace.path
-            }
+            d: this.trace.path
           }
         };
         if (this.trace.region) {
-          p.path._attr['stroke-width'] = '0';
-          p.path._attr.fill = 'currentColor';
+          p.path['stroke-width'] = 0;
+          p.path.fill = 'currentColor';
         } else {
           _ref = this.tools[this.currentTool].stroke;
           for (key in _ref) {
             val = _ref[key];
-            p.path._attr[key] = val;
+            p.path[key] = val;
           }
         }
-        this.layer.current[this.layer.type].push(p);
+        this.layer.current[this.layer.type]._.push(p);
         return this.trace.path = '';
       }
     };

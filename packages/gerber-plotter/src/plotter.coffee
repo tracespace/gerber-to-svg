@@ -83,7 +83,7 @@ class Plotter
     @defs = []
     # svg identification, image group, and current layers
     @gerberId = "gerber-#{unique()}"
-    @group = { g: [ { _attr: { id: "#{@gerberId}-layer-0" } } ] }
+    @group = { g: { id: "#{@gerberId}-layer-0", _: [] } }
     @layer = { level: 0, type: 'g', current: @group }
     # step and repeat, initially set to no repeat
     @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null, block: 0 }
@@ -116,26 +116,22 @@ class Plotter
     width = parseFloat (@bbox.xMax - @bbox.xMin).toPrecision 10
     height = parseFloat (@bbox.yMax - @bbox.yMin).toPrecision 10
     xml = {
-      svg: [
-        {
-          _attr: {
-            xmlns: 'http://www.w3.org/2000/svg'
-            version: '1.1'
-            'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-            width: "#{width}#{@units}"
-            height: "#{height}#{@units}"
-            viewBox: "#{@bbox.xMin} #{@bbox.yMin} #{width} #{height}"
-            id: @gerberId
-          }
-        }
-      ]
+      svg: {
+        xmlns: 'http://www.w3.org/2000/svg'
+        version: '1.1'
+        'xmlns:xlink': 'http://www.w3.org/1999/xlink'
+        width: "#{width}#{@units}"
+        height: "#{height}#{@units}"
+        viewBox: "#{@bbox.xMin} #{@bbox.yMin} #{width} #{height}"
+        id: @gerberId
+        _: []
+      }
     }
-    if @defs.length then xml.svg.push { defs: @defs }
+    if @defs.length then xml.svg._.push { defs: { _: @defs } }
     # flip it in the y and translate back to origin
-    @group.g[0]._attr.transform =
-      "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
+    @group.g.transform = "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
     # return xml object
-    xml.svg.push @group
+    xml.svg._.push @group
     xml
 
   parameter: (blocks) ->
@@ -180,13 +176,7 @@ class Plotter
           @tools[ad.code] = {
             stroke: ad.tool.trace
             flash: (x, y) ->
-              {
-                use: {
-                  _attr: {
-                    x: "#{x}", y: "#{y}", 'xlink:href': '#'+ad.tool.padId
-                  }
-                }
-              }
+              { use: { x: x, y: y, 'xlink:href': '#'+ad.tool.padId } }
             bbox: (x=0, y=0) ->
               {
                 xMin: x + ad.tool.bbox[0]
@@ -217,11 +207,9 @@ class Plotter
             # easiest case: no clear levels
             if @layer.level is 0
               srBlock = {
-                g: [
-                  { _attr: { id: "#{@gerberId}-sr-block-#{@stepRepeat.block}"}}
-                ]
+                g: { id: "#{@gerberId}-sr-block-#{@stepRepeat.block}", _: [] }
               }
-              @layer.current[@layer.type].push srBlock
+              @layer.current[@layer.type]._.push srBlock
               @layer.current = srBlock
           #throw new Error 'step repeat unimplimented'
         when 'LP'
@@ -234,35 +222,28 @@ class Plotter
           # if switching from clear to dark
           if p is 'D' and @layer.type is 'mask'
             groupId = "#{@gerberId}-layer-#{++@layer.level}"
-            @group = { g: [ { _attr: { id: groupId } }, @group ] }
+            @group = { g: { id: groupId, _: [ @group ] } }
             @layer.current = @group
             @layer.type = 'g'
           # else if switching from dark to clear
           else if p is 'C' and @layer.type is 'g'
             maskId = "#{@gerberId}-layer-#{++@layer.level}"
-            x = "#{@bbox.xMin}"
-            y = "#{@bbox.yMin}"
-            width = "#{@bbox.xMax - @bbox.xMin}"
-            height = "#{@bbox.yMax - @bbox.yMin}"
+            x = @bbox.xMin
+            y = @bbox.yMin
+            wid = @bbox.xMax - @bbox.xMin
+            hgt = @bbox.yMax - @bbox.yMin
             # add the mask to the definitions
             m = {
-              mask: [
-                { _attr: { id: maskId, color: '#000' } }
-                {
-                  rect: {
-                    _attr: {
-                      x: x
-                      y: y
-                      width: width
-                      height: height
-                      fill: '#fff'
-                    }
-                  }
-                }
-              ]
+              mask: {
+                id: maskId
+                color: '#000'
+                _: [
+                  { rect: { x: x, y: y, width: wid, height: hgt, fill: '#fff' }}
+                ]
+              }
             }
             @defs.push m
-            @layer.current.g[0]._attr.mask = "url(##{maskId})"
+            @layer.current.g.mask = "url(##{maskId})"
             @layer.current = @defs[@defs.length-1]
             @layer.type = 'mask'
           # undefine the position per gerber spec
@@ -338,7 +319,7 @@ class Plotter
         # finish any in progress path
         @finishTrace()
         # add the pad to the layer
-        @layer.current[@layer.type]
+        @layer.current[@layer.type]._
           .push @tools[@currentTool].flash @position.x, @position.y
         # update the board's bounding box
         @addBbox @tools[@currentTool].bbox @position.x, @position.y
@@ -456,35 +437,32 @@ class Plotter
     if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
       if @layer.level isnt 0
         throw new Error 'step repeat with clear levels is unimplimented'
-      srId = @layer.current.g[0]._attr.id
+      srId = @layer.current.g.id
       @layer.current = @group
       for x in [ 0...@stepRepeat.x ]
         for y in [ 0...@stepRepeat.y ]
           unless x is 0 and y is 0
-            @layer.current[@layer.type].push {
+            @layer.current[@layer.type]._.push {
               use: {
-                _attr: {
-                  x: "#{x*@stepRepeat.xStep}"
-                  y: "#{y*@stepRepeat.yStep}"
-                  'xlink:href': srId
-                }
+                x: x*@stepRepeat.xStep
+                y: y*@stepRepeat.yStep
+                'xlink:href': srId
               }
             }
-
 
   finishTrace: () ->
     # if there's a trace going on
     if @trace.path
-      p = { path: { _attr: { d: @trace.path } } }
+      p = { path: { d: @trace.path } }
       # apply proper path attributes
       if @trace.region
-        p.path._attr['stroke-width'] = '0'
-        p.path._attr.fill = 'currentColor'
+        p.path['stroke-width'] = 0
+        p.path.fill = 'currentColor'
       else
         for key, val of @tools[@currentTool].stroke
-          p.path._attr[key] = val
+          p.path[key] = val
       # push the path to the current layer
-      @layer.current[@layer.type].push p
+      @layer.current[@layer.type]._.push p
       # empty the path out
       @trace.path = ''
 
