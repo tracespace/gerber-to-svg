@@ -357,6 +357,10 @@ class Plotter
             else
               @addBbox @tools[@currentTool].bbox start.x, start.y
         # check what kind of interpolate we're doing
+        unless @mode?
+          console.warn "Warning: no interpolation mode was set by G01/2/3.
+                        Assuming linear interpolation (G01)"
+          @mode = 'i'
         # linear interpolation adds an absolute line to the path
         if @mode is 'i'
           # add the segment to the path
@@ -486,8 +490,11 @@ class Plotter
 
   move: (coord) ->
     unless @units?
-      if @backupUnits? then @units = @backupUnits else
-        throw new Error 'units have not been set'
+      if @backupUnits?
+        @units = @backupUnits
+        console.warn "Warning: units set to '#{@units}' according to
+                      deprecated command G7#{if @units is 'in' then 0 else 1}"
+      else throw new Error 'units have not been set'
     newPosition = @coordinate coord
     @position.x = newPosition.x
     @position.y = newPosition.y
