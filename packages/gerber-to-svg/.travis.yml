@@ -4,7 +4,7 @@ node_js:
 deploy:
   provider: npm
   api_key:
-    secure: DuF6Mqel1lvt6Dvx8t3y0jYgOgC6NW6aeFtv8eMv48mJqw4w/MF6BucfD94F9VY5QW1vhgkY1jRC6kK3bwd1Vn9PFPi0AdX+Zu6d/OpLr0d4vzhBHkx70UFB3ewsrYg2zwGKlpu3VTyMODbluw1nv3meLBLtxfr9xb1PJAAMq3I=
+    secure: gHhYjLHwFNd8uCkYQtyOk1uwRCpY0pzBzBc200+JJUxwKmXH9ZHiAKJGAx9/V/O5fwkXcl1NCz/+TSfBo/6gQz3lx1GUgnH0uazgPdaFeSAARiXK85aLp857rR9i8q9DLbGyQgWj07zdNen3Jmw7JU3tHBxNKYDtWXlTJFFcrCE=
   on:
     tags: true
     branch: master
