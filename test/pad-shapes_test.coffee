@@ -6,9 +6,9 @@ describe 'shape functions', ->
   describe 'for circles', ->
     it 'should create circle with the paramters passed in', ->
       result = shapes.circle {dia: 10, cx: 4, cy: 3}
-      result.shape.circle._attr.r.should.equal '5'
-      result.shape.circle._attr.cx.should.equal '4'
-      result.shape.circle._attr.cy.should.equal '3'
+      result.shape.circle.r.should.equal 5
+      result.shape.circle.cx.should.equal 4
+      result.shape.circle.cy.should.equal 3
     it 'should throw an error if parameters are missing', ->
       (-> shapes.circle {cx: 4, cy: 3}).should.throw /requires diameter/
       (-> shapes.circle {dia: 10, cy: 3}).should.throw /requires x center/
@@ -20,14 +20,14 @@ describe 'shape functions', ->
   describe 'for rectangles', ->
     it 'should create a rectangle with the parameters passed in', ->
       result = shapes.rect { width: 1.2, height: 2.2, cx: 1, cy: 4 }
-      result.shape.rect._attr.x.should.equal '0.4'
-      result.shape.rect._attr.y.should.equal '2.9'
-      result.shape.rect._attr.width.should.equal '1.2'
-      result.shape.rect._attr.height.should.equal '2.2'
+      result.shape.rect.x.should.equal 0.4
+      result.shape.rect.y.should.equal 2.9
+      result.shape.rect.width.should.equal 1.2
+      result.shape.rect.height.should.equal 2.2
     it 'should be able to make an obround', ->
       res = shapes.rect { cx: 0, cy: 0, width: 3.4, height: 2.2, obround: true }
-      res.shape.rect._attr.rx.should.equal '1.1'
-      res.shape.rect._attr.ry.should.equal '1.1'
+      res.shape.rect.rx.should.equal 1.1
+      res.shape.rect.ry.should.equal 1.1
     it 'should throw an error for missing parameters', ->
       (-> shapes.rect { height: 2.2, cx: 1, cy: 4 })
         .should.throw /requires width/
@@ -54,7 +54,7 @@ describe 'shape functions', ->
         if Math.abs(y) < 0.000000001 then y = 0
         points += "#{x},#{y}"
         if v isnt 4 then points += ' '
-      result.shape.polygon._attr.points.should.equal points
+      result.shape.polygon.points.should.equal points
     it 'should return the correct points with rotation specified', ->
       re = shapes.polygon { cx: 0, cy: 0, dia: 42.6, verticies: 7, degrees: 42 }
       points = ''
@@ -64,7 +64,7 @@ describe 'shape functions', ->
         theta = start+v*step
         points += "#{21.3*Math.cos theta},#{21.3*Math.sin theta}"
         if v isnt 6 then points += ' '
-      re.shape.polygon._attr.points.should.equal points
+      re.shape.polygon.points.should.equal points
     it 'should throw errors for missing paramters', ->
       (-> shapes.polygon { cx: 0, cy: 0, verticies: 5 })
         .should.throw /requires diameter/
@@ -83,11 +83,11 @@ describe 'shape functions', ->
   describe 'for vector lines', ->
     it 'should return a vector line given the proper paramters', ->
       result = shapes.vector { x1: 0, y1: 0, x2: 2, y2: 3, width: 2 }
-      result.shape.line._attr.x1.should.equal '0'
-      result.shape.line._attr.y1.should.equal '0'
-      result.shape.line._attr.x2.should.equal '2'
-      result.shape.line._attr.y2.should.equal '3'
-      result.shape.line._attr['stroke-width'].should.equal '2'
+      result.shape.line.x1.should.equal 0
+      result.shape.line.y1.should.equal 0
+      result.shape.line.x2.should.equal 2
+      result.shape.line.y2.should.equal 3
+      result.shape.line['stroke-width'].should.equal 2
     it 'should throw errors for missing parameters', ->
       (-> shapes.vector { y1: 0, x2: 2, y2: 3, width: 2 })
         .should.throw /requires start x/
@@ -112,10 +112,10 @@ describe 'shape functions', ->
   describe 'for lower left rectangles', ->
     it 'should return a rectangle given the proper parameters', ->
       result = shapes.lowerLeftRect { x: 1, y: 3, width: 10, height: 5 }
-      result.shape.rect._attr.x.should.equal '1'
-      result.shape.rect._attr.y.should.equal '3'
-      result.shape.rect._attr.width.should.equal '10'
-      result.shape.rect._attr.height.should.equal '5'
+      result.shape.rect.x.should.equal 1
+      result.shape.rect.y.should.equal 3
+      result.shape.rect.width.should.equal 10
+      result.shape.rect.height.should.equal 5
     it 'should throw errors for missing parameters', ->
       (-> shapes.lowerLeftRect { y: 3, width: 10, height: 5 })
         .should.throw /requires x/
@@ -132,7 +132,7 @@ describe 'shape functions', ->
   describe 'for outline polygons', ->
     it 'should return a polygon given proper parameters', ->
       result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
-      result.shape.polygon._attr.points.should.eql '0,0 1,0 1,1 0,0'
+      result.shape.polygon.points.should.eql '0,0 1,0 1,1 0,0'
     it 'should throw an error if the paramter isnt an array or is missing', ->
       (-> shapes.outline {}).should.throw /requires points array/
       (-> shapes.outline { points: 5 }).should.throw /requires points array/
@@ -160,30 +160,10 @@ describe 'shape functions', ->
         crossThx: 0.5
       }
       result.shape.should.containDeep [
-        {
-          line: {
-            _attr: { x1: '-6', y1: '0', x2: '6', y2: '0', 'stroke-width': '0.5'}
-          }
-        }
-        {
-          line: {
-            _attr: { x1: '0', y1: '-6', x2: '0', y2: '6', 'stroke-width': '0.5'}
-          }
-        }
-        {
-          circle: {
-            _attr: {
-              cx: '0', cy: '0', r: '7', 'stroke-width': '2', fill: 'none'
-            }
-          }
-        }
-        {
-          circle: {
-            _attr: {
-              cx: '0', cy: '0', r: '3', 'stroke-width': '2', fill: 'none'
-            }
-          }
-        }
+        { line: { x1: -6, y1: 0, x2: 6, y2: 0, 'stroke-width': 0.5 } }
+        { line: { x1: 0, y1: -6, x2: 0, y2: 6, 'stroke-width': 0.5 } }
+        { circle: { cx: 0, cy: 0, r: 7, 'stroke-width': 2, fill: 'none' } }
+        { circle: { cx: 0, cy: 0, r: 3, 'stroke-width': 2, fill: 'none' } }
       ]
     it 'should throw errors for missing parameters', ->
       (-> shapes.moire {
@@ -285,39 +265,25 @@ describe 'shape functions', ->
   describe 'for thermals', ->
     it 'should return a thermal given proper parameters', ->
       result = shapes.thermal {cx: 0, cy: 0, outerDia: 10, innerDia: 8, gap: 3}
-      for obj in result.shape
-        for key, val of obj
-          if key is 'mask'
-            for o in val
-              for k, v of o
-                if k is '_attr' then maskId = v.id
+      maskId = result.shape[0].mask.id
       result.shape.should.containDeep [
         {
-          mask: [ {
-              circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } }
-            }
-            {
-              rect: {
-                _attr: {x:'-5', y:'-1.5', width:'10', height:'3', fill:'#000'}
-              }
-            }
-            {
-              rect: {
-                _attr: {x:'-1.5', y:'-5', width:'3', height:'10', fill:'#000'}
-              }
-            }
-          ]
+          mask: {
+            _: [
+              { circle: { cx: 0, cy: 0, r: 5, fill: '#fff' } }
+              { rect: { x: -5, y: -1.5, width: 10, height: 3, fill: '#000' } }
+              { rect: { x: -1.5, y: -5, width: 3, height: 10, fill: '#000' } }
+            ]
+          }
         }
         {
           circle: {
-            _attr: {
-              cx: '0'
-              cy: '0'
-              r: '4.5'
-              fill: 'none'
-              'stroke-width': '1'
-              mask: 'url(#' + maskId + ')'
-            }
+            cx: 0
+            cy: 0,
+            r: 4.5
+            fill: 'none'
+            'stroke-width': 1
+            mask: "url(##{maskId})"
           }
         }
       ]
