@@ -36,11 +36,12 @@ class MacroTool
     pad.push m for m in @masks
     # bundle the shapes if necessary
     if @shapes.length > 1
-      group = [ { _attr: { id: padId } } ]
-      group.push s for s in @shapes
+      group = { id: padId, _: [] }
+      group._.push s for s in @shapes
       pad = [ { g: group } ]
     else if @shapes.length is 1
-      @shapes[0][key]._attr.id = padId for key of @shapes[0]
+      shape = Object.keys(@shapes[0])[0]
+      @shapes[0][shape].id = padId
       pad.push @shapes[0]
     # return the pad, the bbox, and the pad id
     {
@@ -92,7 +93,7 @@ class MacroTool
           y2: args[6]
         }
         # rotate if necessary
-        if args[7] then shape.shape.line._attr.transform = "rotate(#{args[7]})"
+        if args[7] then shape.shape.line.transform = "rotate(#{args[7]})"
         # add the bounding box with rotation
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[7]
       when 21
@@ -100,14 +101,14 @@ class MacroTool
           cx: args[4], cy: args[5], width: args[2], height: args[3]
         }
         # rotate if necessary
-        if args[6] then shape.shape.rect._attr.transform = "rotate(#{args[6]})"
+        if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
       when 22
         shape = shapes.lowerLeftRect {
           x: args[4], y: args[5], width: args[2], height: args[3]
         }
         # rotate if necessary
-        if args[6] then shape.shape.rect._attr.transform = "rotate(#{args[6]})"
+        if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
       when 4
         points = []
@@ -115,7 +116,7 @@ class MacroTool
         shape = shapes.outline { points: points }
         # rotate if necessary
         if rot = args[args.length - 1]
-          shape.shape.polygon._attr.transform = "rotate(#{rot})"
+          shape.shape.polygon.transform = "rotate(#{rot})"
         if args[1] is 0 then mask = true
         else @addBbox shape.bbox, args[args.length-1]
       when 5
@@ -130,6 +131,7 @@ class MacroTool
           degrees: args[6]
         }
         if args[1] is 0 then mask = true else @addBbox shape.bbox
+      # moire
       when 6
         # rotation only allowed if center is on the origin
         if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
@@ -146,8 +148,9 @@ class MacroTool
         }
         # rotate the crosshairs
         if args[9] then for s in shape.shape
-          if s.line? then s.line._attr.transform = "rotate(#{args[9]})"
+          if s.line? then s.line.transform = "rotate(#{args[9]})"
         @addBbox shape.bbox, args[9]
+      # thermal
       when 7
         # rotation only allowed if center is on the origin
         if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
@@ -161,8 +164,8 @@ class MacroTool
         }
         # rotate and adjust bounding box
         if args[6] then for s in shape.shape
-          if s.mask? then for m in s.mask
-            if m.rect? then m.rect._attr.transform = "rotate(#{args[6]})"
+          if s.mask? then for m in s.mask._
+            if m.rect? then m.rect.transform = "rotate(#{args[6]})"
         @addBbox shape.bbox, args[6]
       else
         throw new SyntaxError "#{args[0]} is not a valid primitive code"
@@ -170,29 +173,32 @@ class MacroTool
     # now, we need to check our exposure
     if mask
       # adjust the fill of our shape to white
-      shape.shape[key]._attr.fill = '#000' for key of shape.shape
+      shape.shape[key].fill = '#000' for key of shape.shape
       # create a mask with our new shape
       maskId = "macro-#{@name}-mask-#{unique()}"
-      m = { mask: [
-          { _attr: { id: maskId } }
-          { rect: { _attr: {
-                x: "#{@bbox[0]}"
-                y: "#{@bbox[1]}"
-                width: "#{@bbox[2]-@bbox[0]}"
-                height: "#{@bbox[3]-@bbox[1]}"
+      m = {
+        mask: {
+          id: maskId
+          _: [
+            {
+              rect: {
+                x: @bbox[0]
+                y: @bbox[1]
+                width: @bbox[2]-@bbox[0]
+                height: @bbox[3]-@bbox[1]
                 fill: '#fff'
               }
             }
-          }
-          shape.shape
-        ]
+            shape.shape
+          ]
+        }
       }
       # check if we need to bundle
       if @shapes.length is 1
-        @shapes[0][key]._attr.mask = "url(##{maskId})" for key of @shapes[0]
+        @shapes[0][key].mask = "url(##{maskId})" for key of @shapes[0]
       else if @shapes.length > 1
-        group = [ { _attr: { mask: "url(##{maskId})" } } ]
-        group.push s for s in @shapes
+        group = { mask: "url(##{maskId})", _: [] }
+        group._.push s for s in @shapes
         @shapes = [ { g: group } ]
       # add our mask to the mask list
       @masks.push m
