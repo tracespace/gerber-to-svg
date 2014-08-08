@@ -4,7 +4,7 @@ describe 'unique id generator', ->
   it 'should be able to generate a bunch of unique ids', ->
     prev = null
     counter = 0
-    while counter++ < 200
+    while counter++ < 50
       uniqueId = id()
       uniqueId.should.not.equal prev
       prev = uniqueId
