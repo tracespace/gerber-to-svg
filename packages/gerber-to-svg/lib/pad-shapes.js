@@ -18,13 +18,11 @@
     return {
       shape: {
         circle: {
-          _attr: {
-            cx: "" + p.cx,
-            cy: "" + p.cy,
-            r: "" + r,
-            'stroke-width': '0',
-            fill: 'currentColor'
-          }
+          cx: p.cx,
+          cy: p.cy,
+          r: r,
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       },
       bbox: [p.cx - r, p.cy - r, p.cx + r, p.cy + r]
@@ -50,22 +48,20 @@
     rectangle = {
       shape: {
         rect: {
-          _attr: {
-            x: "" + x,
-            y: "" + y,
-            width: "" + p.width,
-            height: "" + p.height,
-            'stroke-width': '0',
-            fill: 'currentColor'
-          }
+          x: x,
+          y: y,
+          width: p.width,
+          height: p.height,
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       },
       bbox: [x, y, x + p.width, y + p.height]
     };
     if (p.obround) {
       radius = 0.5 * Math.min(p.width, p.height);
-      rectangle.shape.rect._attr.rx = "" + radius;
-      rectangle.shape.rect._attr.ry = "" + radius;
+      rectangle.shape.rect.rx = radius;
+      rectangle.shape.rect.ry = radius;
     }
     return rectangle;
   };
@@ -121,11 +117,9 @@
     return {
       shape: {
         polygon: {
-          _attr: {
-            points: points.slice(1),
-            'stroke-width': '0',
-            fill: 'currentColor'
-          }
+          points: points.slice(1),
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       },
       bbox: [xMin, yMin, xMax, yMax]
@@ -161,14 +155,12 @@
     return {
       shape: {
         line: {
-          _attr: {
-            x1: "" + p.x1,
-            x2: "" + p.x2,
-            y1: "" + p.y1,
-            y2: "" + p.y2,
-            'stroke-width': "" + p.width,
-            stroke: 'currentColor'
-          }
+          x1: p.x1,
+          x2: p.x2,
+          y1: p.y1,
+          y2: p.y2,
+          'stroke-width': p.width,
+          stroke: 'currentColor'
         }
       },
       bbox: [(Math.min(p.x1, p.x2)) - xDelta, (Math.min(p.y1, p.y2)) - yDelta, (Math.max(p.x1, p.x2)) + xDelta, (Math.max(p.y1, p.y2)) + yDelta]
@@ -191,14 +183,12 @@
     return {
       shape: {
         rect: {
-          _attr: {
-            x: "" + p.x,
-            y: "" + p.y,
-            width: "" + p.width,
-            height: "" + p.height,
-            'stroke-width': '0',
-            fill: 'currentColor'
-          }
+          x: p.x,
+          y: p.y,
+          width: p.width,
+          height: p.height,
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       },
       bbox: [p.x, p.y, p.x + p.width, p.y + p.height]
@@ -245,11 +235,9 @@
     return {
       shape: {
         polygon: {
-          _attr: {
-            points: pointString.slice(1),
-            'stroke-width': '0',
-            fill: 'currentColor'
-          }
+          points: pointString.slice(1),
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       },
       bbox: [xMin, yMin, xMax, yMax]
@@ -285,25 +273,21 @@
     shape = [
       {
         line: {
-          _attr: {
-            x1: "" + (p.cx - p.crossLength / 2),
-            y1: '0',
-            x2: "" + (p.cx + p.crossLength / 2),
-            y2: '0',
-            'stroke-width': "" + p.crossThx,
-            stroke: 'currentColor'
-          }
+          x1: p.cx - p.crossLength / 2,
+          y1: 0,
+          x2: p.cx + p.crossLength / 2,
+          y2: 0,
+          'stroke-width': p.crossThx,
+          stroke: 'currentColor'
         }
       }, {
         line: {
-          _attr: {
-            x1: '0',
-            y1: "" + (p.cy - p.crossLength / 2),
-            x2: '0',
-            y2: "" + (p.cy + p.crossLength / 2),
-            'stroke-width': "" + p.crossThx,
-            stroke: 'currentColor'
-          }
+          x1: 0,
+          y1: p.cy - p.crossLength / 2,
+          x2: 0,
+          y2: p.cy + p.crossLength / 2,
+          'stroke-width': p.crossThx,
+          stroke: 'currentColor'
         }
       }
     ];
@@ -312,14 +296,12 @@
     while (r >= p.ringThx && rings <= p.maxRings) {
       shape.push({
         circle: {
-          _attr: {
-            cx: "" + p.cx,
-            cy: "" + p.cy,
-            r: "" + r,
-            fill: 'none',
-            'stroke-width': "" + p.ringThx,
-            stroke: 'currentColor'
-          }
+          cx: p.cx,
+          cy: p.cy,
+          r: r,
+          fill: 'none',
+          'stroke-width': p.ringThx,
+          stroke: 'currentColor'
         }
       });
       rings++;
@@ -328,13 +310,11 @@
     if (r > 0 && rings <= p.maxRings) {
       shape.push({
         circle: {
-          _attr: {
-            cx: "" + p.cx,
-            cy: "" + p.cy,
-            r: "" + r,
-            'stroke-width': 0,
-            fill: 'currentColor'
-          }
+          cx: p.cx,
+          cy: p.cy,
+          r: r,
+          'stroke-width': 0,
+          fill: 'currentColor'
         }
       });
     }
@@ -373,56 +353,47 @@
     return {
       shape: [
         {
-          mask: [
-            {
-              _attr: {
-                id: maskId
-              }
-            }, {
-              circle: {
-                _attr: {
-                  cx: "" + p.cx,
-                  cy: "" + p.cy,
-                  r: "" + outerR,
-                  'stroke-width': '0',
+          mask: {
+            id: maskId,
+            _: [
+              {
+                circle: {
+                  cx: p.cx,
+                  cy: p.cy,
+                  r: outerR,
+                  'stroke-width': 0,
                   fill: '#fff'
                 }
-              }
-            }, {
-              rect: {
-                _attr: {
-                  x: "" + xMin,
-                  y: "" + (-halfGap),
-                  width: "" + p.outerDia,
-                  height: "" + p.gap,
+              }, {
+                rect: {
+                  x: xMin,
+                  y: -halfGap,
+                  width: p.outerDia,
+                  height: p.gap,
                   'stroke-width': 0,
-                  fill: "#000"
+                  fill: '#000'
+                }
+              }, {
+                rect: {
+                  x: -halfGap,
+                  y: yMin,
+                  width: p.gap,
+                  height: p.outerDia,
+                  'stroke-width': 0,
+                  fill: '#000'
                 }
               }
-            }, {
-              rect: {
-                _attr: {
-                  x: "" + (-halfGap),
-                  y: "" + yMin,
-                  width: "" + p.gap,
-                  height: "" + p.outerDia,
-                  'stroke-width': 0,
-                  fill: "#000"
-                }
-              }
-            }
-          ]
+            ]
+          }
         }, {
           circle: {
-            _attr: {
-              cx: "" + p.cx,
-              cy: "" + p.cy,
-              r: "" + r,
-              fill: 'none',
-              'stroke-width': "" + thx,
-              stroke: 'currentColor',
-              mask: "url(#" + maskId + ")"
-            }
+            cx: p.cx,
+            cy: p.cy,
+            r: r,
+            fill: 'none',
+            'stroke-width': thx,
+            stroke: 'currentColor',
+            mask: "url(#" + maskId + ")"
           }
         }
       ],
