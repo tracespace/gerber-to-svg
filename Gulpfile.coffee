@@ -8,6 +8,7 @@ source     = require 'vinyl-source-stream'
 rename     = require 'gulp-rename'
 uglify     = require 'gulp-uglify'
 streamify  = require 'gulp-streamify'
+stat       = require 'node-static'
 
 # application entry point to generate standalone library
 ENTRY = './src/gerber-to-svg.coffee'
@@ -56,3 +57,19 @@ gulp.task 'test', ->
 
 gulp.task 'testwatch', ['test', 'default'], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
+
+gulp.task 'testvisual', [ 'default' ], ->
+  server = new stat.Server '.'
+  require('http').createServer( (request, response) ->
+    request.addListener( 'end', ->
+      if request.url is '/'
+        server.serveFile '/test/index.html', 200, {}, request, response
+        gutil.log "served #{request.url}"
+      else
+        server.serve(request, response, (error, result)->
+          if error then gutil.log "error serving #{request.url}"
+          else gutil.log "served #{request.url}"
+        )
+    ).resume()
+  ).listen 4242
+  gutil.log "test server started at http://localhost:4242\n"
