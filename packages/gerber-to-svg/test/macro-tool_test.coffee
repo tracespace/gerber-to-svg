@@ -32,22 +32,17 @@ describe 'tool macro class', ->
         m = new Macro ['AMNAME', '1,1,8,0,0', '1,1,4,5,5']
         result = m.run 'D10'
         result.pad[0].should.containDeep {
-          g: [
-            { circle: { _attr: { cx: '0', cy: '0' } } }
-            { circle: { _attr: { cx: '5', cy: '5' } } }
-          ]
+          g: { _: [{ circle: { cx: 0, cy: 0 } }, { circle: { cx: 5, cy: 5 } }] }
         }
       it 'should return the primitive if it is the only one', ->
         m = new Macro ['AMNAME', '1,1,8,0,0']
         result = m.run 'D10'
-        result.pad[0].should.containDeep {
-          circle: { _attr: { cx: '0', cy: '0' } }
-        }
+        result.pad[0].should.containDeep { circle: { cx: 0, cy: 0 } }
       it 'should set the id and return id', ->
         m = new Macro ['AMNAME', '1,1,8,0,0']
         result = m.run 'D10'
         result.padId.should.match /D10/
-        result.padId.should.eql result.pad[0].circle._attr.id
+        result.padId.should.eql result.pad[0].circle.id
       it 'should return the bounding box', ->
         m = new Macro ['AMNAME', '1,1,8,0,0']
         result = m.run 'D10'
@@ -56,7 +51,7 @@ describe 'tool macro class', ->
         m = new Macro ['AMNAME', '1,1,8,0,0', '1,0,2,0,0' ]
         result = m.run 'D10'
         result.pad.length.should.equal 2
-        result.pad.should.containDeep [ { mask: [] }, { circle: {} } ]
+        result.pad.should.containDeep [ { mask: { _: [] } }, { circle: {} } ]
       it 'should return a false flag for being traceable', ->
         m = new Macro ['AMNAME', '1,1,8,0,0', '1,0,2,0,0' ]
         result = m.run 'D10'
@@ -78,25 +73,19 @@ describe 'tool macro class', ->
       it 'should split up a primitive block and pass it to @primitive', ->
         m = new Macro ['AMNAME']
         m.runBlock '1,1,10,0,0'
-        m.shapes.should.containDeep [
-          { circle: { _attr: { cx: '0', cy: '0', r: '5' } } }
-        ]
+        m.shapes.should.containDeep [ { circle: { cx: 0, cy: 0, r: 5 } } ]
       it 'should parse modifiers properly', ->
         m = new Macro ['AMNAME']
         m.modifiers = { $1: '1', $2: '10', $3: '4', $4: '4' }
         m.runBlock '1,$1,$2,$3-$4,$4-$3'
-        m.shapes.should.containDeep [
-          { circle: { _attr: { cx: '0', cy: '0', r: '5' } } }
-        ]
+        m.shapes.should.containDeep [ { circle: { cx: 0, cy: 0, r: 5 } } ]
 
   describe 'primitive method', ->
     describe 'for circles', ->
       it 'should add a circle to the shapes and the bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [1, 1, 5, 1, 2]
-        m.shapes.should.containDeep [
-          { circle: { _attr: { cx: '1', cy: '2', r: '2.5' } } }
-        ]
+        m.shapes.should.containDeep [ { circle: { cx: 1, cy: 2, r: 2.5 } } ]
         m.masks.should.eql []
         m.bbox.should.eql [ -1.5, -0.5, 3.5, 4.5 ]
     describe 'for vector lines', ->
@@ -104,75 +93,63 @@ describe 'tool macro class', ->
         m = new Macro ['AMNAME']
         m.primitive [2, 1, 5, 1, 1, 15, 1, 0]
         m.shapes.should.containDeep [
-          {
-            line: {
-              _attr: { x1: '1', y1: '1', x2: '15', y2: '1', 'stroke-width': '5' }
-            }
-          }
+          { line: { x1: 1, y1: 1, x2: 15, y2: 1, 'stroke-width': 5 } }
         ]
         m.masks.should.eql []
         m.bbox.should.eql [ 1, -1.5, 15, 3.5 ]
       it 'should be able to rotate the line', ->
         m = new Macro ['AMNAME']
         m.primitive [2, 1, 5, 1, 0, 10, 0, 90]
-        m.shapes.should.containDeep [
-          { line: { _attr: { transform: 'rotate(90)' } } }
-        ]
+        m.shapes.should.containDeep [ { line: { transform: 'rotate(90)' } } ]
         m.bbox.should.eql [ -2.5, 1, 2.5, 10 ]
     describe 'for center rects', ->
       it 'should add a center rect to the shapes and bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [21, 1, 4, 5, 1, 2, 0]
         m.shapes.should.containDeep [
-          { rect: { _attr: { x: '-1', y: '-0.5', width: '4', height: '5' } } }
+          { rect: { x: -1, y: -0.5, width: 4, height: 5 } }
         ]
         m.masks.should.eql []
         m.bbox.should.eql [ -1, -0.5, 3, 4.5 ]
       it 'should be able to rotate the rect', ->
         m = new Macro ['AMNAME']
         m.primitive [21, 1, 5, 10, 0, 0, 270]
-        m.shapes.should.containDeep [
-          { rect: { _attr: { transform: 'rotate(270)' } } }
-        ]
+        m.shapes.should.containDeep [ { rect: { transform: 'rotate(270)' } } ]
         m.bbox.should.eql [ -5, -2.5, 5, 2.5 ]
     describe 'for lower left rects', ->
       it 'should add a lower left rect to the shapes and box', ->
         m = new Macro ['AMNAME']
         m.primitive [22, 1, 6, 6, -1, -1, 0]
         m.shapes.should.containDeep [
-          { rect: { _attr: { x: '-1', y: '-1', width: '6', height: '6' } } }
+          { rect: { x: -1, y: -1, width: 6, height: 6 } }
         ]
         m.masks.should.eql []
         m.bbox.should.eql [ -1, -1, 5, 5 ]
       it 'should be able to rotate the rect', ->
         m = new Macro ['AMNAME']
         m.primitive [22, 1, 5, 10, 0, 0, 180]
-        m.shapes.should.containDeep [
-          { rect: { _attr: { transform: 'rotate(180)' } } }
-        ]
+        m.shapes.should.containDeep [ { rect: { transform: 'rotate(180)' } } ]
         m.bbox.should.eql [ -5, -10, 0, 0 ]
     describe 'for outline polygons', ->
       it 'should add an outline polygon to the shapes and bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [4, 1, 4, 1,1, 2,2, 1,3, 0,2, 1,1, 0 ]
         m.shapes.should.containDeep [
-          { polygon: { _attr: { points: '1,1 2,2 1,3 0,2 1,1' } } }
+          { polygon: { points: '1,1 2,2 1,3 0,2 1,1' } }
         ]
         m.masks.should.eql []
         m.bbox.should.eql [ 0, 1, 2, 3 ]
       it 'should be able to rotate the outline', ->
         m = new Macro ['AMNAME']
         m.primitive [ 4, 1, 4, 1,1, 2,2, 1,3, 0,2, 1,1, -90 ]
-        m.shapes.should.containDeep [
-          { polygon: { _attr: { transform: 'rotate(-90)' } } }
-        ]
+        m.shapes.should.containDeep [{ polygon: { transform: 'rotate(-90)' } }]
         m.bbox.should.eql [ 1, -2, 3, 0 ]
     describe 'for regular polygons', ->
       it 'should add a regular polygon to the shapes and bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [5, 1, 4, 0, 0, 5, 0]
         m.shapes.should.containDeep [
-          { polygon: { _attr: { points: '2.5,0 0,2.5 -2.5,0 0,-2.5' } } }
+          { polygon: { points: '2.5,0 0,2.5 -2.5,0 0,-2.5' } }
         ]
         m.masks.should.eql []
         m.bbox.should.eql [ -2.5, -2.5, 2.5, 2.5 ]
@@ -192,39 +169,23 @@ describe 'tool macro class', ->
         m = new Macro ['AMNAME']
         m.primitive [6, 0, 0, 20, 2, 2, 3, 2, 22, 0]
         m.shapes.should.containDeep [
-          { line: { _attr: {
-                x1: '-11', y1: '0', x2: '11', y2: '0', 'stroke-width': '2'
-              }
-            }
-          }
+          { line: { x1: -11, y1: 0, x2: 11, y2: 0, 'stroke-width': 2 } }
         ]
         m.shapes.should.containDeep [
-          { line: { _attr: {
-                x1: '0', y1: '-11', x2: '0', y2: '11', 'stroke-width': '2'
-              }
-            }
-          }
+          { line: { x1: 0, y1: -11, x2: 0, y2: 11, 'stroke-width': 2 } }
         ]
         m.shapes.should.containDeep [
-          { circle: { _attr: {
-                cx: '0', cy: '0', r: '9', fill: 'none', 'stroke-width': '2'
-              }
-            }
-          }
-          { circle: { _attr: {
-                cx: '0', cy: '0', r: '5', fill: 'none', 'stroke-width': '2'
-              }
-            }
-          }
-          { circle: { _attr: { cx: '0', cy: '0', r: '1', 'stroke-width': '0' } } }
+          { circle: { cx: 0, cy: 0, r: 9, fill: 'none', 'stroke-width': 2 } }
+          { circle: { cx: 0, cy: 0, r: 5, fill: 'none', 'stroke-width': 2 } }
+          { circle: { cx: 0, cy: 0, r: 1, 'stroke-width': 0 } }
         ]
         m.bbox.should.eql [ -11, -11, 11, 11 ]
       it 'should rotate the crosshairs if center is 0,0', ->
         m = new Macro ['AMNAME']
         m.primitive [6, 0, 0, 20, 2, 2, 3, 2, 22, 45]
         m.shapes.should.containDeep [
-          { line: { _attr: { transform: 'rotate(45)' } } }
-          { line: { _attr: { transform: 'rotate(45)' } } }
+          { line: { transform: 'rotate(45)' } }
+          { line: { transform: 'rotate(45)' } }
         ]
       it 'should throw an error if rotation given when center is not 0,0', ->
         m = new Macro ['AMNAME']
@@ -234,37 +195,31 @@ describe 'tool macro class', ->
       it 'should add a thermal to the shapes, mask, and bbox', ->
         m = new Macro ['AMNAME']
         m.primitive [ 7, 0, 0, 10, 8, 2, 0 ]
-        m.masks.should.containDeep [{
-          mask: [
-            { circle: { _attr: { cx: '0', cy: '0', r: '5', fill: '#fff' } } }
-            { rect: { _attr: {
-                  x: '-5', y: '-1', width: '10', height: '2', fill: '#000'
-                }
-              }
-            }
-            { rect: { _attr: {
-                  x: '-1', y: '-5', width: '2', height: '10', fill: '#000'
-                }
-              }
-            }
-          ]
-        }]
-        m.shapes.should.containDeep [{
-          circle: {
-            _attr: {
-              cx: '0', cy: '0', r: '4.5', fill: 'none', 'stroke-width': '1'
+        m.masks.should.containDeep [
+          {
+            mask: {
+              _: [
+                { circle: { cx: 0, cy: 0, r: 5, fill: '#fff' } }
+                { rect: { x: -5, y: -1, width: 10, height: 2, fill: '#000' } }
+                { rect: { x: -1, y: -5, width: 2, height: 10, fill: '#000' } }
+              ]
             }
           }
-        }]
+        ]
+        m.shapes.should.containDeep [
+          { circle: { cx: 0, cy: 0, r: 4.5, fill: 'none', 'stroke-width': 1 } }
+        ]
       it 'should rotate the cutout if center is 0,0', ->
         m = new Macro ['AMNAME']
         m.primitive [ 7, 0, 0, 10, 8, 2, 30 ]
         m.masks.should.containDeep [
           {
-            mask: [
-              { rect: { _attr: { transform: 'rotate(30)' } } }
-              { rect: { _attr: { transform: 'rotate(30)' } } }
-            ]
+            mask: {
+              _: [
+                { rect: { transform: 'rotate(30)' } }
+                { rect: { transform: 'rotate(30)' } }
+              ]
+            }
           }
         ]
       it 'should throw an error if rotation given when center is not 0,0', ->
@@ -287,23 +242,19 @@ describe 'tool macro class', ->
         # cut out a smaller circle
         m.primitive [ 1, 0, 5, 0, 0]
         m.masks.should.containDeep [
-          { mask: [ { rect: { _attr: {
-                    x: '-5', y: '-5', width: '10', height: '10', fill: '#fff'
-                  }
-                }
-              }
-              { circle: { _attr: { cx: '0', cy: '0', r: '2.5', fill: '#000' }}}
-            ]
+          {
+            mask: {
+              _: [
+                { rect: { x: -5, y: -5, width: 10, height: 10, fill: '#fff' } }
+                { circle: { cx: 0, cy: 0, r: 2.5, fill: '#000' } }
+              ]
+            }
           }
         ]
         # get mask id
-        for obj in m.masks[0].mask
-          for k, v of obj
-            if k is '_attr' then maskId = v.id
+        maskId = m.masks[0].mask.id
         # check that shape was masked
-        m.shapes.should.containDeep [
-          { circle: { _attr: { mask: "url(##{maskId})" } } }
-        ]
+        m.shapes.should.containDeep [ { circle: { mask: "url(##{maskId})" } } ]
       it 'should group up previous shapes if theres several and mask them', ->
         # add a few circles
         m = new Macro ['AMNAME']
@@ -313,23 +264,17 @@ describe 'tool macro class', ->
         m.primitive [ 1, 0, 5, 5, 0 ]
         # mask should use the bounding box
         m.masks.length.should.equal 1
-        m.masks[0].mask.should.containDeep [
-          { rect: { _attr:
-              { x: '-5', y: '-5', width: '14.5', height: '10', fill: '#fff' }
-            }
-          }
-          { circle: { _attr: { cx: '5', cy: '0', r: '2.5', fill: '#000' } } }
+        m.masks[0].mask._.should.containDeep [
+          { rect: { x: -5, y: -5, width: 14.5, height: 10, fill: '#fff' } }
+          { circle: { cx: 5, cy: 0, r: 2.5, fill: '#000' } }
         ]
-        for obj in m.masks[0].mask
-          for k, v of obj
-            if k is '_attr' then maskId = v.id
+        maskId = m.masks[0].mask.id
         # shapes should be a single group
         m.shapes.length.should.equal 1
-        m.shapes[0].g.should.containDeep [
-          { _attr: { mask: "url(##{maskId})" } }
-          { circle: { _attr: { r: '5' } } }
-          { circle: { _attr: { r: '4.5'} } }
-        ]
+        m.shapes[0].g.should.containDeep {
+          mask: "url(##{maskId})"
+          _: [ { circle: { r: 5 } }, { circle:{ r: 4.5 } } ]
+        }
 
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
