@@ -1,7 +1,7 @@
 (function() {
   var Plotter, builder, gerberToSvg;
 
-  builder = require('xml');
+  builder = require('./obj-to-xml');
 
   Plotter = require('./plotter');
 
@@ -16,7 +16,7 @@
       throw e;
     }
     return builder(xmlObject, {
-      indent: '  '
+      pretty: true
     });
   };
 
