@@ -1,5 +1,5 @@
-# gerber-to-svg
-Javascript Gerber file to SVG converter for Node and the browser.
+# gerber-to-svg [![Build Status](http://img.shields.io/travis/mcous/gerber-to-svg.svg?style=flat)](https://travis-ci.org/mcous/gerber-to-svg) [![Version](http://img.shields.io/npm/v/gerber-to-svg.svg?style=flat)](https://www.npmjs.org/package/gerber-to-svg)
+Gerber file to SVG converter for Node and the browser.
 
 ## usage
 ### command line (with Node already installed)
