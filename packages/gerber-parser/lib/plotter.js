@@ -442,6 +442,10 @@
           this.quad = 's';
         } else if (code === 'G75') {
           this.quad = 'm';
+        } else if (code === 'G70') {
+          this.backupUnits = 'in';
+        } else if (code === 'G71') {
+          this.backupUnits = 'mm';
         } else if (!code.match(/^G(0?4)|(5[45])|(7[01])|(9[01])/)) {
           throw new SyntaxError('invalid operation G code');
         }
@@ -485,6 +489,10 @@
                 this.addBbox(this.tools[this.currentTool].bbox(start.x, start.y));
               }
             }
+          }
+          if (this.mode == null) {
+            console.warn("Warning: no interpolation mode was set by G01/2/3. Assuming linear interpolation (G01)");
+            this.mode = 'i';
           }
           if (this.mode === 'i') {
             this.trace.path += "L" + end.x + " " + end.y;
@@ -665,7 +673,12 @@
     Plotter.prototype.move = function(coord) {
       var newPosition;
       if (this.units == null) {
-        throw new Error('units have not been set');
+        if (this.backupUnits != null) {
+          this.units = this.backupUnits;
+          console.warn("Warning: units set to '" + this.units + "' according to deprecated command G7" + (this.units === 'in' ? 0 : 1));
+        } else {
+          throw new Error('units have not been set');
+        }
       }
       newPosition = this.coordinate(coord);
       this.position.x = newPosition.x;
