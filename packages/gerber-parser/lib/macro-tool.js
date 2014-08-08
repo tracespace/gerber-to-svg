@@ -18,7 +18,7 @@
     }
 
     MacroTool.prototype.run = function(tool, modifiers) {
-      var b, group, i, key, m, pad, padId, s, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2;
+      var b, group, i, m, pad, padId, s, shape, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2;
       if (modifiers == null) {
         modifiers = [];
       }
@@ -39,17 +39,14 @@
         pad.push(m);
       }
       if (this.shapes.length > 1) {
-        group = [
-          {
-            _attr: {
-              id: padId
-            }
-          }
-        ];
+        group = {
+          id: padId,
+          _: []
+        };
         _ref2 = this.shapes;
         for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
           s = _ref2[_l];
-          group.push(s);
+          group._.push(s);
         }
         pad = [
           {
@@ -57,9 +54,8 @@
           }
         ];
       } else if (this.shapes.length === 1) {
-        for (key in this.shapes[0]) {
-          this.shapes[0][key]._attr.id = padId;
-        }
+        shape = Object.keys(this.shapes[0])[0];
+        this.shapes[0][shape].id = padId;
         pad.push(this.shapes[0]);
       }
       return {
@@ -127,7 +123,7 @@
             y2: args[6]
           });
           if (args[7]) {
-            shape.shape.line._attr.transform = "rotate(" + args[7] + ")";
+            shape.shape.line.transform = "rotate(" + args[7] + ")";
           }
           if (args[1] === 0) {
             mask = true;
@@ -143,7 +139,7 @@
             height: args[3]
           });
           if (args[6]) {
-            shape.shape.rect._attr.transform = "rotate(" + args[6] + ")";
+            shape.shape.rect.transform = "rotate(" + args[6] + ")";
           }
           if (args[1] === 0) {
             mask = true;
@@ -159,7 +155,7 @@
             height: args[3]
           });
           if (args[6]) {
-            shape.shape.rect._attr.transform = "rotate(" + args[6] + ")";
+            shape.shape.rect.transform = "rotate(" + args[6] + ")";
           }
           if (args[1] === 0) {
             mask = true;
@@ -176,7 +172,7 @@
             points: points
           });
           if (rot = args[args.length - 1]) {
-            shape.shape.polygon._attr.transform = "rotate(" + rot + ")";
+            shape.shape.polygon.transform = "rotate(" + rot + ")";
           }
           if (args[1] === 0) {
             mask = true;
@@ -220,7 +216,7 @@
             for (_j = 0, _len = _ref1.length; _j < _len; _j++) {
               s = _ref1[_j];
               if (s.line != null) {
-                s.line._attr.transform = "rotate(" + args[9] + ")";
+                s.line.transform = "rotate(" + args[9] + ")";
               }
             }
           }
@@ -242,11 +238,11 @@
             for (_k = 0, _len1 = _ref2.length; _k < _len1; _k++) {
               s = _ref2[_k];
               if (s.mask != null) {
-                _ref3 = s.mask;
+                _ref3 = s.mask._;
                 for (_l = 0, _len2 = _ref3.length; _l < _len2; _l++) {
                   m = _ref3[_l];
                   if (m.rect != null) {
-                    m.rect._attr.transform = "rotate(" + args[6] + ")";
+                    m.rect.transform = "rotate(" + args[6] + ")";
                   }
                 }
               }
@@ -259,44 +255,38 @@
       }
       if (mask) {
         for (key in shape.shape) {
-          shape.shape[key]._attr.fill = '#000';
+          shape.shape[key].fill = '#000';
         }
         maskId = "macro-" + this.name + "-mask-" + (unique());
         m = {
-          mask: [
-            {
-              _attr: {
-                id: maskId
-              }
-            }, {
-              rect: {
-                _attr: {
-                  x: "" + this.bbox[0],
-                  y: "" + this.bbox[1],
-                  width: "" + (this.bbox[2] - this.bbox[0]),
-                  height: "" + (this.bbox[3] - this.bbox[1]),
+          mask: {
+            id: maskId,
+            _: [
+              {
+                rect: {
+                  x: this.bbox[0],
+                  y: this.bbox[1],
+                  width: this.bbox[2] - this.bbox[0],
+                  height: this.bbox[3] - this.bbox[1],
                   fill: '#fff'
                 }
-              }
-            }, shape.shape
-          ]
+              }, shape.shape
+            ]
+          }
         };
         if (this.shapes.length === 1) {
           for (key in this.shapes[0]) {
-            this.shapes[0][key]._attr.mask = "url(#" + maskId + ")";
+            this.shapes[0][key].mask = "url(#" + maskId + ")";
           }
         } else if (this.shapes.length > 1) {
-          group = [
-            {
-              _attr: {
-                mask: "url(#" + maskId + ")"
-              }
-            }
-          ];
+          group = {
+            mask: "url(#" + maskId + ")",
+            _: []
+          };
           _ref4 = this.shapes;
           for (_m = 0, _len3 = _ref4.length; _m < _len3; _m++) {
             s = _ref4[_m];
-            group.push(s);
+            group._.push(s);
           }
           this.shapes = [
             {
