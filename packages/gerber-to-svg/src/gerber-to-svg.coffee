@@ -1,4 +1,4 @@
-builder = require 'xml'
+builder = require './obj-to-xml'
 Plotter = require './plotter'
 
 gerberToSvg = (gerber) ->
@@ -9,6 +9,6 @@ gerberToSvg = (gerber) ->
     console.log "error at gerber line #{p.parser.line}"
     throw e
   # return the string
-  builder xmlObject, { indent: '  ' }
+  builder xmlObject, { pretty: true }
 
 module.exports = gerberToSvg
