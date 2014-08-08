@@ -303,6 +303,11 @@ class Plotter
         @quad = 's'
       else if code is 'G75'
         @quad = 'm'
+      # deprecated units commands (for backup)
+      else if code is 'G70'
+        @backupUnits = 'in'
+      else if code is 'G71'
+        @backupUnits = 'mm'
       # check for comments or deprecated, else throw
       else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
         throw new SyntaxError 'invalid operation G code'
@@ -480,7 +485,9 @@ class Plotter
       @trace.path = ''
 
   move: (coord) ->
-    unless @units? then throw new Error 'units have not been set'
+    unless @units?
+      if @backupUnits? then @units = @backupUnits else
+        throw new Error 'units have not been set'
     newPosition = @coordinate coord
     @position.x = newPosition.x
     @position.y = newPosition.y
