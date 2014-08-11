@@ -71,6 +71,36 @@ parseAD = (block) ->
   # return the tool and the tool code
   { macro: am, tool: ad, code: code }
 
+# given a rectangle's dimensions and path end, return a path string
+rectangleStrokePath = (start, end, width, height) ->
+  # helpers
+  sxm = start.x - width/2
+  sxp = start.x + width/2
+  sym = start.y - height/2
+  syp = start.y + height/2
+  exm = end.x - width/2
+  exp = end.x + width/2
+  eym = end.y - height/2
+  eyp = end.y + height/2
+  # get the quadrant we're in
+  theta = Math.atan2 end.y-start.y, end.x - start.x
+  # quadrant I
+  if 0 <= theta < Math.PI/2
+    "M#{sxm} #{sym}L#{sxp} #{sym}L#{exp} #{eym}L#{exp} #{eyp}L#{exm} #{eyp}
+     L#{sxm} #{syp}Z"
+  # quadrant II
+  else if Math.PI/2 <= theta < Math.PI
+    "M#{sxm} #{sym}L#{sxp} #{sym}L#{sxp} #{syp}L#{exp} #{eyp}L#{exm} #{eyp}
+     L#{exm} #{eym}Z"
+  # quadrant III
+  else if -Math.PI <= theta < -Math.PI/2
+    "M#{sxp} #{sym}L#{sxp} #{syp}L#{sxm} #{syp}L#{exm} #{eyp}L#{exm} #{eym}
+     L#{exp} #{eym}Z"
+  # quadrant IV
+  else if -Math.PI/2 <= theta < 0
+    "M#{sxm} #{sym}L#{exm} #{eym}L#{exp} #{eym}L#{exp} #{eyp}L#{sxp} #{syp}
+     L#{sxm} #{syp}Z"
+
 class Plotter
   constructor: (file = '') ->
     # create a parser object
@@ -314,6 +344,9 @@ class Plotter
 
       # finally, if it's a 1, we've got an interpolate
       else if op is '1'
+        # throw if tool isn't traceable
+        if not @trace.region and not @tools[@currentTool].stroke
+          throw new Error "tool #{@currentTool} is not a strokeable tool"
         # if there's no path yet, we need to move to the current point
         unless @trace.path
           @trace.path = "M#{start.x} #{start.y}"
@@ -333,7 +366,14 @@ class Plotter
         # linear interpolation adds an absolute line to the path
         if @mode is 'i'
           # add the segment to the path
-          @trace.path += "L#{end.x} #{end.y}"
+          # if it's a round tool or we're in region mode, just add the point
+          if @trace.region or @tools[@currentTool].stroke['stroke-linecap']?
+            @trace.path += "L#{end.x} #{end.y}"
+          # else we're stroking a rectangular aperture, so that's frustrating
+          else
+            width = @tools[@currentTool].pad[0].rect.width
+            height = @tools[@currentTool].pad[0].rect.height
+            @trace.path += rectangleStrokePath start, end, width, height
           # add the segment to the bbox
           if @trace.region
             @addBbox {
@@ -343,6 +383,10 @@ class Plotter
             @addBbox @tools[@currentTool].bbox end.x, end.y
         # are interpolation adds an eliptical (circular) arc to the path
         else if @mode is 'cw' or @mode is 'ccw'
+          # throw if tool isn't a circle
+          unless @tools[@currentTool].stroke['stroke-linecap'] is 'round'
+            throw new Error "tool #{@currentTool} is not circular and cannot
+                             stroke arcs"
           r = Math.sqrt end.i**2 + end.j**2
           sweep = if @mode is 'cw' then 0 else 1
           large = 0
