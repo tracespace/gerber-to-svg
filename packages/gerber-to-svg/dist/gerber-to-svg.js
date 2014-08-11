@@ -946,7 +946,7 @@ moire = function(p) {
   ];
   r = (p.outerDia - p.ringThx) / 2;
   rings = 0;
-  while (r >= p.ringThx && rings <= p.maxRings) {
+  while (r >= p.ringThx && rings < p.maxRings) {
     shape.push({
       circle: {
         cx: p.cx,
@@ -960,7 +960,8 @@ moire = function(p) {
     rings++;
     r -= p.ringThx + p.ringGap;
   }
-  if (r > 0 && rings <= p.maxRings) {
+  r += 0.5 * p.ringThx;
+  if (r > 0 && rings < p.maxRings) {
     shape.push({
       circle: {
         cx: p.cx,
