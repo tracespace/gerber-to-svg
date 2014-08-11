@@ -43,7 +43,16 @@
         </li>
         <li>
           <a href="macro-pad-tests">aperture macro pad tests</a>
-          <ul
+          <ul>
+            <li><a href="#macro-primitive-tests">circles</a></li>
+            <li><a href="#macro-vector-tests">vectors</a></li>
+            <li><a href="#macro-center-rect-tests">center rectangles</a></li>
+            <li><a href="#macro-lower-left-rect-tests">lower-left rectangles</a></li>
+            <li><a href="#macro-outline-tests">outlines</a></li>
+            <li><a href="#macro-polygon-tests">polygons</a></li>
+            <li><a href="#macro-moire-tests">polygons</a></li>
+            <li><a href="#macro-thermal-tests">polygons</a></li>
+          </ul>
       </ul>
     </nav>
 
@@ -51,19 +60,19 @@
 
     <h3 id="standard-circle-tests">circles</h3>
     <div class="test" id="circle-pad-test">
-      <h4 class=".title">circle</h4>
+      <h4 class="title">circle</h4>
       <p class="description">circle with 0.5" diameter</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="circle-pad-circle-hole-test">
-      <h4 class=".title">circle with circle hole</h4>
+      <h4 class="title">circle with circle hole</h4>
       <p class="description">circle with 0.25" diameter hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="circle-pad-rect-hole-test">
-      <h4 class=".title">circle with rect hole</h4>
+      <h4 class="title">circle with rect hole</h4>
       <p class="description">circle with W0.25"xH0.15" hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
@@ -71,19 +80,19 @@
 
     <h3 id="standard-rectangle-tests">rectangles</h3>
     <div class="test" id="rect-pad-test">
-      <h4 class=".title">rectangle</h4>
+      <h4 class="title">rectangle</h4>
       <p class="description">W1.0"xH0.5" rectangle</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="rect-pad-circle-hole-test">
-      <h4 class=".title">rectangle with circle hole</h4>
+      <h4 class="title">rectangle with circle hole</h4>
       <p class="description">rectangle with 0.25" diameter hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="rect-pad-rect-hole-test">
-      <h4 class=".title">rectangle with rect hole</h4>
+      <h4 class="title">rectangle with rect hole</h4>
       <p class="description">rectangle with W0.25"xH0.15" hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
@@ -91,19 +100,19 @@
 
     <h3 id="standard-obround-tests">obrounds</h3>
     <div class="test" id="obround-pad-test">
-      <h4 class=".title">obround</h4>
+      <h4 class="title">obround</h4>
       <p class="description">W1.0"xH0.5" obround</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="obround-pad-circle-hole-test">
-      <h4 class=".title">obround with circle hole</h4>
+      <h4 class="title">obround with circle hole</h4>
       <p class="description">obround with 0.25" diameter hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="obround-pad-rect-hole-test">
-      <h4 class=".title">obround with rect hole</h4>
+      <h4 class="title">obround with rect hole</h4>
       <p class="description">obround with W0.25"xH0.15" hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
@@ -111,31 +120,84 @@
 
     <h3 id="standard-polygon-tests">polygons</h3>
     <div class="test" id="polygon-pad-test">
-      <h4 class=".title">polygon</h4>
+      <h4 class="title">polygon</h4>
       <p class="description">All available regular polygons with 0.5" circumscribed diameter and 0.6" spacing</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="polygon-pad-rotation-test">
-      <h4 class=".title">rotated polygon</h4>
+      <h4 class="title">rotated polygon</h4>
       <p class="description">hexagon rotated 20 deg CCW</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="polygon-pad-circle-hole-test">
-      <h4 class=".title">polygon with circle hole</h4>
+      <h4 class="title">polygon with circle hole</h4>
       <p class="description">hexagon with 0.25" diameter hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
     <div class="test" id="polygon-pad-rect-hole-test">
-      <h4 class=".title">polygon with rect hole</h4>
+      <h4 class="title">polygon with rect hole</h4>
       <p class="description">hexagon with W0.25"xH0.15" hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
 
     <h2 id="macro-pad-tests">aperture macro pad tests</h2>
+
+    <h3 id="macro-circle-tests">primitives</h3>
+    <div class="test" id="circle-macro-test">
+      <h4 class="title">circle</h4>
+      <p class="description">circle with 0.5" diameter</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="vector-macro-test">
+      <h4 class="title">vector line</h4>
+      <p class="description">0.25" inch line from 0,0 to .5,.5</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="center-rect-macro-test">
+      <h4 class="title">center rectangle</h4>
+      <p class="description">W0.5"XH0.25" rectangle</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="lower-left-rect-macro-test">
+      <h4 class="title">lower-left rectangle</h4>
+      <p class="description">W0.5"XH0.25" rectangle</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="outline-macro-test">
+      <h4 class="title">outline polygon</h4>
+      <p class="description">0,0 -> 0,0.5 -> 0.5,0.5 outline</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="polygon-macro-test">
+      <h4 class="title">regular pentagon</h4>
+      <p class="description">0.5" diameter pentagon</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="moire-macro-test">
+      <h4 class="title">moires</h4>
+      <p class="description">moires with 2 rings and 3 rings and a circle</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="thermal-macro-test">
+      <h4 class="title">thermal</h4>
+      <p class="description">OD0.5" ID0.4" thermal</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+
+
 
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="./dist/gerber-to-svg.js"></script>
