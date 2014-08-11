@@ -157,6 +157,7 @@ class Plotter
             ad.tool = @macros[ad.macro.name].run ad.code, ad.macro.mods
           @tools[ad.code] = {
             stroke: ad.tool.trace
+            pad: (obj for obj in ad.tool.pad)
             flash: (x, y) ->
               { use: { x: x, y: y, 'xlink:href': '#'+ad.tool.padId } }
             bbox: (x=0, y=0) ->
@@ -167,7 +168,6 @@ class Plotter
                 yMax: y + ad.tool.bbox[3]
               }
           }
-          @defs.push obj for obj in ad.tool.pad
           # ad sets the current tool to the tool that was just defined
           @currentTool = ad.code
         when 'AM'
@@ -295,13 +295,17 @@ class Plotter
     if block.match /^(G0?[123])?([XYIJ][+-]?\d+){0,4}D0?[123]$/
       # if the last char is a 2, we've got a move
       op = block[block.length - 1]
-      coord = (block.match /[XYIJ][+-]?\d+/g)?.join ''
+      coord = ((block.match /[XYIJ][+-]?\d+/g)?.join '') ? ''
       start = { x: @position.x, y: @position.y }
       end = @move coord
       # if it's a 3, we've got a flash
       if op is '3'
         # finish any in progress path
         @finishTrace()
+        # add the pad to defs if necessary
+        if @tools[@currentTool].pad
+          @defs.push obj for obj in @tools[@currentTool].pad
+          @tools[@currentTool].pad = false
         # add the pad to the layer
         @layer.current[@layer.type]._
           .push @tools[@currentTool].flash @position.x, @position.y
