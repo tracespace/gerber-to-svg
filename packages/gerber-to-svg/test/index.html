@@ -44,14 +44,9 @@
         <li>
           <a href="macro-pad-tests">aperture macro pad tests</a>
           <ul>
-            <li><a href="#macro-primitive-tests">circles</a></li>
-            <li><a href="#macro-vector-tests">vectors</a></li>
-            <li><a href="#macro-center-rect-tests">center rectangles</a></li>
-            <li><a href="#macro-lower-left-rect-tests">lower-left rectangles</a></li>
-            <li><a href="#macro-outline-tests">outlines</a></li>
-            <li><a href="#macro-polygon-tests">polygons</a></li>
-            <li><a href="#macro-moire-tests">polygons</a></li>
-            <li><a href="#macro-thermal-tests">polygons</a></li>
+            <li><a href="#macro-primitive-tests">primitives</a></li>
+            <li><a href="#macro-rotation-tests">rotated primitives</a></li>
+            <li><a href="#macro-exposure-tests">multiple exposures</a></li>
           </ul>
       </ul>
     </nav>
@@ -146,7 +141,7 @@
 
     <h2 id="macro-pad-tests">aperture macro pad tests</h2>
 
-    <h3 id="macro-circle-tests">primitives</h3>
+    <h3 id="macro-primitive-tests">primitives</h3>
     <div class="test" id="circle-macro-test">
       <h4 class="title">circle</h4>
       <p class="description">circle with 0.5" diameter</p>
@@ -196,7 +191,49 @@
       <div class="svg"></div>
     </div>
 
-
+    <h3 id="macro-rotation-tests">rotated primitives</h3>
+    <div class="test" id="rotated-vector-macro-test">
+      <h4 class="title">vector line</h4>
+      <p class="description">vector rotated 130 degrees CCW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-center-rect-macro-test">
+      <h4 class="title">center rectangle</h4>
+      <p class="description">center rectangle rotated 45 degrees CCW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-lower-left-rect-macro-test">
+      <h4 class="title">lower-left rectangle</h4>
+      <p class="description">lower-left rectangle rotated 90 degrees CW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-outline-macro-test">
+      <h4 class="title">outline polygon</h4>
+      <p class="description">outline polygon rotated 180 degrees</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-polygon-macro-test">
+      <h4 class="title">regular pentagon</h4>
+      <p class="description">pentagon rotated 72 degrees CCW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-moire-macro-test">
+      <h4 class="title">moires</h4>
+      <p class="description">moires rotated 63 degrees CCW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="rotated-thermal-macro-test">
+      <h4 class="title">thermal</h4>
+      <p class="description">thermal rotated 25 degrees CW</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
 
 
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
