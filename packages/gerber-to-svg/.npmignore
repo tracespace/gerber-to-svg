@@ -1,0 +1,4 @@
+# ignore source and test files
+Gulpfile.coffee
+src/
+test/
