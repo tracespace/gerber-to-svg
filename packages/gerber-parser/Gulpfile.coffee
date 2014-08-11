@@ -38,7 +38,11 @@ gulp.task 'standalone', ->
     .pipe gulp.dest DISTDIR
     .pipe rename DIST+'.min.js'
     .pipe streamify uglify {
-      preamble: '/* view source at github.com/mcous/gerber-to-svg */'
+      output: {
+        preamble: '/* copyright 2014 by mike cousins; shared under the terms of
+        the MIT license. Source code available at
+        github.com/mcous/gerber-to-svg */'
+      }
       compress: { drop_console: true }
       mangle: true
     }
