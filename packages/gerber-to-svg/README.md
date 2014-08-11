@@ -7,12 +7,17 @@ Gerber file to SVG converter for Node and the browser.
 2. `$ gerber2svg /path/to/gerber` (writes to stdout)
   * `$ gerber2svg /path/to/gerber > file.svg` will write to a file
 
-### api (with Node or in the Browser with Browserify)
+### api (node and browser)
+For Node and Browserify:
 1. `$ npm install --save(-dev) gerber-to-svg`
+2. Add `var gerberToSvg = require(gerber-to-svg);` to your JavaScript
+
+If you'd rather not manage your packages:
+1. Download the standalone [library]() or [minified library]()
+2. Add `<script src="path/to/gerber-to-svg.js"></script>` to your HTML before your application
 
 Use in your app with:
 ``` javascript
-var gerberToSvg = require(gerber-to-svg);
 var svgString = gerberToSvg(gerberString);
 ```
 Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-8 or FileReader.readAsText).
