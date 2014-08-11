@@ -165,6 +165,7 @@ describe 'shape functions', ->
         { circle: { cx: 0, cy: 0, r: 7, 'stroke-width': 2, fill: 'none' } }
         { circle: { cx: 0, cy: 0, r: 3, 'stroke-width': 2, fill: 'none' } }
       ]
+      result.shape.length.should.not.be.greaterThan 4
     it 'should throw errors for missing parameters', ->
       (-> shapes.moire {
         cy: 0

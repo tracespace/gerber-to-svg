@@ -213,7 +213,7 @@ moire = (p) ->
   # add rings to shape
   r = (p.outerDia - p.ringThx)/2
   rings = 0
-  while r >= p.ringThx and rings <= p.maxRings
+  while r >= p.ringThx and rings < p.maxRings
     shape.push {
       circle: {
         cx: p.cx
@@ -226,9 +226,9 @@ moire = (p) ->
     }
     rings++
     r -= p.ringThx + p.ringGap
-
   # if there's still some room left, a disc goes in the center
-  if r > 0 and rings <= p.maxRings then shape.push {
+  r += 0.5*p.ringThx
+  if r > 0 and rings < p.maxRings then shape.push {
     circle: {
       cx: p.cx
       cy: p.cy
