@@ -1,1 +1,5 @@
+# ignore node_modules
 node_modules
+# ignore compiled things
+lib/
+dist/
