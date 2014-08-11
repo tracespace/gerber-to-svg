@@ -29,3 +29,8 @@ describe 'the plot method of the Plotter class', ->
     testGerber= fs.readFileSync 'test/gerber/gerber-spec-example-2.gbr', 'utf-8'
     p = new Plotter testGerber
     (-> p.plot()).should.not.throw
+
+  it 'should throw an error if the file ends without an M02*', ->
+    testGerber = '%FSLAX34Y34*%%MOIN*%%ADD10C,0.5*%X0Y0D03*'
+    p = new Plotter testGerber
+    (-> p.plot()).should.throw /end of file/
