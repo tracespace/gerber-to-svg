@@ -103,8 +103,10 @@ class Plotter
   # go through the gerber file and return an xml object with the svg
   plot: () ->
     until @done
-      # grab the next command
+      # grab the next command. if it returns false we've hit the end of the file
       current = @parser.nextCommand()
+      if current is false
+        throw new Error 'end of file encountered before required M02 command'
       # if it's a parameter command
       if current[0] is '%' then @parameter current else @operate current[0]
     # finish and return the xml object
