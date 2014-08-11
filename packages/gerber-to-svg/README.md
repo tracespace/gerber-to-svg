@@ -16,7 +16,7 @@ For Node and Browserify:
 
 If you'd rather not manage your packages:
 
-1. Download the standalone [library](https://github.com/mcous/gerber-to-svg/raw/master/dist/gerber-to-svg.js) or [minified library](https://github.com/mcous/gerber-to-svg/raw/master/dist/gerber-to-svg.min.js)
+1. Download the standalone [library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.6-alpha/gerber-to-svg.js) or [minified library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.6-alpha/gerber-to-svg.min.js)
 2. Add `<script src="path/to/gerber-to-svg.js"></script>` to your HTML before your application
 
 Use in your app with:
@@ -24,6 +24,13 @@ Use in your app with:
 var svgString = gerberToSvg(gerberString);
 ```
 Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-8 or FileReader.readAsText).
+
+### build from source
+
+1. `$ git clone https://github.com/mcous/gerber-to-svg.git`
+2. `$ npm install && gulp`
+
+Library files for Node and Browserify live in lib/, standalone library files live in dist/, and the command line utility lives in bin/.
 
 ## what you get
 Not a whole lot, for now. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/files/downloads/file/81/the_gerber_file_format_specification.pdf?d69271f6602e26ab2474ad625fe40c97). Most all of the Gerber file features are there.
