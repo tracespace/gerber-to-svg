@@ -10,11 +10,12 @@ class GerberParser
 
   # get the next commmand
   nextCommand: () ->
+    if @index >= @file.length then return false
     blocks = []
     current = ''
     parameter = false
     done = false
-    until done
+    until done or @index is @file.length
       char = @file[@index]
       if char is '%'
         if not parameter then parameter = true else done = true
