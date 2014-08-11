@@ -1,5 +1,59 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>gerber to svg visual tests</title>
+    <style type="text/css">
+    body, html {
+      background-color: gainsboro;
+    }
+    h1, h2, h3, h4 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    svg {
+      color: navy;
+    }
+    .test {
+      display: inline-block;
+      margin: 0 10px 0 10px;
+    }
+    .gerber {
+      white-space: pre-line;
+      font-size: 12px;
+    }
+    </style>
+  </head>
   <body>
-    <h1> hello, world. </h1>
+    <h1>gerber to svg visual tests</h1>
+    <h2>standard aperture pad tests</h2>
+    <h3>circles</h3>
+    <div class="test" id="circle-pad-test">
+      <h4 class=".title">circle</h4>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="circle-pad-circle-hole-test">
+      <h4 class=".title">circle with circle hole</h4>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="circle-pad-rect-hole-test">
+      <h4 class=".title">circle with rect hole</h4>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./dist/gerber-to-svg.min.js"></script>
+    <script>
+    $(".test").each(function(index) {
+      var test = $(this);
+      var file = test.children('.gerber');
+      $.get('../test/gerber/' + test.attr('id') + '.gbr', function(data) {
+        file.html(data);
+        file.next('.svg').html(gerberToSvg(data));
+      });
+    });
+    </script>
   </body>
 </html>

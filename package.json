@@ -36,6 +36,7 @@
     "gulp-streamify": "0.0.5",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^2.2.19",
+    "jquery": "^2.1.1",
     "mocha": "^1.20.1",
     "node-static": "^0.7.4",
     "should": "^4.0.4",

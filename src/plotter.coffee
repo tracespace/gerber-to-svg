@@ -186,6 +186,8 @@ class Plotter
               }
           }
           @defs.push obj for obj in ad.tool.pad
+          # ad sets the current tool to the tool that was just defined
+          @currentTool = ad.code
         when 'AM'
           m = new Macro blocks[...-1]
           @macros[m.name] = m

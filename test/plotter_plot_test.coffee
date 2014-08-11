@@ -4,7 +4,7 @@ fs = require 'fs'
 
 describe 'the plot method of the Plotter class', ->
   it 'should plot example 1 from the gerber spec', ->
-    testGerber = fs.readFileSync 'test/gerber-spec-example-1.gbr', 'utf-8'
+    testGerber= fs.readFileSync 'test/gerber/gerber-spec-example-1.gbr', 'utf-8'
     p = new Plotter testGerber
     result = p.plot()
     result.should.containDeep {
@@ -26,6 +26,6 @@ describe 'the plot method of the Plotter class', ->
     }
 
   it 'should plot example 2 from the gerber spec', ->
-    testGerber = fs.readFileSync 'test/gerber-spec-example-2.gbr', 'utf-8'
+    testGerber= fs.readFileSync 'test/gerber/gerber-spec-example-2.gbr', 'utf-8'
     p = new Plotter testGerber
     (-> p.plot()).should.not.throw
