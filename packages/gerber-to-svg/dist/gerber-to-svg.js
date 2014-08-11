@@ -1375,6 +1375,7 @@ Plotter = (function() {
             obj = _ref[_i];
             this.defs.push(obj);
           }
+          this.currentTool = ad.code;
           break;
         case 'AM':
           m = new Macro(blocks.slice(0, -1));
