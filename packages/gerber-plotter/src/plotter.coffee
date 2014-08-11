@@ -115,26 +115,6 @@ class Plotter
   finish: () ->
     @finishTrace()
     @finishStepRepeat()
-    width = parseFloat (@bbox.xMax - @bbox.xMin).toPrecision 10
-    height = parseFloat (@bbox.yMax - @bbox.yMin).toPrecision 10
-    xml = {
-      svg: {
-        xmlns: 'http://www.w3.org/2000/svg'
-        version: '1.1'
-        'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-        width: "#{width}#{@units}"
-        height: "#{height}#{@units}"
-        viewBox: "#{@bbox.xMin} #{@bbox.yMin} #{width} #{height}"
-        id: @gerberId
-        _: []
-      }
-    }
-    if @defs.length then xml.svg._.push { defs: { _: @defs } }
-    # flip it in the y and translate back to origin
-    @group.g.transform = "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
-    # return xml object
-    xml.svg._.push @group
-    xml
 
   parameter: (blocks) ->
     done = false
