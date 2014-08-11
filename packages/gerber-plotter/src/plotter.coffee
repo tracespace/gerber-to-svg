@@ -24,8 +24,8 @@ parseAD = (block) ->
       mods = block[4+code.length..].split 'X'
       params = { dia: parseFloat mods[0] }
       if mods.length > 2 then params.hole = {
-        width: parseFloat mods[2]
-        height: parseFloat mods[1]
+        width: parseFloat mods[1]
+        height: parseFloat mods[2]
       }
       else if mods.length > 1 then params.hole = { dia: parseFloat mods[1] }
       ad = tool code, params
@@ -33,8 +33,8 @@ parseAD = (block) ->
       mods = block[4+code.length..].split 'X'
       params = { width: parseFloat(mods[0]), height: parseFloat(mods[1]) }
       if mods.length > 3 then params.hole = {
-        width: parseFloat mods[3]
-        height: parseFloat mods[2]
+        width: parseFloat mods[2]
+        height: parseFloat mods[3]
       }
       else if mods.length > 2 then params.hole = { dia: parseFloat mods[2] }
       ad = tool code, params
@@ -42,8 +42,8 @@ parseAD = (block) ->
       mods = block[4+code.length..].split 'X'
       params = { width: parseFloat(mods[0]), height: parseFloat(mods[1]) }
       if mods.length > 3 then params.hole = {
-        width: parseFloat mods[3]
-        height: parseFloat mods[2]
+        width: parseFloat mods[2]
+        height: parseFloat mods[3]
       }
       else if mods.length > 2 then params.hole = { dia: parseFloat mods[2] }
       params.obround = true
@@ -56,8 +56,8 @@ parseAD = (block) ->
       }
       if mods[2]? then params.degrees = parseFloat mods[2]
       if mods.length > 4 then params.hole = {
-        width: parseFloat mods[4]
-        height: parseFloat mods[3]
+        width: parseFloat mods[3]
+        height: parseFloat mods[4]
       }
       else if mods.length > 3 then params.hole = { dia: parseFloat mods[3] }
       ad = tool code, params

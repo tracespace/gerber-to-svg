@@ -96,10 +96,10 @@ describe 'Plotter class', ->
             { circle: { r: 0.7 } }
           ]
           (p.tools.D12?).should.be.false
-          p.parameter [ '%', 'ADD12C,1.6X0.5X0.5', '%' ]
+          p.parameter [ '%', 'ADD12C,1.6X0.6X0.5', '%' ]
           (p.tools.D12?).should.be.true
           p.defs.should.containDeep [
-            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { circle: { r: 0.8 } }
           ]
         it 'should add standard rectangles to the tools list', ->
@@ -110,7 +110,7 @@ describe 'Plotter class', ->
             '%'
             'ADD10R,1X1'
             'ADD11R,1.1X1.1X0.5'
-            'ADD12R,1.2X1.2X0.5X0.5'
+            'ADD12R,1.2X1.2X0.6X0.5'
             '%'
           ]
           (p.tools.D10?).should.be.true
@@ -120,7 +120,7 @@ describe 'Plotter class', ->
             { rect:  { width: 1 } }
             { mask: { _: [ { circle: { r: 0.25 } } ] } }
             { rect: { width: 1.1 } }
-            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { rect: { width: 1.2 } }
           ]
 
@@ -132,7 +132,7 @@ describe 'Plotter class', ->
             '%'
             'ADD10O,1X1'
             'ADD11O,1.2X1.2X0.5'
-            'ADD12O,1.4X1.4X0.5X0.5'
+            'ADD12O,1.4X1.4X0.6X0.5'
             '%'
           ]
           (p.tools.D10?).should.be.true
@@ -142,7 +142,7 @@ describe 'Plotter class', ->
             { rect: { width: 1, rx: 0.5 } }
             { mask: { _: [ { circle: { r: 0.25 } } ] } }
             { rect: { width: 1.2, rx: 0.6 } }
-            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { rect: { width: 1.4, rx: 0.7 } }
           ]
         it 'should add standard polygons to the tools list', ->
@@ -155,7 +155,7 @@ describe 'Plotter class', ->
             'ADD10P,5X3'
             'ADD11P,5X4X45'
             'ADD12P,5X4X0X0.6'
-            'ADD13P,5X4X0X0.6X0.6'
+            'ADD13P,5X4X0X0.6X0.5'
             '%'
           ]
           (p.tools.D10?).should.be.true
@@ -167,7 +167,7 @@ describe 'Plotter class', ->
             { polygon: {} }
             { mask: { _: [ { circle: { r: 0.3 } } ] } }
             { polygon: {} }
-            { mask: { _: [ { rect: {} }, { rect: {} } ] } }
+            { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { polygon: {} }
           ]
 
