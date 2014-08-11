@@ -1088,8 +1088,8 @@ parseAD = function(block) {
       };
       if (mods.length > 2) {
         params.hole = {
-          width: parseFloat(mods[2]),
-          height: parseFloat(mods[1])
+          width: parseFloat(mods[1]),
+          height: parseFloat(mods[2])
         };
       } else if (mods.length > 1) {
         params.hole = {
@@ -1106,8 +1106,8 @@ parseAD = function(block) {
       };
       if (mods.length > 3) {
         params.hole = {
-          width: parseFloat(mods[3]),
-          height: parseFloat(mods[2])
+          width: parseFloat(mods[2]),
+          height: parseFloat(mods[3])
         };
       } else if (mods.length > 2) {
         params.hole = {
@@ -1124,8 +1124,8 @@ parseAD = function(block) {
       };
       if (mods.length > 3) {
         params.hole = {
-          width: parseFloat(mods[3]),
-          height: parseFloat(mods[2])
+          width: parseFloat(mods[2]),
+          height: parseFloat(mods[3])
         };
       } else if (mods.length > 2) {
         params.hole = {
@@ -1146,8 +1146,8 @@ parseAD = function(block) {
       }
       if (mods.length > 4) {
         params.hole = {
-          width: parseFloat(mods[4]),
-          height: parseFloat(mods[3])
+          width: parseFloat(mods[3]),
+          height: parseFloat(mods[4])
         };
       } else if (mods.length > 3) {
         params.hole = {
