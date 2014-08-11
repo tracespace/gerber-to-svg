@@ -63,9 +63,11 @@ describe 'Plotter class', ->
         (-> p.macros.UNIQUENAME.run('D10')).should.throw /unrecognized tool/
 
     describe 'with aperture definitions', ->
-      it 'should add the pad shapes to the defs list', ->
+      it 'should not add the pad shapes to the defs list until its flashed', ->
         p.defs.length.should.equal 0
-        p.parameter [ '%', 'ADD10C,1.1', '%' ]
+        p.parameter [ '%', 'FSLAX34Y34', 'MOIN', 'ADD10C,1.1', '%' ]
+        p.defs.length.should.equal 0
+        p.operate 'D03'
         p.defs[0].should.containDeep { circle: {} }
       it 'should set the tools flash object to a use object', ->
         p.parameter [ '%', 'ADD10C,1.1', '%' ]
@@ -87,18 +89,18 @@ describe 'Plotter class', ->
           (p.tools.D10?).should.be.false
           p.parameter [ '%', 'ADD10C,1.2', '%' ]
           (p.tools.D10?).should.be.true
-          p.defs.should.containDeep [ { circle: { r: 0.6 } } ]
+          p.tools.D10.pad.should.containDeep [ { circle: { r: 0.6 } } ]
           (p.tools.D11?).should.be.false
           p.parameter [ '%', 'ADD11C,1.4X0.5', '%' ]
           (p.tools.D11?).should.be.true
-          p.defs.should.containDeep [
+          p.tools.D11.pad.should.containDeep [
             { mask: { _: [ { circle: { r: 0.25 } } ] } }
             { circle: { r: 0.7 } }
           ]
           (p.tools.D12?).should.be.false
           p.parameter [ '%', 'ADD12C,1.6X0.6X0.5', '%' ]
           (p.tools.D12?).should.be.true
-          p.defs.should.containDeep [
+          p.tools.D12.pad.should.containDeep [
             { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { circle: { r: 0.8 } }
           ]
@@ -116,10 +118,14 @@ describe 'Plotter class', ->
           (p.tools.D10?).should.be.true
           (p.tools.D11?).should.be.true
           (p.tools.D12?).should.be.true
-          p.defs.should.containDeep [
+          p.tools.D10.pad.should.containDeep [
             { rect:  { width: 1 } }
+          ]
+          p.tools.D11.pad.should.containDeep [
             { mask: { _: [ { circle: { r: 0.25 } } ] } }
             { rect: { width: 1.1 } }
+          ]
+          p.tools.D12.pad.should.containDeep [
             { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { rect: { width: 1.2 } }
           ]
@@ -138,10 +144,14 @@ describe 'Plotter class', ->
           (p.tools.D10?).should.be.true
           (p.tools.D11?).should.be.true
           (p.tools.D12?).should.be.true
-          p.defs.should.containDeep [
+          p.tools.D10.pad.should.containDeep [
             { rect: { width: 1, rx: 0.5 } }
+          ]
+          p.tools.D11.pad.should.containDeep [
             { mask: { _: [ { circle: { r: 0.25 } } ] } }
             { rect: { width: 1.2, rx: 0.6 } }
+          ]
+          p.tools.D12.pad.should.containDeep [
             { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { rect: { width: 1.4, rx: 0.7 } }
           ]
@@ -162,11 +172,17 @@ describe 'Plotter class', ->
           (p.tools.D11?).should.be.true
           (p.tools.D12?).should.be.true
           (p.tools.D13?).should.be.true
-          p.defs.should.containDeep [
+          p.tools.D10.pad.should.containDeep [
             { polygon: {} }
+          ]
+          p.tools.D11.pad.should.containDeep [
             { polygon: {} }
+          ]
+          p.tools.D12.pad.should.containDeep [
             { mask: { _: [ { circle: { r: 0.3 } } ] } }
             { polygon: {} }
+          ]
+          p.tools.D13.pad.should.containDeep [
             { mask: { _: [ { rect: {} }, { rect: {width:0.6, height:0.5} } ] } }
             { polygon: {} }
           ]
@@ -176,11 +192,11 @@ describe 'Plotter class', ->
           p.parameter [ '%', 'AMCIRC', '1,1,$1,0,0', '%' ]
           p.parameter [ '%', 'ADD10CIRC,1.6', '%' ]
           (p.tools.D10?).should.be.true
-          p.defs.should.containDeep [ { circle: { r: 0.8 } } ]
+          # p.defs.should.containDeep [ { circle: { r: 0.8 } } ]
           p.parameter [ '%', 'AMRECT1', '21,1,1,1,0,0,0', '%' ]
           p.parameter [ '%', 'ADD11RECT1', '%' ]
           (p.tools.D11?).should.be.true
-          p.defs.should.containDeep [ { rect: { width: 1 } } ]
+          # p.defs.should.containDeep [ { rect: { width: 1 } } ]
 
     describe 'changing layer polarity', ->
       it 'shouldnt do anything if the polarity doesnt change', ->
