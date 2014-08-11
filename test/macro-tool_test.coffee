@@ -187,6 +187,11 @@ describe 'tool macro class', ->
           { line: { transform: 'rotate(45)' } }
           { line: { transform: 'rotate(45)' } }
         ]
+      it 'should have no more than maxrings (arg 6)', ->
+        m = new Macro ['AMNAME']
+        m.primitive [6, 0, 0, 20, 1, 1, 2, 1, 22, 0]
+        # shapes should have two rings and two lines
+        m.shapes.length.should.equal 4
       it 'should throw an error if rotation given when center is not 0,0', ->
         m = new Macro ['AMNAME']
         (-> m.primitive [6, 1, 1, 20, 2, 2, 3, 2, 22, 45])
