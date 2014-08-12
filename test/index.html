@@ -48,6 +48,17 @@
             <li><a href="#macro-rotation-tests">rotated primitives</a></li>
             <li><a href="#macro-exposure-tests">multiple exposures</a></li>
           </ul>
+        </li>
+        <li>
+          <a href="#stroke-tests">stroke tests</a>
+          <ul>
+            <li><a href="#zero-length-stroke-tests">zero length strokes</a></li>
+            <li><a href="#linear-stroke-tests">linear strokes</a></li>
+            <li><a href="#special-arc-stroke-tests">special arc strokes</a></li>
+            <li><a href="#single-quad-arc-stroke-tests">less than 90 deg arc strokes</a></li>
+            <li><a href="#multi-quad-arc-stroke-tests">no limit arc strokes</a></li>
+          </ul>
+        </li>
       </ul>
     </nav>
 
@@ -245,6 +256,170 @@
     <div class="test" id="multiple-exposure-macro-clear">
       <h4 class="title">multiple exposure macro clearing</h4>
       <p class="description">same macro flashing on a clear level</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h2 id="stroke-tests">aperture stroking tests</h3>
+
+    <h3 id="zero-length-stroke-tests">zero-length stroke tests</h3>
+    <div class="test" id="zero-length-rect-stroke-test">
+      <h4 class="title">zero-length rectangular stroke</h4>
+      <p class="description">zero-length rectangular stroke (left) should match
+        rectangular pad (right)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="zero-length-circle-stroke-test">
+      <h4 class="title">zero-length circular stroke</h4>
+      <p class="description">zero-length circular stroke (left) should match
+        circular pad (right)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h3 id="linear-stroke-tests">linear stroke tests</h3>
+    <div class="test" id="single-rect-stroke-test">
+      <h4 class="title">single rectangular stroke</h4>
+      <p class="description">stroke should be rectangle dragged without rotation
+        in a straight line</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="single-circle-stroke-test">
+      <h4 class="title">single circular stroke</h4>
+      <p class="description">stroke should be a line with round ends</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-rect-stroke-test">
+      <h4 class="title">multiple rectangular strokes</h4>
+      <p class="description">stroke should be rectangle dragged without rotation
+        in four straight line segments</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-circle-stroke-test">
+      <h4 class="title">multiple circular strokes</h4>
+      <p class="description">stroke should be four line segments with round
+        ends and round joins</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h3 id="special-arc-stroke-tests">edge case arc stroke tests</h3>
+    <div class="test" id="zero-length-arc-stroke-test">
+      <h4 class="title">zero-length arc stroke</h4>
+      <p class="description">in single quadrant mode, a arc with matching start
+        and end points (left) is a zero-length stroke that matches a flash
+        (right)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="full-circle-arc-stroke-test">
+      <h4 class="title">full circle arc stroke</h4>
+      <p class="description">in multi quadrant mode, an arc with matching start
+        and end points is a full circle (left CCW, right CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h3 id="single-quad-arc-stroke-tests">less than 90 deg arc stroke tests</h3>
+    <div class="test" id="single-quad-I-II-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant I and II</h4>
+      <p class="description">top arc (CCW) should match bottom arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="single-quad-II-III-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant II and III</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="single-quad-III-IV-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant III and IV</h4>
+      <p class="description">bottom arc (CCW) should match top arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="single-quad-IV-I-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant IV and I</h4>
+      <p class="description">right arc (CCW) should match left arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h3 id="multi-quad-arc-stroke-tests">no rotation limit arc stroke tests</h3>
+    <div class="test" id="multi-quad-I-II-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant I and II</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-I-III-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant I and III</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-I-IV-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant I and IV</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-II-III-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant II and III</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-II-IV-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant II and IV</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-II-I-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant II and I</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-III-IV-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant III and IV</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-III-I-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant III and I</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-III-II-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant III and II</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-IV-I-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant IV and I</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-IV-II-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant IV and II</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="multi-quad-IV-III-arc-stroke-test">
+      <h4 class="title">arc strokes between quadrant IV and III</h4>
+      <p class="description">left arc (CCW) should match right arc (CW)</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
