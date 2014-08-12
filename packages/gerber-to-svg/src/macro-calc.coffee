@@ -1,7 +1,7 @@
 # parser for arithmetic expressions in gerber aperture macros
 
 # regex matches
-OPERATOR = /[\+-\/x\(\)]/
+OPERATOR = /[\+\-\/xX\(\)]/
 NUMBER = /[\$\d\.]+/
 TOKEN = new RegExp "(#{OPERATOR.source})|(#{NUMBER.source})", 'g'
 
@@ -38,8 +38,13 @@ parse = (arith) ->
   parseMultiplication = ->
     exp = parsePrimary()
     t = peek()
-    while t is 'x' or t is '/'
+    while t is 'x' or t is '/' or t is 'X'
       consume t
+      # allow uppercase X as multiply with warning
+      if t is 'X'
+        console.warn "Warning: uppercase 'X' as multiplication symbol is
+          incorrect; macros should use lowercase 'x' to multiply"
+        t = 'x'
       rhs = parsePrimary()
       exp = { type: t, left: exp, right: rhs }
       t = peek()
