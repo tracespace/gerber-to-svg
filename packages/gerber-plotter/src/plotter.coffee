@@ -20,7 +20,7 @@ parseAD = (block) ->
   code = (block.match /^ADD\d+/)?[0]?[2..]
   # throw an error early if code is bad
   unless code? and parseInt(code[1..], 10) > 9
-    throw new SyntaxError "#{code} is an invalid tool code (must be >= 10)"
+    throw new Error "#{code} is an invalid tool code (must be >= 10)"
   # get the tool
   ad = null
   am = false
@@ -69,7 +69,7 @@ parseAD = (block) ->
     else
       def = block[2+code.length..]
       name = (def.match /[a-zA-Z_$][a-zA-Z_$.0-9]{0,126}(?=,)?/)?[0]
-      unless name then throw new SyntaxError 'invalid definition with macro'
+      unless name then throw new Error 'invalid definition with macro'
       mods = (def[name.length+1..]).split 'X'
       if mods.length is 1 and mods[0] is '' then mods = null
       am = { name: name, mods: mods }
@@ -154,7 +154,7 @@ class Plotter
   parameter: (blocks) ->
     done = false
     if blocks[0] is '%' and blocks[blocks.length-1] isnt '%'
-      throw new SyntaxError '@parameter should only be called with paramters'
+      throw new Error '@parameter should only be called with paramters'
     blocks = blocks[1..]
     index = 0
     until done
@@ -163,7 +163,7 @@ class Plotter
         when 'FS'
           invalid = false
           if @format.set
-            throw new SyntaxError 'format spec cannot be redefined'
+            throw new Error 'format spec cannot be redefined'
           try
             if block[2] is 'L' or block[2] is 'T' then @format.zero = block[2]
             else invalid = true
@@ -177,17 +177,17 @@ class Plotter
             else invalid = true
           catch error
             invalid = true
-          if invalid then throw new SyntaxError 'invalid format spec'
+          if invalid then throw new Error 'invalid format spec'
           else @format.set = true
         when 'MO'
           u = block[2..]
           unless @units?
             if u is 'MM' then @units = 'mm' else if u is 'IN' then @units = 'in'
-            else throw new SyntaxError "#{u} are unrecognized units"
-          else throw new SyntaxError "gerber file may not redifine units"
+            else throw new Error "#{u} are unrecognized units"
+          else throw new Error "gerber file may not redifine units"
         when 'AD'
           ad = parseAD blocks[index]
-          if @tools[ad.code]? then throw new SyntaxError 'duplicate tool code'
+          if @tools[ad.code]? then throw new Error 'duplicate tool code'
           if ad.macro
             ad.tool = @macros[ad.macro.name].run ad.code, ad.macro.mods
           @tools[ad.code] = {
@@ -237,7 +237,7 @@ class Plotter
           # get the level
           p = block[2]
           unless p is 'D' or p is 'C'
-            throw new SyntaxError "#{block} is an unrecognized level polarity"
+            throw new Error "#{block} is an unrecognized level polarity"
           # if switching from clear to dark
           if p is 'D' and @layer.type is 'mask'
             groupId = "#{@gerberId}-layer-#{++@layer.level}"
@@ -281,7 +281,7 @@ class Plotter
         @done = true
         block = ''
       else unless (code is 'M00' or code is 'M01')
-        throw new SyntaxError 'invalid operation M code'
+        throw new Error 'invalid operation M code'
       valid = true
     # else check for a G code
     else if block[0] is 'G'
@@ -310,7 +310,7 @@ class Plotter
         @backupUnits = 'mm'
       # check for comments or deprecated, else throw
       else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
-        throw new SyntaxError 'invalid operation G code'
+        throw new Error 'invalid operation G code'
       valid = true
 
     # check for a tool change
@@ -320,9 +320,9 @@ class Plotter
       @finishTrace()
       # check that tool exists and we're not in region mode
       unless @tools[t]?
-        throw new SyntaxError "tool #{t} does not exist"
+        throw new Error "tool #{t} does not exist"
       if @trace.region
-        throw new SyntaxError "cannot change tool while region mode is on"
+        throw new Error "cannot change tool while region mode is on"
       # change the tool
       @currentTool = t
 
@@ -469,11 +469,11 @@ class Plotter
           # add the bounding box
           @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
         # if there wasn't a mode set then we're in trouble
-        else throw new SyntaxError 'cannot interpolate without a G01/2/3'
+        else throw new Error 'cannot interpolate without a G01/2/3'
       else if op is '2'
         @finishTrace()
       else
-        throw new SyntaxError "#{op} is an invalid operation (D) code"
+        throw new Error "#{op} is an invalid operation (D) code"
 
   finishStepRepeat: () ->
     if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
@@ -524,7 +524,7 @@ class Plotter
   # take a coordinate string with format given by the format spec
   # return an absolute position
   coordinate: (coord) ->
-    unless @format.set then throw new SyntaxError 'format undefined'
+    unless @format.set then throw new Error 'format undefined'
     result = { x: 0, y: 0 }
     # pull out the x, y, i, and j
     result.x = coord.match(/X[+-]?\d+/)?[0]?[1..]
@@ -541,7 +541,7 @@ class Plotter
         if @format.zero is 'L' then divisor *= 10 ** @format.places[1]
         else if @format.zero is 'T'
           divisor *= 10 ** (val.length - @format.places[0])
-        else throw new SyntaxError 'invalid zero suppression format'
+        else throw new Error 'invalid zero suppression format'
         result[key] = Number(val) / divisor
         # incremental coordinate support
         if @format.notation is 'I' then result[key] += (@position[key] ? 0)

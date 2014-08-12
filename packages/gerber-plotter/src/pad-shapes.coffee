@@ -5,9 +5,9 @@
 unique = require './unique-id'
 
 circle = (p) ->
-  unless p.dia? then throw new SyntaxError 'circle function requires diameter'
-  unless p.cx? then throw new SyntaxError 'circle function requires x center'
-  unless p.cy? then throw new SyntaxError 'circle function requires y center'
+  unless p.dia? then throw new Error 'circle function requires diameter'
+  unless p.cx? then throw new Error 'circle function requires x center'
+  unless p.cy? then throw new Error 'circle function requires y center'
 
   r = p.dia/2
   {
@@ -18,10 +18,10 @@ circle = (p) ->
   }
 
 rect = (p) ->
-  unless p.width? then throw new SyntaxError 'rectangle requires width'
-  unless p.height? then throw new SyntaxError 'rectangle requires height'
-  unless p.cx? then throw new SyntaxError 'rectangle function requires x center'
-  unless p.cy? then throw new SyntaxError 'rectangle function requires y center'
+  unless p.width? then throw new Error 'rectangle requires width'
+  unless p.height? then throw new Error 'rectangle requires height'
+  unless p.cx? then throw new Error 'rectangle function requires x center'
+  unless p.cy? then throw new Error 'rectangle function requires y center'
 
   x = p.cx - p.width/2
   y = p.cy - p.height/2
@@ -48,10 +48,10 @@ rect = (p) ->
 
 # regular polygon
 polygon = (p) ->
-  unless p.dia? then throw new SyntaxError 'polygon requires diameter'
-  unless p.verticies? then throw new SyntaxError 'polygon requires verticies'
-  unless p.cx? then throw new SyntaxError 'polygon function requires x center'
-  unless p.cy? then throw new SyntaxError 'polygon function requires y center'
+  unless p.dia? then throw new Error 'polygon requires diameter'
+  unless p.verticies? then throw new Error 'polygon requires verticies'
+  unless p.cx? then throw new Error 'polygon function requires x center'
+  unless p.cy? then throw new Error 'polygon function requires y center'
 
   start = if p.degrees? then p.degrees * Math.PI/180 else 0
   step = 2*Math.PI / p.verticies
@@ -85,11 +85,11 @@ polygon = (p) ->
   }
 
 vector = (p) ->
-  unless p.x1? then throw new SyntaxError 'vector function requires start x'
-  unless p.y1? then throw new SyntaxError 'vector function requires start y'
-  unless p.x2? then throw new SyntaxError 'vector function requires end x'
-  unless p.y2? then throw new SyntaxError 'vector function requires end y'
-  unless p.width? then throw new SyntaxError 'vector function requires width'
+  unless p.x1? then throw new Error 'vector function requires start x'
+  unless p.y1? then throw new Error 'vector function requires start y'
+  unless p.x2? then throw new Error 'vector function requires end x'
+  unless p.y2? then throw new Error 'vector function requires end y'
+  unless p.width? then throw new Error 'vector function requires width'
 
   # get angle of the line for the bounding box
   theta = Math.abs Math.atan (p.y2 - p.y1)/(p.x2 - p.x1)
@@ -119,10 +119,10 @@ vector = (p) ->
   }
 
 lowerLeftRect = (p) ->
-  unless p.width? then throw new SyntaxError 'lower left rect requires width'
-  unless p.height? then throw new SyntaxError 'lower left rect requires height'
-  unless p.x? then throw new SyntaxError 'lower left rectangle requires x'
-  unless p.y? then throw new SyntaxError 'lower left rectangle requires y'
+  unless p.width? then throw new Error 'lower left rect requires width'
+  unless p.height? then throw new Error 'lower left rect requires height'
+  unless p.x? then throw new Error 'lower left rectangle requires x'
+  unless p.y? then throw new Error 'lower left rectangle requires y'
 
   # return shape and bbox
   {
@@ -141,7 +141,7 @@ lowerLeftRect = (p) ->
 
 outline = (p) ->
   unless Array.isArray(p.points) and p.points.length > 1
-    throw new SyntaxError 'outline function requires points array'
+    throw new Error 'outline function requires points array'
 
   xMin = null
   yMin = null
@@ -150,7 +150,7 @@ outline = (p) ->
   pointString = ''
   for point in p.points
     unless (Array.isArray(point) and point.length is 2)
-      throw new SyntaxError 'outline function requires points array'
+      throw new Error 'outline function requires points array'
     x = point[0]
     y = point[1]
     if x < xMin or xMin is null then xMin = x
@@ -175,16 +175,14 @@ outline = (p) ->
   }
 
 moire = (p) ->
-  unless p.cx? then throw new SyntaxError 'moiré requires x center'
-  unless p.cy? then throw new SyntaxError 'moiré requires y center'
-  unless p.outerDia? then throw new SyntaxError 'moiré requires outer diameter'
-  unless p.ringThx? then throw new SyntaxError 'moiré requires ring thickness'
-  unless p.ringGap? then throw new SyntaxError 'moiré requires ring gap'
-  unless p.maxRings? then throw new SyntaxError 'moiré requires max rings'
-  unless p.crossLength?
-    throw new SyntaxError 'moiré requires crosshair length'
-  unless p.crossThx?
-    throw new SyntaxError 'moiré requires crosshair thickness'
+  unless p.cx? then throw new Error 'moiré requires x center'
+  unless p.cy? then throw new Error 'moiré requires y center'
+  unless p.outerDia? then throw new Error 'moiré requires outer diameter'
+  unless p.ringThx? then throw new Error 'moiré requires ring thickness'
+  unless p.ringGap? then throw new Error 'moiré requires ring gap'
+  unless p.maxRings? then throw new Error 'moiré requires max rings'
+  unless p.crossLength? then throw new Error 'moiré requires crosshair length'
+  unless p.crossThx? then throw new Error 'moiré requires crosshair thickness'
 
   # add crosshair to shape
   shape = [
@@ -249,13 +247,11 @@ moire = (p) ->
   }
 
 thermal = (p) ->
-  unless p.cx? then throw new SyntaxError 'thermal requires x center'
-  unless p.cy? then throw new SyntaxError 'thermal requires y center'
-  unless p.outerDia?
-    throw new SyntaxError 'thermal requires outer diameter'
-  unless p.innerDia?
-    throw new SyntaxError 'thermal requires inner diameter'
-  unless p.gap? then throw new SyntaxError 'thermal requires gap'
+  unless p.cx? then throw new Error 'thermal requires x center'
+  unless p.cy? then throw new Error 'thermal requires y center'
+  unless p.outerDia? then throw new Error 'thermal requires outer diameter'
+  unless p.innerDia? then throw new Error 'thermal requires inner diameter'
+  unless p.gap? then throw new Error 'thermal requires gap'
 
   maskId = "thermal-mask-#{unique()}"
   thx = (p.outerDia - p.innerDia) / 2
