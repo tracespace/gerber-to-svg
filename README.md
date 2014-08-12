@@ -16,7 +16,7 @@ For Node and Browserify:
 
 If you'd rather not manage your packages:
 
-1. Download the standalone [library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.6-alpha/gerber-to-svg.js) or [minified library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.6-alpha/gerber-to-svg.min.js)
+1. Download the standalone [library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.10-alpha/gerber-to-svg.js) or [minified library](https://github.com/mcous/gerber-to-svg/releases/download/v0.0.10-alpha/gerber-to-svg.min.js)
 2. Add `<script src="path/to/gerber-to-svg.js"></script>` to your HTML before your application
 
 Use in your app with:
