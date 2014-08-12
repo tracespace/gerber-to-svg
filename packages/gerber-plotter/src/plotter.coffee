@@ -9,6 +9,11 @@ Macro = require './macro-tool'
 # standard tool functions
 tool = require './standard-tool'
 
+# constants
+HALF_PI = Math.PI/2
+THREEHALF_PI = 3*HALF_PI
+TWO_PI = 2*Math.PI
+
 # parse a aperture definition command and return the object
 parseAD = (block) ->
   # first get the code
@@ -85,19 +90,19 @@ rectangleStrokePath = (start, end, width, height) ->
   # get the quadrant we're in
   theta = Math.atan2 end.y-start.y, end.x - start.x
   # quadrant I
-  if 0 <= theta < Math.PI/2
+  if 0 <= theta < HALF_PI
     "M#{sxm} #{sym}L#{sxp} #{sym}L#{exp} #{eym}L#{exp} #{eyp}L#{exm} #{eyp}
      L#{sxm} #{syp}Z"
   # quadrant II
-  else if Math.PI/2 <= theta < Math.PI
+  else if HALF_PI <= theta < Math.PI
     "M#{sxm} #{sym}L#{sxp} #{sym}L#{sxp} #{syp}L#{exp} #{eyp}L#{exm} #{eyp}
      L#{exm} #{eym}Z"
   # quadrant III
-  else if -Math.PI <= theta < -Math.PI/2
+  else if -Math.PI <= theta < -HALF_PI
     "M#{sxp} #{sym}L#{sxp} #{syp}L#{sxm} #{syp}L#{exm} #{eyp}L#{exm} #{eym}
      L#{exp} #{eym}Z"
   # quadrant IV
-  else if -Math.PI/2 <= theta < 0
+  else if -HALF_PI <= theta < 0
     "M#{sxm} #{sym}L#{exm} #{eym}L#{exp} #{eym}L#{exp} #{eyp}L#{sxp} #{syp}
      L#{sxm} #{syp}Z"
 
@@ -406,40 +411,45 @@ class Plotter
           # check the points to make sure we have a valid arc
           for c in cen
             thetaE = Math.atan2 end.y-c.y, end.x-c.x
-            if thetaE < 0 then thetaE += 2*Math.PI
+            if thetaE < 0 then thetaE += TWO_PI
             thetaS = Math.atan2 start.y-c.y, start.x-c.x
-            if thetaS < 0 then thetaS += 2*Math.PI
+            if thetaS < 0 then thetaS += TWO_PI
             # adjust angles so math comes out right
-            if @mode is 'cw' and thetaS < thetaE then thetaS+=2*Math.PI
-            else if @mode is 'ccw' and thetaE < thetaS then thetaE+=2*Math.PI
+            if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
+            else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
             # take it if it's less than 90
             theta = Math.abs(thetaE - thetaS)
-            if @quad is 's' and Math.abs(thetaE - thetaS) > Math.PI/2
+            if @quad is 's' and Math.abs(thetaE - thetaS) > HALF_PI
               continue
             else
              if @quad is 'm' and theta >= Math.PI then large = 1
              cen = { x: c.x, y: c.y }
              break
-          # bounding box calculations
           rTool = if @trace.region then 0 else @tools[@currentTool].bbox().xMax
-          # minimum x is either at 180 degress or an endpoint
-          if thetaS <= Math.PI <= thetaE or thetaS >= Math.PI >= thetaE
+          # switch calculations to CCW to make things easier
+          if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
+          # maxima targets
+          xp = if thetaS > 0 then TWO_PI else 0
+          yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
+          xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
+          yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
+          # minimum x is either at the negative x axis or an endpoint
+          if thetaS <= xn <= thetaE
             xMin = cen.x - r - rTool
           else
             xMin = (Math.min start.x, end.x) - rTool
-          # max x is going to be at 2*pi or 0
-          if thetaS <= 2*Math.PI <= thetaE or thetaS >= 2*Math.PI >= thetaE or
-          thetaS <= 0 <= thetaE or thetaS >= 0 >= thetaE
+          # max x is going to be at positive x or endpoint
+          if thetaS <= xp <= thetaE
             xMax = cen.x + r + rTool
           else
             xMax = (Math.max start.x, end.x) + rTool
-          # minimum y is either at 270 degress or an endpoint
-          if thetaS <= 3*Math.PI/2 <= thetaE or thetaS >= 3*Math.PI/2 >= thetaE
+          # minimum y is either at negative y axis or an endpoint
+          if thetaS <= yn <=thetaE
             yMin = cen.y - r - rTool
           else
             yMin = (Math.min start.y, end.y) - rTool
-          # max y is going to be at pi/2
-          if thetaS <= Math.PI/2 <= thetaE or thetaS >= Math.PI/2 >= thetaE
+          # max y is going to be at positive y or endpoint
+          if thetaS <= yp <= thetaE
             yMax = cen.y + r + rTool
           else
             yMax = (Math.max start.y, end.y) + rTool
