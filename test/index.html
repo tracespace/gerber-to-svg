@@ -59,13 +59,8 @@
             <li><a href="#multi-quad-arc-stroke-tests">no limit arc strokes</a></li>
           </ul>
         </li>
-        <li>
-          <a href="#region-tests">region tests</a>
-          <ul>
-            <li><a href="#line-segment-region-tests">regions build with lines</a></li>
-            <li><a href="#arc-region-tests">regions built with arcs</a></li>
-          </ul>
-        </li>
+        <li><a href="#region-tests">region tests</a></li>
+        <li><a href="#polarity-tests">polarity tests</a></li>
       </ul>
     </nav>
 
@@ -266,6 +261,18 @@
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
+    <div class="test" id="thermal-macro-clear">
+      <h4 class="title">thermal macro clearing</h4>
+      <p class="description">same macro flashing on a clear level</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="moire-macro-clear">
+      <h4 class="title">moire macro clearing</h4>
+      <p class="description">same macro flashing on a clear level</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
 
     <h2 id="stroke-tests">aperture stroking tests</h3>
 
@@ -433,7 +440,6 @@
 
     <h2 id="region-tests">region tests</h3>
 
-    <h3 id="line-segment-region-tests">regions built with line segments</h3>
     <div class="test" id="no-cut-in-line-region-test">
       <h4 class="title">line segment region with no cutins</h4>
       <p class="description">region should look like an arrow</p>
@@ -446,8 +452,6 @@
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
-
-    <h3 id="arcs-region-tests">regions built with line segments and arcs</h3>
     <div class="test" id="no-cut-in-arc-region-test">
       <h4 class="title">arc region with no cutins</h4>
       <p class="description">region should look like a box with rounded corners</p>
@@ -461,6 +465,23 @@
       <div class="svg"></div>
     </div>
 
+    <h2 id="polarity-tests">level polarity tests</h2>
+
+    <div class="test" id="gerber-spec-example-2">
+      <h4 class="title">example 2 from the gerber spec</h4>
+      <p class="description">drawing should match the reference (not to scale)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+      <img class="reference" src=./test/gerber/gerber-spec-example-2-reference.png>
+    </div>
+
+    <div class="test" id="gerber-spec-example-4-5-8">
+      <h4 class="title">example 4.5.8 from the gerber spec</h4>
+      <p class="description">drawing should match the reference (not to scale)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+      <img class="reference" src=./test/gerber/gerber-spec-example-4-5-8-reference.png>
+    </div>
 
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="./dist/gerber-to-svg.js"></script>
