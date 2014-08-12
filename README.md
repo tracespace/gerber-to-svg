@@ -25,13 +25,6 @@ var svgString = gerberToSvg(gerberString);
 ```
 Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-8 or FileReader.readAsText).
 
-### build from source
-
-1. `$ git clone https://github.com/mcous/gerber-to-svg.git`
-2. `$ npm install && gulp`
-
-Library files for Node and Browserify live in lib/, standalone library files live in dist/, and the command line utility lives in bin/.
-
 ## what you get
 Not a whole lot, for now. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/files/downloads/file/81/the_gerber_file_format_specification.pdf?d69271f6602e26ab2474ad625fe40c97). Most all of the Gerber file features are there.
 
@@ -42,5 +35,16 @@ Step and repeat is very much a work in progress. If your Gerber file is only one
 
 Arcs should work, but they've tended to give me trouble. If you see something circular and weird, that could be why.
 
-## if it messes up
-Open up an issue and attach your Gerber, if you can. I appreciate files to test on.
+If it messes up, open up an issue and attach your Gerber, if you can. I appreciate files to test on.
+
+## building from source
+
+1. `$ git clone https://github.com/mcous/gerber-to-svg.git`
+2. `$ npm install && gulp`
+
+Library files for Node and Browserify live in lib/, standalone library files live in dist/, and the command line utility lives in bin/.
+
+### unit testing
+This module uses mocha and shouldjs for unit testing. To run the tests once, run `$ gulp test`. To run the tests in watch mode, run `$ gulp testwatch`.
+
+There's also a visual test suite. Run `$ gulp testvisual` and point your browser to http://localhost.com:4242 to take a look.
