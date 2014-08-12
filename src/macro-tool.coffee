@@ -21,11 +21,19 @@ class MacroTool
     @shapes = []
     # array of mask objects
     @masks = []
+    # last exposure used
+    @lastExposure = null
     # bounding box [xMin, yMin, xMax, yMax] of macro
     @bbox = [ null, null, null, null ]
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
+    # make everything is cleared out
+    @lastExposure = null
+    @shapes = []
+    @masks = []
+    @bbox = [ null, null, null, null ]
+    @modifiers = {}
     @modifiers["$#{i+1}"] = m for m, i in modifiers
     # run the blocks
     @runBlock b for b in @blocks
@@ -174,37 +182,37 @@ class MacroTool
     if mask
       # adjust the fill of our shape to white
       shape.shape[key].fill = '#000' for key of shape.shape
-      # create a mask with our new shape
-      maskId = "macro-#{@name}-mask-#{unique()}"
-      m = {
-        mask: {
-          id: maskId
-          _: [
-            {
-              rect: {
-                x: @bbox[0]
-                y: @bbox[1]
-                width: @bbox[2]-@bbox[0]
-                height: @bbox[3]-@bbox[1]
-                fill: '#fff'
-              }
+      # if necessary, create a new mask
+      if @lastExposure isnt 0
+        @lastExposure = 0
+        maskId ="macro-#{@name}-mask-#{unique()}"
+        m = { mask: { id: maskId } }
+        m.mask._ = [
+          {
+            rect: {
+              x: @bbox[0]
+              y: @bbox[1]
+              width: @bbox[2]-@bbox[0]
+              height: @bbox[3]-@bbox[1]
+              fill: '#fff'
             }
-            shape.shape
-          ]
-        }
-      }
-      # check if we need to bundle
-      if @shapes.length is 1
-        @shapes[0][key].mask = "url(##{maskId})" for key of @shapes[0]
-      else if @shapes.length > 1
-        group = { mask: "url(##{maskId})", _: [] }
-        group._.push s for s in @shapes
-        @shapes = [ { g: group } ]
-      # add our mask to the mask list
-      @masks.push m
-
+          }
+        ]
+        # mask off existing shapes
+        # check if we need to bundle
+        if @shapes.length is 1
+          @shapes[0][key].mask = "url(##{maskId})" for key of @shapes[0]
+        else if @shapes.length > 1
+          group = { mask: "url(##{maskId})", _: [] }
+          group._.push s for s in @shapes
+          @shapes = [ { g: group } ]
+        # push the mask to the masks list
+        @masks.push m
+      # add our shape to the current mask
+      @masks[@masks.length-1].mask._.push shape.shape
     # if exposure was on, continue about our merry business
     else
+      @lastExposure = 1
       unless Array.isArray shape.shape then @shapes.push shape.shape
       else
         for s in shape.shape
