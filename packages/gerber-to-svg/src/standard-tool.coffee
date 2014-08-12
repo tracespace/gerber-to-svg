@@ -44,7 +44,10 @@ standardTool = (tool, p) ->
     if p.height <= 0
       throw new RangeError "#{tool} rect height out of range (#{p.height}<=0)"
     shape = 'rect'
-    unless p.hole? or p.obround then result.trace = { 'stroke-width': 0 }
+    unless p.hole? or p.obround then result.trace = {
+      'stroke-width': 0
+      fill: 'currentColor'
+    }
 
   else if p.dia? and p.verticies?
     # we've got a polygon tool unless there's confusion
