@@ -28,6 +28,15 @@ describe 'tool macro class', ->
         items = 0
         if k isnt 'mask' for k of p then items++ for p in result.pad
         items.should.equal 1
+      it 'should be able to create multiple tools from the same macro', ->
+        m = new Macro ['AMNAME', '1,1,$1,0,0']
+        result = m.run 'D10', [ '1' ]
+        result.pad.length.should.equal 1
+        result.pad[0].circle.r.should.equal 0.5
+        result = m.run 'D10', [ '2' ]
+        result.pad.length.should.equal 1
+        result.pad[0].circle.r.should.equal 1
+
       it 'should return a group if there were several primitives', ->
         m = new Macro ['AMNAME', '1,1,8,0,0', '1,1,4,5,5']
         result = m.run 'D10'
@@ -289,8 +298,8 @@ describe 'tool macro class', ->
         m.primitive [ 1, 0, 2, -3, 0 ]
         m.shapes.length.should.equal 1
         m.masks.length.should.equal 1
-        m.masks[0]._.length.should.equal 3
-        m.masks[0]._.should.containDeep [
+        m.masks[0].mask._.length.should.equal 3
+        m.masks[0].mask._.should.containDeep [
           { rect: { width: 10 } }, { circle: { r: 1.5 } }, { circle: { r: 1} }
         ]
 
