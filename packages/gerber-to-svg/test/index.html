@@ -59,6 +59,13 @@
             <li><a href="#multi-quad-arc-stroke-tests">no limit arc strokes</a></li>
           </ul>
         </li>
+        <li>
+          <a href="#region-tests">region tests</a>
+          <ul>
+            <li><a href="#line-segment-region-tests">regions build with lines</a></li>
+            <li><a href="#arc-region-tests">regions built with arcs</a></li>
+          </ul>
+        </li>
       </ul>
     </nav>
 
@@ -420,6 +427,36 @@
     <div class="test" id="multi-quad-IV-III-arc-stroke-test">
       <h4 class="title">arc strokes between quadrant IV and III</h4>
       <p class="description">left arc (CCW) should match right arc (CW)</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h2 id="region-tests">region tests</h3>
+
+    <h3 id="line-segment-region-tests">regions built with line segments</h3>
+    <div class="test" id="no-cut-in-line-region-test">
+      <h4 class="title">line segment region with no cutins</h4>
+      <p class="description">region should look like an arrow</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="cut-in-line-region-test">
+      <h4 class="title">line segment region with cutins</h4>
+      <p class="description">region should look like an big rectangle with two clear rectangles inside</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <h3 id="arcs-region-tests">regions built with line segments and arcs</h3>
+    <div class="test" id="no-cut-in-arc-region-test">
+      <h4 class="title">arc region with no cutins</h4>
+      <p class="description">region should look like a box with rounded corners</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+    <div class="test" id="cut-in-arc-region-test">
+      <h4 class="title">arc region with cutins</h4>
+      <p class="description">region should look like a rectangle with a circular hole</p>
       <p class="gerber"></p>
       <div class="svg"></div>
     </div>
