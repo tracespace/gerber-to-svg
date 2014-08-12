@@ -71,7 +71,7 @@ class MacroTool
         # throw an error because I don't know what's going on
         # unless it's a comment; in that case carry on
         unless block[0] is '0'
-          throw new SyntaxError "'#{block}' unrecognized tool macro block"
+          throw new Error "'#{block}' unrecognized tool macro block"
 
   # identify the primitive and add shapes and masks to the macro
   primitive: (args) ->
@@ -168,7 +168,7 @@ class MacroTool
             if m.rect? then m.rect.transform = "rotate(#{args[6]})"
         @addBbox shape.bbox, args[6]
       else
-        throw new SyntaxError "#{args[0]} is not a valid primitive code"
+        throw new Error "#{args[0]} is not a valid primitive code"
 
     # now, we need to check our exposure
     if mask
