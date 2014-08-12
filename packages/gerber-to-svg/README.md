@@ -31,7 +31,7 @@ Not a whole lot, for now. This converter uses RS-274X and strives to be true to 
 The returned SVG is going to be black, but you can specify `color` either in the XML or with CSS to change it.
 
 ## things to watch out for
-Step and repeat is very much a work in progress. If your Gerber file is only one polarity (i.e %LPC*% doesn't appear anywhere in your file), you should be fine. But otherwise, don't trust whatever it returns (if it doesn't throw).
+Step and repeat is very much a work in progress. If your Gerber file uses step and repeat (i.e. contains at least one %SRX_Y_I_J_*% where one or both of the numbers after X and Y are **not** 1) and is only one polarity (i.e %LPC*% doesn't appear anywhere in your file), you should be fine. If you have both step and repeat and clear layers, though, don't necessarily trust whatever it returns (if it doesn't throw).
 
 Arcs should work, but they've tended to give me trouble. If you see something circular and weird, that could be why.
 
