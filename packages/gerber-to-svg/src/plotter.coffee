@@ -389,8 +389,8 @@ class Plotter
         # are interpolation adds an eliptical (circular) arc to the path
         else if @mode is 'cw' or @mode is 'ccw'
           # throw if tool isn't a circle
-          if not @tools[@currentTool].stroke['stroke-linecap'] is 'round' and
-          not @trace.region
+          if not @trace.region and
+          not @tools[@currentTool].stroke['stroke-linecap'] is 'round'
             throw new Error "tool #{@currentTool} is not circular and cannot
                              stroke arcs"
           r = Math.sqrt end.i**2 + end.j**2
