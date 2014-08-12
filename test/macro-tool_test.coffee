@@ -280,6 +280,19 @@ describe 'tool macro class', ->
           mask: "url(##{maskId})"
           _: [ { circle: { r: 5 } }, { circle:{ r: 4.5 } } ]
         }
+      it 'should add several clear shapes in a row to the same mask', ->
+        # add a rectangle
+        m = new Macro ['AMNAME']
+        m.primitive [ 21, 1, 10, 5, 0, 0, 0 ]
+        # clear out two smaller circles
+        m.primitive [ 1, 0, 3, 3, 0 ]
+        m.primitive [ 1, 0, 2, -3, 0 ]
+        m.shapes.length.should.equal 1
+        m.masks.length.should.equal 1
+        m.masks[0]._.length.should.equal 3
+        m.masks[0]._.should.containDeep [
+          { rect: { width: 10 } }, { circle: { r: 1.5 } }, { circle: { r: 1} }
+        ]
 
   describe 'getNumber method', ->
     m = new Macro ['MACRONAME']
