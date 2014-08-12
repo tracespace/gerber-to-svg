@@ -251,9 +251,9 @@ class MacroTool
   # parse a number in the format of a float string, a modifier, or a math string
   getNumber: (s) ->
     # normal number all by itself
-    if s.match /^[+-]?[\d.]+$/ then parseFloat s
+    if s.match /^[+-]?[\d.]+$/ then Number s
     # modifier all by its lonesome
-    else if s.match /^\$\d+$/ then parseFloat @modifiers[s]
+    else if s.match /^\$\d+$/ then Number @modifiers[s]
     # else we got us some maths
     else @evaluate calc.parse s
 
