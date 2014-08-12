@@ -29,9 +29,9 @@ parse = (arith) ->
     if isNumber t then exp = { type: 'n', val: t }
     else if t is '('
       exp = parseExpression()
-      if peek() isnt ')' then throw new SytaxError "expected ')'" else consume ')'
+      if peek() isnt ')' then throw new Error "expected ')'" else consume ')'
     else
-      throw new SytaxError "#{t} is unexpected in an arithmetic string"
+      throw new Error "#{t} is unexpected in an arithmetic string"
     exp
 
   # second highest priority - multiplication and division
