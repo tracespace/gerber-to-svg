@@ -26,6 +26,9 @@ gulp.task 'default', [ 'standalone' ], ->
       .on 'error', gutil.log
     .pipe gulp.dest LIBDIR
 
+gulp.task 'watch', [ 'default' ], ->
+  gulp.watch [ './src/*' ] , [ 'default' ]
+
 gulp.task 'standalone', ->
   browserify ENTRY, {
       extensions: [ '.coffee' ]
