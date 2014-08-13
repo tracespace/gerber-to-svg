@@ -1,6 +1,8 @@
 gulp       = require 'gulp'
 gutil      = require 'gulp-util'
 mocha      = require 'gulp-mocha'
+coveralls  = require 'gulp-coveralls'
+run        = require 'gulp-run'
 coffee     = require 'gulp-coffee'
 browserify = require 'browserify'
 coffeeify  = require 'coffeeify'
@@ -17,11 +19,11 @@ DISTDIR = './dist'
 NAME = 'gerberToSvg'
 
 # source code and destination code locations
-SRCDIR = './src/*.coffee'
+SRC = './src/*.coffee'
 LIBDIR = './lib'
 
 gulp.task 'default', [ 'standalone' ], ->
-  gulp.src SRCDIR
+  gulp.src SRC
     .pipe coffee()
       .on 'error', gutil.log
     .pipe gulp.dest LIBDIR
@@ -56,11 +58,29 @@ gulp.task 'test', ->
     .pipe mocha {
       reporter: 'spec'
       globals: {
-        should: require('should')
-        coffee: require('coffee-script/register')
+        should: require 'should'
+        coffee: require 'coffee-script/register'
         stack: Error.stackTraceLimit = 3
       }
     }
+
+# this is ugly but it works...
+gulp.task 'coverage2', ->
+  run 'mocha --compilers coffee:coffee-script/register
+    -r blanket -r should
+    -R html-cov', { silent: true }
+    .exec()
+    .pipe rename 'coverage.html'
+    .pipe gulp.dest '/Users/mc/Desktop'
+
+# this is also ugly and might work...
+gulp.task 'coverage', ->
+  run 'mocha --compilers coffee:coffee-script/register
+    -r blanket -r should
+    -R mocha-lcov-reporter', { silent: true }
+    .exec()
+    .pipe rename 'lcov.info'
+    .pipe coveralls()
 
 gulp.task 'testwatch', ['test', 'default'], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
