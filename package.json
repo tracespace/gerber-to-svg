@@ -9,6 +9,7 @@
   "scripts": {
     "prepublish": "gulp",
     "test": "gulp test"
+    "test:travis": "gulp coverage"
   },
   "repository": {
     "type": "git",
@@ -27,18 +28,23 @@
   },
   "homepage": "https://github.com/mcous/gerber-to-svg",
   "devDependencies": {
+    "blanket": "^1.1.6",
     "browserify": "^5.9.1",
     "coffee-script": "^1.7.1",
     "coffeeify": "^0.7.0",
+    "coveralls": "^2.11.1",
     "gulp": "^3.8.5",
     "gulp-coffee": "^2.0.1",
+    "gulp-coveralls": "^0.1.2",
     "gulp-mocha": "^0.4.1",
     "gulp-rename": "^1.2.0",
+    "gulp-run": "^1.6.3",
     "gulp-streamify": "0.0.5",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^2.2.19",
     "jquery": "^2.1.1",
     "mocha": "^1.20.1",
+    "mocha-lcov-reporter": "0.0.1",
     "node-static": "^0.7.4",
     "should": "^4.0.4",
     "vinyl-source-stream": "^0.1.1"
@@ -46,5 +52,12 @@
   "dependencies": {
     "chalk": "^0.5.1",
     "minimist": "^1.1.0"
+  },
+  "config": {
+    "blanket": {
+      "data-cover-never": "node_modules",
+      "pattern": "src",
+      "loader": "./node-loaders/coffee-script"
+    }
   }
 }
