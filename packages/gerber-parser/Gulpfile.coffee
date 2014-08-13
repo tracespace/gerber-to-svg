@@ -64,16 +64,7 @@ gulp.task 'test', ->
       }
     }
 
-# this is ugly but it works...
-gulp.task 'coverage2', ->
-  run 'mocha --compilers coffee:coffee-script/register
-    -r blanket -r should
-    -R html-cov', { silent: true }
-    .exec()
-    .pipe rename 'coverage.html'
-    .pipe gulp.dest '/Users/mc/Desktop'
-
-# this is also ugly and might work...
+# this is also ugly but it works
 gulp.task 'coverage', [ 'test' ], ->
   run 'mocha --compilers coffee:coffee-script/register
     -r blanket -r should
