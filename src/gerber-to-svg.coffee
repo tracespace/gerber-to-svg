@@ -12,9 +12,8 @@ gerberToSvg = (gerber) ->
   p = new Plotter gerber
   try
     xmlObject = p.plot()
-  catch e
-    console.log "error at gerber line #{p.parser.line}"
-    throw e
+  catch error
+    throw new Error "Error at line #{p.parser.line} - #{error.message}"
   # make sure the bbox is valid
   unless p.bbox.xMin >= p.bbox.xMax
     width = parseFloat (p.bbox.xMax - p.bbox.xMin).toPrecision 10

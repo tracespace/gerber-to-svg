@@ -62,10 +62,14 @@ run = ->
         else warn "Error writing to #{newName}: #{error.code}"
 
   # loop through files
-  for file in argv._
+  for file in fileList
     do (file) ->
       fs.readFile file, 'utf-8', (error, data) ->
-        unless error then write gerberToSvg(data), file
+        unless error
+          try
+            write gerberToSvg(data), file
+          catch e
+            warn "could not process #{file}: #{e.message}"
         else warn "Error reading file #{file}: #{error.code}"
 
 module.exports = run
