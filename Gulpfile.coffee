@@ -80,7 +80,7 @@ gulp.task 'coverage', ->
     -R mocha-lcov-reporter', { silent: true }
     .exec()
     .pipe rename 'lcov.info'
-    .pipe coveralls()
+    .pipe streamify coveralls()
 
 gulp.task 'testwatch', ['test', 'default'], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']

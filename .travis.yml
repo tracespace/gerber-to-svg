@@ -1,7 +1,7 @@
 language: node_js
 node_js:
 - '0.10'
-script: npm test:travis
+script: npm run-script test:travis
 deploy:
   provider: npm
   email: mike@cousins.io
