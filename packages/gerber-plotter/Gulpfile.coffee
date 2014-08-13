@@ -74,7 +74,7 @@ gulp.task 'coverage2', ->
     .pipe gulp.dest '/Users/mc/Desktop'
 
 # this is also ugly and might work...
-gulp.task 'coverage', ->
+gulp.task 'coverage', [test] ->
   run 'mocha --compilers coffee:coffee-script/register
     -r blanket -r should
     -R mocha-lcov-reporter', { silent: true }
