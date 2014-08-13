@@ -43,5 +43,8 @@
     "should": "^4.0.4",
     "vinyl-source-stream": "^0.1.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "chalk": "^0.5.1",
+    "minimist": "^1.1.0"
+  }
 }
