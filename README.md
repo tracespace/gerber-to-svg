@@ -66,8 +66,8 @@ appreciate files to test on.
 ## building from source
 
 1. `$ git clone https://github.com/mcous/gerber-to-svg.git`
-2. `$ npm install && gulp`
-3. `$ gulp` or `$ gulp watch` to rebuild or rebuild on source changes
+2. `$ npm install && gulp build`
+3. `$ gulp build` or `$ gulp watch` to rebuild or rebuild on source changes
 
 Library files for Node live in lib/, standalone library files
 live in dist/, and the command line utility lives in bin/.
@@ -77,4 +77,4 @@ This module uses mocha and shouldjs for unit testing. To run the tests once, run
 `$ gulp test`. To run the tests automatically when source or tests change, run `$ gulp testwatch`.
 
 There's also a visual test suite. Run `$ gulp testvisual` and point your browser
-to http://localhost.com:4242 to take a look.
+to http://localhost.com:4242 to take a look. This will also run the build watcher

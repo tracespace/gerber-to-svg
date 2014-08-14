@@ -22,14 +22,11 @@ NAME = 'gerberToSvg'
 SRC = './src/*.coffee'
 LIBDIR = './lib'
 
-gulp.task 'default', [ 'standalone' ], ->
+gulp.task 'default', ->
   gulp.src SRC
     .pipe coffee()
       .on 'error', gutil.log
     .pipe gulp.dest LIBDIR
-
-gulp.task 'watch', [ 'default' ], ->
-  gulp.watch [ './src/*' ] , [ 'default' ]
 
 gulp.task 'standalone', ->
   browserify ENTRY, {
@@ -53,6 +50,11 @@ gulp.task 'standalone', ->
     }
     .pipe gulp.dest DISTDIR
 
+gulp.task 'build', [ 'default', 'standalone' ]
+
+gulp.task 'watch', [ 'build' ], ->
+  gulp.watch [ './src/*' ] , [ 'build' ]
+
 gulp.task 'test', ->
   gulp.src './test/*_test.coffee', { read: false }
     .pipe mocha {
@@ -73,10 +75,10 @@ gulp.task 'coverage', [ 'test' ], ->
     .pipe rename 'lcov.info'
     .pipe streamify coveralls()
 
-gulp.task 'testwatch', ['test', 'default'], ->
+gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
 
-gulp.task 'testvisual', [ 'default' ], ->
+gulp.task 'testvisual', [ 'watch' ], ->
   server = new stat.Server '.'
   require('http').createServer( (request, response) ->
     request.addListener( 'end', ->
