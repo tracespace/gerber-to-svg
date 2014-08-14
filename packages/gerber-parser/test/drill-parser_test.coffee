@@ -5,58 +5,104 @@ describe 'NC drill file parser', ->
   p = null
   beforeEach -> p = new Parser
 
-  it 'should know when the header starts and ends', ->
-    p.header.should.be.false
-    p.parseCommand 'M48'
-    p.header.should.be.true
-    p.parseCommand 'M95'
-    p.header.should.be.false
-    p.header = true
-    p.parseCommand '%'
-    p.header.should.be.false
+  it "should ignore comments (start with ';')", ->
+    initialFmat = p.fmat
+    initialFormat = { zero: p.format.zero, places: p.format.places }
+    p.parseCommand(';INCH').should.eql {}
+    p.parseCommand(';M71').should.eql {}
+    p.parseCommand(';T1C0.015').should.eql {}
+    p.parseCommand(';T1').should.eql {}
+    p.parseCommand(';X0016Y0158').should.eql {}
+    p.parseCommand(';INCH,TZ').should.eql {}
+    p.fmat.should.eql initialFmat
+    p.format.should.eql initialFormat
+  it 'should return a set units command with INCH and METRIC', ->
+    p.parseCommand('INCH').should.eql { set: { units: 'in' } }
+    p.parseCommand('METRIC').should.eql { set: { units: 'mm' } }
+  it 'should also set units with M71 and M72', ->
+    p.parseCommand('M71').should.eql { set: { units: 'mm' } }
+    p.parseCommand('M72').should.eql { set: { units: 'in' } }
+  it 'should default to trailing zero suppress, but allow set with units', ->
+    p.format.zero.should.eql 'T'
+    # excellon specifies which zeros to keep
+    # also check that whitespace doesn't throw it off
+    p.parseCommand 'INCH,TZ'
+    p.format.zero.should.eql 'L'
+    p.format.zero = 'T'
+    p.parseCommand 'INCH,  TZ'
+    p.format.zero.should.eql 'L'
+  it 'should use 3.3 format for metric and 2.4 for inches', ->
+    p.parseCommand 'INCH'
+    p.format.places.should.eql [ 2, 4 ]
+    p.parseCommand 'METRIC'
+    p.format.places.should.eql [ 3, 3 ]
+  it 'should return a define tool command for tool definitions', ->
+    p.parseCommand 'T1C0.015'
+      .should.eql { tool: { code: 'T1', shape: { dia: 0.015 } } }
+    p.parseCommand 'T13C0.142'
+      .should.eql { tool: { code: 'T13', shape: { dia: 0.142 } } }
+  it 'should assume FMAT,2, but identify FMAT,1', ->
+    p.fmat.should.eql 'FMAT,2'
+    p.parseCommand('FMAT,1').should.eql {}
+    p.fmat.should.eql 'FMAT,1'
+    p.parseCommand('M70').should.eql { set: { units: 'in' } }
+  it 'should return a set tool for a bare tool number', ->
+    p.parseCommand('T1').should.eql { set: { tool: 'T1' } }
+    p.parseCommand('T14').should.eql { set: { tool: 'T14' } }
+  it 'should return a set notation to abs with G90', ->
+    p.parseCommand('G90').should.eql { set: { notation: 'abs' } }
+  it 'should return a set notation to inc with G91', ->
+    p.parseCommand('G91').should.eql { set: { notation: 'inc' } }
+  it 'M70 (fmat1), M71, and M72 should still set units', ->
+    p.parseCommand('M71').should.eql { set: { units: 'mm' } }
+    p.parseCommand('M72').should.eql { set: { units: 'in' } }
+    p.fmat = 'FMAT,1'
+    p.parseCommand('M70').should.eql { set: { units: 'in' } }
 
-  describe 'parsing header commands', ->
-    beforeEach -> p.header = true
-
-    it 'should return a set units command with INCH and METRIC', ->
-      p.parseCommand('INCH').should.containDeep { set: { units: 'in' } }
-      p.parseCommand('METRIC').should.containDeep { set: { units: 'mm' } }
-    it 'should use 3.3 format for metric and 2.4 for inches', ->
-      p.parseCommand 'INCH'
-      p.format.places.should.eql [ 2, 4 ]
-      p.parseCommand 'METRIC'
-      p.format.places.should.eql [ 3, 3 ]
-    it 'should return a define tool command for tool definitions', ->
-      p.parseCommand 'T1C0.015'
-        .should.containDeep { tool: { code: 'T1', shape: { dia: 0.015 } } }
-      p.parseCommand 'T13C0.142'
-        .should.containDeep { tool: { code: 'T13', shape: { dia: 0.142 } } }
-#
-# # test headers for units
-# TEST_IN = 'M48\nFMAT,2\nINCH,TZ\n%'
-# TEST_MM = 'M48\nFMAT,2\nMETRIC,TZ\n%'
-# # test headers for zero suppression
-# # excellon format specifies which zeros to keep, so switch to match gerber
-# TEST_SUPPRESS_LEAD = 'M48\nFMAT,2\nINCH,TZ\n%'
-# TEST_SUPPRESS_TRAIL = 'M48\nFMAT,2\nINCH,LZ\n%'
-# # test header with tools
-# TEST_TOOLS = 'M48\nFMAT,2\nINCH,TZ\nT1C0.015\nT2C0.020\nT3C0.035\nT4C0.098\n%'
-# describe 'NC drill file parser', ->
-#   describe 'parsing the header commands', ->
-#     it 'should return the units', ->
-#       pInches = new Parser TEST_IN
-#       pInches.units.should.eql 'in'
-#       pMetric = new Parser TEST_MM
-#       pMetric.units.should.eql 'mm'
-#     it 'should use 3.3 for metric and 2.4 for inches', ->
-#       pInches = new Parser TEST_IN
-#       pInches.format.places.should.eql [2, 4]
-#       pMetric = new Parser TEST_MM
-#       pMetric.format.places.should.eql [3, 3]
-#     it 'should get leading or trailing zero suppression', ->
-#       pSuppressLead = new Parser TEST_SUPPRESS_LEAD
-#       pSuppressLead.format.zero.should.eql 'l'
-#       pSuppressTrail = new Parser TEST_SUPPRESS_TRAIL
-#       pSuppressTrail.format.zero.should.eql 't'
-#     it 'should generate a list of tools', ->
-#       pTool = new Parser
+  describe 'drilling (flashing) at coordinates', ->
+    it 'should parse the coordinates into numbers in suppress trailing zero', ->
+      p.format.zero = 'T'
+      p.format.places = [2,4]
+      p.parseCommand('X0016Y0158').should.eql {
+        op: { do: 'flash', x: 0.16, y: 1.58 }
+      }
+      p.parseCommand('X-01795Y0108').should.eql {
+        op: { do: 'flash', x: -1.795, y: 1.08 }
+      }
+    it 'should parse coordinates with leading zeros suppressed', ->
+      p.format.zero = 'L'
+      p.format.places = [2,4]
+      p.parseCommand('X50Y15500').should.eql {
+        op: { do: 'flash', x: 0.0050, y: 1.55 }
+      }
+      p.parseCommand('X16850Y-3300').should.eql {
+        op: { do: 'flash', x: 1.6850, y: -0.33 }
+      }
+    it 'should parse coordinates according to the places format', ->
+      p.format.zero = 'L'
+      p.format.places = [2,4]
+      p.parseCommand('X7550Y14000').should.eql {
+        op: { do: 'flash', x: 0.755, y: 1.4 }
+      }
+      p.format.places = [3,3]
+      p.parseCommand('X7550Y14').should.eql {
+        op: { do: 'flash', x: 7.55, y: 0.014 }
+      }
+      p.format.zero = 'T'
+      p.format.places = [2,4]
+      p.parseCommand('X08Y0124').should.eql {
+        op: { do: 'flash', x: 8, y: 1.24 }
+      }
+      p.format.places = [3,3]
+      p.parseCommand('X08Y0124').should.eql {
+        op: { do: 'flash', x: 80, y: 12.4 }
+      }
+    it 'should recognize a tool change at the beginning or end of the line', ->
+      p.format.zero = 'T'
+      p.format.places = [2,4]
+      p.parseCommand('T01X01Y01').should.eql {
+        set: { tool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+      }
+      p.parseCommand('X01Y01T01').should.eql {
+        set: { tool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+      }
