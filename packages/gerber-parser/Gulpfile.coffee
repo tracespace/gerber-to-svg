@@ -67,7 +67,7 @@ gulp.task 'test', ->
 # this is also ugly but it works
 gulp.task 'coverage', [ 'test' ], ->
   run 'mocha --compilers coffee:coffee-script/register
-    -r blanket -r should
+    -r test/register-coffee-coverage -r should
     -R mocha-lcov-reporter', { silent: true }
     .exec()
     .pipe rename 'lcov.info'
