@@ -17,10 +17,10 @@ TWO_PI = 2*Math.PI
 # parse a aperture definition command and return the object
 parseAD = (block) ->
   # first get the code
-  code = (block.match /^ADD\d+/)?[0]?[2..]
+  code = (block.match /^AD[DT]\d+/)?[0]?[2..]
   # throw an error early if code is bad
-  unless code? and parseInt(code[1..], 10) > 9
-    throw new Error "#{code} is an invalid tool code (must be >= 10)"
+  #unless code? and parseInt(code[1..], 10) > 9
+  #  throw new Error "#{code} is an invalid tool code (must be >= 10)"
   # get the tool
   ad = null
   am = false

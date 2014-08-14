@@ -3,8 +3,7 @@
 # returns an object of { x: number, y: number etc} for coordinates it finds
 
 module.exports = ( coord, format ) ->
-  unless format.zero? and format.places?
-    throw new Error 'format undefined'
+  unless format.zero? and format.places? then throw new Error 'format undefined'
 
   parse = {}
   result = {}
