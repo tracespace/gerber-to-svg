@@ -14,12 +14,15 @@ INC_COMMAND = 'G91'
 # drill coordinate
 reCOORD = /([XY]-?\d*){1,2}/
 
+# backup zero suppression
+ZERO_BACKUP = 'L'
+
 class DrillParser
   constructor: ->
     # format for parsing coordinates, set by each file
     # excellon specifies which zeros to keep, but here we're going to treat it
     # as suppression to match gerber
-    @format = { zero: 'T', places: null }
+    @format = { zero: null, places: null }
     # format of the drill file
     # I don't think this is ever going to be used but whatever
     @fmat = 'FMAT,2'
@@ -56,19 +59,26 @@ class DrillParser
       if ( dia = block.match(/C[\d\.]+(?=$)/)?[0] )
         dia = Number dia[1..]
         command.tool = { code: code, shape: { dia: dia } }
-      else command.set = { tool: code }
+      else command.set = { currentTool: code }
 
     # allow this to be tacked on the end of a command to be lenient
     # we're assuming trailing zero suppression, so we only care if the opposite
     # is specified (TZ for keep trailing zeros)
-    if block.match /\,\s*TZ/
+    if block.match /TZ/
       @format.zero = 'L'
+    else if block.match /LZ/
+      @format.zero = 'T'
 
     # finally, check for a drill command
     # some drill files may tack on tool changes at the end of files, so we'll
     # put this at the end, so any tool change will happen first
     if block.match reCOORD
       command.op = { do: 'flash' }
+      # check for zero suppression
+      unless @format.zero?
+        console.warn 'no drill file zero suppression specified. assuming
+          leading zero suppression (same as no zero suppression)'
+        @format.zero = ZERO_BACKUP
       command.op[k] = v for k, v of parseCoord block, @format
 
     # return the command

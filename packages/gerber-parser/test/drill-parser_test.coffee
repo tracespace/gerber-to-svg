@@ -22,15 +22,26 @@ describe 'NC drill file parser', ->
   it 'should also set units with M71 and M72', ->
     p.parseCommand('M71').should.eql { set: { units: 'mm' } }
     p.parseCommand('M72').should.eql { set: { units: 'in' } }
-  it 'should default to trailing zero suppress, but allow set with units', ->
-    p.format.zero.should.eql 'T'
+  it 'should be able to set the zero suppression', ->
     # excellon specifies which zeros to keep
     # also check that whitespace doesn't throw it off
     p.parseCommand 'INCH,TZ'
     p.format.zero.should.eql 'L'
-    p.format.zero = 'T'
-    p.parseCommand 'INCH,  TZ'
+    p.parseCommand 'INCH,LZ'
+    p.format.zero.should.eql 'T'
+    p.parseCommand 'INCH,TZ'
     p.format.zero.should.eql 'L'
+    p.parseCommand 'INCH,LZ'
+    p.format.zero.should.eql 'T'
+  it 'should warn and fall back to leading suppression if unspecified', ->
+    p.format.places = [2,4]
+    # have a backup
+    p.format.zero?.should.not.be.true
+    hook = require('./stream-capture')(process.stderr)
+    p.parseCommand 'X50Y15500'
+    p.format.zero.should.eql 'L'
+    hook.captured().should.match /assuming leading zero suppression/
+    hook.unhook
   it 'should use 3.3 format for metric and 2.4 for inches', ->
     p.parseCommand 'INCH'
     p.format.places.should.eql [ 2, 4 ]
@@ -47,8 +58,8 @@ describe 'NC drill file parser', ->
     p.fmat.should.eql 'FMAT,1'
     p.parseCommand('M70').should.eql { set: { units: 'in' } }
   it 'should return a set tool for a bare tool number', ->
-    p.parseCommand('T1').should.eql { set: { tool: 'T1' } }
-    p.parseCommand('T14').should.eql { set: { tool: 'T14' } }
+    p.parseCommand('T1').should.eql { set: { currentTool: 'T1' } }
+    p.parseCommand('T14').should.eql { set: { currentTool: 'T14' } }
   it 'should return a set notation to abs with G90', ->
     p.parseCommand('G90').should.eql { set: { notation: 'abs' } }
   it 'should return a set notation to inc with G91', ->
@@ -101,8 +112,8 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('T01X01Y01').should.eql {
-        set: { tool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
       }
       p.parseCommand('X01Y01T01').should.eql {
-        set: { tool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
       }
