@@ -2,6 +2,6 @@
 require('coffee-coverage').register {
   path: 'relative'
   basePath: require('path').join __dirname, '..'
-  exclude: ['test', 'lib', 'dist', 'bin', 'node_modules', '.git']
+  exclude: ['test', 'lib', 'dist', 'bin', 'node_modules', '.git', 'Gulpfile']
   initAll: true
 }
