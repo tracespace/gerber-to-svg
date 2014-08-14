@@ -30,6 +30,7 @@
   "devDependencies": {
     "blanket": "^1.1.6",
     "browserify": "^5.9.1",
+    "coffee-coverage": "^0.4.2",
     "coffee-script": "^1.7.1",
     "coffeeify": "^0.7.0",
     "coveralls": "^2.11.1",
