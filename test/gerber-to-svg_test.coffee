@@ -31,6 +31,7 @@ describe 'gerber to svg function', ->
     result = gerberToSvg exGerb, { object: true }
     (typeof result).should.eql 'object'
     Object.keys(result)[0].should.eql 'svg'
+    Array.isArray(result.svg.viewBox).should.be.true
 
   it 'should have all the requisite svg header stuff', ->
     result = gerberToSvg exGerb, { object: true }
@@ -41,3 +42,12 @@ describe 'gerber to svg function', ->
         'xmlns:xlink': 'http://www.w3.org/1999/xlink'
       }
     }
+
+  it 'should be able to convert an svg object into an svg string', ->
+    result1 = gerberToSvg exGerb
+    obj = gerberToSvg exGerb, { object: true }
+    result2 = gerberToSvg obj
+    # wipe out unique ids for the layers, masks, and pads so i can compare
+    result1 = result1.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
+    result2 = result2.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
+    result2.should.eql result1

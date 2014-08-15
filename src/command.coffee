@@ -23,7 +23,7 @@ OPTIONS = [
   [ 'q', 'quiet', '   do not print warnings and messages' ]
   [ 'p', 'pretty', '  align SVG output prettily' ]
   [ 'd', 'drill', '   process following file as an NC (Excellon) drill file' ]
-  [ 'a', 'append', '  append .svg rather than replace the old file extension' ]
+  [ 'a', 'append-ext', '  append .svg rather than replace the extension' ]
   [ 'v', 'version', ' display version information' ]
   [ 'h', 'help', '    display this help text' ]
 ]
@@ -61,7 +61,7 @@ run = ->
   write = (string, filename) ->
     unless argv.out then process.stdout.write string
     else
-      if argv.append then newName = path.basename filename
+      if argv['append-ext'] then newName = path.basename filename
       else newName = path.basename filename, path.extname filename
       newName = path.join argv.out, newName + '.svg'
       fs.writeFile newName, string, (error) ->
