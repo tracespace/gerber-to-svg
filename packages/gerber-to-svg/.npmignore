@@ -2,3 +2,4 @@
 Gulpfile.coffee
 src/
 test/
+examples/

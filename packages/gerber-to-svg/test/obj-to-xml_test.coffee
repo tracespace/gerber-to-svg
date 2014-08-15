@@ -27,6 +27,18 @@ describe 'object to xml function', ->
     }
     result.should.eql '<g id="id"><s x="0" y="0"/><s cx="5" cy="6" r="2"/></g>'
 
+  it 'should be able to insert text and numbers as children', ->
+    result = objToXml { root: { _: [ 'hello', 'world', 10 ] } }
+    result.should.eql '<root>hello world 10 </root>'
+
+  it 'should be able to take a function and go with it', ->
+    result = objToXml -> { node: { id: 42 } }
+    result.should.eql '<node id="42"/>'
+    result = objToXml { node: -> return { id: 30 } }
+    result.should.eql '<node id="30"/>'
+    result = objToXml { node: { id: -> 36 } }
+    result.should.eql '<node id="36"/>'
+
   it 'should accept an array as input', ->
     result = objToXml [ { elem1: {} }, elem2: {} ]
     result.should.eql '<elem1/><elem2/>'

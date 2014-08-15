@@ -19,7 +19,11 @@ module.exports = (gerber, options = {}) ->
   opts = {}
   opts[key] = val for key, val of DEFAULT_OPTS
   opts[key] = val for key, val of options
-  # plot the thing
+  # check if an svg object was passed int
+  if typeof gerber is 'object'
+    if gerber.svg? then return builder gerber, { pretty: opts.pretty }
+    else throw new Error "non SVG object cannot be converted to an SVG string"
+  # or we got a gerber string, so plot the thing
   p = if opts.drill then new Driller gerber else new Plotter gerber
   try
     xmlObject = p.plot()
@@ -46,7 +50,7 @@ module.exports = (gerber, options = {}) ->
       'xmlns:xlink': 'http://www.w3.org/1999/xlink'
       width: "#{width}#{p.units}"
       height: "#{height}#{p.units}"
-      viewBox: "#{p.bbox.xMin} #{p.bbox.yMin} #{width} #{height}"
+      viewBox: [ p.bbox.xMin, p.bbox.yMin, width, height ]
       id: p.gerberId
       _: []
     }

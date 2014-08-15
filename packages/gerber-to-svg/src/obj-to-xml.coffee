@@ -23,24 +23,32 @@ objToXml = ( obj, op = {} ) ->
   tb = repeat tb, ind
   # xml
   xml = ''
+  # check if obj is a function, if it is, get its value
+  if typeof obj is 'function' then obj = obj()
+  # array
   if Array.isArray obj
     for o, i in obj
       xml += (if i isnt 0 then nl else '') + (objToXml o, op)
-  else
+  # object
+  else if typeof obj is 'object'
     # children
     children = false
     # get the name of the element
     elem = Object.keys(obj)[0]
     if elem?
       xml = "#{tb}<#{elem}"
+      if typeof obj[elem] is 'function' then obj[elem] = obj[elem]()
       # loop through keys of the object to get attributs and children
       for key, val of obj[elem]
+        if typeof val is 'function' then val = val()
         if key is CKEY then children = val else xml += " #{key}=\"#{val}\""
       # tack on the children
       if children then xml +=
         '>' + nl + objToXml children, { pretty: pre, indent: ind + 1 }
       # finsish the string
       if obj[elem]._? then xml += "#{nl}#{tb}</#{elem}>" else xml += '/>'
+  # anything else becomes text separated by whitespace
+  else xml += "#{obj} "
   # return
   xml
 # export

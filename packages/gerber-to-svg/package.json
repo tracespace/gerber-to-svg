@@ -1,7 +1,7 @@
 {
   "name": "gerber-to-svg",
-  "version": "0.0.12",
-  "description": "Gerber file to SVG converter",
+  "version": "0.0.13",
+  "description": "Gerber and NC drill file to SVG converter",
   "main": "lib/gerber-to-svg.js",
   "bin": {
     "gerber2svg": "bin/gerber2svg"
@@ -18,6 +18,8 @@
   "keywords": [
     "svg",
     "gerber",
+    "excellon",
+    "drill",
     "pcb",
     "circuit"
   ],
@@ -51,12 +53,5 @@
   "dependencies": {
     "chalk": "^0.5.1",
     "minimist": "^1.1.0"
-  },
-  "config": {
-    "blanket": {
-      "data-cover-never": "node_modules",
-      "pattern": "src",
-      "loader": "./node-loaders/coffee-script"
-    }
   }
 }
