@@ -6,10 +6,21 @@ view source at http://github.com/mcous/gerber-to-svg
 
 builder = require './obj-to-xml'
 Plotter = require './plotter'
+Driller = require './driller'
 
-gerberToSvg = (gerber) ->
+DEFAULT_OPTS = {
+  drill: false
+  pretty: false
+  object: false
+}
+
+module.exports = (gerber, options = {}) ->
+  # options
+  opts = {}
+  opts[key] = val for key, val of DEFAULT_OPTS
+  opts[key] = val for key, val of options
   # plot the thing
-  p = new Plotter gerber
+  p = if opts.drill then new Driller gerber else new Plotter gerber
   try
     xmlObject = p.plot()
   catch error
@@ -45,7 +56,5 @@ gerberToSvg = (gerber) ->
   if p.group.g._.length
     p.group.g.transform = "translate(0,#{p.bbox.yMin+p.bbox.yMax}) scale(1,-1)"
     xml.svg._.push p.group
-  # return the string
-  builder xml, { pretty: true }
-
-module.exports = gerberToSvg
+  # return the string or the object if that flag is set
+  unless opts.object then builder xml, { pretty: opts.pretty } else xml
