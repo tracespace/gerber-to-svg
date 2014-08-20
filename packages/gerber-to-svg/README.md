@@ -54,7 +54,7 @@ key      | default | how it be
 `pretty` | false   | output the SVG XML string with line-breaks and two-space tabs
 `object` | false   | return an XML object instead of a the default XML string
 
-The object will have the format:
+If an object is returned instead of a string, it will have the format:
 ``` javascript
   {
     svg: {
