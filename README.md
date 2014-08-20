@@ -4,7 +4,7 @@ Gerber and NC drill file to SVG converter for Node and the browser.
 
 Got some Gerbers and want to try this out right now? Go to [svgerber](http://svgerber.cousins.io) and watch the magic.
 
-![svg'ed gerber](./examples/clockblock-pcb-F_Cu.svg)
+![svg'ed gerber](https://rawgit.com/mcous/gerber-to-svg/master/examples/clockblock-pcb-F_Cu.svg)
 
 ## usage
 
