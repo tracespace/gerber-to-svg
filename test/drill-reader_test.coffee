@@ -42,6 +42,8 @@ describe 'drill file reader class', ->
     r.nextBlock().should.be.false
 
   it 'should keep track of the line number', ->
+    r.line.should.equal 0
+    r.nextBlock()
     r.line.should.equal 1
     r.nextBlock()
     r.line.should.equal 2
@@ -50,9 +52,10 @@ describe 'drill file reader class', ->
 
   it 'should ignore CR to work with LF (unix) or CRLF (windows)', ->
     rWindows = new Reader 'M48\r\nFMAT,2\r\nINCH,TZ\r\nT1C0.015\r\n'
-    rWindows.line.should.equal 1
+    rWindows.line.should.equal 0
     rWindows.nextBlock().should.eql 'M48'
-    rWindows.line.should.equal 2
+    rWindows.line.should.equal 1
     rWindows.nextBlock().should.eql 'FMAT,2'
-    rWindows.line.should.equal 3
+    rWindows.line.should.equal 2
     rWindows.nextBlock().should.eql 'INCH,TZ'
+    rWindows.line.should.equal 3
