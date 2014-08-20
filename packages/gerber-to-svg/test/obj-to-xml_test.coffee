@@ -43,6 +43,14 @@ describe 'object to xml function', ->
     result = objToXml [ { elem1: {} }, elem2: {} ]
     result.should.eql '<elem1/><elem2/>'
 
+  it 'should join elements of an array with a space', ->
+    result = objToXml { path: { d: ['M', 1, 2, 'L', 3, 4] } }
+    result.should.eql '<path d="M 1 2 L 3 4"/>'
+
+  it 'should be able to round numbers to a maximum of a fixed precision', ->
+    r = objToXml { svg: { v: [ 0, 0, 9.99997, 2.00005 ] } }, { maxDec: 3 }
+    r.should.eql '<svg v="0 0 10 2"/>'
+
   describe 'pretty print', ->
     it 'should take a pretty key to put nodes on new lines', ->
       obj = [ { node1: {} }, { node2: {} } ]
