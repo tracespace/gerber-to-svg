@@ -17,6 +17,10 @@ objToXml = ( obj, op = {} ) ->
   # parse options
   pre = op.pretty
   ind = op.indent ? 0
+  dec = op.maxDec ? false
+  # round to a precision
+  decimals = (n) ->
+    if typeof n is 'number' then Number n.toFixed dec else n
   # new line
   nl = if pre then '\n' else ''
   tb = if nl then (if typeof pre is 'string' then pre else DTAB) else ''
@@ -41,7 +45,14 @@ objToXml = ( obj, op = {} ) ->
       # loop through keys of the object to get attributs and children
       for key, val of obj[elem]
         if typeof val is 'function' then val = val()
-        if key is CKEY then children = val else xml += " #{key}=\"#{val}\""
+        if key is CKEY then children = val
+        else
+          # if it's an array of values, let's join with a space
+          if Array.isArray val
+            if dec then val = (decimals v for v in val)
+            val = val.join ' '
+          if dec then val = decimals val
+          xml += " #{key}=\"#{val}\""
       # tack on the children
       if children then xml +=
         '>' + nl + objToXml children, { pretty: pre, indent: ind + 1 }
