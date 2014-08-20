@@ -1,7 +1,7 @@
 # svg plotter class
 
 # use the gerber parser class to parse the file
-Parser = require './gerber-parser'
+Parser = require './gerber-parser-old'
 # unique id generator
 unique = require './unique-id'
 # aperture macro class
