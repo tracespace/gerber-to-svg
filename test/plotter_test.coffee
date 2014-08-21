@@ -209,9 +209,108 @@ describe 'Plotter class', ->
           p.path.should.eql []
           p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
 
-      #describe 'adding an arc to the path', ->
+      describe 'adding an arc to the path', ->
+        it 'should throw an error if the tool is not circular', ->
+          p.command { set: { currentTool: 'D11', mode: 'cw', quad: 's' } }
+          (-> p.command { op: { do: 'int', x: 1, y: 1, i: 1 } })
+            .should.throw /arc with non-circular/
+        it 'should not throw if non-circular tool in region mode', ->
+          p.command { set:
+            { currentTool: 'D11', mode: 'cw', region: true, quad: 's' }
+          }
+          (-> p.command { op: { do: 'int', x: 1, y: 1, i: 1 } })
+            .should.not.throw()
+        it 'should throw an error if quadrant mode has not been specified', ->
+          (-> p.command { set: {mode: 'cw'}, op: {do: 'int', x: 1, y: 1, i: 1}})
+            .should.throw /quadrant mode/
+        describe 'single quadrant arc mode', ->
+          beforeEach () -> p.command { set: { quad: 's' } }
+          it 'should add a CW arc with a set to cw', ->
+            p.command { set: { mode: 'cw'}, op: {do: 'int', x: 1, y: 1, i: 1} }
+            p.path.should.containDeep [ 'A', 1, 1, 0, 0, 0, 1, 1 ]
+          it 'should add a CCW arc with a G03', ->
+            p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, j: 1} }
+            p.path.should.containDeep [ 'A', 1, 1, 0, 0, 1, 1, 1 ]
+          it 'should warn for impossible arcs and add nothing to the path', ->
+            hook = stderr()
+            p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, i: 1} }
+            hook.captured().should.match /impossible arc/
+            hook.unhook()
+            p.path.should.not.containEql 'A'
 
-      describe 'region mode', ->
+        describe 'multi quadrant arc mode', ->
+          beforeEach () -> p.command { set: { quad: 'm' } }
+          it 'should add a CW arc with a G02', ->
+            p.command { set: { mode: 'cw'}, op: {do: 'int', x: 1, y: 1, j: 1} }
+            p.path.should.containDeep [ 'A', 1, 1, 0, 1, 0, 1, 1 ]
+          it 'should add a CCW arc with a G03', ->
+            p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, i: 1} }
+            p.path.should.containDeep [ 'A', 1, 1, 0, 1, 1, 1, 1 ]
+          it 'should add 2 paths for full circle if start is end', ->
+            p.command { set: { mode: 'cw'}, op: { do: 'int', i: 1 } }
+            p.path.should.containDeep [
+              'A', 1, 1, 0, 0, 0, 2, 0, 'A', 1, 1, 0, 0, 0, 0, 0
+            ]
+          it 'should warn for impossible arc and add nothing to the path', ->
+            hook = stderr()
+            p.command { set: { mode: 'cw' }, op: {do: 'int', x: 1, y: 1, j:-1 }}
+            hook.captured().should.match /impossible arc/
+            hook.unhook()
+            p.path.should.not.containEql 'A'
+
+        # tool is a dia 2 circle for these tests
+        describe 'adjusting the bbox', ->
+          it 'sweeping past 180 deg determines min X', ->
+            p.command { op: { do: 'move', x: -0.7071, y: -0.7071 } }
+            p.command {
+              set: { mode: 'cw', quad: 's' }
+              op: { do: 'int', x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071 }
+            }
+            result = Math.abs -2-p.bbox.xMin
+            result.should.be.lessThan 0.00001
+          it 'sweeping past 270 deg determines min Y', ->
+            p.command { op: { do: 'move', x: 0.7071, y: -0.7071 } }
+            p.command {
+              set: { mode: 'cw', quad: 's' }
+              op: { do: 'int', x: -0.7071, y: -0.7071, i: 0.7071, j: 0.7071 }
+            }
+            result = Math.abs -2-p.bbox.yMin
+            result.should.be.lessThan 0.00001
+          it 'sweeping past 90 deg determines max Y', ->
+            p.command { op: { do: 'move', x: -0.7071, y: 0.7071 } }
+            p.command {
+              set: { mode: 'cw', quad: 's' }
+              op: { do: 'int', x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071 }
+            }
+            result = Math.abs 2-p.bbox.yMax
+            result.should.be.lessThan 0.00001
+          it 'sweeping past 0 deg determines max X', ->
+            p.command { op: { do: 'move', x: 0.7071, y: 0.7071 } }
+            p.command {
+              set: { mode: 'cw', quad: 's' }
+              op: { do: 'int', x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071 }
+            }
+            result = Math.abs 2-p.bbox.xMax
+            result.should.be.lessThan 0.00001
+          it 'if its just hanging out, use the end points', ->
+            p.command { op: { do: 'move', x: 0.5, y: 0.866 } }
+            p.command {
+              set: { mode: 'cw', quad: 's' }
+              op: { do: 'int', x: 0.866, y: 0.5, i: 0.5, j: 0.866 }
+            }
+            p.bbox.xMin.should.equal -0.5
+            p.bbox.yMin.should.equal -0.5
+            p.bbox.xMax.should.equal 1.8660
+            p.bbox.yMax.should.equal 1.8660
+
+      describe 'region mode off', ->
+        it 'should add the trace properties to the path when it ends', ->
+          p.path = ['M', 0, 0, 'L', 5, 5 ]
+          p.finishPath()
+          p.current.should.containDeep [{
+            path: { d: ['M', 0, 0, 'L', 5, 5], fill: 'none', 'stroke-width': 2 }
+          }]
+      describe 'region mode on', ->
         it 'should allow any tool to create a region', ->
           p.command { tool: { D13: { dia: 5, verticies: 5 } } }
           p.command { set: { region: true } }
