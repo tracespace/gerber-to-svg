@@ -1,7 +1,7 @@
 # until plotter gets refactored, this will be a thin wrapper around the plotter
 # to get it to generate drill files
 
-Plotter = require './plotter'
+Plotter = require './plotter-old'
 Reader = require './drill-reader'
 Parser = require './drill-parser'
 
