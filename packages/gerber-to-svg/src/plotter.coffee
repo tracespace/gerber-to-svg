@@ -16,36 +16,6 @@ TWO_PI = 2*Math.PI
 # error epsilon
 EPS = 0.0000001
 
-# given a rectangle's dimensions and path end, return a path string
-rectangleStrokePath = (start, end, width, height) ->
-  # helpers
-  sxm = start.x - width/2
-  sxp = start.x + width/2
-  sym = start.y - height/2
-  syp = start.y + height/2
-  exm = end.x - width/2
-  exp = end.x + width/2
-  eym = end.y - height/2
-  eyp = end.y + height/2
-  # get the quadrant we're in
-  theta = Math.atan2 end.y-start.y, end.x - start.x
-  # quadrant I
-  if 0 <= theta < HALF_PI
-    "M#{sxm} #{sym}L#{sxp} #{sym}L#{exp} #{eym}L#{exp} #{eyp}L#{exm} #{eyp}
-     L#{sxm} #{syp}Z"
-  # quadrant II
-  else if HALF_PI <= theta < Math.PI
-    "M#{sxm} #{sym}L#{sxp} #{sym}L#{sxp} #{syp}L#{exp} #{eyp}L#{exm} #{eyp}
-     L#{exm} #{eym}Z"
-  # quadrant III
-  else if -Math.PI <= theta < -HALF_PI
-    "M#{sxp} #{sym}L#{sxp} #{syp}L#{sxm} #{syp}L#{exm} #{eyp}L#{exm} #{eym}
-     L#{exp} #{eym}Z"
-  # quadrant IV
-  else if -HALF_PI <= theta < 0
-    "M#{sxm} #{sym}L#{exm} #{eym}L#{exp} #{eym}L#{exp} #{eyp}L#{sxp} #{syp}
-     L#{sxm} #{syp}Z"
-
 class Plotter
   constructor: (file = '', @reader, @parser) ->
     # create a parser object
@@ -235,13 +205,36 @@ class Plotter
     }
     # check for a rectangular or circular tool
     # circular tool will have a stroke-width set, and is easy
-    if t.trace['stroke-width'] > 0 then @path.push 'L', ex, ey
+    if @region or t.trace['stroke-width'] > 0 then @path.push 'L', ex, ey
     # rectagular tools are complicated, though
+    # we're going to use implicit linetos after movetos for ease
     else
-      #   else
-      #     width = @tools[@currentTool].pad[0].rect.width
-      #     height = @tools[@currentTool].pad[0].rect.height
-      #     @trace.path += rectangleStrokePath start, end, width, height
+      # width and height of tool
+      halfWidth = t.pad[0].rect.width/2
+      halfHeight = t.pad[0].rect.height/2
+      # corners of the start and end rects
+      sxm = sx - halfWidth
+      sxp = sx + halfWidth
+      sym = sy - halfHeight
+      syp = sy + halfHeight
+      exm = ex - halfWidth
+      exp = ex + halfWidth
+      eym = ey - halfHeight
+      eyp = ey + halfHeight
+      # get the quadrant we're in
+      theta = Math.atan2 ey-sy, ex - sx
+      # quadrant I
+      if 0 <= theta < HALF_PI
+        @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
+      # quadrant II
+      else if HALF_PI <= theta < Math.PI
+        @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
+      # quadrant III
+      else if -Math.PI <= theta < -HALF_PI
+        @path.push 'M',sxp,sym,sxp,syp,sxm,syp,exm,eyp,exm,eym,exp,eym,'Z'
+      # quadrant IV
+      else if -HALF_PI <= theta < 0
+        @path.push 'M',sxm,sym,exm,eym,exp,eym,exp,eyp,sxp,syp,sxm,syp,'Z'
 
   # draw an arc with the start point, end point, and center offset
   drawArc: (sx, sy, ex, ey, i, j) ->
@@ -338,22 +331,22 @@ class Plotter
     @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
 
 
-  finishStepRepeat: () ->
-    if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
-      if @layer.level isnt 0
-        throw new Error 'step repeat with clear levels is unimplimented'
-      srId = @layer.current.g.id
-      @layer.current = @group
-      for x in [ 0...@stepRepeat.x ]
-        for y in [ 0...@stepRepeat.y ]
-          unless x is 0 and y is 0
-            @layer.current[@layer.type]._.push {
-              use: {
-                x: x*@stepRepeat.xStep
-                y: y*@stepRepeat.yStep
-                'xlink:href': srId
-              }
-            }
+  # finishStepRepeat: () ->
+  #   if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
+  #     if @layer.level isnt 0
+  #       throw new Error 'step repeat with clear levels is unimplimented'
+  #     srId = @layer.current.g.id
+  #     @layer.current = @group
+  #     for x in [ 0...@stepRepeat.x ]
+  #       for y in [ 0...@stepRepeat.y ]
+  #         unless x is 0 and y is 0
+  #           @layer.current[@layer.type]._.push {
+  #             use: {
+  #               x: x*@stepRepeat.xStep
+  #               y: y*@stepRepeat.yStep
+  #               'xlink:href': srId
+  #             }
+  #           }
 
   addBbox: (bbox) ->
     if bbox.xMin < @bbox.xMin then @bbox.xMin = bbox.xMin
