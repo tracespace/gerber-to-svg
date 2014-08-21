@@ -24,7 +24,8 @@ class Driller extends Plotter
       # then tool definitions
       # hack it into recognizing excellon tool definitions
       if c.tool?
-        @parameter [ '%', "AD#{c.tool.code}C,#{c.tool.shape.dia}", '%' ]
+        for key, val of c.tool
+          @parameter [ '%', "AD#{key}C,#{val.dia}", '%' ]
 
       # finally check for drill hits
       if c.op? and c.op.do is 'flash'

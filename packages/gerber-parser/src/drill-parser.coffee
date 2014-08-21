@@ -58,7 +58,8 @@ class DrillParser
       # tool definition
       if ( dia = block.match(/C[\d\.]+(?=$)/)?[0] )
         dia = Number dia[1..]
-        command.tool = { code: code, shape: { dia: dia } }
+        command.tool = {}
+        command.tool[code] = { dia: dia }
       else command.set = { currentTool: code }
 
     # allow this to be tacked on the end of a command to be lenient

@@ -14,6 +14,50 @@ class GerberParser
     # coordinate format (places and zero suppression)
     @format = { zero: null, places: null }
 
+  # parse a format block
+  parseFormat: (p, c) ->
+    zero = if p[2] is 'L' or p[2] is 'T' then p[2] else null
+    nota = if p[3] is 'A' or p[3] is 'I' then p[3] else null
+    if p[4] is 'X' and p[7] is 'Y' and p[5..6] is p[8..9] and
+    p[5] < 8 and p[6] < 8
+      places = [ +p[5], +p[6] ]
+    if not places? or not nota? or not zero?
+      throw new Error "invalid format specification"
+    @format.zero = zero; @format.places = places
+    unless c.set? then c.set = {}
+    c.set.notation = nota
+
+  # parse a aperture definition block
+  parseToolDef: (p, c) ->
+    unless c.tool? then c.tool = {}
+    code = p.match(/^ADD\d{2,}/)?[0][2..]
+    [shape, mods] = p[2+code.length..].split ','
+    mods = mods?.split 'X'
+    switch shape
+      # circle
+      when 'C'
+        if mods.length > 2 then hole = { width: +mods[1], height: +mods[2] }
+        else if mods.length > 1 then hole = { dia: +mods[1] }
+        c.tool[code] = { dia: +mods[0] }
+        if hole? then c.tool[code].hole = hole
+      # rectangle, obround
+      when 'R', 'O'
+        if mods.length > 3 then hole = { width: +mods[2], height: +mods[3] }
+        else if mods.length > 2 then hole = { dia: +mods[2] }
+        c.tool[code] = {width: +mods[0], height: +mods[1] }
+        if shape is 'O' then c.tool[code].obround = true
+        if hole? then c.tool[code].hole = hole
+      # polygon
+      when 'P'
+        if mods.length > 4 then hole = { width: +mods[3], height: +mods[4] }
+        else if mods.length > 3 then hole = { dia: +mods[3] }
+        c.tool[code] = { dia: +mods[0], verticies: +mods[1] }
+        if mods.length > 2 then c.tool[code].degrees = +mods[2]
+        if hole? then c.tool[code].hole = hole
+      # else aperture macro
+      else
+        c.tool[code] = { macro: shape, mods: mods ? [] }
+
   # parse a block for the command
   parseCommand: (block = {}) ->
     # command
@@ -24,6 +68,9 @@ class GerberParser
       for p in param
         # parameter code is first two letters
         switch code = p[0..1]
+          # format set
+          when 'FS'
+            @parseFormat p, c
           # unit set
           when 'MO'
             u = p[2..3]
@@ -31,6 +78,31 @@ class GerberParser
             if u is 'IN' then c.set.units = 'in'
             else if u is 'MM' then c.set.units = 'mm'
             else throw new Error "#{p} is an invalid units setting"
+          # aperture definition
+          when 'AD'
+            @parseToolDef p, c
+          # aperture macro
+          # aperture macro can only appear alone in a parameter block, so return
+          when 'AM'
+            return { macro: param }
+          # new level polarity
+          when 'LP'
+            unless c.new? then c.new = {}
+            c.new.layer = p[2] if p[2] is 'D' or p[2] is 'C'
+            unless c.new.layer? then throw new Error 'invalid level polarity'
+          # new step repeat
+          when 'SR'
+            unless c.new? then c.new = {}
+            x = p.match(/X[+-]?\d+/)?[0][1..] ? 1
+            y = p.match(/Y[+-]?\d+/)?[0][1..] ? 1
+            i = p.match(/I[+-]?\d+/)?[0][1..]
+            j = p.match(/J[+-]?\d+/)?[0][1..]
+            # check for valid numbers and such
+            if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
+              throw new Error 'invalid step repeat'
+            c.new.sr = { x: x, y: y }
+            if i? then c.new.sr.i = +i
+            if j? then c.new.sr.j = +j
     else if block = block.block
       # check for M02 (file done) code
       if block is 'M02' then return { set: { done: true } }
@@ -61,6 +133,10 @@ class GerberParser
         coord = parseCoord block.match(reCOORD)?[0], @format
         c.op = { do: op }
         c.op[axis] = val for axis, val of coord
+      # check for a tool change
+      # this might be on the same line as a legacy G54
+      else if tool = block.match(/D\d+$/)?[0]
+        c.set = { currentTool: tool }
 
     # return the command
     c
