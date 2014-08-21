@@ -46,7 +46,7 @@ describe 'Plotter class', ->
         p.region = true
         p.tools.D10 = {}
         (-> p.command { set: { currentTool: 'D10' } }).should.throw /tool/
-    it 'should the interpolation mode', ->
+    it 'should set the interpolation mode', ->
       p.command { set: { mode: 'i' } }
       p.mode.should.eql 'i'
       p.command { set: { mode: 'cw' } }
@@ -66,6 +66,27 @@ describe 'Plotter class', ->
     it 'should set the file end flag', ->
       p.command { set: { done: true } }
       p.done.should.be.true
+
+  describe 'new layer commands', ->
+    it 'should finish any in progress layer', ->
+      p.current = [ 'stuff' ]
+      p.command { new: { sr: { x: 2, y: 3, xStep: 7, yStep: 2 } } }
+      p.current.should.eql []
+      p.current = [ 'more', 'stuff' ]
+      p.command { new: { layer: 'C' } }
+      p.current.should.eql []
+
+    it 'should set step repeat params', ->
+      p.command { new: { sr: { x: 2, y: 3, xStep: 7, yStep: 2 } } }
+      p.stepRepeat.should.eql { x: 2, y: 3, xStep: 7, yStep: 2 }
+      p.command { new: { sr: { x: 1, y: 1 } } }
+      p.stepRepeat.should.eql { x: 1, y: 1, xStep: 0, yStep: 0 }
+
+    it 'should set polarity param', ->
+      p.command { new: { layer: 'C' } }
+      p.polarity.should.eql 'c'
+      p.command { new: { layer: 'D' } }
+      p.polarity.should.eql 'd'
 
   describe 'defining new tools', ->
     it 'should add a standard tool to the tools object', ->
