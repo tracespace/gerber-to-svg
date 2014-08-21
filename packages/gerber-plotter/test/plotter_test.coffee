@@ -360,3 +360,46 @@ describe 'Plotter class', ->
           p.current.should.containEql {
             path: { d: ['M', 0, 0, 'L', 5, 5, 'L', 0, 5, 'L', 0, 0, 'Z' ] }
           }
+
+  describe 'finish layer method', ->
+    beforeEach -> p.current = [ 'item0', 'item1', 'item2', 'item3' ]
+    it 'should add the current items to the group if only one dark layer', ->
+      p.finishLayer()
+      p.group.should.eql { g: { _: [ 'item0', 'item1', 'item2', 'item3' ] } }
+      p.current.should.eql []
+    describe 'multiple layers', ->
+      it 'if clear layer, should mask the group with them', ->
+        p.polarity = 'c'
+        p.bbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
+        p.finishLayer()
+        p.defs.should.containDeep [
+          {
+            mask: {
+              color: '#000'
+              _: [
+                { rect: { x: 0, y: 0, width: 2, height: 2, fill: '#fff' } }
+                'item0'
+                'item1'
+                'item2'
+                'item3'
+              ]
+            }
+          }
+        ]
+        id = p.defs[0].mask.id
+        p.group.should.eql { g: { mask: "url(##{id})", _: [] } }
+        p.current.should.eql []
+      it 'if dark layer after clear layer, it should wrap the group', ->
+        p.group = { g: { mask: 'url(#mask-id)', _: [ 'gItem1', 'gItem2' ] } }
+        p.finishLayer()
+        p.group.should.eql {
+          g: {
+            _: [
+              { g: { mask: 'url(#mask-id)', _: [ 'gItem1', 'gItem2' ] } }
+              'item0'
+              'item1'
+              'item2'
+              'item3'
+            ]
+          }
+        }
