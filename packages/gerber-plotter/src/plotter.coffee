@@ -29,7 +29,7 @@ class Plotter
     @polarity = 'd'
     @current = []
     # step and repeat, initially set to no repeat
-    @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null, block: 0 }
+    @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null }
     # unit system
     @units = null
     # operating mode
@@ -117,16 +117,41 @@ class Plotter
 
   finish: ->
     @finishPath()
-    #@finishStepRepeat()
+    @finishLayer()
 
   finishLayer: ->
+    # check for a step repeat
+    if @stepRepeat.x > 1 or @stepRepeat.y > 1
+      # wrap current up in a group with an sr id
+      srId = "gerber-sr_#{unique()}"
+      @current = [ { g: { id: srId, _: @current } } ]
+      for x in [ 0...@stepRepeat.x ]
+        for y in [ 0...@stepRepeat.x ]
+          unless x is 0 and y is 0
+            u = { use: { 'xlink:href': '#'+srId } }
+            u.use.x = x*@stepRepeat.xStep if x isnt 0
+            u.use.y = y*@stepRepeat.yStep if y isnt 0
+            @current.push u
+      # warn if polarity is clear and steps overlap the bbox
+      xBboxAdd =
+      if @polarity is 'c' and
+      ( @stepRepeat.xStep < @bbox.xMax - @bbox.xMin or
+      @stepRepeat.yStep < @bbox.yMax - @bbox.yMin )
+        console.warn 'step repeat blocks with clear polarity overlap; resulting
+          image may not be correct'
+      # adjust the bbox
+      @bbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.xStep
+      @bbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.yStep
+
     # if dark polarity
     if @polarity is 'd'
       # is there an existing group that's been cleared, then we need to wrap it
       # insert the group at the beginning of current
       if @group.g.mask? then @current.unshift @group
       # set the group
-      @group = { g: { _: @current } }
+      if not @group.g.mask? and @group.g._.length
+        @group.g._.push c for c in @current
+      else @group = { g: { _: @current } }
     # else clear polarity
     else
       # make a mask
@@ -350,24 +375,6 @@ class Plotter
     @path.push 'A', r, r, 0, large, sweep, ex, ey
     # add the bounding box
     @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
-
-
-  # finishStepRepeat: () ->
-  #   if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
-  #     if @layer.level isnt 0
-  #       throw new Error 'step repeat with clear levels is unimplimented'
-  #     srId = @layer.current.g.id
-  #     @layer.current = @group
-  #     for x in [ 0...@stepRepeat.x ]
-  #       for y in [ 0...@stepRepeat.y ]
-  #         unless x is 0 and y is 0
-  #           @layer.current[@layer.type]._.push {
-  #             use: {
-  #               x: x*@stepRepeat.xStep
-  #               y: y*@stepRepeat.yStep
-  #               'xlink:href': srId
-  #             }
-  #           }
 
   addBbox: (bbox) ->
     if bbox.xMin < @bbox.xMin then @bbox.xMin = bbox.xMin
