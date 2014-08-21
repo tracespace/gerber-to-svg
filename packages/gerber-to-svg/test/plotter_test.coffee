@@ -204,10 +204,6 @@ describe 'Plotter class', ->
           p.command { new: { sr: { x: 2, y: 2, i: 1, j: 2 } } }
           p.path.should.eql []
           p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
-        it 'should end the path on file end', ->
-          p.finish()
-          p.path.should.eql []
-          p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
 
       describe 'stroking a rectangular tool', ->
         beforeEach -> p.command { set: { currentTool: 'D11' } }
@@ -362,10 +358,10 @@ describe 'Plotter class', ->
           }
 
   describe 'finish layer method', ->
-    beforeEach -> p.current = [ 'item0', 'item1', 'item2', 'item3' ]
+    beforeEach -> p.current = [ 'item0', 'item1', 'item2' ]
     it 'should add the current items to the group if only one dark layer', ->
       p.finishLayer()
-      p.group.should.eql { g: { _: [ 'item0', 'item1', 'item2', 'item3' ] } }
+      p.group.should.eql { g: { _: [ 'item0', 'item1', 'item2' ] } }
       p.current.should.eql []
     describe 'multiple layers', ->
       it 'if clear layer, should mask the group with them', ->
@@ -381,7 +377,6 @@ describe 'Plotter class', ->
                 'item0'
                 'item1'
                 'item2'
-                'item3'
               ]
             }
           }
@@ -399,7 +394,72 @@ describe 'Plotter class', ->
               'item0'
               'item1'
               'item2'
-              'item3'
             ]
           }
         }
+
+    describe 'step repeat', ->
+      beforeEach ->
+        p.bbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
+        p.stepRepeat = { x: 2, y: 2, xStep: 3, yStep: 3 }
+      describe 'with a dark layer', ->
+        it 'should wrap current in a group, copy it, and add it to @group', ->
+          p.finishLayer()
+          id = p.group.g._[0].g.id
+          p.group.should.containDeep {
+            g: {
+              _: [
+                { g: { id: id, _: [ 'item0', 'item1', 'item2' ] } }
+                { use: { y: 3, 'xlink:href': '#'+id } }
+                { use: { x: 3, 'xlink:href': '#'+id } }
+                { use: { x:3, y: 3, 'xlink:href': '#'+id } }
+              ]
+            }
+          }
+          p.current.should.eql []
+        it 'leave existing (pre-stepRepeat) items alone', ->
+          p.group.g._ = [ 'existing1', 'existing2' ]
+          p.finishLayer()
+          p.group.g._.should.have.length 6
+          id = p.group.g._[2].g.id
+          p.group.should.containDeep {
+            g: {
+              _: [
+                'existing1'
+                'existing2'
+                { g: { _: [ 'item0', 'item1', 'item2' ] } }
+                { use: { y: 3, 'xlink:href': '#'+id } }
+                { use: { x: 3, 'xlink:href': '#'+id } }
+                { use: { x:3, y: 3, 'xlink:href': '#'+id } }
+              ]
+            }
+          }
+          p.current.should.eql []
+
+      describe 'with a clear layer', ->
+        it 'should wrap the current items and repeat them in the mask', ->
+          p.polarity = 'c'
+          p.finishLayer()
+          maskId = p.defs[0].mask.id
+          groupId = p.defs[0].mask._[1].g.id
+          p.defs[0].should.containDeep {
+            mask: {
+              _: [
+                { rect: { x: 0, y: 0, width: 5, height: 5, fill: '#fff' } }
+                { g: { _: [ 'item0', 'item1', 'item2' ] } }
+                { use: { y: 3, 'xlink:href': '#'+groupId } }
+                { use: { x: 3, 'xlink:href': '#'+groupId } }
+                { use: { x:3, y: 3, 'xlink:href': '#'+groupId } }
+              ]
+            }
+          }
+          p.group.g.mask.should.eql "url(##{maskId})"
+          p.current.should.eql []
+
+        it 'should throw a warning of incorrect image if repeats overlap', ->
+          p.bbox = { xMin: 0, yMin: 0, xMax: 4, yMax: 4 }
+          p.polarity = 'c'
+          hook = stderr()
+          p.finishLayer()
+          hook.captured().should.match /overlap.*may not be correct/
+          hook.unhook()
