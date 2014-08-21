@@ -1,7 +1,5 @@
 # test suite for GerberParser class
 Parser = require '../src/gerber-parser'
-streamCapture = require './stream-capture'
-stderr = -> streamCapture(process.stderr)
 
 param = (p) -> { param: [ p ] }
 block = (b) -> { block: b }
