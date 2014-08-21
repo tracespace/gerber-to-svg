@@ -13,6 +13,8 @@ tool = require './standard-tool'
 HALF_PI = Math.PI/2
 THREEHALF_PI = 3*HALF_PI
 TWO_PI = 2*Math.PI
+# error epsilon
+EPS = 0.0000001
 
 # given a rectangle's dimensions and path end, return a path string
 rectangleStrokePath = (start, end, width, height) ->
@@ -136,15 +138,15 @@ class Plotter
 
   # go through the gerber file and return an xml object with the svg
   plot: () ->
-    until @done
-      # grab the next command. if it returns false we've hit the end of the file
-      current = @parser.nextCommand()
-      if current is false
-        throw new Error 'end of file encountered before required M02 command'
-      # if it's a parameter command
-      if current[0] is '%' then @parameter current else @operate current[0]
-    # finish and return the xml object
-    @finish()
+    # until @done
+    #   # grab the next command. if it returns false we've hit the end of the file
+    #   current = @parser.nextCommand()
+    #   if current is false
+    #     throw new Error 'end of file encountered before required M02 command'
+    #   # if it's a parameter command
+    #   if current[0] is '%' then @parameter current else @operate current[0]
+    # # finish and return the xml object
+    # @finish()
 
   finish: () ->
     @finishPath()
@@ -162,7 +164,7 @@ class Plotter
       @current.push p
       @path = []
 
-  # operate method takes the operation and the end point
+  # operate method takes the operation object
   operate: (op) ->
     # get the start position
     sx = @pos.x; sy = @pos.y
@@ -221,8 +223,10 @@ class Plotter
       if @mode is 'i'
         @drawLine sx, sy, ex, ey
       else
+        op.i = 0 unless op.i?; op.j = 0 unless op.j?
         @drawArc sx, sy, ex, ey, op.i, op.j
 
+  # draw a line with the start and end point
   drawLine: (sx, sy, ex, ey) ->
     t = @tools[@currentTool]
     # add to the bbox
@@ -234,110 +238,104 @@ class Plotter
     if t.trace['stroke-width'] > 0 then @path.push 'L', ex, ey
     # rectagular tools are complicated, though
     else
-
-
-
-      # # linear interpolation adds an absolute line to the path
-      # if @mode is 'i'
-      #   # add the segment to the path
-      #   # if it's a round tool or we're in region mode, just add the point
-      #   if @trace.region or @tools[@currentTool].stroke['stroke-linecap']?
-      #     @trace.path += "L#{end.x} #{end.y}"
-      #   # else we're stroking a rectangular aperture, so that's frustrating
       #   else
       #     width = @tools[@currentTool].pad[0].rect.width
       #     height = @tools[@currentTool].pad[0].rect.height
       #     @trace.path += rectangleStrokePath start, end, width, height
-      #   # add the segment to the bbox
-      #   if @trace.region
-      #     @addBbox {
-      #       xMin: end.x, yMin: end.y, xMax: end.x, yMax: end.y
-      #     }
-      #   else
-      #     @addBbox @tools[@currentTool].bbox end.x, end.y
-      # # are interpolation adds an eliptical (circular) arc to the path
-      # else if @mode is 'cw' or @mode is 'ccw'
-      #   # throw if tool isn't a circle
-      #   if not @trace.region and
-      #   not @tools[@currentTool].stroke['stroke-linecap'] is 'round'
-      #     throw new Error "tool #{@currentTool} is not circular and cannot
-      #                      stroke arcs"
-      #   r = Math.sqrt end.i**2 + end.j**2
-      #   sweep = if @mode is 'cw' then 0 else 1
-      #   large = 0
-      #   # if we're in single quadrant mode, work to get the center
-      #   # signs are implicit on i and j in single quad, so test them
-      #   cen = []
-      #   thetaE = 0
-      #   thetaS = 0
-      #   if @quad is 's'
-      #     for cx in [ start.x - end.i, start.x + end.i ]
-      #       for cy in [start.y - end.j, start.y + end.j ]
-      #         dist = Math.sqrt (cx-end.x)**2 + (cy-end.y)**2
-      #         if (Math.abs r - dist) < 0.0000001 then cen.push {x: cx, y: cy }
-      #   else if @quad is 'm'
-      #     cen.push { x: start.x + end.i, y: start.y + end.j }
-      #   # at most, we'll have two candidates
-      #   # check the points to make sure we have a valid arc
-      #   for c in cen
-      #     thetaE = Math.atan2 end.y-c.y, end.x-c.x
-      #     if thetaE < 0 then thetaE += TWO_PI
-      #     thetaS = Math.atan2 start.y-c.y, start.x-c.x
-      #     if thetaS < 0 then thetaS += TWO_PI
-      #     # adjust angles so math comes out right
-      #     if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
-      #     else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
-      #     # take it if it's less than 90
-      #     theta = Math.abs(thetaE - thetaS)
-      #     if @quad is 's' and Math.abs(thetaE - thetaS) > HALF_PI
-      #       continue
-      #     else
-      #      if @quad is 'm' and theta >= Math.PI then large = 1
-      #      cen = { x: c.x, y: c.y }
-      #      break
-      #   rTool = if @trace.region then 0 else @tools[@currentTool].bbox().xMax
-      #   # switch calculations to CCW to make things easier
-      #   if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
-      #   # maxima targets
-      #   xp = if thetaS > 0 then TWO_PI else 0
-      #   yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
-      #   xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
-      #   yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
-      #   # minimum x is either at the negative x axis or an endpoint
-      #   if thetaS <= xn <= thetaE
-      #     xMin = cen.x - r - rTool
-      #   else
-      #     xMin = (Math.min start.x, end.x) - rTool
-      #   # max x is going to be at positive x or endpoint
-      #   if thetaS <= xp <= thetaE
-      #     xMax = cen.x + r + rTool
-      #   else
-      #     xMax = (Math.max start.x, end.x) + rTool
-      #   # minimum y is either at negative y axis or an endpoint
-      #   if thetaS <= yn <=thetaE
-      #     yMin = cen.y - r - rTool
-      #   else
-      #     yMin = (Math.min start.y, end.y) - rTool
-      #   # max y is going to be at positive y or endpoint
-      #   if thetaS <= yp <= thetaE
-      #     yMax = cen.y + r + rTool
-      #   else
-      #     yMax = (Math.max start.y, end.y) + rTool
-      #   # check for special case: full circle
-      #   if @quad is 'm' and (Math.abs(start.x - end.x) < 0.000001) and
-      #   (Math.abs(start.y - end.y) < 0.000001)
-      #     # we'll need two paths (180 deg each)
-      #     @trace.path +=
-      #       "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
-      #     # bbox is going to just be a rectangle
-      #     xMin = cen.x - r - rTool
-      #     yMin = cen.y - r - rTool
-      #     xMax = cen.x + r + rTool
-      #     yMax = cen.y + r + rTool
-      #   # add the arc to the path
-      #   @trace.path += "A#{r} #{r} 0 #{large} #{sweep} #{end.x} #{end.y}"
-      #   # add the bounding box
-      #   @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
+
+  # draw an arc with the start point, end point, and center offset
+  drawArc: (sx, sy, ex, ey, i, j) ->
+    t = @tools[@currentTool]
+    # throw an error if the tool is rectangular
+    if not t.trace['stroke-width'] and not @region
+      throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
+    # throw an error if quadrant mode was not set
+    if not @quad? then throw new Error 'arc quadrant mode has not been set'
+    #
+    # get the radius of the arc from the offsets
+    r = Math.sqrt i**2 + j**2
+    # get the sweep flag (svg sweep flag is 0 for cw and 1 for ccw)
+    sweep = if @mode is 'cw' then 0 else 1
+    # large arc flag is if arc > 180 deg. this doesn't line up with gerber, so
+    # we gotta calculate the arc length if we're in multi quadrant mode
+    large = 0
+    # get some arc angles for bounding box, large flag, and arc check
+    # valid candidates for center
+    validCen = []
+    # potential candidates
+    cand = [ [sx+i, sy+j] ]
+    if @quad is 's' then cand.push [sx-i, sy-j], [sx-i, sy+j], [sx+i, sy-j]
+    # loop through the candidates and find centers that make sense
+    for c in cand
+      dist = Math.sqrt (c[0] - ex)**2 + (c[1] - ey)**2
+      if (Math.abs r - dist) < EPS then validCen.push { x: c[0], y: c[1] }
+    # now let's calculate some angles
+    thetaE = 0
+    thetaS = 0
+    cen = null
+    # at most, we'll have two candidates
+    # check the points to make sure we have a valid arc
+    for c in validCen
+      # find the angles and make positive
+      thetaE = Math.atan2 ey-c.y, ex-c.x
+      if thetaE < 0 then thetaE += TWO_PI
+      thetaS = Math.atan2 sy-c.y, sx-c.x
+      if thetaS < 0 then thetaS += TWO_PI
+      # adjust angles so math comes out right
+      # in cw, the angle of the start should always be greater than the end
+      if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
+      # in ccw, the start angle should be less than the end angle
+      else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
+      # calculate the sweep angle (abs value for cw)
+      theta = Math.abs(thetaE - thetaS)
+      # in single quadrant mode, center is good if it's less than 90
+      if @quad is 's' and theta <= HALF_PI then cen = c
+      else if @quad is 'm'
+        # if the sweep angle is >= 180, then its an svg large arc
+        if theta >= Math.PI then large = 1
+        # take the center
+        cen = { x: c.x, y: c.y }
+      # break if we've found a center
+      if cen? then break
+    # if we didn't find a center, then it's an invalid arc
+    unless cen?
+      console.warn "x: #{ex}, y: #{ex}, i: #{i}, j: #{j} is an impossible arc"
+      return
+    # get the radius of the tool for bbox calcs
+    rTool = if @region then 0 else t.bbox().xMax
+    # switch start and end angles to CCW to make things easier
+    # this ensures thetaS is always less than thetaE in these calculations
+    if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
+    # maxima targets for bounding box
+    xp = if thetaS > 0 then TWO_PI else 0
+    yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
+    xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
+    yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
+    # minimum x is either at the negative x axis or an endpoint
+    if thetaS <= xn <= thetaE then xMin = cen.x - r - rTool
+    else xMin = (Math.min sx, ex) - rTool
+    # max x is going to be at positive x or endpoint
+    if thetaS <= xp <= thetaE then xMax = cen.x + r + rTool
+    else xMax = (Math.max sx, ex) + rTool
+    # minimum y is either at negative y axis or an endpoint
+    if thetaS <= yn <= thetaE then yMin = cen.y - r - rTool
+    else yMin = (Math.min sy, ey) - rTool
+    # max y is going to be at positive y or endpoint
+    if thetaS <= yp <= thetaE then yMax = cen.y + r + rTool
+    else yMax = (Math.max sy, ey) + rTool
+    # check for special case: full circle
+    if @quad is 'm' and (Math.abs(sx - ex) < EPS) and (Math.abs(sy - ey) < EPS)
+      # we'll need two paths (180 deg each)
+      @path.push 'A', r, r, 0, 0, sweep, ex+2*i, ey+2*j
+      # bbox is going to just be a rectangle
+      xMin = cen.x - r - rTool
+      yMin = cen.y - r - rTool
+      xMax = cen.x + r + rTool
+      yMax = cen.y + r + rTool
+    # add the arc to the path
+    @path.push 'A', r, r, 0, large, sweep, ex, ey
+    # add the bounding box
+    @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
 
 
   finishStepRepeat: () ->
