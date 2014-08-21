@@ -49,9 +49,9 @@ describe 'NC drill file parser', ->
     p.format.places.should.eql [ 3, 3 ]
   it 'should return a define tool command for tool definitions', ->
     p.parseCommand 'T1C0.015'
-      .should.eql { tool: { code: 'T1', shape: { dia: 0.015 } } }
+      .should.eql { tool: { T1: { dia: 0.015 } } }
     p.parseCommand 'T13C0.142'
-      .should.eql { tool: { code: 'T13', shape: { dia: 0.142 } } }
+      .should.eql { tool: { T13: { dia: 0.142 } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}
