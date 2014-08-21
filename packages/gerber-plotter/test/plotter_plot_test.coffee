@@ -1,5 +1,5 @@
 # test suite for the plot method of the plotter class
-Plotter = require '../src/plotter'
+Plotter = require '../src/plotter-old'
 fs = require 'fs'
 
 describe 'the plot method of the Plotter class', ->

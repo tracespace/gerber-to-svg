@@ -65,6 +65,8 @@ gulp.task 'test', ->
         stack: Error.stackTraceLimit = 3
       }
     }
+    .on 'error', (e) ->
+      if e.name is 'SyntaxError' then gutil.log e.stack else gutil.log e.message
 
 # this is also ugly but it works
 gulp.task 'coverage', [ 'test' ], ->
