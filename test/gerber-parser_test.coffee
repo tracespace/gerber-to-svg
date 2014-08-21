@@ -20,6 +20,118 @@ describe 'gerber command parser', ->
     p.parseCommand(block 'G04 M02').should.eql {}
     p.format.should.eql initialFormat
 
+  describe 'parsing the format block', ->
+    it 'should handle it with good options', ->
+      p.parseCommand(param 'FSLAX34Y34').should.eql { set: { notation: 'A' } }
+      p.format.zero.should.eql 'L'
+      p.format.places.should.eql [3,4]
+      p.parseCommand(param 'FSTIX77Y77').should.eql { set: { notation: 'I' } }
+      p.format.zero.should.eql 'T'
+      p.format.places.should.eql [7,7]
+    it 'should throw error for bad options', ->
+      (-> p.parseCommand(param 'FSLPX34Y34')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSFAX34Y34')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSLAX12Y34')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSLAX34')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSLAY34')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSLAX3.4Y3.4')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSLA')).should.throw /invalid/
+      (-> p.parseCommand(param 'FSpoop')).should.throw /invalid/
+
+  describe 'parsing an aperture definition', ->
+    describe 'with standard tools', ->
+      it 'should handle standard circles', ->
+        p.parseCommand(param 'ADD10C,1').should.eql {
+          tool: { D10: { dia: 1 } }
+        }
+        p.parseCommand(param 'ADD11C,1X0.2').should.eql {
+          tool: { D11: { dia: 1, hole: { dia: 0.2 } } }
+        }
+        p.parseCommand(param 'ADD12C,1X0.2X0.3').should.eql {
+          tool: { D12: { dia: 1, hole: { width: 0.2, height: 0.3 } } }
+        }
+      it 'should handle standard rectangles', ->
+        p.parseCommand(param 'ADD10R,1X0.5').should.eql {
+          tool: { D10: { width: 1, height: 0.5 } }
+        }
+        p.parseCommand(param 'ADD11R,1X0.5X0.2').should.eql {
+          tool: { D11: { width: 1, height: 0.5, hole: { dia: 0.2 } } }
+        }
+        p.parseCommand(param 'ADD12R,1X0.5X0.2X0.3').should.eql {
+          tool: { D12: { width: 1, height: .5, hole:{width: 0.2, height: 0.3 }}}
+        }
+      it 'should handle standard obrounds', ->
+        p.parseCommand(param 'ADD10O,1X0.5').should.eql {
+          tool: { D10: { width: 1, height: 0.5, obround: true } }
+        }
+        p.parseCommand(param 'ADD11O,1X0.5X0.2').should.eql {
+          tool: { D11: { width: 1, height: 0.5, obround: true, hole:{dia: 0.2}}}
+        }
+        p.parseCommand(param 'ADD12O,1X0.5X0.2X0.3').should.eql {
+          tool: { D12: { width: 1, height: .5, obround:true, hole: {
+                width: 0.2, height: 0.3
+              }
+            }
+          }
+        }
+      it 'should handle standard polygons', ->
+        p.parseCommand(param 'ADD10P,5X3').should.eql {
+          tool: { D10: { dia: 5, verticies: 3 } }
+        }
+        p.parseCommand(param 'ADD11P,5X4X45').should.eql {
+          tool: { D11: { dia: 5, verticies: 4, degrees: 45 } }
+        }
+        p.parseCommand(param 'ADD12P,5X4X0X0.6').should.eql {
+          tool: { D12: { dia: 5, verticies: 4, degrees: 0, hole: { dia: .6 } } }
+        }
+        p.parseCommand(param 'ADD13P,5X4X0X0.6X0.5').should.eql {
+          tool: { D13: { dia: 5, verticies: 4, degrees: 0, hole: {
+                width: 0.6, height: 0.5
+              }
+            }
+          }
+        }
+
+    describe 'with aperture macros', ->
+      it 'should parse an aperture macro with modifiers', ->
+        p.parseCommand(param 'ADD10CIRC,1X0.5').should.eql {
+          tool: { D10: { macro: 'CIRC', mods: [ 1, 0.5 ] } }
+        }
+      it 'should parse a macro with no modifiers', ->
+        p.parseCommand(param 'ADD11RECT').should.eql {
+          tool: { D11: { macro: 'RECT', mods: [] } }
+        }
+
+  it 'should pass along the blocks if an aperture macro', ->
+    p.parseCommand({ param: [ 'AMRECT1', '21,1,1,1,0,0,0' ] }).should.eql {
+      macro: [ 'AMRECT1', '21,1,1,1,0,0,0' ]
+    }
+
+  describe 'level polarity', ->
+    it 'should return a new dark or clean layer', ->
+      p.parseCommand(param 'LPD').should.eql { new: { layer: 'D' } }
+      p.parseCommand(param 'LPC').should.eql { new: { layer: 'C' } }
+    it 'should throw for a bad polarity', ->
+      (-> p.parseCommand(param 'LPA')).should.throw /invalid level polarity/
+
+  describe 'step repeat', ->
+    it 'should return a new step repeat block with good input', ->
+      p.parseCommand(param 'SRX1Y1').should.eql { new: { sr: { x: 1, y: 1 } } }
+      p.parseCommand(param 'SRX1Y1I0J0').should.eql {
+        new: { sr: { x: 1, y: 1, i: 0, j: 0 } }
+      }
+      p.parseCommand(param 'SRX2Y3I2.0J3.0').should.eql {
+        new: { sr: { x: 2, y: 3, i: 2, j: 3 } }
+      }
+      p.parseCommand(param 'SR').should.eql { new: { sr: { x: 1, y: 1 } } }
+    it 'should throw if bad input', ->
+      (-> p.parseCommand(param 'SRX2Y3I4')).should.throw /invalid step/
+      (-> p.parseCommand(param 'SRX2Y3J4')).should.throw /invalid step/
+      (-> p.parseCommand(param 'SRX-1I1')).should.throw /invalid step/
+      (-> p.parseCommand(param 'SRY-1J2')).should.throw /invalid step/
+      (-> p.parseCommand(param 'SRX2Y2I-1J1')).should.throw /invalid step/
+      (-> p.parseCommand(param 'SRX2Y2I1J-1')).should.throw /invalid step/
+
   it 'should end the file with an M02', ->
     p.parseCommand(block 'M02').should.eql { set: { done: true } }
 
@@ -34,6 +146,10 @@ describe 'gerber command parser', ->
     it 'should set backup units with G70 (in) and G71 (mm)', ->
       p.parseCommand(block 'G70').should.eql { set: { backupUnits: 'in' } }
       p.parseCommand(block 'G71').should.eql { set: { backupUnits: 'mm' } }
+
+  it 'should change tools with a tool change block', ->
+    p.parseCommand(block 'D10').should.eql { set: { currentTool: 'D10' } }
+    p.parseCommand(block 'G54D11').should.eql { set: { currentTool: 'D11' } }
 
   describe 'operating modes', ->
     it 'should turn region mode on and off with a G36 and G37', ->
