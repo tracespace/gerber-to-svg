@@ -209,6 +209,38 @@ describe 'Plotter class', ->
           p.path.should.eql []
           p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
 
+      describe 'stroking a rectangular tool', ->
+        beforeEach -> p.command { set: { currentTool: 'D11' } }
+        # these are fun because they just drag the rectange without rotation
+        # let's test each of the quadrants
+        # width of tool is 2, height is 1
+        it 'should handle a first quadrant move', ->
+          p.command { op: { do: 'int', x: 5, y: 5 } }
+          p.path.should.containDeep [
+            'M', -1, -0.5, 1, -0.5, 6, 4.5, 6, 5.5, 4, 5.5, -1, 0.5, 'Z'
+          ]
+        it 'should handle a second quadrant move', ->
+          p.command { op: { do: 'int', x: -5, y: 5 } }
+          p.path.should.containDeep [
+            'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 5.5, -6, 5.5, -6, 4.5, 'Z'
+          ]
+        it 'should handle a third quadrant move', ->
+          p.command { op: { do: 'int', x: -5, y: -5 } }
+          p.path.should.containDeep [
+            'M', 1, 0.5, -1, 0.5, -6, -4.5, -6, -5.5, -4, -5.5, 1, -0.5, 'Z'
+          ]
+        it 'should handle a fourth quadrant move', ->
+          p.command { op: { do: 'int', x: 5, y: -5 } }
+          p.path.should.containDeep [
+            'M', 1, 0.5, -1, 0.5, -1, -0.5, 4, -5.5, 6, -5.5, 6, -4.5, 'Z'
+          ]
+        it "should not have a stroke-width (it's filled instead)", ->
+          p.command { op: { do: 'int', x: 5, y: 5 } }
+          p.finishPath()
+          p.current[0].should.have.key 'path'
+          p.current[0].path.should.not.have.key 'stroke-width'
+
+
       describe 'adding an arc to the path', ->
         it 'should throw an error if the tool is not circular', ->
           p.command { set: { currentTool: 'D11', mode: 'cw', quad: 's' } }
