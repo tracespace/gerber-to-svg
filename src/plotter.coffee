@@ -18,18 +18,16 @@ EPS = 0.0000001
 
 class Plotter
   constructor: (file = '', @reader, @parser) ->
-    # create a parser object
-    @parser = new Parser file
-    # tools
+    # tools and macros
     @macros = {}
     @tools = {}
     @currentTool = ''
-    # array for pad and mask definitions
+    # array for pad and mask definitions and image group
     @defs = []
-    # svg identification, image group, and current layers
-    @gerberId = "gerber-#{unique()}"
-    @group = { g: { id: "#{@gerberId}-layer-0", _: [] } }
-    @layer = { level: 0, type: 'g', current: @group }
+    @group = { g: { _: [] } }
+    # current layer and its polarity
+    @polarity = 'd'
+    @current = []
     # step and repeat, initially set to no repeat
     @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null, block: 0 }
     # unit system
@@ -39,10 +37,9 @@ class Plotter
     @quad = null
     @region = false
     @done = false
-    # operation state (position, current region or trace path, current layer)
+    # operation state (position and current region or trace path)
     @pos = { x: 0, y: 0 }
     @path = []
-    @current = []
     # bounding box of plotted image
     @bbox = { xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity }
 
@@ -107,7 +104,7 @@ class Plotter
       @finishPath()
 
   # go through the gerber file and return an xml object with the svg
-  plot: () ->
+  plot: ->
     # until @done
     #   # grab the next command. if it returns false we've hit the end of the file
     #   current = @parser.nextCommand()
@@ -118,9 +115,33 @@ class Plotter
     # # finish and return the xml object
     # @finish()
 
-  finish: () ->
+  finish: ->
     @finishPath()
     #@finishStepRepeat()
+
+  finishLayer: ->
+    # if dark polarity
+    if @polarity is 'd'
+      # is there an existing group that's been cleared, then we need to wrap it
+      # insert the group at the beginning of current
+      if @group.g.mask? then @current.unshift @group
+      # set the group
+      @group = { g: { _: @current } }
+    # else clear polarity
+    else
+      # make a mask
+      id = "gerber-mask_#{unique()}"
+      # shift in the bbox rect to keep everything
+      w = @bbox.xMax - @bbox.xMin; h = @bbox.yMax - @bbox.yMin
+      @current.unshift {
+        rect: {x: @bbox.xMin, y: @bbox.yMin, width: w, height: h, fill: '#fff'}
+      }
+      # push the masks to the definitions
+      @defs.push { mask: { id: id, color: '#000', _: @current}}
+      # add the mask to the group
+      @group.g.mask = "url(##{id})"
+    # empty out current
+    @current = []
 
   finishPath: ->
     if @path.length
