@@ -69,7 +69,7 @@ run = ->
         else warn "Error writing to #{newName}: #{error.code}"
 
   # add drill file if it was included
-  if argv.drill? and not argv.drill in fileList then fileList.push argv.drill
+  if argv.drill? and argv.drill not in fileList then fileList.push argv.drill
   # loop through files
   for file in fileList
     do (file) ->
