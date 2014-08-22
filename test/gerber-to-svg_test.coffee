@@ -43,11 +43,20 @@ describe 'gerber to svg function', ->
       }
     }
 
-  it 'should be able to convert an svg object into an svg string', ->
-    result1 = gerberToSvg exGerb
-    obj = gerberToSvg exGerb, { object: true }
-    result2 = gerberToSvg obj
-    # wipe out unique ids for the layers, masks, and pads so i can compare
-    result1 = result1.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
-    result2 = result2.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
-    result2.should.eql result1
+  it 'should set the bbox to zero if the svg has no shapes', ->
+    result = gerberToSvg 'M02*', { object: true }
+    result.svg.viewBox.should.eql [ 0, 0, 0, 0 ]
+    result.svg.width.should.match /^0\D/
+    result.svg.height.should.match /^0\D/
+
+  describe 'converting an svg object into an svg string', ->
+    it 'should be able to convert an svg object into an svg string', ->
+      result1 = gerberToSvg exGerb
+      obj = gerberToSvg exGerb, { object: true }
+      result2 = gerberToSvg obj
+      # wipe out unique ids for the layers, masks, and pads so i can compare
+      result1 = result1.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
+      result2 = result2.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
+      result2.should.eql result1
+    it 'should throw an error if a non svg object is passed in', ->
+      (-> gerberToSvg { thing: {} }).should.throw /non SVG/

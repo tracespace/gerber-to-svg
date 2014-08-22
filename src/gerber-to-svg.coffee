@@ -6,7 +6,6 @@ view source at http://github.com/mcous/gerber-to-svg
 
 builder = require './obj-to-xml'
 Plotter = require './plotter'
-Driller = require './driller'
 
 DEFAULT_OPTS = {
   drill: false
@@ -23,21 +22,29 @@ module.exports = (gerber, options = {}) ->
   if typeof gerber is 'object'
     if gerber.svg? then return builder gerber, { pretty: opts.pretty }
     else throw new Error "non SVG object cannot be converted to an SVG string"
-  # or we got a gerber string, so plot the thing
-  p = if opts.drill then new Driller gerber else new Plotter gerber
+  # or we got a string, so plot the thing
+  # get the correct reader and parser
+  if opts.drill
+    Reader = require './drill-reader'
+    Parser = require './drill-parser'
+  else
+    Reader = require './gerber-reader'
+    Parser = require './gerber-parser'
+  # create the plotter
+  p = new Plotter gerber, Reader, Parser
+  # try to plot
   try
     xmlObject = p.plot()
   catch error
-    throw new Error "Error at line #{p.parser.line} - #{error.message}"
+    throw new Error "Error at line #{p.reader.line} - #{error.message}"
+
   # make sure the bbox is valid
-  unless p.bbox.xMin >= p.bbox.xMax
-    width = parseFloat (p.bbox.xMax - p.bbox.xMin).toPrecision 10
+  unless p.bbox.xMin >= p.bbox.xMax then width = p.bbox.xMax - p.bbox.xMin
   else
     p.bbox.xMin = 0
     p.bbox.xMax = 0
     width = 0
-  unless  p.bbox.yMin >= p.bbox.yMax
-    height = parseFloat (p.bbox.yMax - p.bbox.yMin).toPrecision 10
+  unless  p.bbox.yMin >= p.bbox.yMax then height = p.bbox.yMax - p.bbox.yMin
   else
     p.bbox.yMin = 0
     p.bbox.yMax = 0
@@ -55,10 +62,11 @@ module.exports = (gerber, options = {}) ->
       _: []
     }
   }
+  # add attributes
+  xml.svg[a] = val for a, val of p.attr
+  # push the defs if there are any
   if p.defs.length then xml.svg._.push { defs: { _: p.defs } }
-  # flip it in the y and translate back to origin
-  if p.group.g._.length
-    p.group.g.transform = "translate(0,#{p.bbox.yMin+p.bbox.yMax}) scale(1,-1)"
-    xml.svg._.push p.group
+  # flip the image group in the y and translate back to origin
+  if p.group.g._.length then xml.svg._.push p.group
   # return the string or the object if that flag is set
   unless opts.object then builder xml, { pretty: opts.pretty } else xml

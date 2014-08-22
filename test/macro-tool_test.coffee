@@ -186,7 +186,7 @@ describe 'tool macro class', ->
         m.shapes.should.containDeep [
           { circle: { cx: 0, cy: 0, r: 9, fill: 'none', 'stroke-width': 2 } }
           { circle: { cx: 0, cy: 0, r: 5, fill: 'none', 'stroke-width': 2 } }
-          { circle: { cx: 0, cy: 0, r: 2, 'stroke-width': 0 } }
+          { circle: { cx: 0, cy: 0, r: 2 } }
         ]
         m.bbox.should.eql [ -11, -11, 11, 11 ]
       it 'should rotate the crosshairs if center is 0,0', ->

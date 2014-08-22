@@ -25,8 +25,6 @@ describe 'standard tool function', ->
     it 'should be traceable if there is no hole', ->
       result = standard tool, {dia: 10}
       result.trace['stroke-width'].should.equal 10
-      result.trace['stroke-linecap'].should.equal 'round'
-      result.trace['stroke-linejoin'].should.equal 'round'
     it 'should throw an error if the diameter is negative', ->
       (-> standard tool, {dia: -3.4}).should.throw /diameter out of range/
       (-> standard tool, {dia: 0}).should.not.throw
@@ -42,7 +40,7 @@ describe 'standard tool function', ->
       result.pad[0].rect.y.should.equal -1.1
     it 'should be traceable if there is no hole', ->
       result = standard tool, { width: 1.2, height: 2.2 }
-      result.trace['stroke-width'].should.equal 0
+      result.trace.should.not.be.false
     it 'should throw an error for non-positive side lengths', ->
       (-> standard tool, {width: -23, height: 4}).should.throw /out of range/
       (-> standard tool, {width: 2.3, height: 0}).should.throw /out of range/
