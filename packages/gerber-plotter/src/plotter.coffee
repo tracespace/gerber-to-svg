@@ -17,7 +17,9 @@ TWO_PI = 2*Math.PI
 EPS = 0.0000001
 
 class Plotter
-  constructor: (file = '', @reader, @parser) ->
+  constructor: (file = '', Reader, Parser) ->
+    if Reader? then @reader = new Reader file
+    if Parser? then @parser = new Parser
     # tools and macros
     @macros = {}
     @tools = {}
@@ -116,15 +118,18 @@ class Plotter
 
   # go through the gerber file and return an xml object with the svg
   plot: ->
-    # until @done
-    #   # grab the next command. if it returns false we've hit the end of the file
-    #   current = @parser.nextCommand()
-    #   if current is false
-    #     throw new Error 'end of file encountered before required M02 command'
-    #   # if it's a parameter command
-    #   if current[0] is '%' then @parameter current else @operate current[0]
-    # # finish and return the xml object
-    # @finish()
+    until @done
+      # grab the next command. if it returns false we've hit the end of the file
+      block = @reader.nextBlock()
+      current = @parser.parseCommand block
+      console.log block
+      console.log current
+      if block is false
+        throw new Error 'end of file encountered before required M02 command'
+      # if it's a parameter command
+      @command current
+    # finish and return the xml object
+    @finish()
 
   finish: ->
     @finishPath()
