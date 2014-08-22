@@ -3,11 +3,11 @@
 
 class DrillReader
   constructor: (drillFile) ->
-    @line = 1
+    @line = 0
     @blocks = drillFile.split /\r?\n/
 
   nextBlock: () ->
-    if @line <= @blocks.length then @blocks[++@line-2] else false
+    if @line < @blocks.length then @blocks[++@line-1] else false
 
 # export the module
 module.exports = DrillReader
