@@ -80,9 +80,12 @@ class Plotter
     @finishPath()
     # throw an error if in region mode or if tool does not exist
     if @region then throw new Error "cannot change tool when in region mode"
-    if not @tools[code]? then throw new Error "tool #{code} is not defined"
+    # throw if tool doesn't exist if it's a gerber. if it's a drill, just
+    # let it slide
+    if not @tools[code]?
+      unless @parser?.fmat then throw new Error "tool #{code} is not defined"
     # change the tool if it exists
-    @currentTool = code
+    else @currentTool = code
 
   # handle a command that comes in from the parser
   command: (c) ->
@@ -92,11 +95,16 @@ class Plotter
     # if there's a set command
     for state, val of c.set
       # check for some specific things that shouldn't happen
-      if state is 'units' and @units?
+      # can't redifine units unless it's a drill file in which case let it
+      # do any damn thing it pleases
+      if state is 'units' and @units? and not @parser?.fmat?
         throw new Error 'cannot redefine units'
+      # notation should not be defined
       else if state is 'notation' and @notation?
         throw new Error 'cannot redefine notation'
-      # tool changes are the only special ones
+      # if the region mode changes, then we need to finish the current path
+      if state is 'region' then @finishPath()
+      # tool changes are special
       if state is 'currentTool' then @changeTool val
       # else just set the state
       else @[state] = val
@@ -121,13 +129,14 @@ class Plotter
     until @done
       # grab the next command. if it returns false we've hit the end of the file
       block = @reader.nextBlock()
-      current = @parser.parseCommand block
-      console.log block
-      console.log current
       if block is false
-        throw new Error 'end of file encountered before required M02 command'
-      # if it's a parameter command
-      @command current
+        # if it's not a drill file
+        if not @parser?.fmat?
+          throw new Error 'end of file encountered before required M02 command'
+        else
+          @done = true
+      else
+        @command @parser.parseCommand block
     # finish and return the xml object
     @finish()
 
