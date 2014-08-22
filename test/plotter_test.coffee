@@ -140,6 +140,13 @@ describe 'Plotter class', ->
         (-> p.command { op: { do: 'int', x: 1, y: 1 } })
           .should.throw /format/
 
+      it 'should assume notation is absolute if not set on a drill file', ->
+        p = new Plotter '', null, require '../src/drill-parser'
+        p.units = 'in'
+        p.command { tool: { T1: { dia: 1 } } }
+        (-> p.command { op: { do: 'flash', x: 1, y: 1 } }).should.not.throw()
+        p.notation.should.eql 'A'
+
     it 'should move the plotter position with absolute notation', ->
       p.command { op: { do: 'int', x: 1, y: 2 } }
       p.pos.should.eql { x: 1, y: 2 }
@@ -173,17 +180,17 @@ describe 'Plotter class', ->
         p.command { op: { do: 'flash', x: 2, y: 2 } }
         p.defs.should.containDeep [ { circle: { r: 1 } } ]
         p.current.should.containDeep [ { use: { x: 2, y: 2 } } ]
-      it 'should add pads to the bbox', ->
+      it 'should add pads to the layer bbox', ->
         p.command { set: { currentTool: 'D11' } }
         p.command { op: { do: 'flash', x: 2, y: 2 } }
-        p.bbox.should.eql { xMin: 1, yMin: 1.5, xMax: 3, yMax: 2.5 }
+        p.layerBbox.should.eql { xMin: 1, yMin: 1.5, xMax: 3, yMax: 2.5 }
         p.command { set: { currentTool: 'D10' } }
         p.command { op: { do: 'flash', x: 2, y: 2 } }
-        p.bbox.should.eql { xMin: 1, yMin: 1, xMax: 3, yMax: 3 }
+        p.layerBbox.should.eql { xMin: 1, yMin: 1, xMax: 3, yMax: 3 }
         p.command { op: { do: 'flash', x: -2, y: -2 } }
-        p.bbox.should.eql { xMin: -3, yMin: -3, xMax: 3, yMax: 3 }
+        p.layerBbox.should.eql { xMin: -3, yMin: -3, xMax: 3, yMax: 3 }
         p.command { op: { do: 'flash', x: 3, y: 3 } }
-        p.bbox.should.eql { xMin: -3, yMin: -3, xMax: 4, yMax: 4 }
+        p.layerBbox.should.eql { xMin: -3, yMin: -3, xMax: 4, yMax: 4 }
       it 'should throw an error if in region mode', ->
         p.region = true
         (-> p.command { op: { do: 'flash', x: 2, y: 2 } }).should.throw /region/
@@ -191,7 +198,7 @@ describe 'Plotter class', ->
       it 'should start a new path with an interpolate', ->
         p.command { op: { do: 'int', x: 5, y: 5 } }
         p.path.should.eql [ 'M', 0, 0, 'L', 5, 5 ]
-        p.bbox.should.eql { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
+        p.layerBbox.should.eql { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
       it 'should throw an error for unstrokable tool outside region mode', ->
         p.command { tool: { D13: { dia: 5, verticies: 5 } } }
         (-> p.command { op: { do: 'int' } }).should.throw /strokable tool/
@@ -205,15 +212,15 @@ describe 'Plotter class', ->
       describe 'adding to a linear path', ->
         beforeEach ->
           p.path = [ 'M', 0, 0, 'L', 5, 5 ]
-          p.bbox = { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
+          p.layerBbox = { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
         it 'should add a lineto with an int', ->
           p.command { op: { do: 'int', x: 10, y: 10 } }
           p.path.should.eql [ 'M', 0, 0, 'L', 5, 5, 'L', 10, 10 ]
-          { xMin: -1, yMin: -1, xMax: 11, yMax: 11 }
+          p.layerBbox.should.eql { xMin: -1, yMin: -1, xMax: 11, yMax: 11 }
         it 'should add a moveto with a move', ->
           p.command { op: { do: 'move', x: 10, y: 10 } }
           p.path.should.eql [ 'M', 0, 0, 'L', 5, 5, 'M', 10, 10 ]
-          p.bbox.should.eql { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
+          p.layerBbox.should.eql { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
       describe 'ending the path', ->
         beforeEach -> p.path = [ 'M', 0, 0, 'L', 5, 5 ]
         it 'should end the path on a flash', ->
@@ -314,14 +321,14 @@ describe 'Plotter class', ->
             p.path.should.not.containEql 'A'
 
         # tool is a dia 2 circle for these tests
-        describe 'adjusting the bbox', ->
+        describe 'adjusting the layer bbox', ->
           it 'sweeping past 180 deg determines min X', ->
             p.command { op: { do: 'move', x: -0.7071, y: -0.7071 } }
             p.command {
               set: { mode: 'cw', quad: 's' }
               op: { do: 'int', x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071 }
             }
-            result = Math.abs -2-p.bbox.xMin
+            result = Math.abs -2-p.layerBbox.xMin
             result.should.be.lessThan 0.00001
           it 'sweeping past 270 deg determines min Y', ->
             p.command { op: { do: 'move', x: 0.7071, y: -0.7071 } }
@@ -329,7 +336,7 @@ describe 'Plotter class', ->
               set: { mode: 'cw', quad: 's' }
               op: { do: 'int', x: -0.7071, y: -0.7071, i: 0.7071, j: 0.7071 }
             }
-            result = Math.abs -2-p.bbox.yMin
+            result = Math.abs -2-p.layerBbox.yMin
             result.should.be.lessThan 0.00001
           it 'sweeping past 90 deg determines max Y', ->
             p.command { op: { do: 'move', x: -0.7071, y: 0.7071 } }
@@ -337,7 +344,7 @@ describe 'Plotter class', ->
               set: { mode: 'cw', quad: 's' }
               op: { do: 'int', x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071 }
             }
-            result = Math.abs 2-p.bbox.yMax
+            result = Math.abs 2-p.layerBbox.yMax
             result.should.be.lessThan 0.00001
           it 'sweeping past 0 deg determines max X', ->
             p.command { op: { do: 'move', x: 0.7071, y: 0.7071 } }
@@ -345,7 +352,7 @@ describe 'Plotter class', ->
               set: { mode: 'cw', quad: 's' }
               op: { do: 'int', x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071 }
             }
-            result = Math.abs 2-p.bbox.xMax
+            result = Math.abs 2-p.layerBbox.xMax
             result.should.be.lessThan 0.00001
           it 'if its just hanging out, use the end points', ->
             p.command { op: { do: 'move', x: 0.5, y: 0.866 } }
@@ -353,10 +360,10 @@ describe 'Plotter class', ->
               set: { mode: 'cw', quad: 's' }
               op: { do: 'int', x: 0.866, y: 0.5, i: 0.5, j: 0.866 }
             }
-            p.bbox.xMin.should.equal -0.5
-            p.bbox.yMin.should.equal -0.5
-            p.bbox.xMax.should.equal 1.8660
-            p.bbox.yMax.should.equal 1.8660
+            p.layerBbox.xMin.should.equal -0.5
+            p.layerBbox.yMin.should.equal -0.5
+            p.layerBbox.xMax.should.equal 1.8660
+            p.layerBbox.yMax.should.equal 1.8660
 
       describe 'region mode off', ->
         it 'should add the trace properties to the path when it ends', ->
@@ -373,7 +380,7 @@ describe 'Plotter class', ->
         it 'should not take the tool into account when calculating the bbox', ->
           p.command { set: { region: true } }
           p.command { op: { do: 'int', x: 5, y: 5 } }
-          p.bbox.should.eql { xMin: 0, yMin: 0, xMax: 5, yMax: 5 }
+          p.layerBbox.should.eql { xMin: 0, yMin: 0, xMax: 5, yMax: 5 }
         it 'should add a path element to the current layer', ->
           p.command { set: { region: true } }
           p.command { op: { do: 'int', x: 5, y: 5 } }
@@ -427,7 +434,7 @@ describe 'Plotter class', ->
 
     describe 'step repeat', ->
       beforeEach ->
-        p.bbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
+        p.layerBbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
         p.stepRepeat = { x: 2, y: 2, i: 3, j: 3 }
       describe 'with a dark layer', ->
         it 'should wrap current in a group, copy it, and add it to @group', ->
@@ -484,7 +491,7 @@ describe 'Plotter class', ->
           p.current.should.eql []
 
         it 'should throw a warning of incorrect image if repeats overlap', ->
-          p.bbox = { xMin: 0, yMin: 0, xMax: 4, yMax: 4 }
+          p.layerBbox = { xMin: 0, yMin: 0, xMax: 4, yMax: 4 }
           p.polarity = 'C'
           hook = stderr()
           p.finishLayer()
@@ -497,6 +504,5 @@ describe 'Plotter class', ->
       p.attr['stroke-linejoin'].should.eql 'round'
     it 'should default stroke-width to 0', ->
       p.attr['stroke-width'].should.eql 0
-    it 'should default stroke and fill to currentColor', ->
-      p.attr.stroke.should.eql 'currentColor'
-      p.attr.fill.should.eql 'currentColor'
+    it 'should default stroke to black', ->
+      p.attr.stroke.should.eql '#000'
