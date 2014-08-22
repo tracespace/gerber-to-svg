@@ -74,15 +74,15 @@ describe 'Plotter class', ->
   describe 'new layer commands', ->
     it 'should finish any in progress layer', ->
       p.current = [ 'stuff' ]
-      p.command { new: { sr: { x: 2, y: 3, xStep: 7, yStep: 2 } } }
+      p.command { new: { sr: { x: 2, y: 3, i: 7, j: 2 } } }
       p.current.should.eql []
       p.current = [ 'more', 'stuff' ]
       p.command { new: { layer: 'C' } }
       p.current.should.eql []
 
     it 'should set step repeat params', ->
-      p.command { new: { sr: { x: 2, y: 3, xStep: 7, yStep: 2 } } }
-      p.stepRepeat.should.eql { x: 2, y: 3, xStep: 7, yStep: 2 }
+      p.command { new: { sr: { x: 2, y: 3, i: 7, j: 2 } } }
+      p.stepRepeat.should.eql { x: 2, y: 3, i: 7, j: 2 }
       p.command { new: { sr: { x: 1, y: 1 } } }
       p.stepRepeat.should.eql { x: 1, y: 1 }
 
@@ -174,6 +174,9 @@ describe 'Plotter class', ->
         p.defs.should.containDeep [ { circle: { r: 1 } } ]
         p.current.should.containDeep [ { use: { x: 2, y: 2 } } ]
       it 'should add pads to the bbox', ->
+        p.command { set: { currentTool: 'D11' } }
+        p.command { op: { do: 'flash', x: 2, y: 2 } }
+        p.bbox.should.eql { xMin: 1, yMin: 1.5, xMax: 3, yMax: 2.5 }
         p.command { set: { currentTool: 'D10' } }
         p.command { op: { do: 'flash', x: 2, y: 2 } }
         p.bbox.should.eql { xMin: 1, yMin: 1, xMax: 3, yMax: 3 }
@@ -425,7 +428,7 @@ describe 'Plotter class', ->
     describe 'step repeat', ->
       beforeEach ->
         p.bbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
-        p.stepRepeat = { x: 2, y: 2, xStep: 3, yStep: 3 }
+        p.stepRepeat = { x: 2, y: 2, i: 3, j: 3 }
       describe 'with a dark layer', ->
         it 'should wrap current in a group, copy it, and add it to @group', ->
           p.finishLayer()
