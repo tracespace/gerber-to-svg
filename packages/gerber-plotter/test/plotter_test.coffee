@@ -42,6 +42,10 @@ describe 'Plotter class', ->
         p.currentTool.should.eql 'D10'
       it 'should throw if the tool doesnt exist', ->
         (-> p.command { set: { currentTool: 'D10' } }).should.throw /tool/
+      it 'should not throw missing tool exception for drill files', ->
+        # drill files sometimes do this, so check for it
+        p = new Plotter '', null, require '../src/drill-parser'
+        (-> p.command { set: { currentTool: 'T0' } } ).should.not.throw()
       it 'should throw if region mode is on', ->
         p.region = true
         p.tools.D10 = {}
@@ -214,6 +218,9 @@ describe 'Plotter class', ->
           p.path.should.eql []
         it 'should end the path on a tool change', ->
           p.command { set: { currentTool: 'D10' } }
+          p.path.should.eql []
+        it 'should end the path on a region change', ->
+          p.command { set: { region: true } }
           p.path.should.eql []
         it 'should end the path on a polarity change', ->
           p.command { new: { layer: 'C' } }
