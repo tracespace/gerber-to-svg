@@ -26,7 +26,7 @@ class Plotter
     @defs = []
     @group = { g: { _: [] } }
     # current layer and its polarity
-    @polarity = 'd'
+    @polarity = 'D'
     @current = []
     # step and repeat, initially set to no repeat
     @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null }
@@ -40,7 +40,14 @@ class Plotter
     # operation state (position and current region or trace path)
     @pos = { x: 0, y: 0 }
     @path = []
-    # bounding box of plotted image
+    # bounding box of plotted image and image wide stroke and fill props
+    @attr = {
+      'stroke-linecap': 'round'
+      'stroke-linejoin': 'round'
+      'stroke-width': 0
+      fill: 'currentColor'
+      stroke: 'currentColor'
+    }
     @bbox = { xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity }
 
   # add a tool to the tool list
@@ -99,9 +106,13 @@ class Plotter
     if c.op? then @operate c.op
 
     # if it's a new command, then we're making a new layer or step repeat
-    # finish any open path before we do
     if c.new?
-      @finishPath()
+      # finish the in progress layer
+      @finishLayer()
+      # set the new params
+      if c.new.layer? then @polarity = c.new.layer
+      else if c.new.sr? then @stepRepeat = c.new.sr
+
 
   # go through the gerber file and return an xml object with the svg
   plot: ->
@@ -120,6 +131,8 @@ class Plotter
     @finishLayer()
 
   finishLayer: ->
+    # finish any in progress path
+    @finishPath()
     # check for a step repeat
     if @stepRepeat.x > 1 or @stepRepeat.y > 1
       # wrap current up in a group with an sr id
@@ -134,7 +147,7 @@ class Plotter
             @current.push u
       # warn if polarity is clear and steps overlap the bbox
       xBboxAdd =
-      if @polarity is 'c' and
+      if @polarity is 'C' and
       ( @stepRepeat.xStep < @bbox.xMax - @bbox.xMin or
       @stepRepeat.yStep < @bbox.yMax - @bbox.yMin )
         console.warn 'step repeat blocks with clear polarity overlap; resulting
@@ -144,7 +157,7 @@ class Plotter
       @bbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.yStep
 
     # if dark polarity
-    if @polarity is 'd'
+    if @polarity is 'D'
       # is there an existing group that's been cleared, then we need to wrap it
       # insert the group at the beginning of current
       if @group.g.mask? then @current.unshift @group
