@@ -1,7 +1,5 @@
 # svg plotter class
 
-# use the gerber parser class to parse the file
-Parser = require './gerber-parser'
 # unique id generator
 unique = require './unique-id'
 # aperture macro class
@@ -13,551 +11,423 @@ tool = require './standard-tool'
 HALF_PI = Math.PI/2
 THREEHALF_PI = 3*HALF_PI
 TWO_PI = 2*Math.PI
-
-# parse a aperture definition command and return the object
-parseAD = (block) ->
-  # first get the code
-  code = (block.match /^AD[DT]\d+/)?[0]?[2..]
-  # throw an error early if code is bad
-  #unless code? and parseInt(code[1..], 10) > 9
-  #  throw new Error "#{code} is an invalid tool code (must be >= 10)"
-  # get the tool
-  ad = null
-  am = false
-  switch block[2+code.length...4+code.length]
-    when 'C,'
-      mods = block[4+code.length..].split 'X'
-      params = { dia: parseFloat mods[0] }
-      if mods.length > 2 then params.hole = {
-        width: parseFloat mods[1]
-        height: parseFloat mods[2]
-      }
-      else if mods.length > 1 then params.hole = { dia: parseFloat mods[1] }
-      ad = tool code, params
-    when 'R,'
-      mods = block[4+code.length..].split 'X'
-      params = { width: parseFloat(mods[0]), height: parseFloat(mods[1]) }
-      if mods.length > 3 then params.hole = {
-        width: parseFloat mods[2]
-        height: parseFloat mods[3]
-      }
-      else if mods.length > 2 then params.hole = { dia: parseFloat mods[2] }
-      ad = tool code, params
-    when 'O,'
-      mods = block[4+code.length..].split 'X'
-      params = { width: parseFloat(mods[0]), height: parseFloat(mods[1]) }
-      if mods.length > 3 then params.hole = {
-        width: parseFloat mods[2]
-        height: parseFloat mods[3]
-      }
-      else if mods.length > 2 then params.hole = { dia: parseFloat mods[2] }
-      params.obround = true
-      ad = tool code, params
-    when 'P,'
-      mods = block[4+code.length..].split 'X'
-      params = {
-        dia: parseFloat(mods[0])
-        verticies: parseFloat(mods[1])
-      }
-      if mods[2]? then params.degrees = parseFloat mods[2]
-      if mods.length > 4 then params.hole = {
-        width: parseFloat mods[3]
-        height: parseFloat mods[4]
-      }
-      else if mods.length > 3 then params.hole = { dia: parseFloat mods[3] }
-      ad = tool code, params
-    else
-      def = block[2+code.length..]
-      name = (def.match /[a-zA-Z_$][a-zA-Z_$.0-9]{0,126}(?=,)?/)?[0]
-      unless name then throw new Error 'invalid definition with macro'
-      mods = (def[name.length+1..]).split 'X'
-      if mods.length is 1 and mods[0] is '' then mods = null
-      am = { name: name, mods: mods }
-  # return the tool and the tool code
-  { macro: am, tool: ad, code: code }
-
-# given a rectangle's dimensions and path end, return a path string
-rectangleStrokePath = (start, end, width, height) ->
-  # helpers
-  sxm = start.x - width/2
-  sxp = start.x + width/2
-  sym = start.y - height/2
-  syp = start.y + height/2
-  exm = end.x - width/2
-  exp = end.x + width/2
-  eym = end.y - height/2
-  eyp = end.y + height/2
-  # get the quadrant we're in
-  theta = Math.atan2 end.y-start.y, end.x - start.x
-  # quadrant I
-  if 0 <= theta < HALF_PI
-    "M#{sxm} #{sym}L#{sxp} #{sym}L#{exp} #{eym}L#{exp} #{eyp}L#{exm} #{eyp}
-     L#{sxm} #{syp}Z"
-  # quadrant II
-  else if HALF_PI <= theta < Math.PI
-    "M#{sxm} #{sym}L#{sxp} #{sym}L#{sxp} #{syp}L#{exp} #{eyp}L#{exm} #{eyp}
-     L#{exm} #{eym}Z"
-  # quadrant III
-  else if -Math.PI <= theta < -HALF_PI
-    "M#{sxp} #{sym}L#{sxp} #{syp}L#{sxm} #{syp}L#{exm} #{eyp}L#{exm} #{eym}
-     L#{exp} #{eym}Z"
-  # quadrant IV
-  else if -HALF_PI <= theta < 0
-    "M#{sxm} #{sym}L#{exm} #{eym}L#{exp} #{eym}L#{exp} #{eyp}L#{sxp} #{syp}
-     L#{sxm} #{syp}Z"
+# error epsilon
+arcEps = 0.0000001
 
 class Plotter
-  constructor: (file = '') ->
-    # create a parser object
-    @parser = new Parser file
-    # tools
+  constructor: (file = '', Reader, Parser) ->
+    if Reader? then @reader = new Reader file
+    if Parser? then @parser = new Parser
+    # tools and macros
     @macros = {}
     @tools = {}
     @currentTool = ''
-    # array for pad and mask definitions
+    # array for pad and mask definitions and image group
     @defs = []
-    # svg identification, image group, and current layers
-    @gerberId = "gerber-#{unique()}"
-    @group = { g: { id: "#{@gerberId}-layer-0", _: [] } }
-    @layer = { level: 0, type: 'g', current: @group }
+    @group = { g: { _: [] } }
+    # current layer and its polarity
+    @polarity = 'D'
+    @current = []
     # step and repeat, initially set to no repeat
-    @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null, block: 0 }
-    # are we done with the file yet? no
-    @done = false
-    # unit system and coordinate format system
+    @stepRepeat = { x: 1, y: 1, i: 0, j: 0 }
+    # unit system
     @units = null
-    @format = { set: false, zero: null, notation: null, places: null }
-    @position = { x: 0, y: 0 }
     # operating mode
     @mode = null
-    @trace = { region: false, path: '' }
     @quad = null
-    # bounding box
-    @bbox = { xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity }
+    @region = false
+    @done = false
+    # operation state (position and current region or trace path)
+    @pos = { x: 0, y: 0 }
+    @path = []
+    # bounding boxes of plotted image and image wide stroke and fill props
+    @attr = {
+      'stroke-linecap': 'round'
+      'stroke-linejoin': 'round'
+      'stroke-width': 0
+      stroke: '#000'
+    }
+    @bbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
+    @layerBbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
+
+  # add a tool to the tool list
+  addTool: (code, params) ->
+    if @tools[code]? then throw new Error "cannot reassign tool #{code}"
+    # get the tool
+    if params.macro? then t = @macros[params.macro].run code, params.mods
+    else t = tool code, params
+    # set the object in the tools collection
+    @tools[code] = {
+      trace: t.trace
+      pad: (obj for obj in t.pad)
+      flash: (x, y) -> { use: { x: x, y: y, 'xlink:href': '#'+t.padId } }
+      bbox: (x=0, y=0) -> {
+        xMin: x+t.bbox[0]
+        yMin: y+t.bbox[1]
+        xMax: x+t.bbox[2]
+        yMax: y+t.bbox[3]
+      }
+    }
+    # set the current tool to the one just defined
+    @changeTool code
+    # since this was a tool change, finish the path
+
+  # change the tool
+  changeTool: (code) ->
+    # finish any in progress path
+    @finishPath()
+    # throw an error if in region mode or if tool does not exist
+    if @region then throw new Error "cannot change tool when in region mode"
+    # throw if tool doesn't exist if it's a gerber. if it's a drill, just
+    # let it slide
+    if not @tools[code]?
+      unless @parser?.fmat then throw new Error "tool #{code} is not defined"
+    # change the tool if it exists
+    else @currentTool = code
+
+  # handle a command that comes in from the parser
+  command: (c) ->
+    # if the command is a macro command, it's going to appear alone
+    if c.macro? then m = new Macro c.macro; @macros[m.name] = m; return
+
+    # if there's a set command
+    for state, val of c.set
+      # check for some specific things that shouldn't happen
+      # can't redifine units unless it's a drill file in which case let it
+      # do any damn thing it pleases
+      if state is 'units' and @units? and not @parser?.fmat?
+        throw new Error 'cannot redefine units'
+      # notation should not be defined
+      else if state is 'notation' and @notation?
+        throw new Error 'cannot redefine notation'
+      # if the region mode changes, then we need to finish the current path
+      if state is 'region' then @finishPath()
+      # tool changes are special, # else just set the stat
+      if state is 'currentTool' then @changeTool val else @[state] = val
+
+    # if there's a tool command
+    if c.tool? then @addTool code, params for code, params of c.tool
+
+    # if there's an operate command, then IT'S TIME TO OPERATE
+    if c.op? then @operate c.op
+
+    # if it's a new command, then we're making a new layer or step repeat
+    if c.new?
+      # finish the in progress layer
+      @finishLayer()
+      # set the new params
+      if c.new.layer? then @polarity = c.new.layer
+      else if c.new.sr? then @stepRepeat = c.new.sr
+
 
   # go through the gerber file and return an xml object with the svg
-  plot: () ->
+  plot: ->
     until @done
       # grab the next command. if it returns false we've hit the end of the file
-      current = @parser.nextCommand()
-      if current is false
-        throw new Error 'end of file encountered before required M02 command'
-      # if it's a parameter command
-      if current[0] is '%' then @parameter current else @operate current[0]
+      block = @reader.nextBlock()
+      if block is false
+        # if it's not a drill file
+        if not @parser?.fmat?
+          throw new Error 'end of file encountered before required M02 command'
+        else
+          @done = true
+      else
+        @command @parser.parseCommand block
     # finish and return the xml object
     @finish()
 
-  finish: () ->
-    @finishTrace()
-    @finishStepRepeat()
+  finish: ->
+    @finishPath()
+    @finishLayer()
+    # set default fill and stroke to current color in the group
+    @group.g.fill = 'currentColor'; @group.g.stroke = 'currentColor'
+    # flip vertically
+    @group.g.transform = "translate(0,#{@bbox.yMin+@bbox.yMax}) scale(1,-1)"
 
-  parameter: (blocks) ->
-    done = false
-    if blocks[0] is '%' and blocks[blocks.length-1] isnt '%'
-      throw new Error '@parameter should only be called with paramters'
-    blocks = blocks[1..]
-    index = 0
-    until done
-      block = blocks[index]
-      switch block[0...2]
-        when 'FS'
-          invalid = false
-          if @format.set
-            throw new Error 'format spec cannot be redefined'
-          try
-            if block[2] is 'L' or block[2] is 'T' then @format.zero = block[2]
-            else invalid = true
-            if block[3] is 'A' or block[3] is 'I'
-              @format.notation = block[3]
-            else invalid = true
-            if block[4] is 'X' and block[7] is 'Y' and
-            block[5..6] is block[8..9]
-              @format.places = [ parseInt(block[5],10), parseInt(block[6],10) ]
-              if @format.places[0]>7 or @format.places[1]>7 then invalid = true
-            else invalid = true
-          catch error
-            invalid = true
-          if invalid then throw new Error 'invalid format spec'
-          else @format.set = true
-        when 'MO'
-          u = block[2..]
-          unless @units?
-            if u is 'MM' then @units = 'mm' else if u is 'IN' then @units = 'in'
-            else throw new Error "#{u} are unrecognized units"
-          else throw new Error "gerber file may not redifine units"
-        when 'AD'
-          ad = parseAD blocks[index]
-          if @tools[ad.code]? then throw new Error 'duplicate tool code'
-          if ad.macro
-            ad.tool = @macros[ad.macro.name].run ad.code, ad.macro.mods
-          @tools[ad.code] = {
-            stroke: ad.tool.trace
-            pad: (obj for obj in ad.tool.pad)
-            flash: (x, y) ->
-              { use: { x: x, y: y, 'xlink:href': '#'+ad.tool.padId } }
-            bbox: (x=0, y=0) ->
-              {
-                xMin: x + ad.tool.bbox[0]
-                yMin: y + ad.tool.bbox[1]
-                xMax: x + ad.tool.bbox[2]
-                yMax: y + ad.tool.bbox[3]
-              }
-          }
-          # ad sets the current tool to the tool that was just defined
-          @currentTool = ad.code
-        when 'AM'
-          m = new Macro blocks[...-1]
-          @macros[m.name] = m
-          done = true
-        when 'SR'
-          # finish any trace that's in progress
-          @finishTrace()
-          # finish any in progress SR
-          @finishStepRepeat()
-          # get the steps and stuff
-          @stepRepeat.x = Number (block.match /X\d+/)?[0][1..] ? 1
-          @stepRepeat.y = Number (block.match /Y\d+/)?[0][1..] ? 1
-          if @stepRepeat.x > 1
-            @stepRepeat.xStep = Number (block.match /I[\d\.]+/)?[0][1..]
-          if @stepRepeat.y > 1
-            @stepRepeat.yStep = Number (block.match /J[\d\.]+/)?[0][1..]
-          # if we've got steps in any direction, we need a new SR block
-          if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
-            # easiest case: no clear levels
-            if @layer.level is 0
-              srBlock = {
-                g: { id: "#{@gerberId}-sr-block-#{@stepRepeat.block}", _: [] }
-              }
-              @layer.current[@layer.type]._.push srBlock
-              @layer.current = srBlock
-          #throw new Error 'step repeat unimplimented'
-        when 'LP'
-          # finish any trace that's in progress
-          @finishTrace()
-          # get the level
-          p = block[2]
-          unless p is 'D' or p is 'C'
-            throw new Error "#{block} is an unrecognized level polarity"
-          # if switching from clear to dark
-          if p is 'D' and @layer.type is 'mask'
-            groupId = "#{@gerberId}-layer-#{++@layer.level}"
-            @group = { g: { id: groupId, _: [ @group ] } }
-            @layer.current = @group
-            @layer.type = 'g'
-          # else if switching from dark to clear
-          else if p is 'C' and @layer.type is 'g'
-            maskId = "#{@gerberId}-layer-#{++@layer.level}"
-            x = @bbox.xMin
-            y = @bbox.yMin
-            wid = @bbox.xMax - @bbox.xMin
-            hgt = @bbox.yMax - @bbox.yMin
-            # add the mask to the definitions
-            m = {
-              mask: {
-                id: maskId
-                color: '#000'
-                _: [
-                  { rect: { x: x, y: y, width: wid, height: hgt, fill: '#fff' }}
-                ]
-              }
-            }
-            @defs.push m
-            @layer.current.g.mask = "url(##{maskId})"
-            @layer.current = @defs[@defs.length-1]
-            @layer.type = 'mask'
-          # undefine the position per gerber spec
-          @position.x = null
-          @position.y = null
-
-      if blocks[++index] is '%' then done = true
-
-  operate: (block) ->
-    valid = false
-    # code for operations
-    code = block[0..2]
-    # check for end of file or deprecated M command
-    if block[0] is 'M'
-      if code is 'M02'
-        @done = true
-        block = ''
-      else unless (code is 'M00' or code is 'M01')
-        throw new Error 'invalid operation M code'
-      valid = true
-    # else check for a G code
-    else if block[0] is 'G'
-      # set interpolation mode
-      if block.match /^G0?1/
-        @mode = 'i'
-      else if block.match /^G0?2/
-        @mode = 'cw'
-      else if block.match /^G0?3(?![67])/
-        @mode = 'ccw'
-      # set region mode
-      else if code is 'G36'
-        @finishTrace()
-        @trace.region = true
-      else if code is 'G37'
-        @finishTrace()
-        @trace.region = false
-      else if code is 'G74'
-        @quad = 's'
-      else if code is 'G75'
-        @quad = 'm'
-      # deprecated units commands (for backup)
-      else if code is 'G70'
-        @backupUnits = 'in'
-      else if code is 'G71'
-        @backupUnits = 'mm'
-      # check for comments or deprecated, else throw
-      else unless code.match /^G(0?4)|(5[45])|(7[01])|(9[01])/
-        throw new Error 'invalid operation G code'
-      valid = true
-
-    # check for a tool change
-    t = (block.match /D[1-9]\d{1,}$/)?[0]
-    if t?
-      # finish any in progress path
-      @finishTrace()
-      # check that tool exists and we're not in region mode
-      unless @tools[t]?
-        throw new Error "tool #{t} does not exist"
-      if @trace.region
-        throw new Error "cannot change tool while region mode is on"
-      # change the tool
-      @currentTool = t
-
-    # now let's check for a coordinate block
-    if block.match /^(G0?[123])?([XYIJ][+-]?\d+){0,4}D0?[123]$/
-      # if the last char is a 2, we've got a move
-      op = block[block.length - 1]
-      coord = ((block.match /[XYIJ][+-]?\d+/g)?.join '') ? ''
-      start = { x: @position.x, y: @position.y }
-      end = @move coord
-      # if it's a 3, we've got a flash
-      if op is '3'
-        # finish any in progress path
-        @finishTrace()
-        # add the pad to defs if necessary
-        if @tools[@currentTool].pad
-          @defs.push obj for obj in @tools[@currentTool].pad
-          @tools[@currentTool].pad = false
-        # add the pad to the layer
-        @layer.current[@layer.type]._
-          .push @tools[@currentTool].flash @position.x, @position.y
-        # update the board's bounding box
-        @addBbox @tools[@currentTool].bbox @position.x, @position.y
-
-      # finally, if it's a 1, we've got an interpolate
-      else if op is '1'
-        # throw if tool isn't traceable
-        if not @trace.region and not @tools[@currentTool].stroke
-          throw new Error "tool #{@currentTool} is not a strokeable tool"
-        # if there's no path yet, we need to move to the current point
-        unless @trace.path
-          @trace.path = "M#{start.x} #{start.y}"
-          # also add the start to the bounding box if it's a line
-          if @mode is 'i'
-            if @trace.region
-              @addBbox {
-                xMin: start.x, yMin: start.y, xMax: start.x, yMax: start.y
-              }
-            else
-              @addBbox @tools[@currentTool].bbox start.x, start.y
-        # check what kind of interpolate we're doing
-        unless @mode?
-          console.warn "Warning: no interpolation mode was set by G01/2/3.
-                        Assuming linear interpolation (G01)"
-          @mode = 'i'
-        # linear interpolation adds an absolute line to the path
-        if @mode is 'i'
-          # add the segment to the path
-          # if it's a round tool or we're in region mode, just add the point
-          if @trace.region or @tools[@currentTool].stroke['stroke-linecap']?
-            @trace.path += "L#{end.x} #{end.y}"
-          # else we're stroking a rectangular aperture, so that's frustrating
-          else
-            width = @tools[@currentTool].pad[0].rect.width
-            height = @tools[@currentTool].pad[0].rect.height
-            @trace.path += rectangleStrokePath start, end, width, height
-          # add the segment to the bbox
-          if @trace.region
-            @addBbox {
-              xMin: end.x, yMin: end.y, xMax: end.x, yMax: end.y
-            }
-          else
-            @addBbox @tools[@currentTool].bbox end.x, end.y
-        # are interpolation adds an eliptical (circular) arc to the path
-        else if @mode is 'cw' or @mode is 'ccw'
-          # throw if tool isn't a circle
-          if not @trace.region and
-          not @tools[@currentTool].stroke['stroke-linecap'] is 'round'
-            throw new Error "tool #{@currentTool} is not circular and cannot
-                             stroke arcs"
-          r = Math.sqrt end.i**2 + end.j**2
-          sweep = if @mode is 'cw' then 0 else 1
-          large = 0
-          # if we're in single quadrant mode, work to get the center
-          # signs are implicit on i and j in single quad, so test them
-          cen = []
-          thetaE = 0
-          thetaS = 0
-          if @quad is 's'
-            for cx in [ start.x - end.i, start.x + end.i ]
-              for cy in [start.y - end.j, start.y + end.j ]
-                dist = Math.sqrt (cx-end.x)**2 + (cy-end.y)**2
-                if (Math.abs r - dist) < 0.0000001 then cen.push {x: cx, y: cy }
-          else if @quad is 'm'
-            cen.push { x: start.x + end.i, y: start.y + end.j }
-          # at most, we'll have two candidates
-          # check the points to make sure we have a valid arc
-          for c in cen
-            thetaE = Math.atan2 end.y-c.y, end.x-c.x
-            if thetaE < 0 then thetaE += TWO_PI
-            thetaS = Math.atan2 start.y-c.y, start.x-c.x
-            if thetaS < 0 then thetaS += TWO_PI
-            # adjust angles so math comes out right
-            if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
-            else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
-            # take it if it's less than 90
-            theta = Math.abs(thetaE - thetaS)
-            if @quad is 's' and Math.abs(thetaE - thetaS) > HALF_PI
-              continue
-            else
-             if @quad is 'm' and theta >= Math.PI then large = 1
-             cen = { x: c.x, y: c.y }
-             break
-          rTool = if @trace.region then 0 else @tools[@currentTool].bbox().xMax
-          # switch calculations to CCW to make things easier
-          if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
-          # maxima targets
-          xp = if thetaS > 0 then TWO_PI else 0
-          yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
-          xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
-          yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
-          # minimum x is either at the negative x axis or an endpoint
-          if thetaS <= xn <= thetaE
-            xMin = cen.x - r - rTool
-          else
-            xMin = (Math.min start.x, end.x) - rTool
-          # max x is going to be at positive x or endpoint
-          if thetaS <= xp <= thetaE
-            xMax = cen.x + r + rTool
-          else
-            xMax = (Math.max start.x, end.x) + rTool
-          # minimum y is either at negative y axis or an endpoint
-          if thetaS <= yn <=thetaE
-            yMin = cen.y - r - rTool
-          else
-            yMin = (Math.min start.y, end.y) - rTool
-          # max y is going to be at positive y or endpoint
-          if thetaS <= yp <= thetaE
-            yMax = cen.y + r + rTool
-          else
-            yMax = (Math.max start.y, end.y) + rTool
-          # check for special case: full circle
-          if @quad is 'm' and (Math.abs(start.x - end.x) < 0.000001) and
-          (Math.abs(start.y - end.y) < 0.000001)
-            # we'll need two paths (180 deg each)
-            @trace.path +=
-              "A#{r} #{r} 0 0 #{sweep} #{end.x+2*end.i} #{end.y+2*end.j}"
-            # bbox is going to just be a rectangle
-            xMin = cen.x - r - rTool
-            yMin = cen.y - r - rTool
-            xMax = cen.x + r + rTool
-            yMax = cen.y + r + rTool
-          # add the arc to the path
-          @trace.path += "A#{r} #{r} 0 #{large} #{sweep} #{end.x} #{end.y}"
-          # add the bounding box
-          @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
-        # if there wasn't a mode set then we're in trouble
-        else throw new Error 'cannot interpolate without a G01/2/3'
-      else if op is '2'
-        @finishTrace()
-      else
-        throw new Error "#{op} is an invalid operation (D) code"
-
-  finishStepRepeat: () ->
-    if @stepRepeat.x isnt 1 or @stepRepeat.y isnt 1
-      if @layer.level isnt 0
-        throw new Error 'step repeat with clear levels is unimplimented'
-      srId = @layer.current.g.id
-      @layer.current = @group
+  finishLayer: ->
+    # finish any in progress path
+    @finishPath()
+    # only do something if there's stuff in the current layer
+    unless @current.length then return
+    # check for a step repeat
+    if @stepRepeat.x > 1 or @stepRepeat.y > 1
+      # wrap current up in a group with an sr id
+      srId = "gerber-sr_#{unique()}"
+      @current = [ { g: { id: srId, _: @current } } ]
       for x in [ 0...@stepRepeat.x ]
-        for y in [ 0...@stepRepeat.y ]
+        for y in [ 0...@stepRepeat.x ]
           unless x is 0 and y is 0
-            @layer.current[@layer.type]._.push {
-              use: {
-                x: x*@stepRepeat.xStep
-                y: y*@stepRepeat.yStep
-                'xlink:href': srId
-              }
-            }
+            u = { use: { 'xlink:href': '#'+srId } }
+            u.use.x = x*@stepRepeat.i if x isnt 0
+            u.use.y = y*@stepRepeat.j if y isnt 0
+            @current.push u
+      # warn if polarity is clear and steps overlap the bbox
+      if @polarity is 'C' and
+      ( @stepRepeat.j < @layerBbox.xMax - @layerBbox.xMin or
+      @stepRepeat.j < @layerBbox.yMax - @layerBbox.yMin )
+        console.warn 'step repeat blocks with clear polarity overlap; resulting
+          image may not be correct'
+      # adjust the bbox
+      @layerBbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
+      @layerBbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.j
 
-  finishTrace: () ->
-    # if there's a trace going on
-    if @trace.path
-      p = { path: { d: @trace.path } }
-      # apply proper path attributes
-      if @trace.region
-        p.path['stroke-width'] = 0
-        p.path.fill = 'currentColor'
-      else
-        for key, val of @tools[@currentTool].stroke
-          p.path[key] = val
-      # push the path to the current layer
-      @layer.current[@layer.type]._.push p
-      # empty the path out
-      @trace.path = ''
+    # add the layerBbox to the doc bbox
+    @addBbox @layerBbox, @bbox
+    @layerBbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
+    # if dark polarity
+    if @polarity is 'D'
+      # is there an existing group that's been cleared, then we need to wrap
+      # insert the group at the beginning of current
+      if @group.g.mask? then @current.unshift @group
+      # set the group
+      if not @group.g.mask? and @group.g._.length
+        @group.g._.push c for c in @current
+      else @group = { g: { _: @current } }
+    # else clear polarity
+    else
+      # make a mask
+      id = "gerber-mask_#{unique()}"
+      # shift in the bbox rect to keep everything
+      w = @bbox.xMax - @bbox.xMin; h = @bbox.yMax - @bbox.yMin
+      @current.unshift {
+        rect: {x: @bbox.xMin, y: @bbox.yMin, width: w, height: h, fill: '#fff'}
+      }
+      # push the masks to the definitions
+      @defs.push { mask: { id: id, color: '#000', _: @current}}
+      # add the mask to the group
+      @group.g.mask = "url(##{id})"
+    # empty out current
+    @current = []
 
-  move: (coord) ->
+  finishPath: ->
+    if @path.length
+      p = { path: {} }
+      # if we're in region mode, check for start and end match and close
+      if @region then @path.push 'Z'
+      # else, apply the stroke properties
+      else p.path[key] = val for key, val of @tools[@currentTool].trace
+      # stick the path data in, push to the current layer, and empty the path
+      p.path.d = @path
+      @current.push p
+      @path = []
+
+  # operate method takes the operation object
+  operate: (op) ->
+    # get the start position
+    sx = @pos.x; sy = @pos.y
+    # move the plotter position
+    # coordinates are modal, so adapt accordingly
+    if @notation is 'I'
+      @pos.x += op.x ? 0; @pos.y += op.y ? 0
+    else @pos.x = op.x ? @pos.x; @pos.y = op.y ? @pos.y
+    # get the end position
+    ex = @pos.x; ey = @pos.y
+    # get the current tool
+    t = @tools[@currentTool]
+
+    # do a check for units and notation (ensures format is properly set)
     unless @units?
       if @backupUnits?
         @units = @backupUnits
         console.warn "Warning: units set to '#{@units}' according to
                       deprecated command G7#{if @units is 'in' then 0 else 1}"
       else throw new Error 'units have not been set'
-    newPosition = @coordinate coord
-    @position.x = newPosition.x
-    @position.y = newPosition.y
-    # return the new position
-    newPosition
+    unless @notation?
+      # if drill file, assume absolute notation
+      if @parser?.fmat? then @notation = 'A'
+      # else throw error
+      else throw new Error 'format has not been set'
 
-  # take a coordinate string with format given by the format spec
-  # return an absolute position
-  coordinate: (coord) ->
-    unless @format.set then throw new Error 'format undefined'
-    result = { x: 0, y: 0 }
-    # pull out the x, y, i, and j
-    result.x = coord.match(/X[+-]?\d+/)?[0]?[1..]
-    result.y = coord.match(/Y[+-]?\d+/)?[0]?[1..]
-    result.i = coord.match(/I[+-]?\d+/)?[0]?[1..]
-    result.j = coord.match(/J[+-]?\d+/)?[0]?[1..]
-    # loop through matched coordinates
-    for key, val of result
-      if val?
-        divisor = 1
-        if val[0] is '+' or val[0] is '-'
-          divisor = -1 if val[0] is '-'
-          val = val[1..]
-        if @format.zero is 'L' then divisor *= 10 ** @format.places[1]
-        else if @format.zero is 'T'
-          divisor *= 10 ** (val.length - @format.places[0])
-        else throw new Error 'invalid zero suppression format'
-        result[key] = Number(val) / divisor
-        # incremental coordinate support
-        if @format.notation is 'I' then result[key] += (@position[key] ? 0)
-    # apply defaults to missing
-    unless result.x? then result.x = @position.x
-    unless result.y? then result.y = @position.y
-    unless result.i? then result.i = 0
-    unless result.j? then result.j = 0
-    # return the result
-    result
+    # switch through the actual operation
+    # a move adds a move to the path if there is one, else we've already moved
+    if op.do is 'move' and @path.length then @path.push 'M', ex, ey
+    # a flash adds a pad to the current layer
+    else if op.do is 'flash'
+      # end any in progress path
+      @finishPath()
+      # check that region mode isn't on
+      if @region then throw new Error 'cannot flash while in region mode'
+      # add the pad to the definitions if necessary, and then flash the layer
+      if t.pad then @defs.push shape for shape in t.pad; t.pad = false
+      @current.push t.flash ex, ey
+      # update the bounding box
+      @addBbox t.bbox(ex, ey), @layerBbox
+    # finally, an interpolate makes a trace or defines a region
+    # right here, though, it's mostly just gonna add stuff to @path
+    else if op.do is 'int'
+      # if we're not in region mode, check if the tool is strokable
+      if not @region and not t.trace
+        throw new Error "#{@currentTool} is not a strokable tool"
+      # if there's no path right now, we'd better start one
+      if @path.length is 0
+        # start the path
+        @path.push 'M', sx, sy
+        # start the bbox
+        bbox = if not @region then t.bbox sx, sy else {
+          xMin: sx, yMin: sy, xMax: sx, yMax: sy
+        }
+        @addBbox bbox, @layerBbox
+      # check for a mode, and assume linear if necessary
+      if not @mode? then @mode = 'i'; console.warn 'Warning: no interpolation
+        mode set. Assuming linear interpolation (G01)'
 
-  addBbox: (bbox) ->
-    if bbox.xMin < @bbox.xMin then @bbox.xMin = bbox.xMin
-    if bbox.yMin < @bbox.yMin then @bbox.yMin = bbox.yMin
-    if bbox.xMax > @bbox.xMax then @bbox.xMax = bbox.xMax
-    if bbox.yMax > @bbox.yMax then @bbox.yMax = bbox.yMax
+      # let's draw something
+      if @mode is 'i'
+        @drawLine sx, sy, ex, ey
+      else
+        op.i = 0 unless op.i?; op.j = 0 unless op.j?
+        @drawArc sx, sy, ex, ey, op.i, op.j
+
+  # draw a line with the start and end point
+  drawLine: (sx, sy, ex, ey) ->
+    t = @tools[@currentTool]
+    # add to the bbox
+    bbox = if not @region then t.bbox ex, ey else {
+      xMin: ex, yMin: ey, xMax: ex, yMax: ey
+    }
+    @addBbox bbox, @layerBbox
+    # check for a rectangular or circular tool
+    # circular tool will have a stroke-width set, and is easy
+    if @region or t.trace['stroke-width'] >= 0 then @path.push 'L', ex, ey
+    # rectagular tools are complicated, though
+    # we're going to use implicit linetos after movetos for ease
+    else
+      # width and height of tool
+      halfWidth = t.pad[0].rect.width/2
+      halfHeight = t.pad[0].rect.height/2
+      # corners of the start and end rects
+      sxm = sx - halfWidth
+      sxp = sx + halfWidth
+      sym = sy - halfHeight
+      syp = sy + halfHeight
+      exm = ex - halfWidth
+      exp = ex + halfWidth
+      eym = ey - halfHeight
+      eyp = ey + halfHeight
+      # get the quadrant we're in
+      theta = Math.atan2 ey-sy, ex - sx
+      # quadrant I
+      if 0 <= theta < HALF_PI
+        @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
+      # quadrant II
+      else if HALF_PI <= theta < Math.PI
+        @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
+      # quadrant III
+      else if -Math.PI <= theta < -HALF_PI
+        @path.push 'M',sxp,sym,sxp,syp,sxm,syp,exm,eyp,exm,eym,exp,eym,'Z'
+      # quadrant IV
+      else if -HALF_PI <= theta < 0
+        @path.push 'M',sxm,sym,exm,eym,exp,eym,exp,eyp,sxp,syp,sxm,syp,'Z'
+
+  # draw an arc with the start point, end point, and center offset
+  drawArc: (sx, sy, ex, ey, i, j) ->
+    # use a seriously low epsilon constant
+    arcEps = 1.01 * 10**-( (@parser?.format.places[1] ? 6 ) - 1 )
+    t = @tools[@currentTool]
+    # throw an error if the tool is rectangular
+    if not @region and not t.trace['stroke-width']
+      throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
+    # throw an error if quadrant mode was not set
+    if not @quad? then throw new Error 'arc quadrant mode has not been set'
+    #
+    # get the radius of the arc from the offsets
+    r = Math.sqrt i**2 + j**2
+    # get the sweep flag (svg sweep flag is 0 for cw and 1 for ccw)
+    sweep = if @mode is 'cw' then 0 else 1
+    # large arc flag is if arc > 180 deg. this doesn't line up with gerber, so
+    # we gotta calculate the arc length if we're in multi quadrant mode
+    large = 0
+    # get some arc angles for bounding box, large flag, and arc check
+    # valid candidates for center
+    validCen = []
+    # potential candidates
+    cand = [ [sx+i, sy+j] ]
+    if @quad is 's' then cand.push [sx-i, sy-j], [sx-i, sy+j], [sx+i, sy-j]
+    # loop through the candidates and find centers that make sense
+    for c in cand
+      dist = Math.sqrt (c[0] - ex)**2 + (c[1] - ey)**2
+      if (Math.abs r - dist) < arcEps then validCen.push { x: c[0], y: c[1] }
+    # now let's calculate some angles
+    thetaE = 0
+    thetaS = 0
+    cen = null
+    # at most, we'll have two candidates
+    # check the points to make sure we have a valid arc
+    for c in validCen
+      # find the angles and make positive
+      thetaE = Math.atan2 ey-c.y, ex-c.x
+      if thetaE < 0 then thetaE += TWO_PI
+      thetaS = Math.atan2 sy-c.y, sx-c.x
+      if thetaS < 0 then thetaS += TWO_PI
+      # adjust angles so math comes out right
+      # in cw, the angle of the start should always be greater than the end
+      if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
+      # in ccw, the start angle should be less than the end angle
+      else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
+      # calculate the sweep angle (abs value for cw)
+      theta = Math.abs(thetaE - thetaS)
+      # in single quadrant mode, center is good if it's less than 90
+      if @quad is 's' and theta <= HALF_PI then cen = c
+      else if @quad is 'm'
+        # if the sweep angle is >= 180, then its an svg large arc
+        if theta >= Math.PI then large = 1
+        # take the center
+        cen = { x: c.x, y: c.y }
+      # break if we've found a center
+      if cen? then break
+    # if we didn't find a center, then it's an invalid arc
+    unless cen?
+      console.warn "start #{sx},#{sy} #{@mode} to end #{ex},#{ey} with center
+        offset #{i},#{j} is an impossible arc in
+        #{if @quad is 's' then 'single' else 'multi'} quadrant mode with
+        epsilon set to #{arcEps}"
+      return
+    # get the radius of the tool for bbox calcs
+    rTool = if @region then 0 else t.bbox().xMax
+    # switch start and end angles to CCW to make things easier
+    # this ensures thetaS is always less than thetaE in these calculations
+    if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
+    # maxima targets for bounding box
+    xp = if thetaS > 0 then TWO_PI else 0
+    yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
+    xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
+    yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
+    # minimum x is either at the negative x axis or an endpoint
+    if thetaS <= xn <= thetaE then xMin = cen.x - r - rTool
+    else xMin = (Math.min sx, ex) - rTool
+    # max x is going to be at positive x or endpoint
+    if thetaS <= xp <= thetaE then xMax = cen.x + r + rTool
+    else xMax = (Math.max sx, ex) + rTool
+    # minimum y is either at negative y axis or an endpoint
+    if thetaS <= yn <= thetaE then yMin = cen.y - r - rTool
+    else yMin = (Math.min sy, ey) - rTool
+    # max y is going to be at positive y or endpoint
+    if thetaS <= yp <= thetaE then yMax = cen.y + r + rTool
+    else yMax = (Math.max sy, ey) + rTool
+    # check for special case: full circle
+    if @quad is 'm' and (Math.abs(sx - ex) < arcEps) and (Math.abs(sy - ey) < arcEps)
+      # we'll need two paths (180 deg each)
+      @path.push 'A', r, r, 0, 0, sweep, ex+2*i, ey+2*j
+      # bbox is going to just be a rectangle
+      xMin = cen.x - r - rTool
+      yMin = cen.y - r - rTool
+      xMax = cen.x + r + rTool
+      yMax = cen.y + r + rTool
+    # add the arc to the path
+    @path.push 'A', r, r, 0, large, sweep, ex, ey
+    # add the bounding box
+    @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }, @layerBbox
+
+  addBbox: (bbox, target) ->
+    if bbox.xMin < target.xMin then target.xMin = bbox.xMin
+    if bbox.yMin < target.yMin then target.yMin = bbox.yMin
+    if bbox.xMax > target.xMax then target.xMax = bbox.xMax
+    if bbox.yMax > target.yMax then target.yMax = bbox.yMax
 
 module.exports = Plotter

@@ -27,10 +27,7 @@ standardTool = (tool, p) ->
     # get the initial shape of the pad and apply the stroke properties
     shape = 'circle'
     unless p.hole? then result.trace = {
-      'stroke-linecap': 'round'
-      'stroke-linejoin': 'round'
       'stroke-width': p.dia
-      stroke: 'currentColor'
       fill: 'none'
     }
 
@@ -44,10 +41,7 @@ standardTool = (tool, p) ->
     if p.height <= 0
       throw new RangeError "#{tool} rect height out of range (#{p.height}<=0)"
     shape = 'rect'
-    unless p.hole? or p.obround then result.trace = {
-      'stroke-width': 0
-      fill: 'currentColor'
-    }
+    unless p.hole? or p.obround then result.trace = {}
 
   else if p.dia? and p.verticies?
     # we've got a polygon tool unless there's confusion

@@ -54,9 +54,40 @@ key      | default | how it be
 `pretty` | false   | output the SVG XML string with line-breaks and two-space tabs
 `object` | false   | return an XML object instead of a the default XML string
 
-The object will have the format:
-` { node: { attr1: val, attr2: val, _: [ { childNode: { attr: val } } ] } }`
-
+If an object is returned instead of a string, it will have the format:
+``` javascript
+  {
+    svg: {
+      xmlns: 'http://www.w3.org/2000/svg',
+      version: '1.1',
+      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+      width: width + units,
+      height: height + units,
+      viewBox: [ xMin, yMin, width, height ],
+      id: id,
+      // array of child nodes
+      _: [
+        // if gerber had pad flashes or polarity changes, there will be a
+        // defs child
+        {
+          defs: {
+            // array of child nodes
+            _: [ shapes ]
+          }
+        },
+        // then there will be a group that holds all the shapes
+        {
+          g: {
+            // flip horizontally because svg is y positive going down
+            transform: 'translate(0,' + (xMin+xMax) + ') scale(1,-1)',
+            // array of child nodes
+            _: [ shapes ]
+          }
+        }
+      ]
+    }
+  }
+```
 #### examples
 
 Output an SVG to the console
