@@ -80,13 +80,13 @@ describe 'Plotter class', ->
       p.command { new: { sr: { x: 2, y: 3, xStep: 7, yStep: 2 } } }
       p.stepRepeat.should.eql { x: 2, y: 3, xStep: 7, yStep: 2 }
       p.command { new: { sr: { x: 1, y: 1 } } }
-      p.stepRepeat.should.eql { x: 1, y: 1, xStep: 0, yStep: 0 }
+      p.stepRepeat.should.eql { x: 1, y: 1 }
 
     it 'should set polarity param', ->
       p.command { new: { layer: 'C' } }
-      p.polarity.should.eql 'c'
+      p.polarity.should.eql 'C'
       p.command { new: { layer: 'D' } }
-      p.polarity.should.eql 'd'
+      p.polarity.should.eql 'D'
 
   describe 'defining new tools', ->
     it 'should add a standard tool to the tools object', ->
@@ -212,19 +212,15 @@ describe 'Plotter class', ->
         it 'should end the path on a flash', ->
           p.command { op: { do: 'flash', x: 2, y: 2 } }
           p.path.should.eql []
-          p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
         it 'should end the path on a tool change', ->
           p.command { set: { currentTool: 'D10' } }
           p.path.should.eql []
-          p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
         it 'should end the path on a polarity change', ->
           p.command { new: { layer: 'C' } }
           p.path.should.eql []
-          p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
         it 'should end the path on a step repeat', ->
           p.command { new: { sr: { x: 2, y: 2, i: 1, j: 2 } } }
           p.path.should.eql []
-          p.current.should.containDeep [{ path: { d: ['M', 0, 0, 'L', 5, 5] } }]
 
       describe 'stroking a rectangular tool', ->
         beforeEach -> p.command { set: { currentTool: 'D11' } }
@@ -386,7 +382,7 @@ describe 'Plotter class', ->
       p.current.should.eql []
     describe 'multiple layers', ->
       it 'if clear layer, should mask the group with them', ->
-        p.polarity = 'c'
+        p.polarity = 'C'
         p.bbox = { xMin: 0, yMin: 0, xMax: 2, yMax: 2 }
         p.finishLayer()
         p.defs.should.containDeep [
@@ -459,7 +455,7 @@ describe 'Plotter class', ->
 
       describe 'with a clear layer', ->
         it 'should wrap the current items and repeat them in the mask', ->
-          p.polarity = 'c'
+          p.polarity = 'C'
           p.finishLayer()
           maskId = p.defs[0].mask.id
           groupId = p.defs[0].mask._[1].g.id
@@ -479,8 +475,18 @@ describe 'Plotter class', ->
 
         it 'should throw a warning of incorrect image if repeats overlap', ->
           p.bbox = { xMin: 0, yMin: 0, xMax: 4, yMax: 4 }
-          p.polarity = 'c'
+          p.polarity = 'C'
           hook = stderr()
           p.finishLayer()
           hook.captured().should.match /overlap.*may not be correct/
           hook.unhook()
+
+  describe 'overall fill and stroke style', ->
+    it 'should default stroke-linecap and stroke-linejoin to round', ->
+      p.attr['stroke-linecap'].should.eql 'round'
+      p.attr['stroke-linejoin'].should.eql 'round'
+    it 'should default stroke-width to 0', ->
+      p.attr['stroke-width'].should.eql 0
+    it 'should default stroke and fill to currentColor', ->
+      p.attr.stroke.should.eql 'currentColor'
+      p.attr.fill.should.eql 'currentColor'
