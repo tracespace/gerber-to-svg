@@ -48,6 +48,6 @@ describe 'gerber to svg function', ->
     obj = gerberToSvg exGerb, { object: true }
     result2 = gerberToSvg obj
     # wipe out unique ids for the layers, masks, and pads so i can compare
-    result1 = result1.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
-    result2 = result2.replace /(pad-\d+)|(gerber-\d+)|(mask-\d+)/g, 'unique'
+    result1 = result1.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
+    result2 = result2.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
     result2.should.eql result1
