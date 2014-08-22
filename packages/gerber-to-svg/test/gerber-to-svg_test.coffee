@@ -49,15 +49,6 @@ describe 'gerber to svg function', ->
     result.svg.width.should.match /^0\D/
     result.svg.height.should.match /^0\D/
 
-  it 'should handle this file', ->
-    result = gerberToSvg '''
-      %FSLAX34Y34*%
-      %MOIN*%
-      %SRX3Y2I2.0J2.0*%
-      %ADD10R,1.0X1.0*%
-      M02*
-    '''
-
   describe 'converting an svg object into an svg string', ->
     it 'should be able to convert an svg object into an svg string', ->
       result1 = gerberToSvg exGerb

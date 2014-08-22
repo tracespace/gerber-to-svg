@@ -5,6 +5,17 @@ parseArgs = require 'minimist'
 chalk = require 'chalk'
 gerberToSvg = require './gerber-to-svg'
 
+# stream capture
+streamCapture = (stream) ->
+  oldWrite = stream.write
+  buf = ''
+  stream.write = (chunk, encoding, callback) -> buf += chunk.toString()
+  return {
+    unhook: -> stream.write = oldWrite
+    captured: -> buf
+  }
+stderr = -> streamCapture(process.stderr)
+
 # version number
 VERSION = require('../package.json').version
 
@@ -76,10 +87,18 @@ run = ->
       fs.readFile file, 'utf-8', (error, data) ->
         unless error
           try
+            hook = stderr()
             opts = { pretty: argv.pretty, drill: (file is argv.drill) }
             write gerberToSvg(data, opts), file
           catch e
             warn "could not process #{file}: #{e.message}"
+          finally
+            warnings = hook.captured()
+            hook.unhook()
+            if warnings then warn """
+              #{file} produced the following warnings:
+              #{warnings}
+            """
         else
           warn "Error reading file #{file}: #{error.code}"
 

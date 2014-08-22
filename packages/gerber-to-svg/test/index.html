@@ -487,15 +487,33 @@
 
     <div class="test" id="step-repeat-one-polarity-block-test">
       <h4 class="title">single dark block step repeat test</h4>
-      <p class="description">a dark 1" square repeated 6 times 1" apart</p>
+      <p class="description">a dark 0.5" square repeated 6 times 0.5" apart</p>
       <p class="gerber"></p>
       <div class="svg"></div>
+    </div>
 
-    <!-- <div class-"test" id="step-repeat-multi-polarity-block">
-      <h4 class="title">single dark block step repeat test</h4>
-      <p class="description">a dark 1" square repeated 6 times 1" apart</p>
+    <div class="test" id="step-repeat-multi-polarity-block-test">
+      <h4 class="title">multi polarity single block step repeat test</h4>
+      <p class="description">square with hole and solid circle repeated 6</p>
       <p class="gerber"></p>
-      <div class="svg"></div> -->
+      <div class="svg"></div>
+    </div>
+
+    <div class="test" id="step-repeat-multi-polarity-multi-block-test">
+      <h4 class="title">multi polarity multi block step repeat test</h4>
+      <p class="description">a circle with a hole covered by four squares with
+        holes</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+    </div>
+
+    <div class="test" id="step-repeat-overlapping-clear-test">
+      <h4 class="title">step repeat overlapping clears test</h4>
+      <p class="description">this probably won't render correctly. see the gerber spec (section 4.13) for a description and compare to reference image</p>
+      <p class="gerber"></p>
+      <div class="svg"></div>
+      <img class="reference" src=./test/gerber/step-repeat-overlapping-clear-reference.png>
+    </div>
 
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="./dist/gerber-to-svg.js"></script>

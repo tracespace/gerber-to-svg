@@ -12,7 +12,7 @@ HALF_PI = Math.PI/2
 THREEHALF_PI = 3*HALF_PI
 TWO_PI = 2*Math.PI
 # error epsilon
-EPS = 0.0000001
+arcEps = 0.0000001
 
 class Plotter
   constructor: (file = '', Reader, Parser) ->
@@ -40,15 +40,19 @@ class Plotter
     # operation state (position and current region or trace path)
     @pos = { x: 0, y: 0 }
     @path = []
-    # bounding box of plotted image and image wide stroke and fill props
+    # bounding boxes of plotted image and image wide stroke and fill props
     @attr = {
       'stroke-linecap': 'round'
       'stroke-linejoin': 'round'
       'stroke-width': 0
-      fill: 'currentColor'
-      stroke: 'currentColor'
+      stroke: '#000'
     }
-    @bbox = { xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity }
+    @bbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
+    @layerBbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
 
   # add a tool to the tool list
   addTool: (code, params) ->
@@ -139,10 +143,16 @@ class Plotter
   finish: ->
     @finishPath()
     @finishLayer()
+    # set default fill and stroke to current color in the group
+    @group.g.fill = 'currentColor'; @group.g.stroke = 'currentColor'
+    # flip vertically
+    @group.g.transform = "translate(0,#{@bbox.yMin+@bbox.yMax}) scale(1,-1)"
 
   finishLayer: ->
     # finish any in progress path
     @finishPath()
+    # only do something if there's stuff in the current layer
+    unless @current.length then return
     # check for a step repeat
     if @stepRepeat.x > 1 or @stepRepeat.y > 1
       # wrap current up in a group with an sr id
@@ -157,17 +167,22 @@ class Plotter
             @current.push u
       # warn if polarity is clear and steps overlap the bbox
       if @polarity is 'C' and
-      ( @stepRepeat.j < @bbox.xMax - @bbox.xMin or
-      @stepRepeat.j < @bbox.yMax - @bbox.yMin )
+      ( @stepRepeat.j < @layerBbox.xMax - @layerBbox.xMin or
+      @stepRepeat.j < @layerBbox.yMax - @layerBbox.yMin )
         console.warn 'step repeat blocks with clear polarity overlap; resulting
           image may not be correct'
       # adjust the bbox
-      @bbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
-      @bbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.j
+      @layerBbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
+      @layerBbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.j
 
+    # add the layerBbox to the doc bbox
+    @addBbox @layerBbox, @bbox
+    @layerBbox = {
+      xMin: Infinity, yMin: Infinity, xMax: -Infinity, yMax: -Infinity
+    }
     # if dark polarity
     if @polarity is 'D'
-      # is there an existing group that's been cleared, then we need to wrap it
+      # is there an existing group that's been cleared, then we need to wrap
       # insert the group at the beginning of current
       if @group.g.mask? then @current.unshift @group
       # set the group
@@ -223,7 +238,11 @@ class Plotter
         console.warn "Warning: units set to '#{@units}' according to
                       deprecated command G7#{if @units is 'in' then 0 else 1}"
       else throw new Error 'units have not been set'
-    unless @notation? then throw new Error 'format has not been set'
+    unless @notation?
+      # if drill file, assume absolute notation
+      if @parser?.fmat? then @notation = 'A'
+      # else throw error
+      else throw new Error 'format has not been set'
 
     # switch through the actual operation
     # a move adds a move to the path if there is one, else we've already moved
@@ -238,7 +257,7 @@ class Plotter
       if t.pad then @defs.push shape for shape in t.pad; t.pad = false
       @current.push t.flash ex, ey
       # update the bounding box
-      @addBbox t.bbox ex, ey
+      @addBbox t.bbox(ex, ey), @layerBbox
     # finally, an interpolate makes a trace or defines a region
     # right here, though, it's mostly just gonna add stuff to @path
     else if op.do is 'int'
@@ -250,9 +269,10 @@ class Plotter
         # start the path
         @path.push 'M', sx, sy
         # start the bbox
-        if not @region then @addBbox t.bbox sx, sy else @addBbox {
+        bbox = if not @region then t.bbox sx, sy else {
           xMin: sx, yMin: sy, xMax: sx, yMax: sy
         }
+        @addBbox bbox, @layerBbox
       # check for a mode, and assume linear if necessary
       if not @mode? then @mode = 'i'; console.warn 'Warning: no interpolation
         mode set. Assuming linear interpolation (G01)'
@@ -268,12 +288,13 @@ class Plotter
   drawLine: (sx, sy, ex, ey) ->
     t = @tools[@currentTool]
     # add to the bbox
-    if not @region then @addBbox t.bbox ex, ey else @addBbox {
+    bbox = if not @region then t.bbox ex, ey else {
       xMin: ex, yMin: ey, xMax: ex, yMax: ey
     }
+    @addBbox bbox, @layerBbox
     # check for a rectangular or circular tool
     # circular tool will have a stroke-width set, and is easy
-    if @region or t.trace['stroke-width'] > 0 then @path.push 'L', ex, ey
+    if @region or t.trace['stroke-width'] >= 0 then @path.push 'L', ex, ey
     # rectagular tools are complicated, though
     # we're going to use implicit linetos after movetos for ease
     else
@@ -306,6 +327,8 @@ class Plotter
 
   # draw an arc with the start point, end point, and center offset
   drawArc: (sx, sy, ex, ey, i, j) ->
+    # use a seriously low epsilon constant
+    arcEps = 1.01 * 10**-( (@parser?.format.places[1] ? 6 ) - 1 )
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
     if not @region and not t.trace['stroke-width']
@@ -329,7 +352,7 @@ class Plotter
     # loop through the candidates and find centers that make sense
     for c in cand
       dist = Math.sqrt (c[0] - ex)**2 + (c[1] - ey)**2
-      if (Math.abs r - dist) < EPS then validCen.push { x: c[0], y: c[1] }
+      if (Math.abs r - dist) < arcEps then validCen.push { x: c[0], y: c[1] }
     # now let's calculate some angles
     thetaE = 0
     thetaS = 0
@@ -360,7 +383,10 @@ class Plotter
       if cen? then break
     # if we didn't find a center, then it's an invalid arc
     unless cen?
-      console.warn "x: #{ex}, y: #{ex}, i: #{i}, j: #{j} is an impossible arc"
+      console.warn "start #{sx},#{sy} #{@mode} to end #{ex},#{ey} with center
+        offset #{i},#{j} is an impossible arc in
+        #{if @quad is 's' then 'single' else 'multi'} quadrant mode with
+        epsilon set to #{arcEps}"
       return
     # get the radius of the tool for bbox calcs
     rTool = if @region then 0 else t.bbox().xMax
@@ -385,7 +411,7 @@ class Plotter
     if thetaS <= yp <= thetaE then yMax = cen.y + r + rTool
     else yMax = (Math.max sy, ey) + rTool
     # check for special case: full circle
-    if @quad is 'm' and (Math.abs(sx - ex) < EPS) and (Math.abs(sy - ey) < EPS)
+    if @quad is 'm' and (Math.abs(sx - ex) < arcEps) and (Math.abs(sy - ey) < arcEps)
       # we'll need two paths (180 deg each)
       @path.push 'A', r, r, 0, 0, sweep, ex+2*i, ey+2*j
       # bbox is going to just be a rectangle
@@ -396,12 +422,12 @@ class Plotter
     # add the arc to the path
     @path.push 'A', r, r, 0, large, sweep, ex, ey
     # add the bounding box
-    @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }
+    @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }, @layerBbox
 
-  addBbox: (bbox) ->
-    if bbox.xMin < @bbox.xMin then @bbox.xMin = bbox.xMin
-    if bbox.yMin < @bbox.yMin then @bbox.yMin = bbox.yMin
-    if bbox.xMax > @bbox.xMax then @bbox.xMax = bbox.xMax
-    if bbox.yMax > @bbox.yMax then @bbox.yMax = bbox.yMax
+  addBbox: (bbox, target) ->
+    if bbox.xMin < target.xMin then target.xMin = bbox.xMin
+    if bbox.yMin < target.yMin then target.yMin = bbox.yMin
+    if bbox.xMax > target.xMax then target.xMax = bbox.xMax
+    if bbox.yMax > target.yMax then target.yMax = bbox.yMax
 
 module.exports = Plotter

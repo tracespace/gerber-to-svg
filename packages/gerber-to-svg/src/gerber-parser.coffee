@@ -93,10 +93,10 @@ class GerberParser
           # new step repeat
           when 'SR'
             unless c.new? then c.new = {}
-            x = p.match(/X[+-]?\d+/)?[0][1..] ? 1
-            y = p.match(/Y[+-]?\d+/)?[0][1..] ? 1
-            i = p.match(/I[+-]?\d+/)?[0][1..]
-            j = p.match(/J[+-]?\d+/)?[0][1..]
+            x = p.match(/X[+-]?[\d\.]+/)?[0][1..] ? 1
+            y = p.match(/Y[+-]?[\d\.]+/)?[0][1..] ? 1
+            i = p.match(/I[+-]?[\d\.]+/)?[0][1..]
+            j = p.match(/J[+-]?[\d\.]+/)?[0][1..]
             # check for valid numbers and such
             if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
               throw new Error 'invalid step repeat'

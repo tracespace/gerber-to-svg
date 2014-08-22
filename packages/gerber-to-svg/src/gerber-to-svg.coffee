@@ -67,8 +67,6 @@ module.exports = (gerber, options = {}) ->
   # push the defs if there are any
   if p.defs.length then xml.svg._.push { defs: { _: p.defs } }
   # flip the image group in the y and translate back to origin
-  if p.group.g._.length
-    p.group.g.transform = "translate(0,#{p.bbox.yMin+p.bbox.yMax}) scale(1,-1)"
-    xml.svg._.push p.group
+  if p.group.g._.length then xml.svg._.push p.group
   # return the string or the object if that flag is set
   unless opts.object then builder xml, { pretty: opts.pretty } else xml
