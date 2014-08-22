@@ -29,7 +29,7 @@ class Plotter
     @polarity = 'D'
     @current = []
     # step and repeat, initially set to no repeat
-    @stepRepeat = { x: 1, y: 1, xStep: null, yStep: null }
+    @stepRepeat = { x: 1, y: 1, i: 0, j: 0 }
     # unit system
     @units = null
     # operating mode
@@ -69,7 +69,7 @@ class Plotter
       }
     }
     # set the current tool to the one just defined
-    @currentTool = code
+    @changeTool code
     # since this was a tool change, finish the path
 
   # change the tool
@@ -102,10 +102,8 @@ class Plotter
         throw new Error 'cannot redefine notation'
       # if the region mode changes, then we need to finish the current path
       if state is 'region' then @finishPath()
-      # tool changes are special
-      if state is 'currentTool' then @changeTool val
-      # else just set the state
-      else @[state] = val
+      # tool changes are special, # else just set the stat
+      if state is 'currentTool' then @changeTool val else @[state] = val
 
     # if there's a tool command
     if c.tool? then @addTool code, params for code, params of c.tool
@@ -154,19 +152,18 @@ class Plotter
         for y in [ 0...@stepRepeat.x ]
           unless x is 0 and y is 0
             u = { use: { 'xlink:href': '#'+srId } }
-            u.use.x = x*@stepRepeat.xStep if x isnt 0
-            u.use.y = y*@stepRepeat.yStep if y isnt 0
+            u.use.x = x*@stepRepeat.i if x isnt 0
+            u.use.y = y*@stepRepeat.j if y isnt 0
             @current.push u
       # warn if polarity is clear and steps overlap the bbox
-      xBboxAdd =
       if @polarity is 'C' and
-      ( @stepRepeat.xStep < @bbox.xMax - @bbox.xMin or
-      @stepRepeat.yStep < @bbox.yMax - @bbox.yMin )
+      ( @stepRepeat.j < @bbox.xMax - @bbox.xMin or
+      @stepRepeat.j < @bbox.yMax - @bbox.yMin )
         console.warn 'step repeat blocks with clear polarity overlap; resulting
           image may not be correct'
       # adjust the bbox
-      @bbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.xStep
-      @bbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.yStep
+      @bbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
+      @bbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.j
 
     # if dark polarity
     if @polarity is 'D'
@@ -311,7 +308,7 @@ class Plotter
   drawArc: (sx, sy, ex, ey, i, j) ->
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
-    if not t.trace['stroke-width'] and not @region
+    if not @region and not t.trace['stroke-width']
       throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
     # throw an error if quadrant mode was not set
     if not @quad? then throw new Error 'arc quadrant mode has not been set'
