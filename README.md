@@ -79,7 +79,7 @@ If an object is returned instead of a string, it will have the format:
         {
           g: {
             // flip horizontally because svg is y positive going down
-            transform: 'translate(0,' + (xMin+xMax) + ') scale(1,-1)',
+            transform: 'translate(0,' + (yMin+yMax) + ') scale(1,-1)',
             // array of child nodes
             _: [ shapes ]
           }
