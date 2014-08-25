@@ -109,10 +109,10 @@ Use the object output to align layers before getting the strings
 frontObj = gerberToSvg gerberFront, { object: true }
 backObj  = gerberToSvg gerberBack, { object: true }
 drillObj = gerberToSvg drillFile, { object: true, drill: true}
-# pull the origina out of the viewbox
-offsetFront = frontObj.svg.viewbox[0..1]
-offsetBack  = backObj.svg.viewbox[0..1]
-offsetDrill = drillObj.svg.viewbox[0..1]
+# pull the origins from the viewBox
+offsetFront = frontObj.svg.viewBox[0..1]
+offsetBack  = backObj.svg.viewBox[0..1]
+offsetDrill = drillObj.svg.viewBox[0..1]
 # pass the objets back in to get the svg strings
 frontString = gerberToSvg frontObj
 backString  = gerberToSvg backObj
