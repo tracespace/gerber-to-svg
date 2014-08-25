@@ -58,7 +58,6 @@ module.exports = (gerber, options = {}) ->
       width: "#{width}#{p.units}"
       height: "#{height}#{p.units}"
       viewBox: [ p.bbox.xMin, p.bbox.yMin, width, height ]
-      id: p.gerberId
       _: []
     }
   }
