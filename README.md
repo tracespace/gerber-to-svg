@@ -35,6 +35,10 @@ For Node and Browserify:
 
 `$ npm install --save gerber-to-svg`
 
+With Bower:
+
+`$ bower install --save gerber-to-svg`
+
 If you'd rather not manage your packages:
 
 1. Download the full or minified [standalone library](https://github.com/mcous/gerber-to-svg/releases/latest)
@@ -42,7 +46,11 @@ If you'd rather not manage your packages:
 
 Use in your app with:
 ``` javascript
+// get an svg string
 var svgString = gerberToSvg(gerberString, opts);
+// get an svg object and then convert that object into a string
+var svgObj = gerberToSvg(gerberString, { object: true } )
+var svgString = gerberToSvg(svgObj)
 ```
 Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-8) or an SVG object previously outputted by the function.
 
