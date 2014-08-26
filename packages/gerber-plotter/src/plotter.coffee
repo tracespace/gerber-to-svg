@@ -30,6 +30,8 @@ class Plotter
     @current = []
     # step and repeat, initially set to no repeat
     @stepRepeat = { x: 1, y: 1, i: 0, j: 0 }
+    @srOverClear = false
+    @srOverCurrent = []
     # unit system
     @units = null
     # operating mode
@@ -121,7 +123,7 @@ class Plotter
       @finishLayer()
       # set the new params
       if c.new.layer? then @polarity = c.new.layer
-      else if c.new.sr? then @stepRepeat = c.new.sr
+      else if c.new.sr? then @finishSR(); @stepRepeat = c.new.sr
 
 
   # go through the gerber file and return an xml object with the svg
@@ -148,6 +150,19 @@ class Plotter
     # flip vertically
     @group.g.transform = "translate(0,#{@bbox.yMin+@bbox.yMax}) scale(1,-1)"
 
+  # finish step repeat method
+  # really only does anything if clear layers overlap
+  finishSR: ->
+    if @srOverClear and @srOverCurrent
+      maskId = "gerber-sr-mask_#{unique()}"
+      m = { mask: { color: '#000', id: maskId, _: [] } }
+
+
+      # clear the flag and current array
+      @srOverClear = false; @srOverCurrent = []
+      # push the mask to the defs
+      @defs.push m
+
   finishLayer: ->
     # finish any in progress path
     @finishPath()
@@ -158,6 +173,12 @@ class Plotter
       # wrap current up in a group with an sr id
       srId = "gerber-sr_#{unique()}"
       @current = [ { g: { id: srId, _: @current } } ]
+      # warn if polarity is clear and steps overlap the bbox
+      if @stepRepeat.j < @layerBbox.xMax - @layerBbox.xMin or
+      @stepRepeat.j < @layerBbox.yMax - @layerBbox.yMin
+        obj = {}; obj[@polarity] = srId
+        @srOverCurrent.push obj
+        if @polarity is 'C' then @srOverClear = true
       for x in [ 0...@stepRepeat.x ]
         for y in [ 0...@stepRepeat.x ]
           unless x is 0 and y is 0
@@ -165,12 +186,6 @@ class Plotter
             u.use.x = x*@stepRepeat.i if x isnt 0
             u.use.y = y*@stepRepeat.j if y isnt 0
             @current.push u
-      # warn if polarity is clear and steps overlap the bbox
-      if @polarity is 'C' and
-      ( @stepRepeat.j < @layerBbox.xMax - @layerBbox.xMin or
-      @stepRepeat.j < @layerBbox.yMax - @layerBbox.yMin )
-        console.warn 'step repeat blocks with clear polarity overlap; resulting
-          image may not be correct'
       # adjust the bbox
       @layerBbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
       @layerBbox.yMax += (@stepRepeat.y - 1) * @stepRepeat.j
@@ -190,7 +205,7 @@ class Plotter
         @group.g._.push c for c in @current
       else @group = { g: { _: @current } }
     # else clear polarity
-    else
+    else if @polarity is 'C' and not @srOverClear
       # make a mask
       id = "gerber-mask_#{unique()}"
       # shift in the bbox rect to keep everything
