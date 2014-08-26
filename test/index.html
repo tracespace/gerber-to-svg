@@ -16,6 +16,9 @@
     }
     svg {
       color: navy;
+      border-style: dashed;
+      border-width: 1px;
+      border-color: black;
     }
     .test {
       display: inline-block;
@@ -509,7 +512,7 @@
 
     <div class="test" id="step-repeat-overlapping-clear-test">
       <h4 class="title">step repeat overlapping clears test</h4>
-      <p class="description">this probably won't render correctly. see the gerber spec (section 4.13) for a description and compare to reference image</p>
+      <p class="description">overlapped clears should also clear repeated blocks that are underneath. see the gerber spec (section 4.13) for a description and compare to reference image</p>
       <p class="gerber"></p>
       <div class="svg"></div>
       <img class="reference" src=./test/gerber/step-repeat-overlapping-clear-reference.png>
