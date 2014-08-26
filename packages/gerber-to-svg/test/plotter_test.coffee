@@ -490,14 +490,50 @@ describe 'Plotter class', ->
           p.group.g.mask.should.eql "url(##{maskId})"
           p.current.should.eql []
 
-        it 'should throw a warning of incorrect image if repeats overlap', ->
+      describe 'overlapping clear layers', ->
+        beforeEach ->
           p.layerBbox = { xMin: 0, yMin: 0, xMax: 4, yMax: 4 }
-          p.polarity = 'C'
-          hook = stderr()
           p.finishLayer()
-          hook.captured().should.match /overlap.*may not be correct/
-          hook.unhook()
-
+          p.current = [ 'item3', 'item4' ]
+          p.layerBbox = { xMin: 0, yMin: 0, xMax: 6, yMax: 6 }
+          p.polarity = 'C'
+          p.finishLayer()
+        it 'should push the ids of sr layers to the overlap array', ->
+          p.srOverCurrent[0].D.should.match /gerber-sr/
+          p.srOverCurrent[0].should.not.have.key 'C'
+          p.srOverCurrent[1].C.should.match /gerber-sr/
+          p.srOverCurrent[1].should.not.have.key 'D'
+        it 'should push dark layers to the group normally', ->
+          p.group.g._.should.containDeep [
+              { g: {} }
+              { use: {} }
+              { use: {} }
+              { use: {} }
+          ]
+        it 'should set the clear overlap flag and not mask immediately', ->
+          p.srOverClear.should.be.true
+        it 'should create the mask when the sr changes', ->
+          id = []
+          for layer in p.srOverCurrent
+            id.push val for key, val of layer
+          p.command { new: { sr: { x: 1, y: 1 } } }
+          p.srOverCurrent.length.should.equal 0
+          p.srOverClear.should.be.false
+          console.log p.group.g
+          p.group.g.mask.should.eql "url(##{maskId})"
+          p.defs[0].mask.color.should.eql '#000'
+          maskId = p.defs[0].mask.id
+          p.defs[0].mask._.should.containDeep [
+            { rect: { fill: '#fff', x: 0, y: 0, width: 6, height: 6 } }
+            { use: { fill: '#fff', 'xlink:href': id[0] } }
+            { use: { 'xlink:href': id[1] } }
+            { use: { y: 3, fill: '#fff', 'xlink:href': id[0] } }
+            { use: { y: 3, 'xlink:href': id[1] } }
+            { use: { x: 3, fill: '#fff', 'xlink:href': id[0] } }
+            { use: { x: 3, 'xlink:href': id[1] } }
+            { use: { x: 3, y: 3, fill: '#fff', 'xlink:href': id[0] } }
+            { use: { x: 3, y: 3, 'xlink:href': id[1] } }
+          ]
   describe 'overall fill and stroke style', ->
     it 'should default stroke-linecap and stroke-linejoin to round', ->
       p.attr['stroke-linecap'].should.eql 'round'
