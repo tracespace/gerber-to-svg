@@ -149,12 +149,13 @@ If it messes up, open up an issue and attach your Gerber, if you can. I
 appreciate files to test on.
 
 ### problems with drill files
-If your drill file is a wildly different size than your Gerbers, or the offset is completely off, check for these things:
+If your drill file is a wildly different size than your Gerbers, or it's offset from your Gerbers, check for these things:
 
 * The drill file processor assumes 2:4 precision for inches and 3:3 precision for millimeters
 * Leading zero suppression (identical to no suppression and keep trailing zeros in Excellon speak) will be assumed if left unspecified
 * Absolute coordinates will be assumed if left unspecified
-* Check that your CAD packages isn't offsetting the drill file to prevent negative coordinates
+* The CAD package that generated the drill file may have offset it to prevent negative coordinates
+* The drill file may have been generated with a different origin than the Gerbers
 
 ## building from source
 
