@@ -1,5 +1,4 @@
 # ignore node_modules
 node_modules
-# ignore compiled things
+# ignore compiled things (but not the dist folder, because bower needs it)
 lib/
-dist/

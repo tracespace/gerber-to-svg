@@ -1,4 +1,5 @@
 # ignore source and test files
+bower.json
 Gulpfile.coffee
 src/
 test/
