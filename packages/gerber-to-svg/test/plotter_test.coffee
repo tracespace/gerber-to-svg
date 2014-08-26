@@ -519,12 +519,14 @@ describe 'Plotter class', ->
           p.command { new: { sr: { x: 1, y: 1 } } }
           p.srOverCurrent.length.should.equal 0
           p.srOverClear.should.be.false
-          console.log p.group.g
+          p.defs[0].should.containDeep {
+            g: { _: [ 'item3', 'item4' ] }
+          }
+          p.defs[1].mask.color.should.eql '#000'
+          maskId = p.defs[1].mask.id
           p.group.g.mask.should.eql "url(##{maskId})"
-          p.defs[0].mask.color.should.eql '#000'
-          maskId = p.defs[0].mask.id
-          p.defs[0].mask._.should.containDeep [
-            { rect: { fill: '#fff', x: 0, y: 0, width: 6, height: 6 } }
+          p.defs[1].mask._.should.containDeep [
+            { rect: { fill: '#fff', x: 0, y: 0, width: 9, height: 9 } }
             { use: { fill: '#fff', 'xlink:href': id[0] } }
             { use: { 'xlink:href': id[1] } }
             { use: { y: 3, fill: '#fff', 'xlink:href': id[0] } }
@@ -534,6 +536,10 @@ describe 'Plotter class', ->
             { use: { x: 3, y: 3, fill: '#fff', 'xlink:href': id[0] } }
             { use: { x: 3, y: 3, 'xlink:href': id[1] } }
           ]
+        it 'should also finish the SR at the end of file', ->
+          p.finish()
+          p.srOverCurrent.length.should.equal 0
+          p.srOverClear.should.be.false
   describe 'overall fill and stroke style', ->
     it 'should default stroke-linecap and stroke-linejoin to round', ->
       p.attr['stroke-linecap'].should.eql 'round'

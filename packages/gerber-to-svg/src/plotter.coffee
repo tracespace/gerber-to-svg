@@ -145,6 +145,7 @@ class Plotter
   finish: ->
     @finishPath()
     @finishLayer()
+    @finishSR()
     # set default fill and stroke to current color in the group
     @group.g.fill = 'currentColor'; @group.g.stroke = 'currentColor'
     # flip vertically
@@ -156,12 +157,31 @@ class Plotter
     if @srOverClear and @srOverCurrent
       maskId = "gerber-sr-mask_#{unique()}"
       m = { mask: { color: '#000', id: maskId, _: [] } }
-
-
+      m.mask._.push {
+        rect: {
+          fill: '#fff'
+          x: @bbox.xMin
+          y: @bbox.yMin
+          width: @bbox.xMax - @bbox.xMin
+          height: @bbox.yMax - @bbox.yMin
+        }
+      }
+      # loop through the repeats
+      for x in [ 0...@stepRepeat.x * @stepRepeat.i ] by @stepRepeat.i
+        for y in [ 0...@stepRepeat.y * @stepRepeat.j ] by @stepRepeat.j
+          for layer in @srOverCurrent
+            u = { use: {} }
+            u.use.x = x if x isnt 0
+            u.use.y = y if y isnt 0
+            u.use['xlink:href'] = '#' + (layer.C ? layer.D)
+            if layer.D? then u.use.fill = '#fff'
+            m.mask._.push u
       # clear the flag and current array
       @srOverClear = false; @srOverCurrent = []
       # push the mask to the defs
       @defs.push m
+      # mask the current group
+      @group.g.mask = "url(##{maskId})"
 
   finishLayer: ->
     # finish any in progress path
@@ -174,13 +194,16 @@ class Plotter
       srId = "gerber-sr_#{unique()}"
       @current = [ { g: { id: srId, _: @current } } ]
       # warn if polarity is clear and steps overlap the bbox
-      if @stepRepeat.j < @layerBbox.xMax - @layerBbox.xMin or
+      if @srOverClear or
+      @stepRepeat.i < @layerBbox.xMax - @layerBbox.xMin or
       @stepRepeat.j < @layerBbox.yMax - @layerBbox.yMin
         obj = {}; obj[@polarity] = srId
         @srOverCurrent.push obj
-        if @polarity is 'C' then @srOverClear = true
+        if @polarity is 'C'
+          @srOverClear = true
+          @defs.push @current[0]
       for x in [ 0...@stepRepeat.x ]
-        for y in [ 0...@stepRepeat.x ]
+        for y in [ 0...@stepRepeat.y ]
           unless x is 0 and y is 0
             u = { use: { 'xlink:href': '#'+srId } }
             u.use.x = x*@stepRepeat.i if x isnt 0
