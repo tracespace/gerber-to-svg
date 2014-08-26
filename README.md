@@ -128,7 +128,7 @@ drillString = gerberToSvg drillObj
 ```
 
 ## what you get
-Since Gerber is just an image format, this library does not attempt to identify nor infer anything about what the file represents (e.g. a copper layer, a silkscreen layer, etc.) It just takes in a Gerber and spits out an SVG. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/files/downloads/file/81/the_gerber_file_format_specification.pdf?d69271f6602e26ab2474ad625fe40c97). Most of the Gerber file features are there.
+Since Gerber is just an image format, this library does not attempt to identify nor infer anything about what the file represents (e.g. a copper layer, a silkscreen layer, etc.) It just takes in a Gerber and spits out an SVG. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/files/downloads/file/81/the_gerber_file_format_specification.pdf?d69271f6602e26ab2474ad625fe40c97). All the Gerber image features should be there.
 
 Everywhere that is "dark" or "exposed" in the Gerber (think a copper trace
 or a line on the silkscreen) will be "currentColor" in the SVG. You can set this
@@ -141,18 +141,20 @@ SVG masks and groups.
 The bounding box is carefully calculated as the Gerber's being converted, so the `width` and `height` of the resulting SVG should be nearly (if not exactly) the real world size of the Gerber image. The SVG's `viewBox` is in Gerber units, so its `min-x` and `min-y` values can be used to align SVGs generated from different board layers.
 
 ## things to watch out for
-Step and repeat is very much a work in progress. If your Gerber file uses step
-and repeat (i.e. contains at least one %SRX_Y_I_J_\*% where one or both of the
-numbers after X and Y are **not** 1) and is only one polarity (i.e. %LPC*%
-doesn't appear anywhere in your file), you should be fine. If you have both step
-and repeat and clear layers, though, don't necessarily trust whatever it returns
-(if it doesn't throw).
+The produced image should be correct, but if issues do occur, they'll most likely be with arcs or step / repeat blocks. It's possible a floating point rounding error or several could throw things off.
 
-Arcs should work, but they've tended to give me trouble. If you see something
-circular and weird, that could be why.
+Certain exceptions to the spec have been made to allow some older and/or improperly written files to process, but if they're not technically to spec, they won't necessarily process without throwing an error. Try / catches are your friend.
 
 If it messes up, open up an issue and attach your Gerber, if you can. I
 appreciate files to test on.
+
+### problems with drill files
+If your drill file is a wildly different size than your Gerbers, or the offset is completely off, check for these things:
+
+* The drill file processor assumes 2:4 precision for inches and 3:3 precision for millimeters
+* Leading zero suppression (identical to no suppression and keep trailing zeros in Excellon speak) will be assumed if left unspecified
+* Absolute coordinates will be assumed if left unspecified
+* Check that your CAD packages isn't offsetting the drill file to prevent negative coordinates
 
 ## building from source
 
