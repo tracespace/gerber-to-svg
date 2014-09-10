@@ -62,7 +62,7 @@ gulp.task 'test', ->
       globals: {
         should: require 'should'
         coffee: require 'coffee-script/register'
-      #  stack: Error.stackTraceLimit = 3
+        stack: Error.stackTraceLimit = 3
       }
     }
     .on 'error', (e) ->
