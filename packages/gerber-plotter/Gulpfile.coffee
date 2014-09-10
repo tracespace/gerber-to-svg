@@ -74,7 +74,6 @@ gulp.task 'coverage', [ 'test' ], ->
     -r test/register-coffee-coverage -r should
     -R mocha-lcov-reporter', { silent: true }
     .exec()
-    #.pipe rename 'lcov.info'
     .pipe streamify coveralls()
 
 gulp.task 'testwatch', ['test' ], ->
