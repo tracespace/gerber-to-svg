@@ -37,6 +37,7 @@ class Plotter
     # operating mode
     @mode = null
     @quad = null
+    @lastOp = null
     @region = false
     @done = false
     # operation state (position and current region or trace path)
@@ -257,6 +258,11 @@ class Plotter
 
   # operate method takes the operation object
   operate: (op) ->
+    # get and set the lastOp as necessary
+    if op.do is 'last'
+      op.do = @lastOp
+      console.warn 'modal operation codes are deprecated'
+    else @lastOp = op.do
     # get the start position
     sx = @pos.x; sy = @pos.y
     # move the plotter position
