@@ -31,8 +31,11 @@ class GerberParser
   parseToolDef: (p, c) ->
     unless c.tool? then c.tool = {}
     code = p.match(/^ADD\d{2,}/)?[0][2..]
+    # get the shape and modifiers
     [shape, mods] = p[2+code.length..].split ','
     mods = mods?.split 'X'
+    # remove leading zeros from tool code
+    code = code[0] + code[2..] while code[1] is '0'
     switch shape
       # circle
       when 'C'
