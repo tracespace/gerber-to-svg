@@ -67,6 +67,7 @@ gulp.task 'test', ->
     }
     .on 'error', (e) ->
       if e.name is 'SyntaxError' then gutil.log e.stack else gutil.log e.message
+      @.emit 'end'
 
 # this is also ugly but it works
 gulp.task 'coverage', [ 'test' ], ->
