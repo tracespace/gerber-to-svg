@@ -130,10 +130,14 @@ class GerberParser
       # check for coordinate operations
       # not an else if because G codes for mode set can go inline with
       # interpolate blocks
-      if op = block.match(/D0?[123]$/)?[0]
-        op = op[op.length-1]
-        op = if op is '1' then 'int' else if op is '2' then 'move' else 'flash'
-        coord = parseCoord block.match(reCOORD)?[0], @format
+      coord = parseCoord block.match(reCOORD)?[0], @format
+      if op = block.match(/D0?[123]$/)?[0] or Object.keys(coord).length
+        if op? then op = op[op.length-1]
+        op = switch op
+          when '1' then 'int'
+          when '2' then 'move'
+          when '3' then 'flash'
+          else 'last'
         c.op = { do: op }
         c.op[axis] = val for axis, val of coord
       # check for a tool change
