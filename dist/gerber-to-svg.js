@@ -309,6 +309,9 @@ GerberParser = (function() {
     code = (_ref = p.match(/^ADD\d{2,}/)) != null ? _ref[0].slice(2) : void 0;
     _ref1 = p.slice(2 + code.length).split(','), shape = _ref1[0], mods = _ref1[1];
     mods = mods != null ? mods.split('X') : void 0;
+    while (code[1] === '0') {
+      code = code[0] + code.slice(2);
+    }
     switch (shape) {
       case 'C':
         if (mods.length > 2) {
@@ -491,10 +494,23 @@ GerberParser = (function() {
             };
         }
       }
-      if (op = (_ref7 = block.match(/D0?[123]$/)) != null ? _ref7[0] : void 0) {
-        op = op[op.length - 1];
-        op = op === '1' ? 'int' : op === '2' ? 'move' : 'flash';
-        coord = parseCoord((_ref8 = block.match(reCOORD)) != null ? _ref8[0] : void 0, this.format);
+      coord = parseCoord((_ref7 = block.match(reCOORD)) != null ? _ref7[0] : void 0, this.format);
+      if (op = ((_ref8 = block.match(/D0?[123]$/)) != null ? _ref8[0] : void 0) || Object.keys(coord).length) {
+        if (op != null) {
+          op = op[op.length - 1];
+        }
+        op = (function() {
+          switch (op) {
+            case '1':
+              return 'int';
+            case '2':
+              return 'move';
+            case '3':
+              return 'flash';
+            default:
+              return 'last';
+          }
+        })();
         c.op = {
           "do": op
         };
@@ -1648,6 +1664,7 @@ Plotter = (function() {
     this.units = null;
     this.mode = null;
     this.quad = null;
+    this.lastOp = null;
     this.region = false;
     this.done = false;
     this.pos = {
@@ -1977,6 +1994,12 @@ Plotter = (function() {
 
   Plotter.prototype.operate = function(op) {
     var bbox, ex, ey, shape, sx, sy, t, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+    if (op["do"] === 'last') {
+      op["do"] = this.lastOp;
+      console.warn('modal operation codes are deprecated');
+    } else {
+      this.lastOp = op["do"];
+    }
     sx = this.pos.x;
     sy = this.pos.y;
     if (this.notation === 'I') {
