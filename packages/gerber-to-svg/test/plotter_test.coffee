@@ -270,7 +270,6 @@ describe 'Plotter class', ->
           p.current[0].should.have.key 'path'
           p.current[0].path.should.not.have.key 'stroke-width'
 
-
       describe 'adding an arc to the path', ->
         it 'should throw an error if the tool is not circular', ->
           p.command { set: { currentTool: 'D11', mode: 'cw', quad: 's' } }
@@ -390,6 +389,28 @@ describe 'Plotter class', ->
           p.current.should.containEql {
             path: { d: ['M', 0, 0, 'L', 5, 5, 'L', 0, 5, 'L', 0, 0, 'Z' ] }
           }
+
+    describe 'modal operation codes', ->
+      it 'should throw a warning if operation codes are used modally', ->
+        hook = stderr()
+        p.command { op: { do: 'int', x: 1, y: 1 } }
+        p.command { op: { do: 'last', x: 2, y: 2 } }
+        hook.captured().should.match /modal operation/
+        hook.unhook()
+      it 'should continue a stroke if last operation was a stroke', ->
+        p.command { op: { do: 'int', x: 1, y: 1 } }
+        p.command { op: { do: 'last', x: 2, y: 2 } }
+        p.path.should.eql [ 'M', 0, 0, 'L', 1, 1, 'L', 2, 2 ]
+      it 'should move if last operation was a move', ->
+        p.command { op: { do: 'move', x: 1, y: 1 } }
+        p.command { op: { do: 'last', x: 2, y: 2 } }
+        p.pos.should.eql { x: 2, y: 2 }
+      it 'should flash if last operation was a flash', ->
+        p.command { op: { do: 'flash', x: 1, y: 1 } }
+        p.command { op: { do: 'last', x: 2, y: 2 } }
+        p.current.should.containDeep [
+          { use: { x: 1, y: 1 } }, { use: { x: 2, y: 2 } }
+        ]
 
   describe 'finish layer method', ->
     beforeEach -> p.current = [ 'item0', 'item1', 'item2' ]
