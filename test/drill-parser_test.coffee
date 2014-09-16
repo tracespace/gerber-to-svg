@@ -41,17 +41,29 @@ describe 'NC drill file parser', ->
     p.parseCommand 'X50Y15500'
     p.format.zero.should.eql 'L'
     hook.captured().should.match /assuming leading zero suppression/
-    hook.unhook
+    hook.unhook()
+  it 'should warn and fall back to 2:4 format if unspecified', ->
+    p.format.zero = 'L'
+    p.format.places?.should.not.be.true
+    hook = require('./stream-capture')(process.stderr)
+    p.parseCommand 'X50Y15500'
+    p.format.places.should.eql [ 2, 4 ]
+    hook.captured().should.match /assuming 2\:4/
+    hook.unhook()
   it 'should use 3.3 format for metric and 2.4 for inches', ->
     p.parseCommand 'INCH'
     p.format.places.should.eql [ 2, 4 ]
     p.parseCommand 'METRIC'
     p.format.places.should.eql [ 3, 3 ]
-  it 'should return a define tool command for tool definitions', ->
-    p.parseCommand 'T1C0.015'
-      .should.eql { tool: { T1: { dia: 0.015 } } }
-    p.parseCommand 'T13C0.142'
-      .should.eql { tool: { T13: { dia: 0.142 } } }
+  describe 'tool definitions', ->
+    it 'should return a define tool command for tool definitions', ->
+      p.parseCommand 'T1C0.015'
+        .should.eql { tool: { T1: { dia: 0.015 } } }
+      p.parseCommand 'T13C0.142'
+        .should.eql { tool: { T13: { dia: 0.142 } } }
+    it 'should ignore feedrate and spindle speed', ->
+      p.parseCommand 'T1C0.01F100S5'
+        .should.eql { tool: { T1: { dia: 0.01 } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}

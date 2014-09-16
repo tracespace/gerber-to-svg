@@ -14,8 +14,9 @@ INC_COMMAND = 'G91'
 # drill coordinate
 reCOORD = /([XY]-?\d*){1,2}/
 
-# backup zero suppression
+# backup zero suppression and format
 ZERO_BACKUP = 'L'
+PLACES_BACKUP = [ 2, 4 ]
 
 class DrillParser
   constructor: ->
@@ -56,7 +57,7 @@ class DrillParser
     # tool definition
     else if ( code = block.match(/T\d+/)?[0] )
       # tool definition
-      if ( dia = block.match(/C[\d\.]+(?=$)/)?[0] )
+      if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
         dia = Number dia[1..]
         command.tool = {}
         command.tool[code] = { dia: dia }
@@ -80,6 +81,10 @@ class DrillParser
         console.warn 'no drill file zero suppression specified. assuming
           leading zero suppression (same as no zero suppression)'
         @format.zero = ZERO_BACKUP
+      # check for format
+      unless @format.places?
+        console.warn 'no drill file units specified; assuming 2:4 inches format'
+        @format.places = PLACES_BACKUP
       command.op[k] = v for k, v of parseCoord block, @format
 
     # return the command

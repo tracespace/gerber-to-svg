@@ -130,10 +130,13 @@ describe 'Plotter class', ->
         hook.unhook()
         p.units.should.eql 'in'
 
-      it 'should throw if units and backup units are not set', ->
+      it 'should assume inches if units and backup units are not set', ->
         p.units = null
-        (-> p.command { op: { do: 'int', x: 1, y: 1 } })
-          .should.throw /units/
+        hook = stderr()
+        p.command { op: { do: 'int', x: 1, y: 1 } }
+        hook.captured().should.match /no units/
+        hook.unhook()
+        p.units.should.eql 'in'
 
       it 'should throw if notation is not set', ->
         p.notation = null
