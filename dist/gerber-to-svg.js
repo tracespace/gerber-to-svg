@@ -146,7 +146,7 @@ module.exports = function(coord, format) {
 
 
 },{}],3:[function(require,module,exports){
-var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, ZERO_BACKUP, parseCoord, reCOORD;
+var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
@@ -164,6 +164,8 @@ INC_COMMAND = 'G91';
 reCOORD = /([XY]-?\d*){1,2}/;
 
 ZERO_BACKUP = 'L';
+
+PLACES_BACKUP = [2, 4];
 
 DrillParser = (function() {
   function DrillParser() {
@@ -201,7 +203,7 @@ DrillParser = (function() {
         notation: 'inc'
       };
     } else if ((code = (_ref = block.match(/T\d+/)) != null ? _ref[0] : void 0)) {
-      if ((dia = (_ref1 = block.match(/C[\d\.]+(?=$)/)) != null ? _ref1[0] : void 0)) {
+      if ((dia = (_ref1 = block.match(/C[\d\.]+(?=.*$)/)) != null ? _ref1[0] : void 0)) {
         dia = Number(dia.slice(1));
         command.tool = {};
         command.tool[code] = {
@@ -225,6 +227,10 @@ DrillParser = (function() {
       if (this.format.zero == null) {
         console.warn('no drill file zero suppression specified. assuming leading zero suppression (same as no zero suppression)');
         this.format.zero = ZERO_BACKUP;
+      }
+      if (this.format.places == null) {
+        console.warn('no drill file units specified; assuming 2:4 inches format');
+        this.format.places = PLACES_BACKUP;
       }
       _ref2 = parseCoord(block, this.format);
       for (k in _ref2) {
@@ -1615,7 +1621,7 @@ module.exports = {
 
 
 },{"./unique-id":13}],11:[function(require,module,exports){
-var HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, arcEps, tool, unique;
+var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, arcEps, tool, unique;
 
 unique = require('./unique-id');
 
@@ -1630,6 +1636,8 @@ THREEHALF_PI = 3 * HALF_PI;
 TWO_PI = 2 * Math.PI;
 
 arcEps = 0.0000001;
+
+ASSUMED_UNITS = 'in';
 
 Plotter = (function() {
   function Plotter(file, Reader, Parser) {
@@ -2017,7 +2025,8 @@ Plotter = (function() {
         this.units = this.backupUnits;
         console.warn("Warning: units set to '" + this.units + "' according to deprecated command G7" + (this.units === 'in' ? 0 : 1));
       } else {
-        throw new Error('units have not been set');
+        this.units = ASSUMED_UNITS;
+        console.warn("Warning: no units set; assuming inches");
       }
     }
     if (this.notation == null) {
