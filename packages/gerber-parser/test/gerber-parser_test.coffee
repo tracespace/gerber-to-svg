@@ -196,7 +196,7 @@ describe 'gerber command parser', ->
       p.parseCommand(block 'X1Y1D3').should.eql {
         op: { do: 'flash', x: 0.01, y: 0.01 }
       }
-    it 'should interpolat with an inline mode set', ->
+    it 'should interpolate with an inline mode set', ->
       p.parseCommand(block 'G01X01Y01D01').should.eql {
         set: { mode: 'i' }, op: { do: 'int', x: 0.01, y:0.01 }
       }
@@ -205,4 +205,8 @@ describe 'gerber command parser', ->
       }
       p.parseCommand(block 'G03X01Y01D01').should.eql {
         set: { mode: 'ccw' }, op: { do: 'int', x: 0.01, y:0.01 }
+      }
+    it 'should send a last operation command if the op code is missing', ->
+      p.parseCommand(block 'X01Y01').should.eql {
+        op: { do: 'last', x: 0.01, y: 0.01 }
       }
