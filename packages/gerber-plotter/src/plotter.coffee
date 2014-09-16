@@ -13,6 +13,8 @@ THREEHALF_PI = 3*HALF_PI
 TWO_PI = 2*Math.PI
 # error epsilon
 arcEps = 0.0000001
+# assumed units
+ASSUMED_UNITS = 'in'
 
 class Plotter
   constructor: (file = '', Reader, Parser) ->
@@ -281,7 +283,9 @@ class Plotter
         @units = @backupUnits
         console.warn "Warning: units set to '#{@units}' according to
                       deprecated command G7#{if @units is 'in' then 0 else 1}"
-      else throw new Error 'units have not been set'
+      else
+        @units = ASSUMED_UNITS
+        console.warn "Warning: no units set; assuming inches"
     unless @notation?
       # if drill file, assume absolute notation
       if @parser?.fmat? then @notation = 'A'
