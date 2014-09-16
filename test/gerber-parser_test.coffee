@@ -37,6 +37,13 @@ describe 'gerber command parser', ->
       (-> p.parseCommand(param 'FSpoop')).should.throw /invalid/
 
   describe 'parsing an aperture definition', ->
+    it 'should remove leading zeros from the tool code string', ->
+      p.parseCommand(param 'ADD010C,1').should.eql {
+        tool: { D10: { dia: 1 } }
+      }
+      p.parseCommand(param 'ADD0011C,1').should.eql {
+        tool: { D11: { dia: 1 } }
+      }
     describe 'with standard tools', ->
       it 'should handle standard circles', ->
         p.parseCommand(param 'ADD10C,1').should.eql {
