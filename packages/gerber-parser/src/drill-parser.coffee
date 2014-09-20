@@ -37,6 +37,8 @@ class DrillParser
     # format 1 command
     # this will likely never happen
     if block is 'FMAT,1' then @fmat = block
+    # end of file
+    else if block is 'M30' or block is 'M00' then command.set = { done: true }
     # inches command
     else if block is INCH_COMMAND[@fmat] or block.match /INCH/
       # set the format to 2.4
