@@ -16,6 +16,9 @@ describe 'NC drill file parser', ->
     p.parseCommand(';INCH,TZ').should.eql {}
     p.fmat.should.eql initialFmat
     p.format.should.eql initialFormat
+  it 'should return a done command with M00 or M30', ->
+    p.parseCommand('M00').should.eql { set: { done: true } }
+    p.parseCommand('M30').should.eql { set: { done: true } }
   it 'should return a set units command with INCH and METRIC', ->
     p.parseCommand('INCH').should.eql { set: { units: 'in' } }
     p.parseCommand('METRIC').should.eql { set: { units: 'mm' } }

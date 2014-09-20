@@ -139,7 +139,7 @@ class Plotter
         if not @parser?.fmat?
           throw new Error 'end of file encountered before required M02 command'
         else
-          @done = true
+          throw new Error 'end of drill file encountered before M00/M30 command'
       else
         @command @parser.parseCommand block
     # finish and return the xml object
