@@ -376,6 +376,7 @@ class Plotter
   # draw an arc with the start point, end point, and center offset
   drawArc: (sx, sy, ex, ey, i, j) ->
     # use a seriously low epsilon constant
+    # this value is too small and causing problems. re-evaluate
     arcEps = 1.01 * 10**-( (@parser?.format.places[1] ? 6 ) - 1 )
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
