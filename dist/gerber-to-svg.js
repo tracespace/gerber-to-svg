@@ -184,6 +184,10 @@ DrillParser = (function() {
     }
     if (block === 'FMAT,1') {
       this.fmat = block;
+    } else if (block === 'M30' || block === 'M00') {
+      command.set = {
+        done: true
+      };
     } else if (block === INCH_COMMAND[this.fmat] || block.match(/INCH/)) {
       this.format.places = [2, 4];
       command.set = {
@@ -1817,7 +1821,7 @@ Plotter = (function() {
         if (((_ref = this.parser) != null ? _ref.fmat : void 0) == null) {
           throw new Error('end of file encountered before required M02 command');
         } else {
-          this.done = true;
+          throw new Error('end of drill file encountered before M00/M30 command');
         }
       } else {
         this.command(this.parser.parseCommand(block));
