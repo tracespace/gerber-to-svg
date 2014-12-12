@@ -59,11 +59,13 @@ class DrillParser
     # tool definition
     else if ( code = block.match(/T\d+/)?[0] )
       # tool definition
+      toolCode = "T#{Number code[1..]}"
       if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
         dia = Number dia[1..]
         command.tool = {}
-        command.tool[code] = { dia: dia }
-      else command.set = { currentTool: code }
+        command.tool[toolCode] = { dia: dia }
+      else
+        command.set = { currentTool: toolCode }
 
     # allow this to be tacked on the end of a command to be lenient
     # we're assuming trailing zero suppression, so we only care if the opposite
