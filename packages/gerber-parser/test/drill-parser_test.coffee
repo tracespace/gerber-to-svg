@@ -67,6 +67,9 @@ describe 'NC drill file parser', ->
     it 'should ignore feedrate and spindle speed', ->
       p.parseCommand 'T1C0.01F100S5'
         .should.eql { tool: { T1: { dia: 0.01 } } }
+    it 'should ignore leading zeros in tool name', ->
+      p.parseCommand 'T01C0.015'
+        .should.eql { tool: { T1: { dia: 0.015 } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}
@@ -75,6 +78,8 @@ describe 'NC drill file parser', ->
   it 'should return a set tool for a bare tool number', ->
     p.parseCommand('T1').should.eql { set: { currentTool: 'T1' } }
     p.parseCommand('T14').should.eql { set: { currentTool: 'T14' } }
+  it 'should ignore leading zeros in tool name', ->
+    p.parseCommand('T01').should.eql { set: { currentTool: 'T1' } }
   it 'should return a set notation to abs with G90', ->
     p.parseCommand('G90').should.eql { set: { notation: 'abs' } }
   it 'should return a set notation to inc with G91', ->
@@ -127,8 +132,8 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('T01X01Y01').should.eql {
-        set: { currentTool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1, y: 1 }
       }
       p.parseCommand('X01Y01T01').should.eql {
-        set: { currentTool: 'T01' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1, y: 1 }
       }
