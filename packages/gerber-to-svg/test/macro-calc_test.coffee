@@ -1,4 +1,6 @@
 # tests for the macro arithmetic calc
+# take over the alert module
+alert = require '../src/alert'
 calc = require '../src/macro-calc'
 tokenize = calc.tokenize
 isNumber = calc.isNumber
@@ -39,3 +41,17 @@ describe 'macro arithmetic calculator', ->
         }
         right: { type: 'n', val: '3'}
       }
+  
+  describe 'exceptions to the rules', ->
+    it "should allow an 'X' as a symbol, but warn that is should be 'x'", ->
+      warnBuf = ''
+      warning = (message) ->
+        console.log message
+        warnBuf = message
+      alert.setWarn warning
+      parse('1X2').should.eql {
+        type: 'x'
+        left: { type: 'n', val: '1' }
+        right: { type: 'n', val: '2' }
+      }
+      warnBuf.should.match /uppercase 'X' as multiplication symbol/

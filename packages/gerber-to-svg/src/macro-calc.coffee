@@ -1,5 +1,8 @@
 # parser for arithmetic expressions in gerber aperture macros
 
+# alert module
+alert = require('./alert').warn
+
 # regex matches
 OPERATOR = /[\+\-\/xX\(\)]/
 NUMBER = /[\$\d\.]+/
