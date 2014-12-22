@@ -12,7 +12,7 @@ ABS_COMMAND = 'G90'
 INC_COMMAND = 'G91'
 
 # drill coordinate
-reCOORD = /([XY]-?\d*){1,2}/
+reCOORD = /[XY]{1,2}/
 
 # backup zero suppression and format
 ZERO_BACKUP = 'L'

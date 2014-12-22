@@ -17,8 +17,8 @@ module.exports = ( coord, format ) ->
   for key, val of parse
     if val?
       # decimal numbers are parsed as is
-      if (val.indexOf '.') isnt -1
-        result[key] = Number(val)
+      if '.' in val then result[key] = Number(val)
+      # else, parse according to format
       else
         divisor = 1
         if val[0] is '+' or val[0] is '-'
