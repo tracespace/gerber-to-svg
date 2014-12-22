@@ -247,6 +247,8 @@ class MacroTool
         if @bbox[1] is null or y < @bbox[1] then @bbox[1] = y
         if @bbox[2] is null or x > @bbox[2] then @bbox[2] = x
         if @bbox[3] is null or y > @bbox[3] then @bbox[3] = y
+      # clear out any -0s for better svg output and tests
+      @bbox = ((if b is -0 then 0 else b) for b in @bbox)
 
   # parse a number in the format of a float string, a modifier, or a math string
   getNumber: (s) ->
