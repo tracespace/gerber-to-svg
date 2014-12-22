@@ -59,7 +59,8 @@ class GerberParser
         if hole? then c.tool[code].hole = hole
       # else aperture macro
       else
-        c.tool[code] = { macro: shape, mods: mods ? [] }
+        mods = (+m for m in (mods ? []))
+        c.tool[code] = { macro: shape, mods: mods }
 
   # parse a block for the command
   parseCommand: (block = {}) ->
@@ -103,7 +104,7 @@ class GerberParser
             # check for valid numbers and such
             if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
               throw new Error 'invalid step repeat'
-            c.new.sr = { x: x, y: y }
+            c.new.sr = { x: +x, y: +y }
             if i? then c.new.sr.i = +i
             if j? then c.new.sr.j = +j
     else if block = block.block

@@ -1,6 +1,6 @@
 {
   "name": "gerber-to-svg",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Gerber and NC drill file to SVG converter",
   "main": "lib/gerber-to-svg.js",
   "bin": {
@@ -36,7 +36,7 @@
     "coffeeify": "^0.7.0",
     "gulp": "^3.8.5",
     "gulp-coffee": "^2.0.1",
-    "gulp-coveralls": "^0.1.2",
+    "gulp-coveralls": "^0.1.2", 
     "gulp-mocha": "^0.4.1",
     "gulp-rename": "^1.2.0",
     "gulp-run": "^1.6.3",

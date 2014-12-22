@@ -312,7 +312,7 @@ GerberParser = (function() {
   };
 
   GerberParser.prototype.parseToolDef = function(p, c) {
-    var code, hole, mods, shape, _ref, _ref1;
+    var code, hole, m, mods, shape, _ref, _ref1;
     if (c.tool == null) {
       c.tool = {};
     }
@@ -387,9 +387,19 @@ GerberParser = (function() {
         }
         break;
       default:
+        mods = (function() {
+          var _i, _len, _ref2, _results;
+          _ref2 = mods != null ? mods : [];
+          _results = [];
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            m = _ref2[_i];
+            _results.push(+m);
+          }
+          return _results;
+        })();
         return c.tool[code] = {
           macro: shape,
-          mods: mods != null ? mods : []
+          mods: mods
         };
     }
   };
@@ -450,8 +460,8 @@ GerberParser = (function() {
               throw new Error('invalid step repeat');
             }
             c["new"].sr = {
-              x: x,
-              y: y
+              x: +x,
+              y: +y
             };
             if (i != null) {
               c["new"].sr.i = +i;
@@ -1028,7 +1038,7 @@ MacroTool = (function() {
   };
 
   MacroTool.prototype.addBbox = function(bbox, rotation) {
-    var c, p, points, s, x, y, _i, _len, _results;
+    var b, c, p, points, s, x, y, _i, _len;
     if (rotation == null) {
       rotation = 0;
     }
@@ -1055,7 +1065,6 @@ MacroTool = (function() {
         c = 0;
       }
       points = [[bbox[0], bbox[1]], [bbox[2], bbox[1]], [bbox[2], bbox[3]], [bbox[0], bbox[3]]];
-      _results = [];
       for (_i = 0, _len = points.length; _i < _len; _i++) {
         p = points[_i];
         x = p[0] * c - p[1] * s;
@@ -1070,12 +1079,19 @@ MacroTool = (function() {
           this.bbox[2] = x;
         }
         if (this.bbox[3] === null || y > this.bbox[3]) {
-          _results.push(this.bbox[3] = y);
-        } else {
-          _results.push(void 0);
+          this.bbox[3] = y;
         }
       }
-      return _results;
+      return this.bbox = (function() {
+        var _j, _len1, _ref, _results;
+        _ref = this.bbox;
+        _results = [];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          b = _ref[_j];
+          _results.push(b === -0 ? 0 : b);
+        }
+        return _results;
+      }).call(this);
     }
   };
 
