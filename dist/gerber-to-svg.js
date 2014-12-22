@@ -106,6 +106,8 @@ module.exports = function(gerber, options) {
 
 
 },{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11}],2:[function(require,module,exports){
+var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
 module.exports = function(coord, format) {
   var divisor, key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
   if (coord == null) {
@@ -116,28 +118,32 @@ module.exports = function(coord, format) {
   }
   parse = {};
   result = {};
-  parse.x = (_ref = coord.match(/X[+-]?\d+/)) != null ? (_ref1 = _ref[0]) != null ? _ref1.slice(1) : void 0 : void 0;
-  parse.y = (_ref2 = coord.match(/Y[+-]?\d+/)) != null ? (_ref3 = _ref2[0]) != null ? _ref3.slice(1) : void 0 : void 0;
-  parse.i = (_ref4 = coord.match(/I[+-]?\d+/)) != null ? (_ref5 = _ref4[0]) != null ? _ref5.slice(1) : void 0 : void 0;
-  parse.j = (_ref6 = coord.match(/J[+-]?\d+/)) != null ? (_ref7 = _ref6[0]) != null ? _ref7.slice(1) : void 0 : void 0;
+  parse.x = (_ref = coord.match(/X[+-]?[\d\.]+/)) != null ? (_ref1 = _ref[0]) != null ? _ref1.slice(1) : void 0 : void 0;
+  parse.y = (_ref2 = coord.match(/Y[+-]?[\d\.]+/)) != null ? (_ref3 = _ref2[0]) != null ? _ref3.slice(1) : void 0 : void 0;
+  parse.i = (_ref4 = coord.match(/I[+-]?[\d\.]+/)) != null ? (_ref5 = _ref4[0]) != null ? _ref5.slice(1) : void 0 : void 0;
+  parse.j = (_ref6 = coord.match(/J[+-]?[\d\.]+/)) != null ? (_ref7 = _ref6[0]) != null ? _ref7.slice(1) : void 0 : void 0;
   for (key in parse) {
     val = parse[key];
     if (val != null) {
-      divisor = 1;
-      if (val[0] === '+' || val[0] === '-') {
-        if (val[0] === '-') {
-          divisor = -1;
-        }
-        val = val.slice(1);
-      }
-      if (format.zero === 'L') {
-        divisor *= Math.pow(10, format.places[1]);
-      } else if (format.zero === 'T') {
-        divisor *= Math.pow(10, val.length - format.places[0]);
+      if (__indexOf.call(val, '.') >= 0) {
+        result[key] = Number(val);
       } else {
-        throw new Error('invalid zero suppression format');
+        divisor = 1;
+        if (val[0] === '+' || val[0] === '-') {
+          if (val[0] === '-') {
+            divisor = -1;
+          }
+          val = val.slice(1);
+        }
+        if (format.zero === 'L') {
+          divisor *= Math.pow(10, format.places[1]);
+        } else if (format.zero === 'T') {
+          divisor *= Math.pow(10, val.length - format.places[0]);
+        } else {
+          throw new Error('invalid zero suppression format');
+        }
+        result[key] = Number(val) / divisor;
       }
-      result[key] = Number(val) / divisor;
     }
   }
   return result;
@@ -161,7 +167,7 @@ ABS_COMMAND = 'G90';
 
 INC_COMMAND = 'G91';
 
-reCOORD = /([XY]-?\d*){1,2}/;
+reCOORD = /[XY]{1,2}/;
 
 ZERO_BACKUP = 'L';
 
