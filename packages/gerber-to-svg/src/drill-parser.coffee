@@ -58,12 +58,15 @@ class DrillParser
 
     # tool definition
     else if ( code = block.match(/T\d+/)?[0] )
-      # tool definition
+      # remove leading zeros from tool code
+      code = code[0] + code[2..] while code[1] is '0'
+      # issue a create tool command or a set tool command
       if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
         dia = Number dia[1..]
         command.tool = {}
         command.tool[code] = { dia: dia }
-      else command.set = { currentTool: code }
+      else
+        command.set = { currentTool: code }
 
     # allow this to be tacked on the end of a command to be lenient
     # we're assuming trailing zero suppression, so we only care if the opposite
