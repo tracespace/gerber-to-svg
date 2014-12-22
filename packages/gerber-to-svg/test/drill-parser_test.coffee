@@ -137,3 +137,13 @@ describe 'NC drill file parser', ->
       p.parseCommand('X01Y01T01').should.eql {
         set: { currentTool: 'T1' }, op: { do: 'flash', x: 1, y: 1 }
       }
+    it 'should parse decimal coordinates verbatim', ->
+      p.format.zero = 'L'
+      p.format.places = [2,4]
+      p.parseCommand('X0.7550Y1.4000').should.eql {
+        op: { do: 'flash', x: 0.755, y: 1.4 }
+      }
+      p.format.places = [3,3]
+      p.parseCommand('X7.550Y14').should.eql {
+        op: { do: 'flash', x: 7.55, y: 0.014 }
+      }
