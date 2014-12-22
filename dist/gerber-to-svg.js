@@ -106,6 +106,8 @@ module.exports = function(gerber, options) {
 
 
 },{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11}],2:[function(require,module,exports){
+var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
 module.exports = function(coord, format) {
   var divisor, key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
   if (coord == null) {
@@ -123,7 +125,7 @@ module.exports = function(coord, format) {
   for (key in parse) {
     val = parse[key];
     if (val != null) {
-      if ((val.indexOf('.')) !== -1) {
+      if (__indexOf.call(val, '.') >= 0) {
         result[key] = Number(val);
       } else {
         divisor = 1;
@@ -165,7 +167,7 @@ ABS_COMMAND = 'G90';
 
 INC_COMMAND = 'G91';
 
-reCOORD = /([XY]-?\d*){1,2}/;
+reCOORD = /[XY]{1,2}/;
 
 ZERO_BACKUP = 'L';
 
