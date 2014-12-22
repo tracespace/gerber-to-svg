@@ -207,6 +207,9 @@ DrillParser = (function() {
         notation: 'inc'
       };
     } else if ((code = (_ref = block.match(/T\d+/)) != null ? _ref[0] : void 0)) {
+      while (code[1] === '0') {
+        code = code[0] + code.slice(2);
+      }
       if ((dia = (_ref1 = block.match(/C[\d\.]+(?=.*$)/)) != null ? _ref1[0] : void 0)) {
         dia = Number(dia.slice(1));
         command.tool = {};
