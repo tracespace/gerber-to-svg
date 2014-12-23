@@ -8,6 +8,9 @@ module.exports = ( numberString, format ) ->
   typeof format?.places?[1] isnt 'number'
     return NaN
   
+  # make sure we're dealing with a string
+  numberString = "#{numberString}"
+  
   # pull out the sign
   sign = '+'
   if numberString[0] is '-' or numberString[0] is '+'
