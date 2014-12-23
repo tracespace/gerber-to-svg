@@ -124,12 +124,13 @@ describe 'gerber command parser', ->
 
   describe 'step repeat', ->
     it 'should return a new step repeat block with good input', ->
+      p.format.places = [2, 2]
       p.parseCommand(param 'SRX1Y1').should.eql { new: { sr: { x: 1, y: 1 } } }
       p.parseCommand(param 'SRX1Y1I0J0').should.eql {
         new: { sr: { x: 1, y: 1, i: 0, j: 0 } }
       }
       p.parseCommand(param 'SRX2Y3I2.0J3.0').should.eql {
-        new: { sr: { x: 2, y: 3, i: 2, j: 3 } }
+        new: { sr: { x: 2, y: 3, i: 200, j: 300 } }
       }
       p.parseCommand(param 'SR').should.eql { new: { sr: { x: 1, y: 1 } } }
     it 'should throw if bad input', ->
