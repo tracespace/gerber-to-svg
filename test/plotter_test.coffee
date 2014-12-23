@@ -105,7 +105,9 @@ describe 'Plotter class', ->
         xMin: -4, yMin: -1.4, xMax: 6, yMax: 8.6
       }
     describe 'tool macros', ->
-      beforeEach -> p.command { macro: [ 'AMRECT1', '21,1,$1,$2,0,0,0' ] }
+      beforeEach ->
+        p.parser = { format: { places: [2, 4] } }
+        p.command { macro: [ 'AMRECT1', '21,1,$1,$2,0,0,0' ] }
       it 'should add the macro to the macros list', ->
         p.macros.RECT1.name.should.eql 'RECT1'
       it 'should add macro tools to the tools object', ->
