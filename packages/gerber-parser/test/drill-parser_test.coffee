@@ -59,17 +59,20 @@ describe 'NC drill file parser', ->
     p.parseCommand 'METRIC'
     p.format.places.should.eql [ 3, 3 ]
   describe 'tool definitions', ->
+    beforeEach ->
+      p.format.zero = 'L'
+      p.format.places = [ 2, 4 ]
     it 'should return a define tool command for tool definitions', ->
       p.parseCommand 'T1C0.015'
-        .should.eql { tool: { T1: { dia: 0.015 } } }
+        .should.eql { tool: { T1: { dia: 150 } } }
       p.parseCommand 'T13C0.142'
-        .should.eql { tool: { T13: { dia: 0.142 } } }
+        .should.eql { tool: { T13: { dia: 1420 } } }
     it 'should ignore feedrate and spindle speed', ->
       p.parseCommand 'T1C0.01F100S5'
-        .should.eql { tool: { T1: { dia: 0.01 } } }
+        .should.eql { tool: { T1: { dia: 100 } } }
     it 'should ignore leading zeros in tool name', ->
       p.parseCommand 'T01C0.015'
-        .should.eql { tool: { T1: { dia: 0.015 } } }
+        .should.eql { tool: { T1: { dia: 1500 } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}
@@ -95,55 +98,56 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('X0016Y0158').should.eql {
-        op: { do: 'flash', x: 0.16, y: 1.58 }
+        op: { do: 'flash', x: 1600, y: 15800 }
       }
       p.parseCommand('X-01795Y0108').should.eql {
-        op: { do: 'flash', x: -1.795, y: 1.08 }
+        op: { do: 'flash', x: -17950, y: 10800 }
       }
     it 'should parse coordinates with leading zeros suppressed', ->
       p.format.zero = 'L'
       p.format.places = [2,4]
       p.parseCommand('X50Y15500').should.eql {
-        op: { do: 'flash', x: 0.0050, y: 1.55 }
+        op: { do: 'flash', x: 50, y: 15500 }
       }
       p.parseCommand('X16850Y-3300').should.eql {
-        op: { do: 'flash', x: 1.6850, y: -0.33 }
+        op: { do: 'flash', x: 16850, y: -3300 }
       }
     it 'should parse coordinates according to the places format', ->
       p.format.zero = 'L'
       p.format.places = [2,4]
       p.parseCommand('X7550Y14000').should.eql {
-        op: { do: 'flash', x: 0.755, y: 1.4 }
+        op: { do: 'flash', x: 7550, y: 14000 }
       }
       p.format.places = [3,3]
       p.parseCommand('X7550Y14').should.eql {
-        op: { do: 'flash', x: 7.55, y: 0.014 }
+        op: { do: 'flash', x: 7550, y: 14 }
       }
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('X08Y0124').should.eql {
-        op: { do: 'flash', x: 8, y: 1.24 }
+        op: { do: 'flash', x: 80000, y: 12400 }
       }
       p.format.places = [3,3]
       p.parseCommand('X08Y0124').should.eql {
-        op: { do: 'flash', x: 80, y: 12.4 }
+        op: { do: 'flash', x: 80000, y: 12400 }
+      }
+    it 'should parse decimal coordinates', ->
+      p.format.zero = 'L'
+      p.format.places = [2,4]
+      p.parseCommand('X0.7550Y1.4000').should.eql {
+        op: { do: 'flash', x: 7550, y: 14000 }
+      }
+      p.format.places = [3,3]
+      p.parseCommand('X7.550Y14').should.eql {
+        op: { do: 'flash', x: 7550, y: 14 }
       }
     it 'should recognize a tool change at the beginning or end of the line', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('T01X01Y01').should.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 10000, y: 10000 }
       }
       p.parseCommand('X01Y01T01').should.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1, y: 1 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 10000, y: 10000 }
       }
-    it 'should parse decimal coordinates verbatim', ->
-      p.format.zero = 'L'
-      p.format.places = [2,4]
-      p.parseCommand('X0.7550Y1.4000').should.eql {
-        op: { do: 'flash', x: 0.755, y: 1.4 }
-      }
-      p.format.places = [3,3]
-      p.parseCommand('X7.550Y14').should.eql {
-        op: { do: 'flash', x: 7.55, y: 0.014 }
-      }
+      

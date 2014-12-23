@@ -15,7 +15,7 @@ module.exports = ( numberString, format ) ->
     numberString = numberString[1..]
   
   # check if the number has a decimal point or has been explicitely flagged
-  if ('.' in numberString) or (format.zero is 'D')
+  if ('.' in numberString) or (not format.zero?)
     # make sure there's not more than one decimal
     subNumbers = numberString.split '.'
     if subNumbers.length > 2 then return NaN
@@ -31,8 +31,6 @@ module.exports = ( numberString, format ) ->
   else if format.zero is 'T'
     while numberString.length < format.places[0] + format.places[1]
       numberString += '0'
-  # else return NaN if there was no zero format
-  else if not format.zero? then return NaN
     
   # finally, parse the numberString
   parseInt(sign + numberString)
