@@ -110,7 +110,7 @@ describe 'Plotter class', ->
         p.macros.RECT1.name.should.eql 'RECT1'
       it 'should add macro tools to the tools object', ->
         p.command { tool: { D10: { macro: 'RECT1', mods: [ 2, 1 ] } } }
-        p.tools.D10.pad.should.containDeep [ { rect: { width: 2, height: 1 } }  ]
+        p.tools.D10.pad.should.containDeep [ { rect: {} }  ]
 
   describe 'operating', ->
     beforeEach ->
