@@ -110,7 +110,7 @@ describe 'tool macro class', ->
       it 'should be able to rotate the line', ->
         m.primitive [2, 1, 5, 1, 0, 10, 0, 90]
         m.shapes.should.containDeep [ { line: { transform: 'rotate(90)' } } ]
-        m.bbox.should.eql [ -2500, 100, 2500, 1000 ]
+        m.bbox.should.eql [ -250, 100, 250, 1000 ]
     describe 'for center rects', ->
       it 'should add a center rect to the shapes and bbox', ->
         m.primitive [21, 1, 4, 5, 1, 2, 0]
