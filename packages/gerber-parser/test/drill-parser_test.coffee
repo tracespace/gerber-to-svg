@@ -72,7 +72,7 @@ describe 'NC drill file parser', ->
         .should.eql { tool: { T1: { dia: 100 } } }
     it 'should ignore leading zeros in tool name', ->
       p.parseCommand 'T01C0.015'
-        .should.eql { tool: { T1: { dia: 1500 } } }
+        .should.eql { tool: { T1: { dia: 150 } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}
