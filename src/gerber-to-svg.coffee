@@ -50,13 +50,14 @@ module.exports = (gerber, options = {}) ->
     p.bbox.yMax = 0
     height = 0
   # create an xml object
+  unitDivisor = 10 ** p.parser?.format?.places?[1] || 1
   xml = {
     svg: {
       xmlns: 'http://www.w3.org/2000/svg'
       version: '1.1'
       'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-      width: "#{width}#{p.units}"
-      height: "#{height}#{p.units}"
+      width: "#{width/unitDivisor}#{p.units}"
+      height: "#{height/unitDivisor}#{p.units}"
       viewBox: [ p.bbox.xMin, p.bbox.yMin, width, height ]
       _: []
     }
