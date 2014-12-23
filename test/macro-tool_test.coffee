@@ -157,7 +157,7 @@ describe 'tool macro class', ->
         m.bbox.should.eql [ -250, -250, 250, 250 ]
       it 'should be able to rotate the polygon if the center is 0,0', ->
         m.primitive [5, 1, 4, 0, 0, 5, 45]
-        d = 2500 / Math.sqrt 2
+        d = 250 / Math.sqrt 2
         Math.abs(m.bbox[0]+d).should.be.below 0.000000001
         Math.abs(m.bbox[1]+d).should.be.below 0.000000001
         Math.abs(m.bbox[2]-d).should.be.below 0.000000001
@@ -242,7 +242,7 @@ describe 'tool macro class', ->
             mask: {
               _: [
                 { rect:{ x:-500, y:-500, width:1000, height:1000, fill:'#fff' }}
-                { circle: { cx: 0, cy: 0, r: 2500, fill: '#000' } }
+                { circle: { cx: 0, cy: 0, r: 250, fill: '#000' } }
               ]
             }
           }
@@ -280,7 +280,7 @@ describe 'tool macro class', ->
         m.masks.length.should.equal 1
         m.masks[0].mask._.length.should.equal 3
         m.masks[0].mask._.should.containDeep [
-          { rect: { width: 10 } }, { circle: { r: 150 } }, { circle: { r: 100} }
+          { rect: { width: 1000 } }, { circle: { r:150 } }, { circle: { r:100} }
         ]
 
   describe 'getNumber method', ->
