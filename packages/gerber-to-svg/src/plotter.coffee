@@ -97,7 +97,10 @@ class Plotter
   # handle a command that comes in from the parser
   command: (c) ->
     # if the command is a macro command, it's going to appear alone
-    if c.macro? then m = new Macro c.macro; @macros[m.name] = m; return
+    if c.macro?
+      m = new Macro c.macro, @parser.format.places
+      @macros[m.name] = m
+      return
 
     # if there's a set command
     for state, val of c.set

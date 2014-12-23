@@ -18,7 +18,7 @@ DEFAULT_OPTS = {
 };
 
 module.exports = function(gerber, options) {
-  var Parser, Reader, a, error, height, key, opts, p, val, width, xml, xmlObject, _ref;
+  var Parser, Reader, a, error, height, key, opts, p, unitDivisor, val, width, xml, xmlObject, _ref, _ref1, _ref2, _ref3;
   if (options == null) {
     options = {};
   }
@@ -68,20 +68,21 @@ module.exports = function(gerber, options) {
     p.bbox.yMax = 0;
     height = 0;
   }
+  unitDivisor = Math.pow(10, (_ref = p.parser) != null ? (_ref1 = _ref.format) != null ? (_ref2 = _ref1.places) != null ? _ref2[1] : void 0 : void 0 : void 0) || 1;
   xml = {
     svg: {
       xmlns: 'http://www.w3.org/2000/svg',
       version: '1.1',
       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-      width: "" + width + p.units,
-      height: "" + height + p.units,
+      width: "" + (width / unitDivisor) + p.units,
+      height: "" + (height / unitDivisor) + p.units,
       viewBox: [p.bbox.xMin, p.bbox.yMin, width, height],
       _: []
     }
   };
-  _ref = p.attr;
-  for (a in _ref) {
-    val = _ref[a];
+  _ref3 = p.attr;
+  for (a in _ref3) {
+    val = _ref3[a];
     xml.svg[a] = val;
   }
   if (p.defs.length) {
@@ -105,11 +106,13 @@ module.exports = function(gerber, options) {
 
 
 
-},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11}],2:[function(require,module,exports){
-var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":10,"./plotter":12}],2:[function(require,module,exports){
+var getInteger;
+
+getInteger = require('./get-integer');
 
 module.exports = function(coord, format) {
-  var divisor, key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+  var key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
   if (coord == null) {
     return {};
   }
@@ -125,25 +128,7 @@ module.exports = function(coord, format) {
   for (key in parse) {
     val = parse[key];
     if (val != null) {
-      if (__indexOf.call(val, '.') >= 0) {
-        result[key] = Number(val);
-      } else {
-        divisor = 1;
-        if (val[0] === '+' || val[0] === '-') {
-          if (val[0] === '-') {
-            divisor = -1;
-          }
-          val = val.slice(1);
-        }
-        if (format.zero === 'L') {
-          divisor *= Math.pow(10, format.places[1]);
-        } else if (format.zero === 'T') {
-          divisor *= Math.pow(10, val.length - format.places[0]);
-        } else {
-          throw new Error('invalid zero suppression format');
-        }
-        result[key] = Number(val) / divisor;
-      }
+      result[key] = getInteger(val, format);
     }
   }
   return result;
@@ -151,10 +136,12 @@ module.exports = function(coord, format) {
 
 
 
-},{}],3:[function(require,module,exports){
-var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, parseCoord, reCOORD;
+},{"./get-integer":7}],3:[function(require,module,exports){
+var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getInteger, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
+
+getInteger = require('./get-integer');
 
 INCH_COMMAND = {
   'FMAT,1': 'M70',
@@ -217,10 +204,12 @@ DrillParser = (function() {
         code = code[0] + code.slice(2);
       }
       if ((dia = (_ref1 = block.match(/C[\d\.]+(?=.*$)/)) != null ? _ref1[0] : void 0)) {
-        dia = Number(dia.slice(1));
+        dia = dia.slice(1);
         command.tool = {};
         command.tool[code] = {
-          dia: dia
+          dia: getInteger(dia, {
+            places: this.format.places
+          })
         };
       } else {
         command.set = {
@@ -262,7 +251,7 @@ module.exports = DrillParser;
 
 
 
-},{"./coord-parser":2}],4:[function(require,module,exports){
+},{"./coord-parser":2,"./get-integer":7}],4:[function(require,module,exports){
 var DrillReader;
 
 DrillReader = (function() {
@@ -288,9 +277,11 @@ module.exports = DrillReader;
 
 
 },{}],5:[function(require,module,exports){
-var GerberParser, parseCoord, reCOORD;
+var GerberParser, getInteger, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
+
+getInteger = require('./get-integer');
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
@@ -335,16 +326,24 @@ GerberParser = (function() {
       case 'C':
         if (mods.length > 2) {
           hole = {
-            width: +mods[1],
-            height: +mods[2]
+            width: getInteger(mods[1], {
+              places: this.format.places
+            }),
+            height: getInteger(mods[2], {
+              places: this.format.places
+            })
           };
         } else if (mods.length > 1) {
           hole = {
-            dia: +mods[1]
+            dia: getInteger(mods[1], {
+              places: this.format.places
+            })
           };
         }
         c.tool[code] = {
-          dia: +mods[0]
+          dia: getInteger(mods[0], {
+            places: this.format.places
+          })
         };
         if (hole != null) {
           return c.tool[code].hole = hole;
@@ -354,17 +353,27 @@ GerberParser = (function() {
       case 'O':
         if (mods.length > 3) {
           hole = {
-            width: +mods[2],
-            height: +mods[3]
+            width: getInteger(mods[2], {
+              places: this.format.places
+            }),
+            height: getInteger(mods[3], {
+              places: this.format.places
+            })
           };
         } else if (mods.length > 2) {
           hole = {
-            dia: +mods[2]
+            dia: getInteger(mods[2], {
+              places: this.format.places
+            })
           };
         }
         c.tool[code] = {
-          width: +mods[0],
-          height: +mods[1]
+          width: getInteger(mods[0], {
+            places: this.format.places
+          }),
+          height: getInteger(mods[1], {
+            places: this.format.places
+          })
         };
         if (shape === 'O') {
           c.tool[code].obround = true;
@@ -376,16 +385,24 @@ GerberParser = (function() {
       case 'P':
         if (mods.length > 4) {
           hole = {
-            width: +mods[3],
-            height: +mods[4]
+            width: getInteger(mods[3], {
+              places: this.format.places
+            }),
+            height: getInteger(mods[4], {
+              places: this.format.places
+            })
           };
         } else if (mods.length > 3) {
           hole = {
-            dia: +mods[3]
+            dia: getInteger(mods[3], {
+              places: this.format.places
+            })
           };
         }
         c.tool[code] = {
-          dia: +mods[0],
+          dia: getInteger(mods[0], {
+            places: this.format.places
+          }),
           verticies: +mods[1]
         };
         if (mods.length > 2) {
@@ -564,7 +581,7 @@ module.exports = GerberParser;
 
 
 
-},{"./coord-parser":2}],6:[function(require,module,exports){
+},{"./coord-parser":2,"./get-integer":7}],6:[function(require,module,exports){
 var GerberReader;
 
 GerberReader = (function() {
@@ -622,6 +639,46 @@ module.exports = GerberReader;
 
 
 },{}],7:[function(require,module,exports){
+var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+module.exports = function(numberString, format) {
+  var after, before, sign, subNumbers, _ref, _ref1, _ref2;
+  if (typeof (format != null ? (_ref = format.places) != null ? _ref[0] : void 0 : void 0) !== 'number' && typeof (format != null ? (_ref1 = format.places) != null ? _ref1[1] : void 0 : void 0) !== 'number') {
+    return NaN;
+  }
+  numberString = "" + numberString;
+  sign = '+';
+  if (numberString[0] === '-' || numberString[0] === '+') {
+    sign = numberString[0];
+    numberString = numberString.slice(1);
+  }
+  if ((__indexOf.call(numberString, '.') >= 0) || (format.zero == null)) {
+    subNumbers = numberString.split('.');
+    if (subNumbers.length > 2) {
+      return NaN;
+    }
+    _ref2 = [subNumbers[0], subNumbers[1]], before = _ref2[0], after = _ref2[1];
+    if (after == null) {
+      after = [];
+    }
+    while (after.length > format.places[1]) {
+      after = after.slice(0, -1);
+    }
+    while (after.length < format.places[1]) {
+      after += '0';
+    }
+    numberString = before + after;
+  } else if (format.zero === 'T') {
+    while (numberString.length < format.places[0] + format.places[1]) {
+      numberString += '0';
+    }
+  }
+  return parseInt(sign + numberString);
+};
+
+
+
+},{}],8:[function(require,module,exports){
 var NUMBER, OPERATOR, TOKEN, isNumber, parse, tokenize;
 
 OPERATOR = /[\+\-\/xX\(\)]/;
@@ -719,8 +776,8 @@ module.exports = {
 
 
 
-},{}],8:[function(require,module,exports){
-var MacroTool, calc, shapes, unique;
+},{}],9:[function(require,module,exports){
+var MacroTool, calc, getInteger, shapes, unique;
 
 shapes = require('./pad-shapes');
 
@@ -728,8 +785,10 @@ calc = require('./macro-calc');
 
 unique = require('./unique-id');
 
+getInteger = require('./get-integer');
+
 MacroTool = (function() {
-  function MacroTool(blocks) {
+  function MacroTool(blocks, numberFormat) {
     this.modifiers = {};
     this.name = blocks[0].slice(2);
     this.blocks = blocks.slice(1);
@@ -737,6 +796,9 @@ MacroTool = (function() {
     this.masks = [];
     this.lastExposure = null;
     this.bbox = [null, null, null, null];
+    this.format = {
+      places: numberFormat
+    };
   }
 
   MacroTool.prototype.run = function(tool, modifiers) {
@@ -830,9 +892,9 @@ MacroTool = (function() {
     switch (args[0]) {
       case 1:
         shape = shapes.circle({
-          dia: args[2],
-          cx: args[3],
-          cy: args[4]
+          dia: getInteger(args[2], this.format),
+          cx: getInteger(args[3], this.format),
+          cy: getInteger(args[4], this.format)
         });
         if (args[1] === 0) {
           mask = true;
@@ -843,11 +905,11 @@ MacroTool = (function() {
       case 2:
       case 20:
         shape = shapes.vector({
-          width: args[2],
-          x1: args[3],
-          y1: args[4],
-          x2: args[5],
-          y2: args[6]
+          width: getInteger(args[2], this.format),
+          x1: getInteger(args[3], this.format),
+          y1: getInteger(args[4], this.format),
+          x2: getInteger(args[5], this.format),
+          y2: getInteger(args[6], this.format)
         });
         if (args[7]) {
           shape.shape.line.transform = "rotate(" + args[7] + ")";
@@ -860,10 +922,10 @@ MacroTool = (function() {
         break;
       case 21:
         shape = shapes.rect({
-          cx: args[4],
-          cy: args[5],
-          width: args[2],
-          height: args[3]
+          cx: getInteger(args[4], this.format),
+          cy: getInteger(args[5], this.format),
+          width: getInteger(args[2], this.format),
+          height: getInteger(args[3], this.format)
         });
         if (args[6]) {
           shape.shape.rect.transform = "rotate(" + args[6] + ")";
@@ -876,10 +938,10 @@ MacroTool = (function() {
         break;
       case 22:
         shape = shapes.lowerLeftRect({
-          x: args[4],
-          y: args[5],
-          width: args[2],
-          height: args[3]
+          x: getInteger(args[4], this.format),
+          y: getInteger(args[5], this.format),
+          width: getInteger(args[2], this.format),
+          height: getInteger(args[3], this.format)
         });
         if (args[6]) {
           shape.shape.rect.transform = "rotate(" + args[6] + ")";
@@ -893,7 +955,7 @@ MacroTool = (function() {
       case 4:
         points = [];
         for (i = _i = 3, _ref = 3 + 2 * args[2]; _i <= _ref; i = _i += 2) {
-          points.push([args[i], args[i + 1]]);
+          points.push([getInteger(args[i], this.format), getInteger(args[i + 1], this.format)]);
         }
         shape = shapes.outline({
           points: points
@@ -912,9 +974,9 @@ MacroTool = (function() {
           throw new RangeError('polygon center must be 0,0 if rotated in macro');
         }
         shape = shapes.polygon({
-          cx: args[3],
-          cy: args[4],
-          dia: args[5],
+          cx: getInteger(args[3], this.format),
+          cy: getInteger(args[4], this.format),
+          dia: getInteger(args[5], this.format),
           verticies: args[2],
           degrees: args[6]
         });
@@ -929,14 +991,14 @@ MacroTool = (function() {
           throw new RangeError('moiré center must be 0,0 if rotated in macro');
         }
         shape = shapes.moire({
-          cx: args[1],
-          cy: args[2],
-          outerDia: args[3],
-          ringThx: args[4],
-          ringGap: args[5],
+          cx: getInteger(args[1], this.format),
+          cy: getInteger(args[2], this.format),
+          outerDia: getInteger(args[3], this.format),
+          ringThx: getInteger(args[4], this.format),
+          ringGap: getInteger(args[5], this.format),
           maxRings: args[6],
-          crossThx: args[7],
-          crossLength: args[8]
+          crossThx: getInteger(args[7], this.format),
+          crossLength: getInteger(args[8], this.format)
         });
         if (args[9]) {
           _ref1 = shape.shape;
@@ -954,11 +1016,11 @@ MacroTool = (function() {
           throw new RangeError('thermal center must be 0,0 if rotated in macro');
         }
         shape = shapes.thermal({
-          cx: args[1],
-          cy: args[2],
-          outerDia: args[3],
-          innerDia: args[4],
-          gap: args[5]
+          cx: getInteger(args[1], this.format),
+          cy: getInteger(args[2], this.format),
+          outerDia: getInteger(args[3], this.format),
+          innerDia: getInteger(args[4], this.format),
+          gap: getInteger(args[5], this.format)
         });
         if (args[6]) {
           _ref2 = shape.shape;
@@ -1137,7 +1199,7 @@ module.exports = MacroTool;
 
 
 
-},{"./macro-calc":7,"./pad-shapes":10,"./unique-id":13}],9:[function(require,module,exports){
+},{"./get-integer":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
 var CKEY, DTAB, objToXml, repeat;
 
 repeat = function(pattern, count) {
@@ -1246,7 +1308,7 @@ module.exports = objToXml;
 
 
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var circle, lowerLeftRect, moire, outline, polygon, rect, thermal, unique, vector;
 
 unique = require('./unique-id');
@@ -1649,7 +1711,7 @@ module.exports = {
 
 
 
-},{"./unique-id":13}],11:[function(require,module,exports){
+},{"./unique-id":14}],12:[function(require,module,exports){
 var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, arcEps, tool, unique;
 
 unique = require('./unique-id');
@@ -1796,7 +1858,7 @@ Plotter = (function() {
   Plotter.prototype.command = function(c) {
     var code, m, params, state, val, _ref, _ref1, _ref2;
     if (c.macro != null) {
-      m = new Macro(c.macro);
+      m = new Macro(c.macro, this.parser.format.places);
       this.macros[m.name] = m;
       return;
     }
@@ -2283,7 +2345,7 @@ module.exports = Plotter;
 
 
 
-},{"./macro-tool":8,"./standard-tool":12,"./unique-id":13}],12:[function(require,module,exports){
+},{"./macro-tool":9,"./standard-tool":13,"./unique-id":14}],13:[function(require,module,exports){
 var shapes, standardTool, unique;
 
 unique = require('./unique-id');
@@ -2404,7 +2466,7 @@ module.exports = standardTool;
 
 
 
-},{"./pad-shapes":10,"./unique-id":13}],13:[function(require,module,exports){
+},{"./pad-shapes":11,"./unique-id":14}],14:[function(require,module,exports){
 var generateUniqueId, id;
 
 id = 1000;
