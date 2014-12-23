@@ -7,10 +7,12 @@ shapes = require './pad-shapes'
 calc = require './macro-calc'
 # unique id generator
 unique = require './unique-id'
+# integer coordinate caluclator
+getInteger = require './get-integer'
 
 class MacroTool
   # constructor takes in macro blocks
-  constructor: (blocks) ->
+  constructor: (blocks, numberFormat) ->
     # macro modifiers
     @modifiers = {}
     # block 0 is going to be AMmacroname
@@ -25,6 +27,8 @@ class MacroTool
     @lastExposure = null
     # bounding box [xMin, yMin, xMax, yMax] of macro
     @bbox = [ null, null, null, null ]
+    # format for coordinate and size values
+    @format = { places: numberFormat }
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
@@ -89,16 +93,20 @@ class MacroTool
     switch args[0]
       # circle primitive
       when 1
-        shape = shapes.circle { dia: args[2], cx: args[3], cy: args[4] }
+        shape = shapes.circle { 
+          dia: getInteger args[2], @format
+          cx:  getInteger args[3], @format
+          cy:  getInteger args[4], @format
+        }
         if args[1] is 0 then mask = true else @addBbox shape.bbox
       # vector line primitive
       when 2, 20
         shape = shapes.vector {
-          width: args[2]
-          x1: args[3]
-          y1: args[4]
-          x2: args[5]
-          y2: args[6]
+          width: getInteger args[2], @format
+          x1:    getInteger args[3], @format
+          y1:    getInteger args[4], @format
+          x2:    getInteger args[5], @format
+          y2:    getInteger args[6], @format
         }
         # rotate if necessary
         if args[7] then shape.shape.line.transform = "rotate(#{args[7]})"
@@ -106,21 +114,30 @@ class MacroTool
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[7]
       when 21
         shape = shapes.rect {
-          cx: args[4], cy: args[5], width: args[2], height: args[3]
+          cx:     getInteger args[4], @format
+          cy:     getInteger args[5], @format
+          width:  getInteger args[2], @format
+          height: getInteger args[3], @format
         }
         # rotate if necessary
         if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
       when 22
         shape = shapes.lowerLeftRect {
-          x: args[4], y: args[5], width: args[2], height: args[3]
+          x:      getInteger args[4], @format
+          y:      getInteger args[5], @format
+          width:  getInteger args[2], @format
+          height: getInteger args[3], @format
         }
         # rotate if necessary
         if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
       when 4
         points = []
-        points.push [ args[i], args[i+1] ] for i in [ 3..3+2*args[2] ] by 2
+        for i in [ 3..3+2*args[2] ] by 2
+          points.push [
+            getInteger(args[i], @format), getIntger(args[i+1], @format)
+          ] 
         shape = shapes.outline { points: points }
         # rotate if necessary
         if rot = args[args.length - 1]
@@ -132,9 +149,9 @@ class MacroTool
         if args[6] isnt 0 and (args[3] isnt 0 or args[4] isnt 0)
           throw new RangeError 'polygon center must be 0,0 if rotated in macro'
         shape = shapes.polygon {
-          cx: args[3]
-          cy: args[4]
-          dia: args[5]
+          cx:  getInteger args[3], @format
+          cy:  getInteger args[4], @format
+          dia: getInteger args[5], @format
           verticies: args[2]
           degrees: args[6]
         }
@@ -145,14 +162,14 @@ class MacroTool
         if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
           throw new RangeError 'moiré center must be 0,0 if rotated in macro'
         shape = shapes.moire {
-          cx: args[1]
-          cy: args[2]
-          outerDia: args[3]
-          ringThx: args[4]
-          ringGap: args[5]
-          maxRings: args[6]
-          crossThx: args[7]
-          crossLength: args[8]
+          cx:          getInteger args[1], @format
+          cy:          getInteger args[2], @format
+          outerDia:    getInteger args[3], @format
+          ringThx:     getInteger args[4], @format
+          ringGap:     getInteger args[5], @format
+          maxRings:    args[6]
+          crossThx:    getInteger args[7], @format
+          crossLength: getInteger args[8], @format
         }
         # rotate the crosshairs
         if args[9] then for s in shape.shape
@@ -164,11 +181,11 @@ class MacroTool
         if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
           throw new RangeError 'thermal center must be 0,0 if rotated in macro'
         shape = shapes.thermal {
-          cx: args[1]
-          cy: args[2]
-          outerDia: args[3]
-          innerDia: args[4]
-          gap: args[5]
+          cx:       getInteger args[1], @format
+          cy:       getInteger args[2], @format
+          outerDia: getInteger args[3], @format
+          innerDia: getInteger args[4], @format
+          gap:      getInteger args[5], @format
         }
         # rotate and adjust bounding box
         if args[6] then for s in shape.shape
