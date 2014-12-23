@@ -4,6 +4,8 @@
 
 # parse coordinate function
 parseCoord = require './coord-parser'
+# get integer function
+getInteger = require './get-integer'
 
 # some command constants
 INCH_COMMAND = { 'FMAT,1': 'M70', 'FMAT,2': 'M72'}
@@ -62,9 +64,9 @@ class DrillParser
       code = code[0] + code[2..] while code[1] is '0'
       # issue a create tool command or a set tool command
       if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
-        dia = Number dia[1..]
+        dia = dia[1..]
         command.tool = {}
-        command.tool[code] = { dia: dia }
+        command.tool[code] = { dia: getInteger dia, { places: @format.places } }
       else
         command.set = { currentTool: code }
 
