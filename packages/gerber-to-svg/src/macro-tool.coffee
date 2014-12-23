@@ -136,7 +136,7 @@ class MacroTool
         points = []
         for i in [ 3..3+2*args[2] ] by 2
           points.push [
-            getInteger(args[i], @format), getIntger(args[i+1], @format)
+            getInteger(args[i], @format), getInteger(args[i+1], @format)
           ] 
         shape = shapes.outline { points: points }
         # rotate if necessary
