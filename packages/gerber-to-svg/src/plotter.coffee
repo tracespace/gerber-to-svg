@@ -462,8 +462,10 @@ class Plotter
     # max y is going to be at positive y or endpoint
     if thetaS <= yp <= thetaE then yMax = cen.y + r + rTool
     else yMax = (Math.max sy, ey) + rTool
+    # check for zerolength arc
+    zeroLength = (Math.abs(sx - ex) < arcEps) and (Math.abs(sy - ey) < arcEps)
     # check for special case: full circle
-    if @quad is 'm' and (Math.abs(sx - ex) < arcEps) and (Math.abs(sy - ey) < arcEps)
+    if @quad is 'm' and zeroLength
       # we'll need two paths (180 deg each)
       @path.push 'A', r, r, 0, 0, sweep, ex+2*i, ey+2*j
       # bbox is going to just be a rectangle
@@ -473,6 +475,8 @@ class Plotter
       yMax = cen.y + r + rTool
     # add the arc to the path
     @path.push 'A', r, r, 0, large, sweep, ex, ey
+    # close the path if it was a zero length single quadrant arc
+    @path.push 'Z' if @quad is 's' and zeroLength
     # add the bounding box
     @addBbox { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax }, @layerBbox
 

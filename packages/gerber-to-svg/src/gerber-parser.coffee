@@ -130,8 +130,8 @@ class GerberParser
             if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
               throw new Error 'invalid step repeat'
             c.new.sr = { x: +x, y: +y }
-            if i? then c.new.sr.i = +i
-            if j? then c.new.sr.j = +j
+            if i? then c.new.sr.i = getInteger i, { places: @format.places }
+            if j? then c.new.sr.j = getInteger j, { places: @format.places }
     else if block = block.block
       # check for M02 (file done) code
       if block is 'M02' then return { set: { done: true } }

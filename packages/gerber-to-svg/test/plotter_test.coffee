@@ -297,6 +297,9 @@ describe 'Plotter class', ->
           it 'should add a CCW arc with a G03', ->
             p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, j: 1} }
             p.path.should.containDeep [ 'A', 1, 1, 0, 0, 1, 1, 1 ]
+          it 'should close the path on a zero length arc', ->
+            p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 0, y: 0, j: 1} }
+            p.path.should.containDeep [ 'A', 1, 1, 0, 0, 0, 0, 0, 'Z' ]
           it 'should warn for impossible arcs and add nothing to the path', ->
             hook = stderr()
             p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, i: 1} }

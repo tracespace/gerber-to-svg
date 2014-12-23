@@ -490,10 +490,14 @@ GerberParser = (function() {
               y: +y
             };
             if (i != null) {
-              c["new"].sr.i = +i;
+              c["new"].sr.i = getInteger(i, {
+                places: this.format.places
+              });
             }
             if (j != null) {
-              c["new"].sr.j = +j;
+              c["new"].sr.j = getInteger(j, {
+                places: this.format.places
+              });
             }
         }
       }
@@ -2213,7 +2217,7 @@ Plotter = (function() {
   };
 
   Plotter.prototype.drawArc = function(sx, sy, ex, ey, i, j) {
-    var c, cand, cen, dist, large, r, rTool, sweep, t, theta, thetaE, thetaS, validCen, xMax, xMin, xn, xp, yMax, yMin, yn, yp, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    var c, cand, cen, dist, large, r, rTool, sweep, t, theta, thetaE, thetaS, validCen, xMax, xMin, xn, xp, yMax, yMin, yn, yp, zeroLength, _i, _j, _len, _len1, _ref, _ref1, _ref2;
     arcEps = 1.01 * Math.pow(10, -(((_ref = (_ref1 = this.parser) != null ? _ref1.format.places[1] : void 0) != null ? _ref : 6) - 1));
     t = this.tools[this.currentTool];
     if (!this.region && !t.trace['stroke-width']) {
@@ -2306,7 +2310,8 @@ Plotter = (function() {
     } else {
       yMax = (Math.max(sy, ey)) + rTool;
     }
-    if (this.quad === 'm' && (Math.abs(sx - ex) < arcEps) && (Math.abs(sy - ey) < arcEps)) {
+    zeroLength = (Math.abs(sx - ex) < arcEps) && (Math.abs(sy - ey) < arcEps);
+    if (this.quad === 'm' && zeroLength) {
       this.path.push('A', r, r, 0, 0, sweep, ex + 2 * i, ey + 2 * j);
       xMin = cen.x - r - rTool;
       yMin = cen.y - r - rTool;
@@ -2314,6 +2319,9 @@ Plotter = (function() {
       yMax = cen.y + r + rTool;
     }
     this.path.push('A', r, r, 0, large, sweep, ex, ey);
+    if (this.quad === 's' && zeroLength) {
+      this.path.push('Z');
+    }
     return this.addBbox({
       xMin: xMin,
       yMin: yMin,
