@@ -4,6 +4,8 @@
 
 # parse coordinate function
 parseCoord = require './coord-parser'
+# get integer function
+getInteger = require './get-integer'
 
 # constants
 # regular expression to match a coordinate
@@ -39,22 +41,45 @@ class GerberParser
     switch shape
       # circle
       when 'C'
-        if mods.length > 2 then hole = { width: +mods[1], height: +mods[2] }
-        else if mods.length > 1 then hole = { dia: +mods[1] }
-        c.tool[code] = { dia: +mods[0] }
+        if mods.length > 2 then hole = {
+          width:  getInteger mods[1], { places: @format.places }
+          height: getInteger mods[2], { places: @format.places }
+        }
+        else if mods.length > 1 then hole = {
+          dia: getInteger mods[1], { places: @format.places }
+        }
+        c.tool[code] = {
+          dia: getInteger mods[0], { places: @format.places }
+        }
         if hole? then c.tool[code].hole = hole
       # rectangle, obround
       when 'R', 'O'
-        if mods.length > 3 then hole = { width: +mods[2], height: +mods[3] }
-        else if mods.length > 2 then hole = { dia: +mods[2] }
-        c.tool[code] = {width: +mods[0], height: +mods[1] }
+        if mods.length > 3 then hole = {
+          width:  getInteger mods[2], { places: @format.places }
+          height: getInteger mods[3], { places: @format.places }
+        }
+        else if mods.length > 2 then hole = {
+          dia: getInteger mods[2], { places: @format.places }
+        }
+        c.tool[code] = {
+          width:  getInteger mods[0], { places: @format.places }
+          height: getInteger mods[1], { places: @format.places }
+        }
         if shape is 'O' then c.tool[code].obround = true
         if hole? then c.tool[code].hole = hole
       # polygon
       when 'P'
-        if mods.length > 4 then hole = { width: +mods[3], height: +mods[4] }
-        else if mods.length > 3 then hole = { dia: +mods[3] }
-        c.tool[code] = { dia: +mods[0], verticies: +mods[1] }
+        if mods.length > 4 then hole = {
+          width:  getInteger mods[3], { places: @format.places }
+          height: getInteger mods[4], { places: @format.places }
+        }
+        else if mods.length > 3 then hole = {
+          dia: getInteger mods[3], { places: @format.places }
+        }
+        c.tool[code] = {
+          dia:       getInteger mods[0], { places: @format.places }
+          verticies: +mods[1]
+        }
         if mods.length > 2 then c.tool[code].degrees = +mods[2]
         if hole? then c.tool[code].hole = hole
       # else aperture macro
