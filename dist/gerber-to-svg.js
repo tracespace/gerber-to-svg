@@ -1677,7 +1677,7 @@ module.exports = {
 
 
 },{"./unique-id":14}],11:[function(require,module,exports){
-var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, arcEps, tool, unique;
+var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, coordFactor, tool, unique;
 
 unique = require('./unique-id');
 
@@ -1685,13 +1685,13 @@ Macro = require('./macro-tool');
 
 tool = require('./standard-tool');
 
+coordFactor = require('./svg-coord').factor;
+
 HALF_PI = Math.PI / 2;
 
 THREEHALF_PI = 3 * HALF_PI;
 
 TWO_PI = 2 * Math.PI;
-
-arcEps = 0.0000001;
 
 ASSUMED_UNITS = 'in';
 
@@ -2178,8 +2178,8 @@ Plotter = (function() {
   };
 
   Plotter.prototype.drawArc = function(sx, sy, ex, ey, i, j) {
-    var c, cand, cen, dist, large, r, rTool, sweep, t, theta, thetaE, thetaS, validCen, xMax, xMin, xn, xp, yMax, yMin, yn, yp, zeroLength, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    arcEps = 1.01 * Math.pow(10, -(((_ref = (_ref1 = this.parser) != null ? _ref1.format.places[1] : void 0) != null ? _ref : 6) - 1));
+    var arcEps, c, cand, cen, dist, large, r, rTool, sweep, t, theta, thetaE, thetaS, validCen, xMax, xMin, xn, xp, yMax, yMin, yn, yp, zeroLength, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    arcEps = 1.5 * coordFactor * Math.pow(10, -((_ref = (_ref1 = this.parser) != null ? _ref1.format.places[1] : void 0) != null ? _ref : 7));
     t = this.tools[this.currentTool];
     if (!this.region && !t.trace['stroke-width']) {
       throw Error("cannot stroke an arc with non-circular tool " + this.currentTool);
@@ -2314,7 +2314,7 @@ module.exports = Plotter;
 
 
 
-},{"./macro-tool":8,"./standard-tool":12,"./unique-id":14}],12:[function(require,module,exports){
+},{"./macro-tool":8,"./standard-tool":12,"./svg-coord":13,"./unique-id":14}],12:[function(require,module,exports){
 var shapes, standardTool, unique;
 
 unique = require('./unique-id');
