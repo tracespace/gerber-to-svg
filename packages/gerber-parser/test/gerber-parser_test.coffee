@@ -1,6 +1,9 @@
 # test suite for GerberParser class
 Parser = require '../src/gerber-parser'
 
+# svg coordinate factor
+factor = require('../src/svg-coord').factor
+
 param = (p) -> { param: [ p ] }
 block = (b) -> { block: b }
 
@@ -150,7 +153,7 @@ describe 'gerber command parser', ->
         new: { sr: { x: 1, y: 1, i: 0, j: 0 } }
       }
       p.parseCommand(param 'SRX2Y3I2.0J3.0').should.eql {
-        new: { sr: { x: 2, y: 3, i: 200, j: 300 } }
+        new: { sr: { x: 2, y: 3, i: 2*factor, j: 3*factor } }
       }
       p.parseCommand(param 'SR').should.eql { new: { sr: { x: 1, y: 1 } } }
     it 'should throw if bad input', ->
@@ -204,7 +207,7 @@ describe 'gerber command parser', ->
         op: { do: 'int', x: .22*factor, y: 0 }
       }
       p.parseCommand(block 'Y110D1').should.eql {
-        op: { do: 'int', y: .11*factor }
+        op: { do: 'int', y: 1.1*factor }
       }
     it 'should parse a move command', ->
       p.parseCommand(block 'X300Y1D02').should.eql {

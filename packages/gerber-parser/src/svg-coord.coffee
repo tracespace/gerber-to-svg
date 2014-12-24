@@ -36,6 +36,8 @@ getSvgCoord = ( numberString, format ) ->
     if format.zero is 'T'
       for c, i in numberString
         if i < format.places[0] then before += c else after += c
+      # pad any missing zeros
+      before += '0' while before.length < format.places[0]
     else if format.zero is 'L'
       for c, i in numberString
         if numberString.length-i<=format.places[1] then after+=c else before+=c

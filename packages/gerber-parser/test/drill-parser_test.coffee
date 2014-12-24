@@ -101,10 +101,10 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('X0016Y0158').should.eql {
-        op: { do: 'flash', x: .0016 * factor, y: .0158 * factor}
+        op: { do: 'flash', x: .16 * factor, y: 1.58 * factor}
       }
       p.parseCommand('X-01795Y0108').should.eql {
-        op: { do: 'flash', x: -.1795 * factor, y: .0108 * factor }
+        op: { do: 'flash', x: -1.795 * factor, y: 1.08 * factor }
       }
     it 'should parse coordinates with leading zeros suppressed', ->
       p.format.zero = 'L'
