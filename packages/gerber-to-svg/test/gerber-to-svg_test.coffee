@@ -3,6 +3,7 @@
 gerberToSvg = require '../src/gerber-to-svg'
 fs = require 'fs'
 
+coordFactor = require('../src/svg-coord').factor
 exGerb = fs.readFileSync './test/gerber/gerber-spec-example-2.gbr', 'utf-8'
 exDrill = fs.readFileSync './test/drill/example1.drl', 'utf-8'
 
@@ -48,6 +49,13 @@ describe 'gerber to svg function', ->
     result.svg.viewBox.should.eql [ 0, 0, 0, 0 ]
     result.svg.width.should.match /^0\D/
     result.svg.height.should.match /^0\D/
+
+  it 'should set the real width and height according to the vbox', ->
+    result = gerberToSvg exGerb, { object: true }
+    vbWidth  = result.svg.viewBox[2]
+    vbHeight = result.svg.viewBox[3]
+    result.svg.width.should.eql  "#{vbWidth /coordFactor}in"
+    result.svg.height.should.eql "#{vbHeight/coordFactor}in"
 
   describe 'converting an svg object into an svg string', ->
     it 'should be able to convert an svg object into an svg string', ->
