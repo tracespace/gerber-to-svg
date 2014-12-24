@@ -8,7 +8,7 @@ calc = require './macro-calc'
 # unique id generator
 unique = require './unique-id'
 # integer coordinate caluclator
-getSvgCoord = require './get-svg-coord'
+getSvgCoord = require('./svg-coord').get
 
 class MacroTool
   # constructor takes in macro blocks
