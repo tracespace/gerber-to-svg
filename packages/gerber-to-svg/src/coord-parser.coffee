@@ -3,7 +3,7 @@
 # returns an object of { x: number, y: number etc} for coordinates it finds
 
 # convert to gerber integer
-getInteger = require './get-integer'
+getSvgCoord = require './get-svg-coord'
 
 module.exports = ( coord, format ) ->
   unless coord? then return {}
@@ -18,6 +18,6 @@ module.exports = ( coord, format ) ->
   parse.j = coord.match(/J[+-]?[\d\.]+/)?[0]?[1..]
   # loop through matched coordinates
   for key, val of parse
-    result[key] = getInteger val, format if val?
+    result[key] = getSvgCoord val, format if val?
   # return the result
   result

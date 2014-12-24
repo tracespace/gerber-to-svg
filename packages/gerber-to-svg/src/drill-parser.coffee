@@ -5,7 +5,7 @@
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
-getInteger = require './get-integer'
+getSvgCoord = require './get-svg-coord'
 
 # some command constants
 INCH_COMMAND = { 'FMAT,1': 'M70', 'FMAT,2': 'M72'}
@@ -66,7 +66,7 @@ class DrillParser
       if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
         dia = dia[1..]
         command.tool = {}
-        command.tool[code] = { dia: getInteger dia, { places: @format.places } }
+        command.tool[code] = { dia: getSvgCoord dia, { places: @format.places } }
       else
         command.set = { currentTool: code }
 
