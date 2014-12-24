@@ -5,11 +5,13 @@
 shared under the terms of the MIT license
 view source at http://github.com/mcous/gerber-to-svg
  */
-var DEFAULT_OPTS, Plotter, builder;
+var DEFAULT_OPTS, Plotter, builder, coordFactor;
 
 builder = require('./obj-to-xml');
 
 Plotter = require('./plotter');
+
+coordFactor = require('./svg-coord').factor;
 
 DEFAULT_OPTS = {
   drill: false,
@@ -18,7 +20,7 @@ DEFAULT_OPTS = {
 };
 
 module.exports = function(gerber, options) {
-  var Parser, Reader, a, error, height, key, opts, p, unitDivisor, val, width, xml, xmlObject, _ref, _ref1, _ref2, _ref3;
+  var Parser, Reader, a, error, height, key, opts, p, val, width, xml, xmlObject, _ref;
   if (options == null) {
     options = {};
   }
@@ -68,21 +70,20 @@ module.exports = function(gerber, options) {
     p.bbox.yMax = 0;
     height = 0;
   }
-  unitDivisor = Math.pow(10, (_ref = p.parser) != null ? (_ref1 = _ref.format) != null ? (_ref2 = _ref1.places) != null ? _ref2[1] : void 0 : void 0 : void 0) || 1;
   xml = {
     svg: {
       xmlns: 'http://www.w3.org/2000/svg',
       version: '1.1',
       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-      width: "" + (width / unitDivisor) + p.units,
-      height: "" + (height / unitDivisor) + p.units,
+      width: "" + (width / coordFactor) + p.units,
+      height: "" + (height / coordFactor) + p.units,
       viewBox: [p.bbox.xMin, p.bbox.yMin, width, height],
       _: []
     }
   };
-  _ref3 = p.attr;
-  for (a in _ref3) {
-    val = _ref3[a];
+  _ref = p.attr;
+  for (a in _ref) {
+    val = _ref[a];
     xml.svg[a] = val;
   }
   if (p.defs.length) {
@@ -106,10 +107,10 @@ module.exports = function(gerber, options) {
 
 
 
-},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":10,"./plotter":12}],2:[function(require,module,exports){
+},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11,"./svg-coord":13}],2:[function(require,module,exports){
 var getSvgCoord;
 
-getSvgCoord = require('./svg-coord');
+getSvgCoord = require('./svg-coord').get;
 
 module.exports = function(coord, format) {
   var key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
@@ -136,12 +137,12 @@ module.exports = function(coord, format) {
 
 
 
-},{"./svg-coord":7}],3:[function(require,module,exports){
+},{"./svg-coord":13}],3:[function(require,module,exports){
 var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getSvgCoord = require('./svg-coord');
+getSvgCoord = require('./svg-coord').get;
 
 INCH_COMMAND = {
   'FMAT,1': 'M70',
@@ -251,7 +252,7 @@ module.exports = DrillParser;
 
 
 
-},{"./coord-parser":2,"./svg-coord":7}],4:[function(require,module,exports){
+},{"./coord-parser":2,"./svg-coord":13}],4:[function(require,module,exports){
 var DrillReader;
 
 DrillReader = (function() {
@@ -281,7 +282,7 @@ var GerberParser, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getSvgCoord = require('./svg-coord');
+getSvgCoord = require('./svg-coord').get;
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
@@ -585,7 +586,7 @@ module.exports = GerberParser;
 
 
 
-},{"./coord-parser":2,"./svg-coord":7}],6:[function(require,module,exports){
+},{"./coord-parser":2,"./svg-coord":13}],6:[function(require,module,exports){
 var GerberReader;
 
 GerberReader = (function() {
@@ -643,46 +644,6 @@ module.exports = GerberReader;
 
 
 },{}],7:[function(require,module,exports){
-var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-module.exports = function(numberString, format) {
-  var after, before, sign, subNumbers, _ref, _ref1, _ref2;
-  if (typeof (format != null ? (_ref = format.places) != null ? _ref[0] : void 0 : void 0) !== 'number' && typeof (format != null ? (_ref1 = format.places) != null ? _ref1[1] : void 0 : void 0) !== 'number') {
-    return NaN;
-  }
-  numberString = "" + numberString;
-  sign = '+';
-  if (numberString[0] === '-' || numberString[0] === '+') {
-    sign = numberString[0];
-    numberString = numberString.slice(1);
-  }
-  if ((__indexOf.call(numberString, '.') >= 0) || (format.zero == null)) {
-    subNumbers = numberString.split('.');
-    if (subNumbers.length > 2) {
-      return NaN;
-    }
-    _ref2 = [subNumbers[0], subNumbers[1]], before = _ref2[0], after = _ref2[1];
-    if (after == null) {
-      after = [];
-    }
-    while (after.length > format.places[1]) {
-      after = after.slice(0, -1);
-    }
-    while (after.length < format.places[1]) {
-      after += '0';
-    }
-    numberString = before + after;
-  } else if (format.zero === 'T') {
-    while (numberString.length < format.places[0] + format.places[1]) {
-      numberString += '0';
-    }
-  }
-  return parseInt(sign + numberString);
-};
-
-
-
-},{}],8:[function(require,module,exports){
 var NUMBER, OPERATOR, TOKEN, isNumber, parse, tokenize;
 
 OPERATOR = /[\+\-\/xX\(\)]/;
@@ -780,7 +741,7 @@ module.exports = {
 
 
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var MacroTool, calc, getSvgCoord, shapes, unique;
 
 shapes = require('./pad-shapes');
@@ -789,7 +750,7 @@ calc = require('./macro-calc');
 
 unique = require('./unique-id');
 
-getSvgCoord = require('./svg-coord');
+getSvgCoord = require('./svg-coord').get;
 
 MacroTool = (function() {
   function MacroTool(blocks, numberFormat) {
@@ -1203,7 +1164,7 @@ module.exports = MacroTool;
 
 
 
-},{"./svg-coord":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
+},{"./macro-calc":7,"./pad-shapes":10,"./svg-coord":13,"./unique-id":14}],9:[function(require,module,exports){
 var CKEY, DTAB, objToXml, repeat;
 
 repeat = function(pattern, count) {
@@ -1312,7 +1273,7 @@ module.exports = objToXml;
 
 
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var circle, lowerLeftRect, moire, outline, polygon, rect, thermal, unique, vector;
 
 unique = require('./unique-id');
@@ -1715,7 +1676,7 @@ module.exports = {
 
 
 
-},{"./unique-id":14}],12:[function(require,module,exports){
+},{"./unique-id":14}],11:[function(require,module,exports){
 var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, arcEps, tool, unique;
 
 unique = require('./unique-id');
@@ -2353,7 +2314,7 @@ module.exports = Plotter;
 
 
 
-},{"./macro-tool":9,"./standard-tool":13,"./unique-id":14}],13:[function(require,module,exports){
+},{"./macro-tool":8,"./standard-tool":12,"./unique-id":14}],12:[function(require,module,exports){
 var shapes, standardTool, unique;
 
 unique = require('./unique-id');
@@ -2474,7 +2435,82 @@ module.exports = standardTool;
 
 
 
-},{"./pad-shapes":11,"./unique-id":14}],14:[function(require,module,exports){
+},{"./pad-shapes":10,"./unique-id":14}],13:[function(require,module,exports){
+var SVG_COORD_E, SVG_COORD_FACTOR, getSvgCoord,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+SVG_COORD_FACTOR = 1000;
+
+SVG_COORD_E = 3;
+
+getSvgCoord = function(numberString, format) {
+  var after, before, c, i, sign, subNumbers, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+  numberString = "" + numberString;
+  before = '';
+  after = '';
+  sign = '+';
+  if (numberString[0] === '-' || numberString[0] === '+') {
+    sign = numberString[0];
+    numberString = numberString.slice(1);
+  }
+  if ((__indexOf.call(numberString, '.') >= 0) || (format.zero == null)) {
+    subNumbers = numberString.split('.');
+    if (subNumbers.length > 2) {
+      return NaN;
+    }
+    _ref = [subNumbers[0], subNumbers[1]], before = _ref[0], after = _ref[1];
+    if (after == null) {
+      after = '';
+    }
+    if (before == null) {
+      before = '';
+    }
+  } else {
+    if (typeof (format != null ? (_ref1 = format.places) != null ? _ref1[0] : void 0 : void 0) !== 'number' && typeof (format != null ? (_ref2 = format.places) != null ? _ref2[1] : void 0 : void 0) !== 'number') {
+      return NaN;
+    }
+    if (format.zero === 'T') {
+      for (i = _i = 0, _len = numberString.length; _i < _len; i = ++_i) {
+        c = numberString[i];
+        if (i < format.places[0]) {
+          before += c;
+        } else {
+          after += c;
+        }
+      }
+      while (before.length < format.places[0]) {
+        before += '0';
+      }
+    } else if (format.zero === 'L') {
+      for (i = _j = 0, _len1 = numberString.length; _j < _len1; i = ++_j) {
+        c = numberString[i];
+        if (numberString.length - i <= format.places[1]) {
+          after += c;
+        } else {
+          before += c;
+        }
+      }
+      while (after.length < format.places[1]) {
+        after = '0' + after;
+      }
+    }
+  }
+  while (after.length < SVG_COORD_E) {
+    after += '0';
+  }
+  before = before + after.slice(0, SVG_COORD_E);
+  after = after.length > SVG_COORD_E ? '.' + after.slice(SVG_COORD_E) : '';
+  return Number(sign + before + after);
+};
+
+module.exports = {
+  get: getSvgCoord,
+  factor: SVG_COORD_FACTOR
+};
+
+
+
+},{}],14:[function(require,module,exports){
 var generateUniqueId, id;
 
 id = 1000;
