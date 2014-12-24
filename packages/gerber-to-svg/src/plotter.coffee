@@ -6,13 +6,14 @@ unique = require './unique-id'
 Macro = require './macro-tool'
 # standard tool functions
 tool = require './standard-tool'
+# coordinate scale factor
+coordFactor = require('./svg-coord').factor
+
 
 # constants
 HALF_PI = Math.PI/2
 THREEHALF_PI = 3*HALF_PI
 TWO_PI = 2*Math.PI
-# error epsilon
-arcEps = 0.0000001
 # assumed units
 ASSUMED_UNITS = 'in'
 
@@ -378,9 +379,10 @@ class Plotter
 
   # draw an arc with the start point, end point, and center offset
   drawArc: (sx, sy, ex, ey, i, j) ->
-    # use a seriously low epsilon constant
-    # this value is too small and causing problems. re-evaluate
-    arcEps = 1.01 * 10**-( (@parser?.format.places[1] ? 6 ) - 1 )
+    # lets try this for arc point comparison epsilon
+    # this value seems strict enough to prevent invalid arcs but forgiving 
+    # enough to let most gerbers draw
+    arcEps = 1.5 * coordFactor * 10**-(@parser?.format.places[1] ? 7) 
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
     if not @region and not t.trace['stroke-width']
