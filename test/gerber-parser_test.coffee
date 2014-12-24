@@ -42,59 +42,79 @@ describe 'gerber command parser', ->
       p.format.places = [2, 2]
     it 'should remove leading zeros from the tool code string', ->
       p.parseCommand(param 'ADD010C,1').should.eql {
-        tool: { D10: { dia: 100 } }
+        tool: { D10: { dia: 1*factor } }
       }
       p.parseCommand(param 'ADD0011C,1').should.eql {
-        tool: { D11: { dia: 100 } }
+        tool: { D11: { dia: 1*factor } }
       }
     describe 'with standard tools', ->
       it 'should handle standard circles', ->
         p.parseCommand(param 'ADD10C,1').should.eql {
-          tool: { D10: { dia: 100 } }
+          tool: { D10: { dia: 1*factor } }
         }
         p.parseCommand(param 'ADD11C,1X0.2').should.eql {
-          tool: { D11: { dia: 100, hole: { dia: 20 } } }
+          tool: { D11: { dia: 1*factor, hole: { dia: .2*factor } } }
         }
         p.parseCommand(param 'ADD12C,1X0.2X0.3').should.eql {
-          tool: { D12: { dia: 100, hole: { width: 20, height: 30 } } }
+          tool: { D12: { dia: 1*factor, hole: {
+                width: .2*factor, height: .3*factor
+              }
+            }
+          }
         }
       it 'should handle standard rectangles', ->
         p.parseCommand(param 'ADD10R,1X0.5').should.eql {
-          tool: { D10: { width: 100, height: 50 } }
+          tool: { D10: { width: 1*factor, height: .5*factor } }
         }
         p.parseCommand(param 'ADD11R,1X0.5X0.2').should.eql {
-          tool: { D11: { width: 100, height: 50, hole: { dia: 20 } } }
+          tool: { D11: { width: 1*factor, height: .5*factor, hole: {
+                dia: .2*factor 
+              }
+            }
+          }
         }
         p.parseCommand(param 'ADD12R,1X0.5X0.2X0.3').should.eql {
-          tool: { D12: { width: 100, height: 50, hole:{width: 20, height: 30 }}}
+          tool: { D12: { width: 1*factor, height: .5*factor, hole: {
+                width: .2*factor, height: .3*factor
+              }
+            }
+          }
         }
       it 'should handle standard obrounds', ->
         p.parseCommand(param 'ADD10O,1X0.5').should.eql {
-          tool: { D10: { width: 100, height: 50, obround: true } }
+          tool: { D10: { width: 1*factor, height: .5*factor, obround: true } }
         }
         p.parseCommand(param 'ADD11O,1X0.5X0.2').should.eql {
-          tool: { D11: { width: 100, height: 50, obround: true, hole:{dia: 20}}}
+          tool: { D11: { width:1*factor, height:.5*factor, obround: true, hole:{ 
+                dia: .2*factor
+              }
+            }
+          }
         }
         p.parseCommand(param 'ADD12O,1X0.5X0.2X0.3').should.eql {
-          tool: { D12: { width: 100, height: 50, obround: true, hole: {
-                width: 20, height: 30
+          tool: { D12: { width:1*factor, height:.5*factor, obround: true, hole:{
+                width: .2*factor, height: .3*factor
               }
             }
           }
         }
       it 'should handle standard polygons', ->
         p.parseCommand(param 'ADD10P,5X3').should.eql {
-          tool: { D10: { dia: 500, verticies: 3 } }
+          tool: { D10: { dia: 5*factor, verticies: 3 } }
         }
         p.parseCommand(param 'ADD11P,5X4X45').should.eql {
-          tool: { D11: { dia: 500, verticies: 4, degrees: 45 } }
+          tool: { D11: { dia: 5*factor, verticies: 4, degrees: 45 } }
         }
         p.parseCommand(param 'ADD12P,5X4X0X0.6').should.eql {
-          tool: { D12: { dia: 500, verticies: 4, degrees: 0, hole: { dia: 60 }}}
+          tool: { D12: { dia: 5*factor, verticies: 4, degrees: 0, hole: { 
+                dia: .6*factor
+              }
+            }
+          }
         }
         p.parseCommand(param 'ADD13P,5X4X0X0.6X0.5').should.eql {
-          tool: { D13: { dia: 500, verticies: 4, degrees: 0, hole: {
-                width: 60, height: 50
+          tool: { D13: { dia: 5*factor, verticies: 4, degrees: 0, hole: {
+                width: .6*factor, height: .5*factor
               }
             }
           }
@@ -181,36 +201,36 @@ describe 'gerber command parser', ->
       p.format.places = [2,2]
     it 'should parse an interpolation command', ->
       p.parseCommand(block 'X22Y0D01').should.eql {
-        op: { do: 'int', x: 22, y: 0 }
+        op: { do: 'int', x: .22*factor, y: 0 }
       }
       p.parseCommand(block 'Y110D1').should.eql {
-        op: { do: 'int', y: 110 }
+        op: { do: 'int', y: .11*factor }
       }
     it 'should parse a move command', ->
       p.parseCommand(block 'X300Y1D02').should.eql {
-        op: { do: 'move', x: 300, y: 1 }
+        op: { do: 'move', x: 3*factor, y: .01*factor }
       }
       p.parseCommand(block 'X-100D2').should.eql {
-        op: { do: 'move', x: -100 }
+        op: { do: 'move', x: -1*factor }
       }
     it 'should parse a flash command', ->
       p.parseCommand(block 'X75Y-140D03').should.eql {
-        op: { do: 'flash', x: 75, y: -140 }
+        op: { do: 'flash', x: .75*factor, y: -1.4*factor }
       }
       p.parseCommand(block 'X1Y1D3').should.eql {
-        op: { do: 'flash', x: 1, y: 1 }
+        op: { do: 'flash', x: .01*factor, y: .01*factor }
       }
     it 'should interpolate with an inline mode set', ->
       p.parseCommand(block 'G01X01Y01D01').should.eql {
-        set: { mode: 'i' }, op: { do: 'int', x: 1, y: 1 }
+        set: { mode: 'i' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
       p.parseCommand(block 'G02X01Y01D01').should.eql {
-        set: { mode: 'cw' }, op: { do: 'int', x: 1, y: 1 }
+        set: { mode: 'cw' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
       p.parseCommand(block 'G03X01Y01D01').should.eql {
-        set: { mode: 'ccw' }, op: { do: 'int', x: 1, y: 1 }
+        set: { mode: 'ccw' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
     it 'should send a last operation command if the op code is missing', ->
       p.parseCommand(block 'X01Y01').should.eql {
-        op: { do: 'last', x: 1, y: 1 }
+        op: { do: 'last', x: .01*factor, y: .01*factor }
       }
