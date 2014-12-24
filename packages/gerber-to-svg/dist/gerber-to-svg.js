@@ -109,7 +109,7 @@ module.exports = function(gerber, options) {
 },{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":10,"./plotter":12}],2:[function(require,module,exports){
 var getSvgCoord;
 
-getSvgCoord = require('./get-svg-coord');
+getSvgCoord = require('./svg-coord');
 
 module.exports = function(coord, format) {
   var key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
@@ -136,12 +136,12 @@ module.exports = function(coord, format) {
 
 
 
-},{"./get-svg-coord":7}],3:[function(require,module,exports){
+},{"./svg-coord":7}],3:[function(require,module,exports){
 var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getSvgCoord = require('./get-svg-coord');
+getSvgCoord = require('./svg-coord');
 
 INCH_COMMAND = {
   'FMAT,1': 'M70',
@@ -251,7 +251,7 @@ module.exports = DrillParser;
 
 
 
-},{"./coord-parser":2,"./get-svg-coord":7}],4:[function(require,module,exports){
+},{"./coord-parser":2,"./svg-coord":7}],4:[function(require,module,exports){
 var DrillReader;
 
 DrillReader = (function() {
@@ -281,7 +281,7 @@ var GerberParser, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getSvgCoord = require('./get-svg-coord');
+getSvgCoord = require('./svg-coord');
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
@@ -585,7 +585,7 @@ module.exports = GerberParser;
 
 
 
-},{"./coord-parser":2,"./get-svg-coord":7}],6:[function(require,module,exports){
+},{"./coord-parser":2,"./svg-coord":7}],6:[function(require,module,exports){
 var GerberReader;
 
 GerberReader = (function() {
@@ -789,7 +789,7 @@ calc = require('./macro-calc');
 
 unique = require('./unique-id');
 
-getSvgCoord = require('./get-svg-coord');
+getSvgCoord = require('./svg-coord');
 
 MacroTool = (function() {
   function MacroTool(blocks, numberFormat) {
@@ -1203,7 +1203,7 @@ module.exports = MacroTool;
 
 
 
-},{"./get-svg-coord":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
+},{"./svg-coord":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
 var CKEY, DTAB, objToXml, repeat;
 
 repeat = function(pattern, count) {
