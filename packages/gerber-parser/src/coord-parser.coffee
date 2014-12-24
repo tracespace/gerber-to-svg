@@ -3,7 +3,7 @@
 # returns an object of { x: number, y: number etc} for coordinates it finds
 
 # convert to gerber integer
-getSvgCoord = require './get-svg-coord'
+getSvgCoord = require './svg-coord'
 
 module.exports = ( coord, format ) ->
   unless coord? then return {}
