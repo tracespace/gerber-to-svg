@@ -1,0 +1,2 @@
+# treat dist files as binary
+dist/* binary
