@@ -7,6 +7,9 @@ view source at http://github.com/mcous/gerber-to-svg
 builder = require './obj-to-xml'
 Plotter = require './plotter'
 
+# coordinate scale
+coordFactor = require('./svg-coord').factor
+
 DEFAULT_OPTS = {
   drill: false
   pretty: false
@@ -50,14 +53,13 @@ module.exports = (gerber, options = {}) ->
     p.bbox.yMax = 0
     height = 0
   # create an xml object
-  unitDivisor = 10 ** p.parser?.format?.places?[1] || 1
   xml = {
     svg: {
       xmlns: 'http://www.w3.org/2000/svg'
       version: '1.1'
       'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-      width: "#{width/unitDivisor}#{p.units}"
-      height: "#{height/unitDivisor}#{p.units}"
+      width: "#{width/coordFactor}#{p.units}"
+      height: "#{height/coordFactor}#{p.units}"
       viewBox: [ p.bbox.xMin, p.bbox.yMin, width, height ]
       _: []
     }
