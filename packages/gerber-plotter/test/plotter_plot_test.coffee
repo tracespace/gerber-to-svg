@@ -4,6 +4,9 @@ GerberReader = require '../src/gerber-reader'
 GerberParser = require '../src/gerber-parser'
 fs = require 'fs'
 
+# svg coord factor
+factor = require('../src/svg-coord').factor
+
 describe 'the plot method of the Plotter class', ->
   it 'should plot example 1 from the gerber spec', ->
     testGerber= fs.readFileSync 'test/gerber/gerber-spec-example-1.gbr', 'utf-8'
@@ -14,16 +17,16 @@ describe 'the plot method of the Plotter class', ->
         {
           path: {
             d: [
-              'M', 0,       0
-              'L', 500000,  0
-              'L', 500000,  500000
-              'L', 0,       500000
-              'L', 0,       0
-              'M', 600000,  0
-              'L', 1100000, 0
-              'L', 1100000, 500000
-              'L', 600000,  500000
-              'L', 600000,  0
+              'M', 0*factor,  0*factor
+              'L', 5*factor,  0*factor
+              'L', 5*factor,  5*factor
+              'L', 0*factor,  5*factor
+              'L', 0*factor,  0*factor
+              'M', 6*factor,  0*factor
+              'L', 11*factor, 0*factor
+              'L', 11*factor, 5*factor
+              'L', 6*factor,  5*factor
+              'L', 6*factor,  0*factor
             ]
           }
         }
