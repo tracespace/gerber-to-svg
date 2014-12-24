@@ -5,7 +5,7 @@
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
-getInteger = require './get-integer'
+getSvgCoord = require './get-svg-coord'
 
 # constants
 # regular expression to match a coordinate
@@ -42,42 +42,42 @@ class GerberParser
       # circle
       when 'C'
         if mods.length > 2 then hole = {
-          width:  getInteger mods[1], { places: @format.places }
-          height: getInteger mods[2], { places: @format.places }
+          width:  getSvgCoord mods[1], { places: @format.places }
+          height: getSvgCoord mods[2], { places: @format.places }
         }
         else if mods.length > 1 then hole = {
-          dia: getInteger mods[1], { places: @format.places }
+          dia: getSvgCoord mods[1], { places: @format.places }
         }
         c.tool[code] = {
-          dia: getInteger mods[0], { places: @format.places }
+          dia: getSvgCoord mods[0], { places: @format.places }
         }
         if hole? then c.tool[code].hole = hole
       # rectangle, obround
       when 'R', 'O'
         if mods.length > 3 then hole = {
-          width:  getInteger mods[2], { places: @format.places }
-          height: getInteger mods[3], { places: @format.places }
+          width:  getSvgCoord mods[2], { places: @format.places }
+          height: getSvgCoord mods[3], { places: @format.places }
         }
         else if mods.length > 2 then hole = {
-          dia: getInteger mods[2], { places: @format.places }
+          dia: getSvgCoord mods[2], { places: @format.places }
         }
         c.tool[code] = {
-          width:  getInteger mods[0], { places: @format.places }
-          height: getInteger mods[1], { places: @format.places }
+          width:  getSvgCoord mods[0], { places: @format.places }
+          height: getSvgCoord mods[1], { places: @format.places }
         }
         if shape is 'O' then c.tool[code].obround = true
         if hole? then c.tool[code].hole = hole
       # polygon
       when 'P'
         if mods.length > 4 then hole = {
-          width:  getInteger mods[3], { places: @format.places }
-          height: getInteger mods[4], { places: @format.places }
+          width:  getSvgCoord mods[3], { places: @format.places }
+          height: getSvgCoord mods[4], { places: @format.places }
         }
         else if mods.length > 3 then hole = {
-          dia: getInteger mods[3], { places: @format.places }
+          dia: getSvgCoord mods[3], { places: @format.places }
         }
         c.tool[code] = {
-          dia:       getInteger mods[0], { places: @format.places }
+          dia:       getSvgCoord mods[0], { places: @format.places }
           verticies: +mods[1]
         }
         if mods.length > 2 then c.tool[code].degrees = +mods[2]
@@ -130,8 +130,8 @@ class GerberParser
             if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
               throw new Error 'invalid step repeat'
             c.new.sr = { x: +x, y: +y }
-            if i? then c.new.sr.i = getInteger i, { places: @format.places }
-            if j? then c.new.sr.j = getInteger j, { places: @format.places }
+            if i? then c.new.sr.i = getSvgCoord i, { places: @format.places }
+            if j? then c.new.sr.j = getSvgCoord j, { places: @format.places }
     else if block = block.block
       # check for M02 (file done) code
       if block is 'M02' then return { set: { done: true } }

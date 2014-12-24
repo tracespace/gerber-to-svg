@@ -107,9 +107,9 @@ module.exports = function(gerber, options) {
 
 
 },{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":10,"./plotter":12}],2:[function(require,module,exports){
-var getInteger;
+var getSvgCoord;
 
-getInteger = require('./get-integer');
+getSvgCoord = require('./get-svg-coord');
 
 module.exports = function(coord, format) {
   var key, parse, result, val, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
@@ -128,7 +128,7 @@ module.exports = function(coord, format) {
   for (key in parse) {
     val = parse[key];
     if (val != null) {
-      result[key] = getInteger(val, format);
+      result[key] = getSvgCoord(val, format);
     }
   }
   return result;
@@ -136,12 +136,12 @@ module.exports = function(coord, format) {
 
 
 
-},{"./get-integer":7}],3:[function(require,module,exports){
-var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getInteger, parseCoord, reCOORD;
+},{"./get-svg-coord":7}],3:[function(require,module,exports){
+var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getInteger = require('./get-integer');
+getSvgCoord = require('./get-svg-coord');
 
 INCH_COMMAND = {
   'FMAT,1': 'M70',
@@ -207,7 +207,7 @@ DrillParser = (function() {
         dia = dia.slice(1);
         command.tool = {};
         command.tool[code] = {
-          dia: getInteger(dia, {
+          dia: getSvgCoord(dia, {
             places: this.format.places
           })
         };
@@ -251,7 +251,7 @@ module.exports = DrillParser;
 
 
 
-},{"./coord-parser":2,"./get-integer":7}],4:[function(require,module,exports){
+},{"./coord-parser":2,"./get-svg-coord":7}],4:[function(require,module,exports){
 var DrillReader;
 
 DrillReader = (function() {
@@ -277,11 +277,11 @@ module.exports = DrillReader;
 
 
 },{}],5:[function(require,module,exports){
-var GerberParser, getInteger, parseCoord, reCOORD;
+var GerberParser, getSvgCoord, parseCoord, reCOORD;
 
 parseCoord = require('./coord-parser');
 
-getInteger = require('./get-integer');
+getSvgCoord = require('./get-svg-coord');
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
@@ -326,22 +326,22 @@ GerberParser = (function() {
       case 'C':
         if (mods.length > 2) {
           hole = {
-            width: getInteger(mods[1], {
+            width: getSvgCoord(mods[1], {
               places: this.format.places
             }),
-            height: getInteger(mods[2], {
+            height: getSvgCoord(mods[2], {
               places: this.format.places
             })
           };
         } else if (mods.length > 1) {
           hole = {
-            dia: getInteger(mods[1], {
+            dia: getSvgCoord(mods[1], {
               places: this.format.places
             })
           };
         }
         c.tool[code] = {
-          dia: getInteger(mods[0], {
+          dia: getSvgCoord(mods[0], {
             places: this.format.places
           })
         };
@@ -353,25 +353,25 @@ GerberParser = (function() {
       case 'O':
         if (mods.length > 3) {
           hole = {
-            width: getInteger(mods[2], {
+            width: getSvgCoord(mods[2], {
               places: this.format.places
             }),
-            height: getInteger(mods[3], {
+            height: getSvgCoord(mods[3], {
               places: this.format.places
             })
           };
         } else if (mods.length > 2) {
           hole = {
-            dia: getInteger(mods[2], {
+            dia: getSvgCoord(mods[2], {
               places: this.format.places
             })
           };
         }
         c.tool[code] = {
-          width: getInteger(mods[0], {
+          width: getSvgCoord(mods[0], {
             places: this.format.places
           }),
-          height: getInteger(mods[1], {
+          height: getSvgCoord(mods[1], {
             places: this.format.places
           })
         };
@@ -385,22 +385,22 @@ GerberParser = (function() {
       case 'P':
         if (mods.length > 4) {
           hole = {
-            width: getInteger(mods[3], {
+            width: getSvgCoord(mods[3], {
               places: this.format.places
             }),
-            height: getInteger(mods[4], {
+            height: getSvgCoord(mods[4], {
               places: this.format.places
             })
           };
         } else if (mods.length > 3) {
           hole = {
-            dia: getInteger(mods[3], {
+            dia: getSvgCoord(mods[3], {
               places: this.format.places
             })
           };
         }
         c.tool[code] = {
-          dia: getInteger(mods[0], {
+          dia: getSvgCoord(mods[0], {
             places: this.format.places
           }),
           verticies: +mods[1]
@@ -490,12 +490,12 @@ GerberParser = (function() {
               y: +y
             };
             if (i != null) {
-              c["new"].sr.i = getInteger(i, {
+              c["new"].sr.i = getSvgCoord(i, {
                 places: this.format.places
               });
             }
             if (j != null) {
-              c["new"].sr.j = getInteger(j, {
+              c["new"].sr.j = getSvgCoord(j, {
                 places: this.format.places
               });
             }
@@ -585,7 +585,7 @@ module.exports = GerberParser;
 
 
 
-},{"./coord-parser":2,"./get-integer":7}],6:[function(require,module,exports){
+},{"./coord-parser":2,"./get-svg-coord":7}],6:[function(require,module,exports){
 var GerberReader;
 
 GerberReader = (function() {
@@ -781,7 +781,7 @@ module.exports = {
 
 
 },{}],9:[function(require,module,exports){
-var MacroTool, calc, getInteger, shapes, unique;
+var MacroTool, calc, getSvgCoord, shapes, unique;
 
 shapes = require('./pad-shapes');
 
@@ -789,7 +789,7 @@ calc = require('./macro-calc');
 
 unique = require('./unique-id');
 
-getInteger = require('./get-integer');
+getSvgCoord = require('./get-svg-coord');
 
 MacroTool = (function() {
   function MacroTool(blocks, numberFormat) {
@@ -896,9 +896,9 @@ MacroTool = (function() {
     switch (args[0]) {
       case 1:
         shape = shapes.circle({
-          dia: getInteger(args[2], this.format),
-          cx: getInteger(args[3], this.format),
-          cy: getInteger(args[4], this.format)
+          dia: getSvgCoord(args[2], this.format),
+          cx: getSvgCoord(args[3], this.format),
+          cy: getSvgCoord(args[4], this.format)
         });
         if (args[1] === 0) {
           mask = true;
@@ -909,11 +909,11 @@ MacroTool = (function() {
       case 2:
       case 20:
         shape = shapes.vector({
-          width: getInteger(args[2], this.format),
-          x1: getInteger(args[3], this.format),
-          y1: getInteger(args[4], this.format),
-          x2: getInteger(args[5], this.format),
-          y2: getInteger(args[6], this.format)
+          width: getSvgCoord(args[2], this.format),
+          x1: getSvgCoord(args[3], this.format),
+          y1: getSvgCoord(args[4], this.format),
+          x2: getSvgCoord(args[5], this.format),
+          y2: getSvgCoord(args[6], this.format)
         });
         if (args[7]) {
           shape.shape.line.transform = "rotate(" + args[7] + ")";
@@ -926,10 +926,10 @@ MacroTool = (function() {
         break;
       case 21:
         shape = shapes.rect({
-          cx: getInteger(args[4], this.format),
-          cy: getInteger(args[5], this.format),
-          width: getInteger(args[2], this.format),
-          height: getInteger(args[3], this.format)
+          cx: getSvgCoord(args[4], this.format),
+          cy: getSvgCoord(args[5], this.format),
+          width: getSvgCoord(args[2], this.format),
+          height: getSvgCoord(args[3], this.format)
         });
         if (args[6]) {
           shape.shape.rect.transform = "rotate(" + args[6] + ")";
@@ -942,10 +942,10 @@ MacroTool = (function() {
         break;
       case 22:
         shape = shapes.lowerLeftRect({
-          x: getInteger(args[4], this.format),
-          y: getInteger(args[5], this.format),
-          width: getInteger(args[2], this.format),
-          height: getInteger(args[3], this.format)
+          x: getSvgCoord(args[4], this.format),
+          y: getSvgCoord(args[5], this.format),
+          width: getSvgCoord(args[2], this.format),
+          height: getSvgCoord(args[3], this.format)
         });
         if (args[6]) {
           shape.shape.rect.transform = "rotate(" + args[6] + ")";
@@ -959,7 +959,7 @@ MacroTool = (function() {
       case 4:
         points = [];
         for (i = _i = 3, _ref = 3 + 2 * args[2]; _i <= _ref; i = _i += 2) {
-          points.push([getInteger(args[i], this.format), getInteger(args[i + 1], this.format)]);
+          points.push([getSvgCoord(args[i], this.format), getSvgCoord(args[i + 1], this.format)]);
         }
         shape = shapes.outline({
           points: points
@@ -978,9 +978,9 @@ MacroTool = (function() {
           throw new RangeError('polygon center must be 0,0 if rotated in macro');
         }
         shape = shapes.polygon({
-          cx: getInteger(args[3], this.format),
-          cy: getInteger(args[4], this.format),
-          dia: getInteger(args[5], this.format),
+          cx: getSvgCoord(args[3], this.format),
+          cy: getSvgCoord(args[4], this.format),
+          dia: getSvgCoord(args[5], this.format),
           verticies: args[2],
           degrees: args[6]
         });
@@ -995,14 +995,14 @@ MacroTool = (function() {
           throw new RangeError('moiré center must be 0,0 if rotated in macro');
         }
         shape = shapes.moire({
-          cx: getInteger(args[1], this.format),
-          cy: getInteger(args[2], this.format),
-          outerDia: getInteger(args[3], this.format),
-          ringThx: getInteger(args[4], this.format),
-          ringGap: getInteger(args[5], this.format),
+          cx: getSvgCoord(args[1], this.format),
+          cy: getSvgCoord(args[2], this.format),
+          outerDia: getSvgCoord(args[3], this.format),
+          ringThx: getSvgCoord(args[4], this.format),
+          ringGap: getSvgCoord(args[5], this.format),
           maxRings: args[6],
-          crossThx: getInteger(args[7], this.format),
-          crossLength: getInteger(args[8], this.format)
+          crossThx: getSvgCoord(args[7], this.format),
+          crossLength: getSvgCoord(args[8], this.format)
         });
         if (args[9]) {
           _ref1 = shape.shape;
@@ -1020,11 +1020,11 @@ MacroTool = (function() {
           throw new RangeError('thermal center must be 0,0 if rotated in macro');
         }
         shape = shapes.thermal({
-          cx: getInteger(args[1], this.format),
-          cy: getInteger(args[2], this.format),
-          outerDia: getInteger(args[3], this.format),
-          innerDia: getInteger(args[4], this.format),
-          gap: getInteger(args[5], this.format)
+          cx: getSvgCoord(args[1], this.format),
+          cy: getSvgCoord(args[2], this.format),
+          outerDia: getSvgCoord(args[3], this.format),
+          innerDia: getSvgCoord(args[4], this.format),
+          gap: getSvgCoord(args[5], this.format)
         });
         if (args[6]) {
           _ref2 = shape.shape;
@@ -1203,7 +1203,7 @@ module.exports = MacroTool;
 
 
 
-},{"./get-integer":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
+},{"./get-svg-coord":7,"./macro-calc":8,"./pad-shapes":11,"./unique-id":14}],10:[function(require,module,exports){
 var CKEY, DTAB, objToXml, repeat;
 
 repeat = function(pattern, count) {
