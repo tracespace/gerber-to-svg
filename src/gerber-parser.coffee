@@ -5,7 +5,7 @@
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
-getSvgCoord = require './get-svg-coord'
+getSvgCoord = require './svg-coord'
 
 # constants
 # regular expression to match a coordinate
