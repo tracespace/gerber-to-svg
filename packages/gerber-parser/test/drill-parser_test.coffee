@@ -1,6 +1,9 @@
 # test suit for the NC drill file parser
 Parser = require '../src/drill-parser'
 
+# svg coordinate scaling factor
+factor = require('../src/svg-coord').factor
+
 describe 'NC drill file parser', ->
   p = null
   beforeEach -> p = new Parser
@@ -64,15 +67,15 @@ describe 'NC drill file parser', ->
       p.format.places = [ 2, 4 ]
     it 'should return a define tool command for tool definitions', ->
       p.parseCommand 'T1C0.015'
-        .should.eql { tool: { T1: { dia: 150 } } }
+        .should.eql { tool: { T1: { dia: .015 * factor } } }
       p.parseCommand 'T13C0.142'
-        .should.eql { tool: { T13: { dia: 1420 } } }
+        .should.eql { tool: { T13: { dia: .142 * factor } } }
     it 'should ignore feedrate and spindle speed', ->
       p.parseCommand 'T1C0.01F100S5'
-        .should.eql { tool: { T1: { dia: 100 } } }
+        .should.eql { tool: { T1: { dia: .01 * factor } } }
     it 'should ignore leading zeros in tool name', ->
       p.parseCommand 'T01C0.015'
-        .should.eql { tool: { T1: { dia: 150 } } }
+        .should.eql { tool: { T1: { dia: .015 * factor } } }
   it 'should assume FMAT,2, but identify FMAT,1', ->
     p.fmat.should.eql 'FMAT,2'
     p.parseCommand('FMAT,1').should.eql {}
@@ -98,56 +101,56 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('X0016Y0158').should.eql {
-        op: { do: 'flash', x: 1600, y: 15800 }
+        op: { do: 'flash', x: .0016 * factor, y: .0158 * factor}
       }
       p.parseCommand('X-01795Y0108').should.eql {
-        op: { do: 'flash', x: -17950, y: 10800 }
+        op: { do: 'flash', x: -.1795 * factor, y: .0108 * factor }
       }
     it 'should parse coordinates with leading zeros suppressed', ->
       p.format.zero = 'L'
       p.format.places = [2,4]
       p.parseCommand('X50Y15500').should.eql {
-        op: { do: 'flash', x: 50, y: 15500 }
+        op: { do: 'flash', x: .0050 * factor, y: 1.55 * factor }
       }
       p.parseCommand('X16850Y-3300').should.eql {
-        op: { do: 'flash', x: 16850, y: -3300 }
+        op: { do: 'flash', x: 1.685 * factor, y: -.33 * factor }
       }
     it 'should parse coordinates according to the places format', ->
       p.format.zero = 'L'
       p.format.places = [2,4]
       p.parseCommand('X7550Y14000').should.eql {
-        op: { do: 'flash', x: 7550, y: 14000 }
+        op: { do: 'flash', x: .755 * factor, y: 1.4 * factor }
       }
       p.format.places = [3,3]
       p.parseCommand('X7550Y14').should.eql {
-        op: { do: 'flash', x: 7550, y: 14 }
+        op: { do: 'flash', x: 7.55 * factor, y: .014 * factor }
       }
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('X08Y0124').should.eql {
-        op: { do: 'flash', x: 80000, y: 12400 }
+        op: { do: 'flash', x: 8 * factor, y: 1.24 * factor }
       }
       p.format.places = [3,3]
       p.parseCommand('X08Y0124').should.eql {
-        op: { do: 'flash', x: 80000, y: 12400 }
+        op: { do: 'flash', x: 80 * factor, y: 12.4 * factor }
       }
     it 'should parse decimal coordinates', ->
       p.format.zero = 'L'
       p.format.places = [2,4]
       p.parseCommand('X0.7550Y1.4000').should.eql {
-        op: { do: 'flash', x: 7550, y: 14000 }
+        op: { do: 'flash', x: 0.755 * factor, y: 1.4 * factor }
       }
       p.format.places = [3,3]
       p.parseCommand('X7.550Y14').should.eql {
-        op: { do: 'flash', x: 7550, y: 14 }
+        op: { do: 'flash', x: 7.55 * factor, y: .014 * factor }
       }
     it 'should recognize a tool change at the beginning or end of the line', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       p.parseCommand('T01X01Y01').should.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 10000, y: 10000 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1*factor, y: 1*factor}
       }
       p.parseCommand('X01Y01T01').should.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 10000, y: 10000 }
+        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1*factor, y: 1*factor}
       }
       
