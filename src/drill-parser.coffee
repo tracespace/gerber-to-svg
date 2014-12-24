@@ -5,7 +5,7 @@
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
-getSvgCoord = require './svg-coord'
+getSvgCoord = require('./svg-coord').get
 
 # some command constants
 INCH_COMMAND = { 'FMAT,1': 'M70', 'FMAT,2': 'M72'}

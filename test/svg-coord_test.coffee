@@ -19,7 +19,7 @@ describe 'get svg coord function', ->
     getSvgCoord('13',   { places: [2, 4], zero: 'T' }).should.equal 13    * fact
     getSvgCoord('-343', { places: [2, 3], zero: 'T' }).should.equal -34.3 * fact
     getSvgCoord('+4347',{ places: [2, 2], zero: 'T' }).should.equal 43.47 * fact
-    getSvgCoord('10',   { places: [2, 4], zero: 'T' }).should.equal 10    * fact
+    getSvgCoord('1',    { places: [2, 4], zero: 'T' }).should.equal 10    * fact
   
   it 'should convert leading zero suppressed numbers into proper coords', ->
     getSvgCoord('13',   { places: [2, 4], zero: 'L' }).should.equal .0013 * fact
