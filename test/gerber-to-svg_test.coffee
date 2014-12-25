@@ -2,10 +2,15 @@
 
 gerberToSvg = require '../src/gerber-to-svg'
 fs = require 'fs'
-
 coordFactor = require('../src/svg-coord').factor
+
+# stream hook for testing for warnings
+streamCapture = require './stream-capture'
+stderr = -> streamCapture(process.stderr)
+
 exGerb = fs.readFileSync './test/gerber/gerber-spec-example-2.gbr', 'utf-8'
 exDrill = fs.readFileSync './test/drill/example1.drl', 'utf-8'
+warnGerb = fs.readFileSync './test/gerber/repeated-op-code-test.gbr', 'utf-8'
 
 describe 'gerber to svg function', ->
   it 'should default to the gerber plotter', ->
@@ -68,3 +73,22 @@ describe 'gerber to svg function', ->
       result2.should.eql result1
     it 'should throw an error if a non svg object is passed in', ->
       (-> gerberToSvg { thing: {} }).should.throw /non SVG/
+
+  describe 'logging warnings', ->
+    it 'should send warnings to console.warn by default', ->
+      # hook into stderr
+      hook = stderr()
+      hook.captured().length.should.equal 0
+      # process a file that will produce warnings
+      gerberToSvg warnGerb
+      # check that we got some warnigns
+      hook.captured().length.should.not.equal 0
+      hook.unhook()
+      
+    it 'should push warnings to an array if option is set', ->
+      warnings = []
+      # precess a file that will produce warnings
+      gerberToSvg warnGerb, { warnArr: warnings }
+      console.log warnings
+      warnings.length.should.not.equal 0
+      
