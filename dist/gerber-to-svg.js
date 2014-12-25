@@ -1,10 +1,5 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.gerberToSvg=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-/*
-@license copyright 2014 by mike cousins <mike@cousins.io> (http://cousins.io)
-shared under the terms of the MIT license
-view source at http://github.com/mcous/gerber-to-svg
- */
+(function (global){
 var DEFAULT_OPTS, Plotter, builder, coordFactor;
 
 builder = require('./obj-to-xml');
@@ -16,11 +11,12 @@ coordFactor = require('./svg-coord').factor;
 DEFAULT_OPTS = {
   drill: false,
   pretty: false,
-  object: false
+  object: false,
+  warnArr: null
 };
 
 module.exports = function(gerber, options) {
-  var Parser, Reader, a, error, height, key, opts, p, val, width, xml, xmlObject, _ref;
+  var Parser, Reader, a, error, height, key, oldWarn, opts, p, root, val, width, xml, xmlObject, _ref;
   if (options == null) {
     options = {};
   }
@@ -50,11 +46,27 @@ module.exports = function(gerber, options) {
     Parser = require('./gerber-parser');
   }
   p = new Plotter(gerber, Reader, Parser);
+  oldWarn = null;
+  root = null;
+  if (Array.isArray(opts.warnArr)) {
+    root = typeof window !== "undefined" && window !== null ? window : global;
+    if (root.console == null) {
+      root.console = {};
+    }
+    oldWarn = root.console.warn;
+    root.console.warn = function(chunk) {
+      return opts.warnArr.push(chunk.toString());
+    };
+  }
   try {
     xmlObject = p.plot();
   } catch (_error) {
     error = _error;
     throw new Error("Error at line " + p.reader.line + " - " + error.message);
+  } finally {
+    if ((oldWarn != null) && (root != null)) {
+      root.console.warn = oldWarn;
+    }
   }
   if (!(p.bbox.xMin >= p.bbox.xMax)) {
     width = p.bbox.xMax - p.bbox.xMin;
@@ -107,6 +119,7 @@ module.exports = function(gerber, options) {
 
 
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11,"./svg-coord":13}],2:[function(require,module,exports){
 var getSvgCoord;
 
@@ -633,6 +646,10 @@ GerberReader = (function() {
       }
     }
     return false;
+  };
+
+  GerberReader.prototype.getLine = function() {
+    return this.line;
   };
 
   return GerberReader;
