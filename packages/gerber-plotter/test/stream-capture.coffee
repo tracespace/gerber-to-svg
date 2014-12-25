@@ -7,7 +7,7 @@ module.exports = (stream) ->
   stream.write = (chunk, encoding, callback) ->
     # chunk is a string or buffer
     buf += chunk.toString()
-    oldWrite.apply stream, arguments
+    #oldWrite.apply stream, arguments
 
   return {
     unhook: -> stream.write = oldWrite
