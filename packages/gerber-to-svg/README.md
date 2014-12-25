@@ -56,13 +56,14 @@ Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-
 
 #### options
 
-key      | default | how it be
----------|---------|--------------------------------------------------------------
-`drill`  | false   | process the string as an NC drill file rather than a Gerber
-`pretty` | false   | output the SVG XML string with line-breaks and two-space tabs
-`object` | false   | return an XML object instead of a the default XML string
+key       | default | how it be
+----------|---------|-------------------------------------------------------------
+`drill`   | false   | process the string as an NC drill file rather than a Gerber
+`pretty`  | false   | output the SVG XML string with line-breaks and two-space tabs
+`object`  | false   | return an XML object instead of a the default XML string
+`warnArr` | null    | if passed an array, will push warning strings to that array rather than console.warn
 
-If an object is returned instead of a string, it will have the format:
+If opts.object is true, the returned object can be passed back into gerber-to-svg to get the XML string. The object will have the format:
 ``` javascript
   {
     svg: {
@@ -155,7 +156,7 @@ If your drill file is a wildly different size than your Gerbers, or it's offset 
 * Leading zero suppression (identical to no suppression and keep trailing zeros in Excellon speak) will be assumed if left unspecified
 * Absolute coordinates will be assumed if left unspecified
 * The CAD package that generated the drill file may have offset it to prevent negative coordinates
-* The drill file may have been generated with a different origin than the Gerbers
+* The drill file may have been generated with a different origin or units than the Gerbers
 
 ## building from source
 
@@ -171,4 +172,4 @@ This module uses mocha and shouldjs for unit testing. To run the tests once, run
 `$ gulp test`. To run the tests automatically when source or tests change, run `$ gulp testwatch`.
 
 There's also a visual test suite. Run `$ gulp testvisual` and point your browser
-to http://localhost.com:4242 to take a look. This will also run the build watcher
+to http://localhost.com:4242 to take a look. This will also run the standalone build watcher.
