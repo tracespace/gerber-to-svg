@@ -1,8 +1,5 @@
-###
-@license copyright 2014 by mike cousins <mike@cousins.io> (http://cousins.io)
-shared under the terms of the MIT license
-view source at http://github.com/mcous/gerber-to-svg
-###
+# gerber-to-svg
+# this bad boy is the entry point
 
 builder = require './obj-to-xml'
 Plotter = require './plotter'
@@ -14,6 +11,7 @@ DEFAULT_OPTS = {
   drill: false
   pretty: false
   object: false
+  warnArr: null
 }
 
 module.exports = (gerber, options = {}) ->
@@ -21,6 +19,7 @@ module.exports = (gerber, options = {}) ->
   opts = {}
   opts[key] = val for key, val of DEFAULT_OPTS
   opts[key] = val for key, val of options
+    
   # check if an svg object was passed int
   if typeof gerber is 'object'
     if gerber.svg? then return builder gerber, { pretty: opts.pretty }
@@ -35,11 +34,23 @@ module.exports = (gerber, options = {}) ->
     Parser = require './gerber-parser'
   # create the plotter
   p = new Plotter gerber, Reader, Parser
-  # try to plot
+  # capture console.warn if necessary
+  oldWarn = null
+  root = null
+  if Array.isArray opts.warnArr
+    root = window ? global
+    root.console = {} if not root.console?
+    oldWarn = root.console.warn
+    root.console.warn = (chunk) -> opts.warnArr.push chunk.toString()
   try
+    # try to plot
     xmlObject = p.plot()
   catch error
     throw new Error "Error at line #{p.reader.line} - #{error.message}"
+  finally
+    # unhook the warning capture if it was hooked
+    if oldWarn? and root? then root.console.warn = oldWarn
+    
 
   # make sure the bbox is valid
   unless p.bbox.xMin >= p.bbox.xMax then width = p.bbox.xMax - p.bbox.xMin

@@ -38,4 +38,7 @@ class GerberReader
     # if we get here, the file has ended
     return false
 
+  getLine: ->
+    @line
+    
 module.exports = GerberReader
