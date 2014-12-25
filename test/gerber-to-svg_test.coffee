@@ -87,8 +87,6 @@ describe 'gerber to svg function', ->
       
     it 'should push warnings to an array if option is set', ->
       warnings = []
-      # precess a file that will produce warnings
+      # process a file that will produce warnings
       gerberToSvg warnGerb, { warnArr: warnings }
-      console.log warnings
       warnings.length.should.not.equal 0
-      
