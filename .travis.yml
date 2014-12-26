@@ -10,3 +10,9 @@ deploy:
   on:
     tags: true
     all_branches: true
+addons:
+  sauce_connect: true
+env:
+  global:
+    - secure: SJVboTQgHqXU1UrY2zNkWzr9Gd75Qe8Uzyj7lCTK8C0P5Y9Jg+vE+bHOBKvehgXLmfrVGLZc93n6EilA52XWW0B6U3X6nPk/Pu9/fZRMK8AiyCLD0bfCgiPCikrNRdpp/1PHgbJyuaaYPlEhYE8SwmADGZk9UHFSPMlJQqDrQco=
+    - secure: U92/0p44DjV4u9FFJno6Bc75hXJ6lMfRpRaCfcxv2LL0aIqwVTKH87Yw1r68YrTDgimdiGFnkuxp4z8yucqRc7kXyagwd8QD5uPU3T6kA+LokJ2yfaXr6OSy2lJhb5KUiRbJ45/ybc0mMI6VYUUxzMDOjwTPgt7Gv2SDMLaq8Rs=

@@ -5,8 +5,7 @@ fs = require 'fs'
 coordFactor = require('../src/svg-coord').factor
 
 # stream hook for testing for warnings
-streamCapture = require './stream-capture'
-stderr = -> streamCapture(process.stderr)
+warnings = require './warn-capture'
 
 exGerb = fs.readFileSync './test/gerber/gerber-spec-example-2.gbr', 'utf-8'
 exDrill = fs.readFileSync './test/drill/example1.drl', 'utf-8'
@@ -77,13 +76,11 @@ describe 'gerber to svg function', ->
   describe 'logging warnings', ->
     it 'should send warnings to console.warn by default', ->
       # hook into stderr
-      hook = stderr()
-      hook.captured().length.should.equal 0
+      warnings.hook()
       # process a file that will produce warnings
       gerberToSvg warnGerb
       # check that we got some warnigns
-      hook.captured().length.should.not.equal 0
-      hook.unhook()
+      warnings.unhook().length.should.not.equal 0
       
     it 'should push warnings to an array if option is set', ->
       warnings = []
