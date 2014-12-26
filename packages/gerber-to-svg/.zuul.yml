@@ -1,0 +1,19 @@
+ui: mocha-bdd
+browsers:
+  - name: chrome
+    version: latest
+  - name: safari
+    version: latest
+  - name: firefox
+    version: latest
+  - name: ie
+    version: latest
+browserify:
+  - require: should
+    entry: true
+  - transform: coffeeify
+  - transform: brfs
+  - options:
+      extensions:
+        - .coffee
+      

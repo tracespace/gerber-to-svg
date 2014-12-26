@@ -1,9 +1,8 @@
 # tests for the macro arithmetic calc
 calc = require '../src/macro-calc'
 
-# stream hook for testing for warnings
-streamCapture = require './stream-capture'
-stderr = -> streamCapture(process.stderr)
+# warnings hook for testing for warnings
+warnings = require './warn-capture'
 
 tokenize = calc.tokenize
 isNumber = calc.isNumber
@@ -47,11 +46,10 @@ describe 'macro arithmetic calculator', ->
   
   describe 'exceptions to the rules', ->
     it "should allow an 'X' as a symbol, but warn that is should be 'x'", ->
-      hook = stderr()
+      warnings.hook()
       parse('1X2').should.eql {
         type: 'x'
         left: { type: 'n', val: '1' }
         right: { type: 'n', val: '2' }
       }
-      hook.captured().should.match /uppercase 'X' as multiplication symbol/
-      hook.unhook()
+      warnings.unhook().should.match /uppercase 'X' as multiplication symbol/
