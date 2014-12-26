@@ -35,11 +35,12 @@ OPTIONS = [
   [ 'p', 'pretty', '      align SVG output prettily' ]
   [ 'd', 'drill', '       process following file as an NC (Excellon) drill file' ]
   [ 'a', 'append-ext', '  append .svg rather than replace the extension' ]
+  [ 'j', 'json', '        output json rather than an xml string' ]
   [ 'v', 'version', '     display version information' ]
   [ 'h', 'help', '        display this help text' ]
 ]
 STRING_OPTS  = [ 'out', 'drill']
-BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'version', 'help' ] 
+BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'json', 'version', 'help' ] 
 
 printOptions = ->
   console.log 'Options:'
@@ -74,6 +75,8 @@ run = ->
 
   # write to the right place
   write = (string, filename) ->
+    if typeof string is 'object'
+      string = JSON.stringify string, null, (if argv.pretty then '  ' else '')
     unless argv.out then process.stdout.write string
     else
       if argv['append-ext'] then newName = path.basename filename
@@ -92,7 +95,11 @@ run = ->
         unless error
           try
             hook = stderr()
-            opts = { pretty: argv.pretty, drill: (file is argv.drill) }
+            opts = {
+              pretty: argv.pretty
+              drill: (file is argv.drill)
+              object: argv.json
+            }
             write gerberToSvg(data, opts), file
           catch e
             warn "could not process #{file}: #{e.message}"

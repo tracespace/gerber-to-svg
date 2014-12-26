@@ -21,6 +21,7 @@ switch             | how it rolls
 `-p, --pretty`     | prettily align SVG output
 `-d, --drill`      | process following file as an NC (Excellon) drill file
 `-a, --append-ext` | append .svg rather than replace the old file extension
+`-j, --json`       | output the SVG in JSON rather than as an XML string
 `-v, --version`    | display version information
 `-h, --help`       | display help text
 
