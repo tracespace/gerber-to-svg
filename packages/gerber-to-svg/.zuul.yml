@@ -8,6 +8,10 @@ browsers:
     version: 33..latest
   - name: ie
     version: 9..latest
+  - name: iphone
+    version: latest
+  - name: android
+    version: latest
 browserify:
   - require: should
     entry: true
