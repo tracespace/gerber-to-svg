@@ -73,15 +73,15 @@ gulp.task 'test', ->
 gulp.task 'coverage', ->
   run 'mocha --compilers coffee:coffee-script/register
     -r test/register-coffee-coverage -r should
-    -R mocha-lcov-reporter', { silent: true }
+    -R mocha-lcov-reporter'
     .exec()
     .pipe streamify coveralls()
 
-gulp.task 'browsers', ->
-  run "zuul -- #{TEST}", { silent: true }
-    .exec()
+#gulp.task 'browsers', ->
+  #run "zuul -- #{TEST}", { silent: true }
+  #  .exec()
     
-gulp.task 'travis', [ 'test', 'coverage', 'browsers' ], ->
+gulp.task 'travis', [ 'coverage' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
