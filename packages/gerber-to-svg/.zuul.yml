@@ -1,13 +1,13 @@
 ui: mocha-bdd
 browsers:
   - name: chrome
-    version: latest
+    version: 38..latest
   - name: safari
-    version: latest
+    version: 6..latest
   - name: firefox
-    version: latest
+    version: 33..latest
   - name: ie
-    version: latest
+    version: 9..latest
 browserify:
   - require: should
     entry: true
