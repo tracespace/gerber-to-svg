@@ -4,6 +4,7 @@ mocha      = require 'gulp-mocha'
 coveralls  = require 'gulp-coveralls'
 run        = require 'gulp-run'
 coffee     = require 'gulp-coffee'
+istanbul   = require 'gulp-coffee-istanbul'
 browserify = require 'browserify'
 coffeeify  = require 'coffeeify'
 source     = require 'vinyl-source-stream'
@@ -22,6 +23,16 @@ NAME = 'gerberToSvg'
 SRC = './src/*.coffee'
 TEST = './test/*_test.coffee'
 LIBDIR = './lib'
+
+# plugin options
+MOCHA_OPTS = {
+  reporter: 'spec'
+  globals: {
+    should: require 'should'
+    coffee: require 'coffee-script/register'
+    stack: Error.stackTraceLimit = 3
+  }
+}
 
 gulp.task 'default', ->
   gulp.src SRC
@@ -55,33 +66,29 @@ gulp.task 'build', [ 'default', 'standalone' ]
 gulp.task 'watch', [ 'build' ], ->
   gulp.watch [ './src/*' ] , [ 'build' ]
 
-gulp.task 'test', ->
-  gulp.src TEST, { read: false }
-    .pipe mocha {
-      reporter: 'spec'
-      globals: {
-        should: require 'should'
-        coffee: require 'coffee-script/register'
-        stack: Error.stackTraceLimit = 3
-      }
-    }
-    .on 'error', (e) ->
-      if e.name is 'SyntaxError' then gutil.log e.stack else gutil.log e.message
-      @.emit 'end'
-
 # this is also ugly but it works
-gulp.task 'coverage', ->
-  run 'mocha --compilers coffee:coffee-script/register
-    -r test/register-coffee-coverage -r should
-    -R mocha-lcov-reporter'
-    .exec()
-    .pipe streamify coveralls()
+gulp.task 'test', ->
+  gulp.src SRC
+    .pipe istanbul { includeUntested: true }
+    .pipe istanbul.hookRequire()
+    .on 'finish', ->
+      gulp.src TEST, { read: false }
+        .pipe mocha MOCHA_OPTS
+        .on 'error', (e) ->
+          if e.name is 'SyntaxError'
+            gutil.log e.stack 
+          else 
+            gutil.log e.message
+        .pipe istanbul.writeReports()
+        .on 'end', ->
+          gulp.src './coverage/lcov.info'
+            .pipe coveralls()
 
 #gulp.task 'browsers', ->
   #run "zuul -- #{TEST}", { silent: true }
   #  .exec()
     
-gulp.task 'travis', [ 'coverage' ], ->
+gulp.task 'travis', [ 'test' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
