@@ -20,6 +20,7 @@ NAME = 'gerberToSvg'
 
 # source code and destination code locations
 SRC = './src/*.coffee'
+TEST = './test/*_test.coffee'
 LIBDIR = './lib'
 
 gulp.task 'default', ->
@@ -33,7 +34,6 @@ gulp.task 'standalone', ->
       extensions: [ '.coffee' ]
       standalone: NAME
     }
-    .transform 'coffeeify'
     .bundle()
       .on 'error', gutil.log
     .pipe source DIST+'.js'
@@ -56,7 +56,7 @@ gulp.task 'watch', [ 'build' ], ->
   gulp.watch [ './src/*' ] , [ 'build' ]
 
 gulp.task 'test', ->
-  gulp.src './test/*_test.coffee', { read: false }
+  gulp.src TEST, { read: false }
     .pipe mocha {
       reporter: 'spec'
       globals: {
@@ -70,12 +70,18 @@ gulp.task 'test', ->
       @.emit 'end'
 
 # this is also ugly but it works
-gulp.task 'coverage', [ 'test' ], ->
+gulp.task 'coverage', ->
   run 'mocha --compilers coffee:coffee-script/register
     -r test/register-coffee-coverage -r should
     -R mocha-lcov-reporter', { silent: true }
     .exec()
     .pipe streamify coveralls()
+
+gulp.task 'browsers', ->
+  run "zuul -- #{TEST}", { silent: true }
+    .exec()
+    
+gulp.task 'travis', [ 'test', 'coverage', 'browsers' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']

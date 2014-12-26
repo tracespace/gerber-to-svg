@@ -1,8 +1,7 @@
 # test suite for plotter class
 Plotter = require '../src/plotter'
 # stream hook for testing for warnings
-streamCapture = require './stream-capture'
-stderr = -> streamCapture(process.stderr)
+warnings = require './warn-capture'
 
 describe 'Plotter class', ->
   p = null
@@ -126,18 +125,16 @@ describe 'Plotter class', ->
       it 'should use the backup units if units were not set', ->
         p.units = null
         p.backupUnits = 'in'
-        hook = stderr()
+        warnings.hook()
         p.command { op: { do: 'int', x: 1, y: 1 } }
-        hook.captured().should.match /units .* deprecated/
-        hook.unhook()
+        warnings.unhook().should.match /units .* deprecated/
         p.units.should.eql 'in'
 
       it 'should assume inches if units and backup units are not set', ->
         p.units = null
-        hook = stderr()
+        warnings.hook()
         p.command { op: { do: 'int', x: 1, y: 1 } }
-        hook.captured().should.match /no units/
-        hook.unhook()
+        warnings.unhook().should.match /no units/
         p.units.should.eql 'in'
 
       it 'should throw if notation is not set', ->
@@ -209,10 +206,9 @@ describe 'Plotter class', ->
         (-> p.command { op: { do: 'int' } }).should.throw /strokable tool/
       it 'should assume linear interpolation if none was specified', ->
         p.mode = null
-        hook = stderr()
+        warnings.hook()
         p.command { op: { do: 'int', x: 5, y: 5 } }
-        hook.captured().should.match /assuming linear/i
-        hook.unhook()
+        warnings.unhook().should.match /assuming linear/i
         p.mode.should.eql 'i'
       describe 'adding to a linear path', ->
         beforeEach ->
@@ -301,10 +297,10 @@ describe 'Plotter class', ->
             p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 0, y: 0, j: 1} }
             p.path.should.containDeep [ 'A', 1, 1, 0, 0, 0, 0, 0, 'Z' ]
           it 'should warn for impossible arcs and add nothing to the path', ->
-            hook = stderr()
+            warnings.hook()
             p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, i: 1} }
-            hook.captured().should.match /impossible arc/
-            hook.unhook()
+            warnings.unhook().should.match /impossible arc/
+            
             p.path.should.not.containEql 'A'
 
         describe 'multi quadrant arc mode', ->
@@ -321,10 +317,10 @@ describe 'Plotter class', ->
               'A', 1, 1, 0, 0, 0, 2, 0, 'A', 1, 1, 0, 0, 0, 0, 0
             ]
           it 'should warn for impossible arc and add nothing to the path', ->
-            hook = stderr()
+            warnings.hook()
             p.command { set: { mode: 'cw' }, op: {do: 'int', x: 1, y: 1, j:-1 }}
-            hook.captured().should.match /impossible arc/
-            hook.unhook()
+            warnings.unhook().should.match /impossible arc/
+            
             p.path.should.not.containEql 'A'
 
         # tool is a dia 2 circle for these tests
@@ -400,11 +396,11 @@ describe 'Plotter class', ->
 
     describe 'modal operation codes', ->
       it 'should throw a warning if operation codes are used modally', ->
-        hook = stderr()
+        warnings.hook()
         p.command { op: { do: 'int', x: 1, y: 1 } }
         p.command { op: { do: 'last', x: 2, y: 2 } }
-        hook.captured().should.match /modal operation/
-        hook.unhook()
+        warnings.unhook().should.match /modal operation/
+        
       it 'should continue a stroke if last operation was a stroke', ->
         p.command { op: { do: 'int', x: 1, y: 1 } }
         p.command { op: { do: 'last', x: 2, y: 2 } }
