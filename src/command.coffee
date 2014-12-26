@@ -30,14 +30,16 @@ BANNER = '''
 '''
 
 OPTIONS = [
-  [ 'o', 'out', '     specify an output directory' ]
-  [ 'q', 'quiet', '   do not print warnings and messages' ]
-  [ 'p', 'pretty', '  align SVG output prettily' ]
-  [ 'd', 'drill', '   process following file as an NC (Excellon) drill file' ]
+  [ 'o', 'out', '         specify an output directory' ]
+  [ 'q', 'quiet', '       do not print warnings and messages' ]
+  [ 'p', 'pretty', '      align SVG output prettily' ]
+  [ 'd', 'drill', '       process following file as an NC (Excellon) drill file' ]
   [ 'a', 'append-ext', '  append .svg rather than replace the extension' ]
-  [ 'v', 'version', ' display version information' ]
-  [ 'h', 'help', '    display this help text' ]
+  [ 'v', 'version', '     display version information' ]
+  [ 'h', 'help', '        display this help text' ]
 ]
+STRING_OPTS  = [ 'out', 'drill']
+BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'version', 'help' ] 
 
 printOptions = ->
   console.log 'Options:'
@@ -57,6 +59,8 @@ help = ->
 run = ->
   argv = parseArgs process.argv.slice(2), {
     alias: getOptions()
+    string: STRING_OPTS
+    boolean: BOOLEAN_OPTS
   }
   fileList = argv._
 
