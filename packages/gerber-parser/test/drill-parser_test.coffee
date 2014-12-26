@@ -1,6 +1,7 @@
 # test suit for the NC drill file parser
 Parser = require '../src/drill-parser'
-
+# warnings hook
+warnings = require './warn-capture'
 # svg coordinate scaling factor
 factor = require('../src/svg-coord').factor
 
@@ -43,19 +44,17 @@ describe 'NC drill file parser', ->
     p.format.places = [2,4]
     # have a backup
     p.format.zero?.should.not.be.true
-    hook = require('./stream-capture')(process.stderr)
+    warnings.hook()
     p.parseCommand 'X50Y15500'
     p.format.zero.should.eql 'L'
-    hook.captured().should.match /assuming leading zero suppression/
-    hook.unhook()
+    warnings.unhook().should.match /assuming leading zero suppression/
   it 'should warn and fall back to 2:4 format if unspecified', ->
     p.format.zero = 'L'
     p.format.places?.should.not.be.true
-    hook = require('./stream-capture')(process.stderr)
+    warnings.hook()
     p.parseCommand 'X50Y15500'
     p.format.places.should.eql [ 2, 4 ]
-    hook.captured().should.match /assuming 2\:4/
-    hook.unhook()
+    warnings.unhook().should.match /assuming 2\:4/
   it 'should use 3.3 format for metric and 2.4 for inches', ->
     p.parseCommand 'INCH'
     p.format.places.should.eql [ 2, 4 ]
