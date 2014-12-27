@@ -2,7 +2,6 @@ gulp       = require 'gulp'
 gutil      = require 'gulp-util'
 mocha      = require 'gulp-mocha'
 coveralls  = require 'gulp-coveralls'
-run        = require 'gulp-run'
 coffee     = require 'gulp-coffee'
 istanbul   = require 'gulp-coffee-istanbul'
 browserify = require 'browserify'
@@ -12,6 +11,10 @@ rename     = require 'gulp-rename'
 uglify     = require 'gulp-uglify'
 streamify  = require 'gulp-streamify'
 stat       = require 'node-static'
+
+exec = require('child_process').exec
+spawn = require('child_process').spawn
+glob = require 'glob'
 
 # application entry point to generate standalone library
 ENTRY = './src/gerber-to-svg.coffee'
@@ -33,6 +36,10 @@ MOCHA_OPTS = {
     stack: Error.stackTraceLimit = 3
   }
 }
+
+TRAVIS_BUILD = process.env.TRAVIS_JOB_NUMBER
+ZUUL_OPTS = [ '--concurrency', 3 ]
+if TRAVIS_BUILD? then ZUUL_OPTS.push '--sauce-connect', TRAVIS_BUILD
 
 gulp.task 'default', ->
   gulp.src SRC
@@ -67,7 +74,7 @@ gulp.task 'watch', [ 'build' ], ->
   gulp.watch [ './src/*' ] , [ 'build' ]
 
 # this is also ugly but it works
-gulp.task 'test', ->
+gulp.task 'test', (cb) ->
   gulp.src SRC
     .pipe istanbul { includeUntested: true }
     .pipe istanbul.hookRequire()
@@ -79,16 +86,27 @@ gulp.task 'test', ->
             gutil.log e.stack 
           else 
             gutil.log e.message
-        .pipe istanbul.writeReports()
-        .on 'end', ->
-          gulp.src './coverage/lcov.info'
-            .pipe coveralls()
+        .pipe istanbul.writeReports { reporters: [ 'lcov', 'text-summary' ] }
+        .on 'end', cb
+    # return null so that cb fires correctly
+    null
+        
+gulp.task 'coveralls', [ 'test' ], ->
+  gulp.src './coverage/lcov.info'
+    .pipe coveralls()
 
-#gulp.task 'browsers', ->
-  #run "zuul -- #{TEST}", { silent: true }
-  #  .exec()
+gulp.task 'browsers', (cb) ->
+  glob TEST, (err, files) ->
+    if err? then cb err
+    else if files?
+      ZUUL_OPTS.push files...
+      child = spawn "zuul", ZUUL_OPTS, { stdio: 'inherit' }
+      child.on 'close', (code) ->
+        gutil.log "browser tests completed"
+        cb()
+  null
     
-gulp.task 'travis', [ 'test' ], ->
+gulp.task 'travis', [ 'test', 'coveralls', 'browsers' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
