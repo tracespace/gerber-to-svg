@@ -1,7 +1,10 @@
+# speed up this build: http://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/
+sudo: false
+
 language: node_js
 node_js:
 - '0.10'
-script: npm run-script test:travis
+script: gulp travis
 deploy:
   provider: npm
   email: mike@cousins.io
