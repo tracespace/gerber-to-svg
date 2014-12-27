@@ -31,7 +31,6 @@
   "devDependencies": {
     "brfs": "^1.2.0",
     "browserify": "^8.0.1",
-    "coffee-coverage": "^0.4.2",
     "coffee-script": "^1.7.1",
     "coffeeify": "^1.0.0",
     "glob": "^4.3.2",
@@ -49,7 +48,7 @@
     "node-static": "^0.7.4",
     "should": "^4.0.4",
     "vinyl-source-stream": "^0.1.1",
-    "zuul": "1.16.1"
+    "zuul": "git://github.com/mcous/zuul.git#e21cf63"
   },
   "dependencies": {
     "chalk": "^0.5.1",
