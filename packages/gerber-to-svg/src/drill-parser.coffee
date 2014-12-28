@@ -66,7 +66,7 @@ class DrillParser
       if ( dia = block.match(/C[\d\.]+(?=.*$)/)?[0] )
         dia = dia[1..]
         command.tool = {}
-        command.tool[code] = { dia: getSvgCoord dia, { places: @format.places } }
+        command.tool[code] = { dia: getSvgCoord dia, { places: @format.places }}
       else
         command.set = { currentTool: code }
 

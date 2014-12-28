@@ -160,8 +160,8 @@ describe 'shape functions', ->
         crossThx: 0.5
       }
       expect( result.shape ).to.deep.eql [
-        { 
-          line: { 
+        {
+          line: {
             x1: -6
             y1: 0
             x2: 6

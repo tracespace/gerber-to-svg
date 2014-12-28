@@ -99,11 +99,11 @@ describe 'tool macro class', ->
       it 'should add a circle to the shapes and the bbox', ->
         m.primitive [ 1, 1, 5, 1, 2 ]
         expect( m.shapes ).to.have.length 1
-        expect( m.shapes[0].circle ).to.contain { 
+        expect( m.shapes[0].circle ).to.contain {
           cx: 1*factor, cy: 2*factor, r: 2.5*factor
         }
         expect( m.masks ).to.eql []
-        expect( m.bbox ).to.eql [ 
+        expect( m.bbox ).to.eql [
           -1.5*factor, -0.5*factor, 3.5*factor, 4.5*factor
         ]
     describe 'for vector lines', ->
@@ -129,8 +129,8 @@ describe 'tool macro class', ->
       it 'should add a center rect to the shapes and bbox', ->
         m.primitive [ 21, 1, 4, 5, 1, 2, 0 ]
         expect( m.shapes ).to.have.length 1
-        expect( m.shapes[0].rect ).to.contain { 
-          x:-1*factor, y:-.5*factor, width:4*factor, height:5*factor 
+        expect( m.shapes[0].rect ).to.contain {
+          x:-1*factor, y:-.5*factor, width:4*factor, height:5*factor
         }
         expect( m.masks ).to.be.empty
         expect( m.bbox ).to.eql [ -1*factor, -.5*factor, 3*factor, 4.5*factor ]
@@ -198,7 +198,7 @@ describe 'tool macro class', ->
       it 'should add a moiré to the shapes and bbox', ->
         m.primitive [6, 0, 0, 20, 2, 2, 3, 2, 22, 0]
         expect( m.shapes ).to.deep.contain.members [
-          { 
+          {
             line: {
               x1: -11*factor
               y1: 0
@@ -208,8 +208,8 @@ describe 'tool macro class', ->
               'stroke-linecap': 'butt'
             }
           }
-          { 
-            line: { 
+          {
+            line: {
               x1: 0
               y1: -11*factor
               x2: 0
@@ -218,14 +218,14 @@ describe 'tool macro class', ->
               'stroke-linecap': 'butt'
             }
           }
-          { 
-            circle: { 
-              cx: 0, cy: 0, r: 9*factor, fill: 'none', 'stroke-width': 2*factor 
+          {
+            circle: {
+              cx: 0, cy: 0, r: 9*factor, fill: 'none', 'stroke-width': 2*factor
             }
           }
-          { 
+          {
             circle: {
-              cx: 0, cy: 0, r: 5*factor, fill: 'none', 'stroke-width': 2*factor 
+              cx: 0, cy: 0, r: 5*factor, fill: 'none', 'stroke-width': 2*factor
             }
           }
           { circle: { cx: 0, cy: 0, r: 2*factor } }
@@ -248,16 +248,16 @@ describe 'tool macro class', ->
         expect( m.masks ).to.have.length 1
         expect( m.masks[0].mask._ ).to.deep.contain.members [
           { circle: { cx: 0, cy: 0, r: 5*factor, fill: '#fff' } }
-          { 
+          {
             rect: {
               x: -5*factor
               y: -1*factor
               width: 10*factor
               height: 2*factor
-              fill:'#000' 
+              fill:'#000'
             }
           }
-          { 
+          {
             rect: {
               x: -1*factor
               y: -5*factor
@@ -268,8 +268,8 @@ describe 'tool macro class', ->
           }
         ]
         expect( m.shapes ).to.have.length 1
-        expect( m.shapes[0].circle ).to.contain { 
-          cx: 0, cy: 0, r: 4.5*factor, fill:'none', 'stroke-width': 1*factor 
+        expect( m.shapes[0].circle ).to.contain {
+          cx: 0, cy: 0, r: 4.5*factor, fill:'none', 'stroke-width': 1*factor
         }
       it 'should rotate the cutout if center is 0,0', ->
         m.primitive [ 7, 0, 0, 10, 8, 2, 30 ]
@@ -293,12 +293,12 @@ describe 'tool macro class', ->
         m.primitive [ 1, 0, 5, 0, 0]
         expect( m.masks ).to.have.length 1
         expect( m.masks[0].mask._ ).to.deep.contain.members [
-          { 
-            rect: { 
+          {
+            rect: {
               x:-5*factor
               y:-5*factor
-              width:10*factor 
-              height:10*factor 
+              width:10*factor
+              height:10*factor
               fill:'#fff'
             }
           }
@@ -318,8 +318,8 @@ describe 'tool macro class', ->
         # mask should use the bounding box
         expect( m.masks.length ).to.equal 1
         expect( m.masks[0].mask._ ).to.deep.contain.members [
-          { 
-            rect: { 
+          {
+            rect: {
               x: -5*factor
               y: -5*factor
               width: 14.5*factor

@@ -68,7 +68,7 @@ describe 'NC drill file parser', ->
       p.format.places = [ 2, 4 ]
     it 'should return a define tool command for tool definitions', ->
       expect( p.parseCommand 'T1C0.015' ).to.eql {
-        tool: { T1: { dia: .015 * factor } } 
+        tool: { T1: { dia: .015 * factor } }
       }
       expect( p.parseCommand 'T13C0.142' ).to.eql {
         tool: { T13: { dia: .142 * factor } }
@@ -158,4 +158,3 @@ describe 'NC drill file parser', ->
       expect( p.parseCommand('X01Y01T01') ).to.eql {
         set: { currentTool: 'T1' }, op: { do: 'flash', x: 1*factor, y: 1*factor}
       }
-      
