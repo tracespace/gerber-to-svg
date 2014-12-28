@@ -2363,13 +2363,18 @@ standardTool = function(tool, p) {
     if ((p.dia != null) || (p.verticies != null) || (p.degrees != null)) {
       throw new Error("incompatible parameters for tool " + tool);
     }
-    if (p.width <= 0) {
-      throw new RangeError("" + tool + " rect width out of range (" + p.width + "<=0)");
+    if (p.width < 0) {
+      throw new RangeError("" + tool + " rect width out of range (" + p.width + "<0)");
     }
-    if (p.height <= 0) {
-      throw new RangeError("" + tool + " rect height out of range (" + p.height + "<=0)");
+    if (p.height < 0) {
+      throw new RangeError("" + tool + " rect height out of range (" + p.height + "<0)");
     }
     shape = 'rect';
+    if ((p.width === 0 || p.height === 0) && !p.obround) {
+      console.warn("zero-size rectangle tools are not allowed; converting " + tool + " to a zero-size circle");
+      shape = 'circle';
+      p.dia = 0;
+    }
     if (!((p.hole != null) || p.obround)) {
       result.trace = {};
     }

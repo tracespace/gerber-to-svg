@@ -2,6 +2,9 @@
 standard = require '../src/standard-tool'
 expect = require('chai').expect
 
+# warning capture
+warnings = require './warn-capture'
+
 tool = 'D10'
 describe 'standard tool function', ->
   it 'should return the pad id', ->
@@ -41,9 +44,15 @@ describe 'standard tool function', ->
     it 'should be traceable if there is no hole', ->
       result = standard tool, { width: 1.2, height: 2.2 }
       expect( result.trace ).to.not.be.false
-    it 'should throw an error for non-positive side lengths', ->
+    it 'should throw an error for negative side lengths', ->
       expect(-> standard tool, {width: -23, height: 4}).to.throw /out of range/
-      expect(-> standard tool, {width: 2.3, height: 0}).to.throw /out of range/
+      expect(-> standard tool, {width: 2.3, height: -1}).to.throw /out of range/
+    it 'should throw a warning and return circle for zero-size side lengths', ->
+      warnings.hook()
+      result = standard tool, { width: 0, height: 1 }
+      expect( warnings.unhook() ).to.match /zero-size rectangle/
+      expect( result.pad[0].circle.r ).to.eql 0
+      expect( result.pad[0].circle.id ).to.match /D10/
 
   describe 'for obround tools', ->
     it 'should return a rect with radiused corners', ->

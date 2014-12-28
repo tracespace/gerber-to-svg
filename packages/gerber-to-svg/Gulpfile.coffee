@@ -37,10 +37,17 @@ MOCHA_OPTS = {
 
 ZUUL_OPTS = [ '--concurrency', 2 ]
 
+handleCompileError = (e) ->
+  if e.name is 'SyntaxError'
+    gutil.log e.stack 
+  else 
+    gutil.log e.message
+  @emit 'end'
+
 gulp.task 'default', ->
   gulp.src SRC
     .pipe coffee()
-      .on 'error', gutil.log
+      .on 'error', handleCompileError
     .pipe gulp.dest LIBDIR
 
 gulp.task 'standalone', ->
@@ -78,12 +85,7 @@ gulp.task 'test', (cb) ->
     .on 'finish', ->
       gulp.src TEST, { read: false }
         .pipe mocha MOCHA_OPTS
-        .on 'error', (e) ->
-          if e.name is 'SyntaxError'
-            gutil.log e.stack 
-          else 
-            gutil.log e.message
-          @emit 'end'
+        .on 'error', handleCompileError
         .pipe istanbul.writeReports { reporters: [ 'lcov', 'text-summary' ] }
         .on 'end', cb
     # return null so that cb fires correctly
