@@ -10,8 +10,9 @@ source     = require 'vinyl-source-stream'
 rename     = require 'gulp-rename'
 uglify     = require 'gulp-uglify'
 streamify  = require 'gulp-streamify'
-stat       = require 'node-static'
+coffeelint = require 'gulp-coffeelint'
 
+stat = require 'node-static'
 spawn = require('child_process').spawn
 glob = require 'glob'
 
@@ -46,6 +47,8 @@ handleCompileError = (e) ->
 
 gulp.task 'default', ->
   gulp.src SRC
+    .pipe coffeelint()
+    .pipe coffeelint.reporter()
     .pipe coffee()
       .on 'error', handleCompileError
     .pipe gulp.dest LIBDIR
@@ -83,7 +86,9 @@ gulp.task 'test', (cb) ->
     .pipe istanbul { includeUntested: true }
     .pipe istanbul.hookRequire()
     .on 'finish', ->
-      gulp.src TEST, { read: false }
+      gulp.src TEST
+        .pipe coffeelint()
+        .pipe coffeelint.reporter()
         .pipe mocha MOCHA_OPTS
         .on 'error', handleCompileError
         .pipe istanbul.writeReports { reporters: [ 'lcov', 'text-summary' ] }

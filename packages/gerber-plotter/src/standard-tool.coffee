@@ -55,7 +55,8 @@ standardTool = (tool, p) ->
       throw new Error "incompatible parameters for tool #{tool}"
     # make sure verticies are in range
     if p.verticies < 3 or p.verticies > 12
-      throw new RangeError "#{tool} polygon points out of range (#{p.verticies}<3 or >12)]"
+      throw new RangeError "#{tool} polygon points out of range
+        (#{p.verticies}<3 or >12)]"
     shape = 'polygon'
 
   else
@@ -71,15 +72,18 @@ standardTool = (tool, p) ->
     # if it's a circle
     if p.hole.dia? and not p.hole.width? and not p.hole.height?
       unless p.hole.dia >= 0
-        throw new RangeError "#{tool} hole diameter out of range (#{p.hole.dia}<0)"
+        throw new RangeError "#{tool} hole diameter out of range
+          (#{p.hole.dia}<0)"
       hole = shapes.circle { cx: p.cx, cy: p.cy, dia: p.hole.dia }
       hole = hole.shape
       hole.circle.fill = '#000'
     else if p.hole.width? and p.hole.height?
       unless p.hole.width >= 0
-        throw new RangeError "#{tool} hole width out of range (#{p.hole.width}<0)"
+        throw new RangeError "#{tool} hole width out of range
+          (#{p.hole.width}<0)"
       unless p.hole.height >= 0
-        throw new RangeError "#{tool} hole height out of range"
+        throw new RangeError "#{tool} hole height out of range
+          (#{p.hole.height}<0)"
       hole = shapes.rect {
         cx: p.cx, cy: p.cy, width: p.hole.width, height: p.hole.height
       }
