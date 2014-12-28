@@ -104,7 +104,7 @@ gulp.task 'browsers', (cb) ->
         cb()
   null
     
-gulp.task 'travis', [ 'test', 'coveralls', 'browsers' ], ->
+gulp.task 'travis', [ 'test', 'coveralls' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
   gulp.watch ['./src/*', './test/*'], ['test', 'default']
