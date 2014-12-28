@@ -172,75 +172,75 @@ describe 'gerber command parser', ->
       expect( -> p.parseCommand param 'SRX2Y2I1J-1' ).to.throw /invalid step/
 
   it 'should end the file with an M02', ->
-    expect( p.parseCommand(block 'M02') ).to.eql { set: { done: true } }
+    expect( p.parseCommand block 'M02' ).to.eql { set: { done: true } }
 
   describe 'units commands', ->
     it 'should return a set units with %MOIN*% and %MOMM*%', ->
-      expect( p.parseCommand(param 'MOIN') ).to.eql { set: { units: 'in' } }
-      expect( p.parseCommand(param 'MOMM') ).to.eql { set: { units: 'mm' } }
+      expect( p.parseCommand param 'MOIN' ).to.eql { set: { units: 'in' } }
+      expect( p.parseCommand param 'MOMM' ).to.eql { set: { units: 'mm' } }
 
     it 'should throw an error for invalid units parameters', ->
-      expect( (-> p.parseCommand param 'MOKM') ).to.throw /invalid units/
+      expect( -> p.parseCommand param 'MOKM' ).to.throw /invalid units/
 
     it 'should set backup units with G70 (in) and G71 (mm)', ->
-      expect( p.parseCommand(block 'G70') ).to.eql { set: { backupUnits: 'in' } }
-      expect( p.parseCommand(block 'G71') ).to.eql { set: { backupUnits: 'mm' } }
+      expect( p.parseCommand block 'G70' ).to.eql { set: { backupUnits: 'in' } }
+      expect( p.parseCommand block 'G71' ).to.eql { set: { backupUnits: 'mm' } }
 
   it 'should change tools with a tool change block', ->
-    expect( p.parseCommand(block 'D10') ).to.eql { set: { currentTool: 'D10' } }
-    expect( p.parseCommand(block 'G54D11') ).to.eql { set: { currentTool: 'D11' } }
+    expect( p.parseCommand block 'D10' ).to.eql { set: { currentTool: 'D10' } }
+    expect( p.parseCommand block 'G54D11' ).to.eql { set: {currentTool: 'D11'} }
 
   describe 'operating modes', ->
     it 'should turn region mode on and off with a G36 and G37', ->
-      expect( p.parseCommand(block 'G36') ).to.eql { set: { region: true  } }
-      expect( p.parseCommand(block 'G37') ).to.eql { set: { region: false } }
+      expect( p.parseCommand block 'G36' ).to.eql { set: { region: true  } }
+      expect( p.parseCommand block 'G37' ).to.eql { set: { region: false } }
     it 'should set the interpolation mode with G01, 2, and 3', ->
-      expect( p.parseCommand(block 'G01') ).to.eql { set: { mode: 'i'   } }
-      expect( p.parseCommand(block 'G1') ).to.eql  { set: { mode: 'i'   } }
-      expect( p.parseCommand(block 'G02') ).to.eql { set: { mode: 'cw'  } }
-      expect( p.parseCommand(block 'G2') ).to.eql  { set: { mode: 'cw'  } }
-      expect( p.parseCommand(block 'G03') ).to.eql { set: { mode: 'ccw' } }
-      expect( p.parseCommand(block 'G3') ).to.eql  { set: { mode: 'ccw' } }
+      expect( p.parseCommand block 'G01' ).to.eql { set: { mode: 'i'   } }
+      expect( p.parseCommand block 'G1' ).to.eql  { set: { mode: 'i'   } }
+      expect( p.parseCommand block 'G02' ).to.eql { set: { mode: 'cw'  } }
+      expect( p.parseCommand block 'G2' ).to.eql  { set: { mode: 'cw'  } }
+      expect( p.parseCommand block 'G03' ).to.eql { set: { mode: 'ccw' } }
+      expect( p.parseCommand block 'G3' ).to.eql  { set: { mode: 'ccw' } }
     it 'should set the arc quadrant mode with G74 (single) and 75 (multi)', ->
-      expect( p.parseCommand(block 'G74') ).to.eql { set: { quad: 's' } }
-      expect( p.parseCommand(block 'G75') ).to.eql { set: { quad: 'm' } }
+      expect( p.parseCommand block 'G74' ).to.eql { set: { quad: 's' } }
+      expect( p.parseCommand block 'G75' ).to.eql { set: { quad: 'm' } }
 
   describe 'operations', ->
     beforeEach ->
       p.format.zero = 'L'
       p.format.places = [2,2]
     it 'should parse an interpolation command', ->
-      expect( p.parseCommand(block 'X22Y0D01') ).to.eql {
+      expect( p.parseCommand block 'X22Y0D01' ).to.eql {
         op: { do: 'int', x: .22*factor, y: 0 }
       }
-      expect( p.parseCommand(block 'Y110D1') ).to.eql {
+      expect( p.parseCommand block 'Y110D1' ).to.eql {
         op: { do: 'int', y: 1.1*factor }
       }
     it 'should parse a move command', ->
-      expect( p.parseCommand(block 'X300Y1D02') ).to.eql {
+      expect( p.parseCommand block 'X300Y1D02' ).to.eql {
         op: { do: 'move', x: 3*factor, y: .01*factor }
       }
-      expect( p.parseCommand(block 'X-100D2') ).to.eql {
+      expect( p.parseCommand block 'X-100D2' ).to.eql {
         op: { do: 'move', x: -1*factor }
       }
     it 'should parse a flash command', ->
-      expect( p.parseCommand(block 'X75Y-140D03') ).to.eql {
+      expect( p.parseCommand block 'X75Y-140D03' ).to.eql {
         op: { do: 'flash', x: .75*factor, y: -1.4*factor }
       }
-      expect( p.parseCommand(block 'X1Y1D3') ).to.eql {
+      expect( p.parseCommand block 'X1Y1D3' ).to.eql {
         op: { do: 'flash', x: .01*factor, y: .01*factor }
       }
     it 'should interpolate with an inline mode set', ->
-      expect( p.parseCommand(block 'G01X01Y01D01') ).to.eql {
+      expect( p.parseCommand block 'G01X01Y01D01' ).to.eql {
         set: { mode: 'i' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
-      expect( p.parseCommand(block 'G02X01Y01D01') ).to.eql {
+      expect( p.parseCommand block 'G02X01Y01D01' ).to.eql {
         set: { mode: 'cw' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
-      expect( p.parseCommand(block 'G03X01Y01D01') ).to.eql {
+      expect( p.parseCommand block 'G03X01Y01D01' ).to.eql {
         set: { mode: 'ccw' }, op: { do: 'int', x: .01*factor, y: .01*factor }
       }
     it 'should send a last operation command if the op code is missing', ->
-      expect( p.parseCommand(block 'X01Y01') ).to.eql {
+      expect( p.parseCommand block 'X01Y01' ).to.eql {
         op: { do: 'last', x: .01*factor, y: .01*factor }
       }
