@@ -9,7 +9,6 @@ tool = require './standard-tool'
 # coordinate scale factor
 coordFactor = require('./svg-coord').factor
 
-
 # constants
 HALF_PI = Math.PI/2
 THREEHALF_PI = 3*HALF_PI
