@@ -45,8 +45,7 @@
     "gulp-util": "^3.0.1",
     "jquery": "^2.1.1",
     "node-static": "^0.7.4",
-    "should": "^4.0.4",
-    "vinyl-source-stream": "^0.1.1",
+    "vinyl-source-stream": "^1.0.0",
     "zuul": "git://github.com/mcous/zuul.git#e21cf63"
   },
   "dependencies": {
