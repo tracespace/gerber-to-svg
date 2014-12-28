@@ -12,7 +12,6 @@ uglify     = require 'gulp-uglify'
 streamify  = require 'gulp-streamify'
 stat       = require 'node-static'
 
-exec = require('child_process').exec
 spawn = require('child_process').spawn
 glob = require 'glob'
 
@@ -83,6 +82,7 @@ gulp.task 'test', (cb) ->
             gutil.log e.stack 
           else 
             gutil.log e.message
+          @emit 'end'
         .pipe istanbul.writeReports { reporters: [ 'lcov', 'text-summary' ] }
         .on 'end', cb
     # return null so that cb fires correctly
