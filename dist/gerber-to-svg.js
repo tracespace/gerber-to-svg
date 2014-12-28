@@ -1641,7 +1641,6 @@ thermal = function(p) {
                 cx: p.cx,
                 cy: p.cy,
                 r: outerR,
-                'stroke-width': 0,
                 fill: '#fff'
               }
             }, {
@@ -1650,7 +1649,6 @@ thermal = function(p) {
                 y: -halfGap,
                 width: p.outerDia,
                 height: p.gap,
-                'stroke-width': 0,
                 fill: '#000'
               }
             }, {
@@ -1659,7 +1657,6 @@ thermal = function(p) {
                 y: yMin,
                 width: p.gap,
                 height: p.outerDia,
-                'stroke-width': 0,
                 fill: '#000'
               }
             }
