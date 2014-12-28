@@ -13,7 +13,8 @@ deploy:
   on:
     tags: true
     all_branches: true
-  # run browser tests after a deploy
+  # build lib before deploy and run browser tests after a deploy
+  before_depoly: gulp
   after_deploy: gulp browsers
 addons:
   sauce_connect: true

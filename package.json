@@ -7,7 +7,6 @@
     "gerber2svg": "bin/gerber2svg"
   },
   "scripts": {
-    "prepublish": "gulp",
     "test": "gulp test"
   },
   "repository": {
