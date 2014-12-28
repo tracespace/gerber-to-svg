@@ -36,11 +36,17 @@ standardTool = (tool, p) ->
     if p.dia? or p.verticies? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
     # make sure side lengths are in range
-    if p.width <= 0
-      throw new RangeError "#{tool} rect width out of range (#{p.width}<=0)"
-    if p.height <= 0
-      throw new RangeError "#{tool} rect height out of range (#{p.height}<=0)"
+    if p.width < 0
+      throw new RangeError "#{tool} rect width out of range (#{p.width}<0)"
+    if p.height < 0
+      throw new RangeError "#{tool} rect height out of range (#{p.height}<0)"
     shape = 'rect'
+    # allow zero-size rectangles, but warn and convert them to circles
+    if (p.width is 0 or p.height is 0) and not p.obround
+      console.warn "zero-size rectangle tools are not allowed;
+        converting #{tool} to a zero-size circle"
+      shape = 'circle'
+      p.dia = 0
     unless p.hole? or p.obround then result.trace = {}
 
   else if p.dia? and p.verticies?
