@@ -40,12 +40,10 @@ describe 'gerber to svg function', ->
 
   it 'should have all the requisite svg header stuff', ->
     result = gerberToSvg exGerb, { object: true }
-    expect( result ).to.containDeep {
-      svg: {
-        xmlns: 'http://www.w3.org/2000/svg'
-        version: '1.1'
-        'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-      }
+    expect( result.svg ).to.contain {
+      xmlns: 'http://www.w3.org/2000/svg'
+      version: '1.1'
+      'xmlns:xlink': 'http://www.w3.org/1999/xlink'
     }
 
   it 'should set the bbox to zero if the svg has no shapes', ->

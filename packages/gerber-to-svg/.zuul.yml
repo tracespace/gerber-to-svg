@@ -13,8 +13,6 @@ browsers:
   - name: android
     version: 4.3..latest
 browserify:
-  - require: should
-    entry: true
   - transform: coffeeify
   - transform: brfs
   - options:
