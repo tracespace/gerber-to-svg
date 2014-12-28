@@ -37,9 +37,7 @@ MOCHA_OPTS = {
   }
 }
 
-# TRAVIS_BUILD = process.env.TRAVIS_JOB_NUMBER
 ZUUL_OPTS = [ '--concurrency', 2 ]
-# if TRAVIS_BUILD? then ZUUL_OPTS.push '--sauce-connect', TRAVIS_BUILD
 
 gulp.task 'default', ->
   gulp.src SRC
