@@ -48,6 +48,7 @@ gulp.task 'standalone', ->
       extensions: [ '.coffee' ]
       standalone: NAME
     }
+    .transform 'coffeeify'
     .bundle()
       .on 'error', gutil.log
     .pipe source DIST+'.js'
