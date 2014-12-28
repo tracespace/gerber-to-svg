@@ -63,7 +63,7 @@ describe 'gerber command parser', ->
         expect( p.parseCommand param 'ADD11C,1X0.2' ).to.eql {
           tool: { D11: { dia: 1*factor, hole: { dia: .2*factor } } }
         }
-        expect( expect( p.parseCommand param 'ADD12C,1X0.2X0.3' ) ).to.eql {
+        expect( p.parseCommand param 'ADD12C,1X0.2X0.3' ).to.eql {
           tool: { D12: { dia: 1*factor, hole: {
                 width: .2*factor, height: .3*factor
               }
