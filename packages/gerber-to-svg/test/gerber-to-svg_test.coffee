@@ -1,6 +1,6 @@
 # test suite for the gerber-to-svg function
-
 gerberToSvg = require '../src/gerber-to-svg'
+expect = require('chai').expect
 fs = require 'fs'
 coordFactor = require('../src/svg-coord').factor
 
@@ -13,34 +13,34 @@ warnGerb = fs.readFileSync './test/gerber/repeated-op-code-test.gbr', 'utf-8'
 
 describe 'gerber to svg function', ->
   it 'should default to the gerber plotter', ->
-    (-> gerberToSvg exGerb).should.not.throw()
-    (-> gerberToSvg exDrill).should.throw()
+    expect( -> gerberToSvg exGerb ).to.not.throw()
+    expect( -> gerberToSvg exDrill ).to.throw()
 
   it 'should be able to plot drill files if told to do so', ->
-    (-> gerberToSvg exDrill, { drill: true }).should.not.throw()
-    (-> gerberToSvg exGerb, { drill: true }).should.throw()
+    expect( -> gerberToSvg exDrill, { drill: true } ).to.not.throw()
+    expect( -> gerberToSvg exGerb, { drill: true } ).to.throw()
 
   it 'should return compressed output by default', ->
     result = gerberToSvg exGerb
-    result.split('\n').length.should.eql 1
+    expect( result.split('\n').length ).to.eql 1
 
   it 'should return pretty output with an option', ->
     result = gerberToSvg exGerb, { pretty: true }
-    result.split('\n').length.should.be.greaterThan 1
+    expect( result.split('\n').length ).to.be.greaterThan 1
 
   it 'should return the xml string by default', ->
     result = gerberToSvg exGerb
-    (typeof result).should.eql 'string'
+    expect( typeof result ).to.eql 'string'
 
   it 'should return the xml object if the object option is passed', ->
     result = gerberToSvg exGerb, { object: true }
-    (typeof result).should.eql 'object'
-    Object.keys(result)[0].should.eql 'svg'
-    Array.isArray(result.svg.viewBox).should.be.true
+    expect( typeof result ).to.eql 'object'
+    expect( Object.keys(result)[0] ).to.eql 'svg'
+    expect( Array.isArray result.svg.viewBox ).to.be.true
 
   it 'should have all the requisite svg header stuff', ->
     result = gerberToSvg exGerb, { object: true }
-    result.should.containDeep {
+    expect( result ).to.containDeep {
       svg: {
         xmlns: 'http://www.w3.org/2000/svg'
         version: '1.1'
@@ -50,16 +50,16 @@ describe 'gerber to svg function', ->
 
   it 'should set the bbox to zero if the svg has no shapes', ->
     result = gerberToSvg 'M02*', { object: true }
-    result.svg.viewBox.should.eql [ 0, 0, 0, 0 ]
-    result.svg.width.should.match /^0\D/
-    result.svg.height.should.match /^0\D/
+    expect( result.svg.viewBox ).to.eql [ 0, 0, 0, 0 ]
+    expect( result.svg.width ).to.match /^0\D/
+    expect( result.svg.height ).to.match /^0\D/
 
   it 'should set the real width and height according to the vbox', ->
     result = gerberToSvg exGerb, { object: true }
     vbWidth  = result.svg.viewBox[2]
     vbHeight = result.svg.viewBox[3]
-    result.svg.width.should.eql  "#{vbWidth /coordFactor}in"
-    result.svg.height.should.eql "#{vbHeight/coordFactor}in"
+    expect( result.svg.width ).to.eql  "#{vbWidth /coordFactor}in"
+    expect( result.svg.height ).to.eql "#{vbHeight/coordFactor}in"
 
   describe 'converting an svg object into an svg string', ->
     it 'should be able to convert an svg object into an svg string', ->
@@ -69,9 +69,9 @@ describe 'gerber to svg function', ->
       # wipe out unique ids for the layers, masks, and pads so i can compare
       result1 = result1.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
       result2 = result2.replace /((pad-)|(gerber-)|(mask-)|(_))\d+/g, 'unique'
-      result2.should.eql result1
+      expect( result2 ).to.eql result1
     it 'should throw an error if a non svg object is passed in', ->
-      (-> gerberToSvg { thing: {} }).should.throw /non SVG/
+      expect( -> gerberToSvg { thing: {} } ).to.throw /non SVG/
 
   describe 'logging warnings', ->
     it 'should send warnings to console.warn by default', ->
@@ -80,10 +80,10 @@ describe 'gerber to svg function', ->
       # process a file that will produce warnings
       gerberToSvg warnGerb
       # check that we got some warnigns
-      warnings.unhook().length.should.not.equal 0
+      expect( warnings.unhook().length ).to.not.equal 0
       
     it 'should push warnings to an array if option is set', ->
       warnings = []
       # process a file that will produce warnings
       gerberToSvg warnGerb, { warnArr: warnings }
-      warnings.length.should.not.equal 0
+      expect( warnings.length ).to.not.equal 0
