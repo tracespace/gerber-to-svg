@@ -1,4 +1,5 @@
 id = require '../src/unique-id'
+expect = require('chai').expect
 
 describe 'unique id generator', ->
   it 'should be able to generate a bunch of unique ids', ->
@@ -6,7 +7,7 @@ describe 'unique id generator', ->
     counter = 0
     while counter++ < 50
       uniqueId = id()
-      uniqueId.should.not.equal prev
+      expect( uniqueId ).to.not.equal prev
       prev = uniqueId
 
   it 'should keep those ids unique even in different closures', ->
@@ -15,4 +16,4 @@ describe 'unique id generator', ->
     do (uniqueId) ->
       otherIdFunc = require '../src/unique-id'
       otherId = otherIdFunc()
-      otherId.should.not.equal uniqueId
+      expect( otherId ).to.not.equal uniqueId
