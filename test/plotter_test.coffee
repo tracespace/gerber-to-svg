@@ -1,6 +1,6 @@
 # test suite for plotter class
-Plotter = require '../src/plotter'
 expect = require('chai').expect
+Plotter = require '../src/plotter'
 # stream hook for testing for warnings
 warnings = require './warn-capture'
 
@@ -104,7 +104,7 @@ describe 'Plotter class', ->
       flash = p.tools.D10.flash(1.0, 3.6)
       expect( flash.use.x ).to.eql 1
       expect( flash.use.y ).to.eql 3.6
-      expect( flash.use['xlink:href'] ).to.match /D10/ 
+      expect( flash.use['xlink:href'] ).to.match /D10/
       expect( p.tools.D10.bbox(1.0, 3.6) ).to.eql {
         xMin: -4, yMin: -1.4, xMax: 6, yMax: 8.6
       }
@@ -223,7 +223,7 @@ describe 'Plotter class', ->
         it 'should add a lineto with an int', ->
           p.command { op: { do: 'int', x: 10, y: 10 } }
           expect( p.path ).to.eql [ 'M', 0, 0, 'L', 5, 5, 'L', 10, 10 ]
-          expect( p.layerBbox ).to.eql { xMin: -1, yMin: -1, xMax: 11, yMax: 11 }
+          expect( p.layerBbox ).to.eql { xMin: -1, yMin: -1, xMax: 11, yMax: 11}
         it 'should add a moveto with a move', ->
           p.command { op: { do: 'move', x: 10, y: 10 } }
           expect( p.path ).to.eql [ 'M', 0, 0, 'L', 5, 5, 'M', 10, 10 ]
@@ -293,10 +293,9 @@ describe 'Plotter class', ->
           expect( -> p.command { op: { do: 'int', x: 1, y: 1, i: 1 } } )
             .to.not.throw()
         it 'should throw an error if quadrant mode has not been specified', ->
-          expect( -> p.command { 
-              set: { mode: 'cw' }, op: { do: 'int', x: 1, y: 1, i: 1 }
-            }
-          ).to.throw /quadrant mode/
+          expect( -> p.command {
+            set: { mode: 'cw' }, op: { do: 'int', x: 1, y: 1, i: 1 }
+          }).to.throw /quadrant mode/
         describe 'single quadrant arc mode', ->
           beforeEach () -> p.command { set: { quad: 's' } }
           it 'should add a CW arc with a set to cw', ->
@@ -312,7 +311,7 @@ describe 'Plotter class', ->
             warnings.hook()
             p.command { set: { mode: 'ccw'}, op: {do: 'int', x: 1, y: 1, i: 1} }
             expect( warnings.unhook() ).to.match /impossible arc/
-            
+
             expect( p.path ).to.not.contain 'A'
 
         describe 'multi quadrant arc mode', ->
@@ -411,7 +410,7 @@ describe 'Plotter class', ->
         p.command { op: { do: 'int', x: 1, y: 1 } }
         p.command { op: { do: 'last', x: 2, y: 2 } }
         expect( warnings.unhook() ).to.match /modal operation/
-        
+
       it 'should continue a stroke if last operation was a stroke', ->
         p.command { op: { do: 'int', x: 1, y: 1 } }
         p.command { op: { do: 'last', x: 2, y: 2 } }

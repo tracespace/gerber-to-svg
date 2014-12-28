@@ -379,9 +379,9 @@ class Plotter
   # draw an arc with the start point, end point, and center offset
   drawArc: (sx, sy, ex, ey, i, j) ->
     # lets try this for arc point comparison epsilon
-    # this value seems strict enough to prevent invalid arcs but forgiving 
+    # this value seems strict enough to prevent invalid arcs but forgiving
     # enough to let most gerbers draw
-    arcEps = 1.5 * coordFactor * 10**-(@parser?.format.places[1] ? 7) 
+    arcEps = 1.5 * coordFactor * 10**-(@parser?.format.places[1] ? 7)
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
     if not @region and not t.trace['stroke-width']

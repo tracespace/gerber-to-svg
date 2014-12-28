@@ -93,7 +93,7 @@ class MacroTool
     switch args[0]
       # circle primitive
       when 1
-        shape = shapes.circle { 
+        shape = shapes.circle {
           dia: getSvgCoord args[2], @format
           cx:  getSvgCoord args[3], @format
           cy:  getSvgCoord args[4], @format
@@ -137,7 +137,7 @@ class MacroTool
         for i in [ 3..3+2*args[2] ] by 2
           points.push [
             getSvgCoord(args[i], @format), getSvgCoord(args[i+1], @format)
-          ] 
+          ]
         shape = shapes.outline { points: points }
         # rotate if necessary
         if rot = args[args.length - 1]

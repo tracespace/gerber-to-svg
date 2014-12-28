@@ -1,8 +1,10 @@
 # command line tool for gerber-to-svg
 fs = require 'fs'
 path = require 'path'
+
 parseArgs = require 'minimist'
 chalk = require 'chalk'
+
 gerberToSvg = require './gerber-to-svg'
 
 # stream capture
@@ -30,17 +32,17 @@ BANNER = '''
 '''
 
 OPTIONS = [
-  [ 'o', 'out', '         specify an output directory' ]
-  [ 'q', 'quiet', '       do not print warnings and messages' ]
-  [ 'p', 'pretty', '      align SVG output prettily' ]
-  [ 'd', 'drill', '       process following file as an NC (Excellon) drill file' ]
-  [ 'a', 'append-ext', '  append .svg rather than replace the extension' ]
-  [ 'j', 'json', '        output json rather than an xml string' ]
-  [ 'v', 'version', '     display version information' ]
-  [ 'h', 'help', '        display this help text' ]
+  [ 'o', 'out', '        specify an output directory' ]
+  [ 'q', 'quiet', '      do not print warnings and messages' ]
+  [ 'p', 'pretty', '     align SVG output prettily' ]
+  [ 'd', 'drill', '      process following file as an NC (Excellon) drill file']
+  [ 'a', 'append-ext', ' append .svg rather than replace the extension' ]
+  [ 'j', 'json', '       output json rather than an xml string' ]
+  [ 'v', 'version', '    display version information' ]
+  [ 'h', 'help', '       display this help text' ]
 ]
 STRING_OPTS  = [ 'out', 'drill']
-BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'json', 'version', 'help' ] 
+BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'json', 'version', 'help' ]
 
 printOptions = ->
   console.log 'Options:'

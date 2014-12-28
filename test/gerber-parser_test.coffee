@@ -1,7 +1,6 @@
 # test suite for GerberParser class
-Parser = require '../src/gerber-parser'
 expect = require('chai').expect
-
+Parser = require '../src/gerber-parser'
 # svg coordinate factor
 factor = require('../src/svg-coord').factor
 
@@ -24,13 +23,13 @@ describe 'gerber command parser', ->
 
   describe 'parsing the format block', ->
     it 'should handle it with good options', ->
-      expect( p.parseCommand param 'FSLAX34Y34' ).to.eql { 
+      expect( p.parseCommand param 'FSLAX34Y34' ).to.eql {
         set: { notation: 'A' }
       }
       expect( p.format.zero ).to.eql 'L'
       expect( p.format.places ).to.eql [3,4]
       expect( p.parseCommand param 'FSTIX77Y77' ).to.eql {
-        set: { notation: 'I' } 
+        set: { notation: 'I' }
       }
       expect( p.format.zero ).to.eql 'T'
       expect( p.format.places ).to.eql [7,7]
@@ -64,9 +63,9 @@ describe 'gerber command parser', ->
           tool: { D11: { dia: 1*factor, hole: { dia: .2*factor } } }
         }
         expect( p.parseCommand param 'ADD12C,1X0.2X0.3' ).to.eql {
-          tool: { D12: { dia: 1*factor, hole: {
-                width: .2*factor, height: .3*factor
-              }
+          tool: {
+            D12: {
+              dia: 1*factor, hole: { width: .2*factor, height: .3*factor }
             }
           }
         }
@@ -75,14 +74,16 @@ describe 'gerber command parser', ->
           tool: { D10: { width: 1*factor, height: .5*factor } }
         }
         expect( p.parseCommand param 'ADD11R,1X0.5X0.2' ).to.eql {
-          tool: { D11: { width: 1*factor, height: .5*factor, hole: {
-                dia: .2*factor 
-              }
+          tool: {
+            D11: {
+              width: 1*factor, height: .5*factor, hole: { dia: .2*factor }
             }
           }
         }
         expect( p.parseCommand param 'ADD12R,1X0.5X0.2X0.3').to.eql {
-          tool: { D12: { width: 1*factor, height: .5*factor, hole: {
+          tool: {
+            D12: {
+              width: 1*factor, height: .5*factor, hole: {
                 width: .2*factor, height: .3*factor
               }
             }
@@ -93,14 +94,18 @@ describe 'gerber command parser', ->
           tool: { D10: { width: 1*factor, height: .5*factor, obround: true } }
         }
         expect( p.parseCommand param 'ADD11O,1X0.5X0.2' ).to.eql {
-          tool: { D11: { width:1*factor, height:.5*factor, obround: true, hole:{ 
+          tool: {
+            D11: {
+              width:1*factor, height:.5*factor, obround: true, hole: {
                 dia: .2*factor
               }
             }
           }
         }
         expect( p.parseCommand param 'ADD12O,1X0.5X0.2X0.3').to.eql {
-          tool: { D12: { width:1*factor, height:.5*factor, obround: true, hole:{
+          tool: {
+            D12: {
+              width:1*factor, height:.5*factor, obround: true, hole: {
                 width: .2*factor, height: .3*factor
               }
             }
@@ -114,14 +119,18 @@ describe 'gerber command parser', ->
           tool: { D11: { dia: 5*factor, verticies: 4, degrees: 45 } }
         }
         expect( p.parseCommand param 'ADD12P,5X4X0X0.6' ).to.eql {
-          tool: { D12: { dia: 5*factor, verticies: 4, degrees: 0, hole: { 
+          tool: {
+            D12: {
+              dia: 5*factor, verticies: 4, degrees: 0, hole: {
                 dia: .6*factor
               }
             }
           }
         }
         expect( p.parseCommand param 'ADD13P,5X4X0X0.6X0.5' ).to.eql {
-          tool: { D13: { dia: 5*factor, verticies: 4, degrees: 0, hole: {
+          tool: {
+            D13: {
+              dia: 5*factor, verticies: 4, degrees: 0, hole: {
                 width: .6*factor, height: .5*factor
               }
             }
@@ -153,7 +162,7 @@ describe 'gerber command parser', ->
   describe 'step repeat', ->
     it 'should return a new step repeat block with good input', ->
       p.format.places = [2, 2]
-      expect( p.parseCommand param 'SRX1Y1' ).to.eql { 
+      expect( p.parseCommand param 'SRX1Y1' ).to.eql {
         new: { sr: { x: 1, y: 1 } }
       }
       expect( p.parseCommand param 'SRX1Y1I0J0' ).to.eql {

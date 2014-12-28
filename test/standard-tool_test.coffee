@@ -1,7 +1,6 @@
 # test suite for the standard tool functions
-standard = require '../src/standard-tool'
 expect = require('chai').expect
-
+standard = require '../src/standard-tool'
 # warning capture
 warnings = require './warn-capture'
 
