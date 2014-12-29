@@ -6,6 +6,7 @@ warnings = require './warn-capture'
 
 tool = 'D10'
 describe 'standard tool function', ->
+
   it 'should return the pad id', ->
     result = standard tool, { dia: 10 }
     expect( result.padId ).to.match /D10/
@@ -66,20 +67,20 @@ describe 'standard tool function', ->
     it 'should return the correct points with no rotation specified', ->
       result = standard tool, { dia: 4, verticies: 5 }
       points = ''
-      step = 2*Math.PI/5
+      step = 2 * Math.PI / 5
       for v in [0..4]
-        theta = v*step
-        points += "#{2*Math.cos theta},#{2*Math.sin theta}"
+        theta = v * step
+        points += "#{2 * Math.cos theta},#{2 * Math.sin theta}"
         if v isnt 4 then points += ' '
       expect( result.pad[0].polygon.points ).to.equal points
     it 'should return the correct points with rotation specified', ->
       result = standard tool, { dia: 42.6, verticies: 7, degrees: 42 }
       points = ''
       start = 42 * Math.PI / 180
-      step = 2*Math.PI/7
+      step = 2 * Math.PI / 7
       for v in [0..6]
-        theta = start+v*step
-        points += "#{21.3*Math.cos theta},#{21.3*Math.sin theta}"
+        theta = start + v * step
+        points += "#{21.3 * Math.cos theta},#{21.3 * Math.sin theta}"
         if v isnt 6 then points += ' '
       expect( result.pad[0].polygon.points ).to.equal points
     it 'should not be traceable', ->

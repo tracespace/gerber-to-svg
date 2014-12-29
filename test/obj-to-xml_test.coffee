@@ -61,13 +61,13 @@ describe 'object to xml function', ->
     it 'pretty should default to two space tabs', ->
       obj = { parent: { _: { child: { _: { grandchild: {} } } } } }
       opt = { pretty: true }
-      expect( objToXml obj, opt ).to.eql """
+      expect( objToXml obj, opt ).to.eql '''
         <parent>
           <child>
             <grandchild/>
           </child>
         </parent>
-      """
+      '''
     it 'pretty can take whatever through', ->
       obj = { parent: { _: { child: { _: { grandchild: {} } } } } }
       opt = { pretty: '\t' }
@@ -76,7 +76,7 @@ describe 'object to xml function', ->
 
       obj = { p: { _: [ { c1: { _: [{ g1: {} }, { g2: {} }] } }, { c2: {} }] } }
       opt = { pretty: '    ' }
-      expect( objToXml obj, opt ).to.eql """
+      expect( objToXml obj, opt ).to.eql '''
         <p>
             <c1>
                 <g1/>
@@ -84,4 +84,4 @@ describe 'object to xml function', ->
             </c1>
             <c2/>
         </p>
-      """
+      '''

@@ -45,11 +45,11 @@ describe 'shape functions', ->
     it 'should return the correct points with no rotation specified', ->
       result = shapes.polygon { cx: 0, cy: 0, dia: 4, verticies: 5 }
       points = ''
-      step = 2*Math.PI/5
+      step = 2 * Math.PI / 5
       for v in [0..4]
-        theta = v*step
-        x = 2*Math.cos theta
-        y = 2*Math.sin theta
+        theta = v * step
+        x = 2 * Math.cos theta
+        y = 2 * Math.sin theta
         if Math.abs(x) < 0.000000001 then x = 0
         if Math.abs(y) < 0.000000001 then y = 0
         points += "#{x},#{y}"
@@ -59,10 +59,10 @@ describe 'shape functions', ->
       re = shapes.polygon { cx: 0, cy: 0, dia: 42.6, verticies: 7, degrees: 42 }
       points = ''
       start = 42 * Math.PI / 180
-      step = 2*Math.PI/7
+      step = 2 * Math.PI / 7
       for v in [0..6]
-        theta = start+v*step
-        points += "#{21.3*Math.cos theta},#{21.3*Math.sin theta}"
+        theta = start + v * step
+        points += "#{21.3 * Math.cos theta},#{21.3 * Math.sin theta}"
         if v isnt 6 then points += ' '
       expect( re.shape.polygon.points ).to.equal points
     it 'should throw errors for missing paramters', ->

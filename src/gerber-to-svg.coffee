@@ -19,11 +19,11 @@ module.exports = (gerber, options = {}) ->
   opts = {}
   opts[key] = val for key, val of DEFAULT_OPTS
   opts[key] = val for key, val of options
-    
+
   # check if an svg object was passed int
   if typeof gerber is 'object'
     if gerber.svg? then return builder gerber, { pretty: opts.pretty }
-    else throw new Error "non SVG object cannot be converted to an SVG string"
+    else throw new Error 'non SVG object cannot be converted to an SVG string'
   # or we got a string, so plot the thing
   # get the correct reader and parser
   if opts.drill
@@ -50,7 +50,7 @@ module.exports = (gerber, options = {}) ->
   finally
     # unhook the warning capture if it was hooked
     if oldWarn? and root? then root.console.warn = oldWarn
-    
+
 
   # make sure the bbox is valid
   unless p.bbox.xMin >= p.bbox.xMax then width = p.bbox.xMax - p.bbox.xMin
@@ -69,8 +69,8 @@ module.exports = (gerber, options = {}) ->
       xmlns: 'http://www.w3.org/2000/svg'
       version: '1.1'
       'xmlns:xlink': 'http://www.w3.org/1999/xlink'
-      width: "#{width/coordFactor}#{p.units}"
-      height: "#{height/coordFactor}#{p.units}"
+      width: "#{width / coordFactor}#{p.units}"
+      height: "#{height / coordFactor}#{p.units}"
       viewBox: [ p.bbox.xMin, p.bbox.yMin, width, height ]
       _: []
     }

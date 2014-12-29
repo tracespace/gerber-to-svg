@@ -9,7 +9,7 @@ circle = (p) ->
   unless p.cx? then throw new Error 'circle function requires x center'
   unless p.cy? then throw new Error 'circle function requires y center'
 
-  r = p.dia/2
+  r = p.dia / 2
   {
     shape: { circle: {cx: p.cx, cy: p.cy, r: r } }
     bbox: [ p.cx - r, p.cy - r, p.cx + r, p.cy + r ]
@@ -21,8 +21,8 @@ rect = (p) ->
   unless p.cx? then throw new Error 'rectangle function requires x center'
   unless p.cy? then throw new Error 'rectangle function requires y center'
 
-  x = p.cx - p.width/2
-  y = p.cy - p.height/2
+  x = p.cx - p.width / 2
+  y = p.cy - p.height / 2
   rectangle = {
     shape: { rect: { x: x, y: y, width: p.width, height: p.height } }
     bbox: [ x, y, x + p.width, y + p.height ]
@@ -42,8 +42,8 @@ polygon = (p) ->
   unless p.cx? then throw new Error 'polygon function requires x center'
   unless p.cy? then throw new Error 'polygon function requires y center'
 
-  start = if p.degrees? then p.degrees * Math.PI/180 else 0
-  step = 2*Math.PI / p.verticies
+  start = if p.degrees? then p.degrees * Math.PI / 180 else 0
+  step = 2 * Math.PI / p.verticies
   r = p.dia / 2
   points = ''
   xMin = null
@@ -52,9 +52,9 @@ polygon = (p) ->
   yMax = null
   # loop over the verticies and add them to the points string
   for i in [0...p.verticies]
-    theta = start + i*step
-    rx = r*Math.cos theta
-    ry = r*Math.sin theta
+    theta = start + (i * step)
+    rx = r * Math.cos theta
+    ry = r * Math.sin theta
     # take care of floating point errors
     if Math.abs(rx) < 0.000000001 then rx = 0
     if Math.abs(ry) < 0.000000001 then ry = 0
@@ -79,7 +79,7 @@ vector = (p) ->
   unless p.width? then throw new Error 'vector function requires width'
 
   # get angle of the line for the bounding box
-  theta = Math.abs Math.atan (p.y2 - p.y1)/(p.x2 - p.x1)
+  theta = Math.abs Math.atan (p.y2 - p.y1) / (p.x2 - p.x1)
   xDelta = p.width / 2 * Math.sin theta
   yDelta = p.width / 2 * Math.cos theta
   # fix some edge cases
@@ -162,9 +162,9 @@ moire = (p) ->
   shape = [
     {
       line: {
-        x1: p.cx - p.crossLength/2
+        x1: p.cx - p.crossLength / 2
         y1: 0
-        x2: p.cx + p.crossLength/2
+        x2: p.cx + p.crossLength / 2
         y2: 0
         'stroke-width': p.crossThx
         'stroke-linecap': 'butt'
@@ -173,9 +173,9 @@ moire = (p) ->
     {
       line: {
         x1: 0
-        y1: p.cy - p.crossLength/2
+        y1: p.cy - p.crossLength / 2
         x2: 0
-        y2: p.cy + p.crossLength/2
+        y2: p.cy + p.crossLength / 2
         'stroke-width': p.crossThx
         'stroke-linecap': 'butt'
       }
@@ -183,7 +183,7 @@ moire = (p) ->
   ]
 
   # add rings to shape
-  r = (p.outerDia - p.ringThx)/2
+  r = (p.outerDia - p.ringThx) / 2
   rings = 0
   while r >= p.ringThx and rings < p.maxRings
     shape.push {
@@ -198,7 +198,7 @@ moire = (p) ->
     rings++
     r -= p.ringThx + p.ringGap
   # if there's still some room left, a disc goes in the center
-  r += 0.5*p.ringThx
+  r += 0.5 * p.ringThx
   if r > 0 and rings < p.maxRings then shape.push {
     circle: {
       cx: p.cx
@@ -210,10 +210,10 @@ moire = (p) ->
   {
     shape: shape
     bbox: [
-      Math.min (p.cx - p.crossLength/2), (p.cx - p.outerDia/2)
-      Math.min (p.cy - p.crossLength/2), (p.cy - p.outerDia/2)
-      Math.max (p.cx + p.crossLength/2), (p.cx + p.outerDia/2)
-      Math.max (p.cy + p.crossLength/2), (p.cy + p.outerDia/2)
+      Math.min (p.cx - p.crossLength / 2), (p.cx - p.outerDia / 2)
+      Math.min (p.cy - p.crossLength / 2), (p.cy - p.outerDia / 2)
+      Math.max (p.cx + p.crossLength / 2), (p.cx + p.outerDia / 2)
+      Math.max (p.cy + p.crossLength / 2), (p.cy + p.outerDia / 2)
     ]
   }
 
@@ -232,7 +232,7 @@ thermal = (p) ->
   xMax = p.cx + outerR
   yMin = p.cy - outerR
   yMax = p.cy + outerR
-  halfGap = p.gap/2
+  halfGap = p.gap / 2
   {
     shape: [
       {

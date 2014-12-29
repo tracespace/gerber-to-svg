@@ -70,7 +70,7 @@ class MacroTool
       # if we got ourselves a modifier, we should set it
       when '$'
         mod = block.match(/^\$\d+(?=\=)/)?[0]
-        val = block[1+mod.length..]
+        val = block[(1 + mod.length)..]
         @modifiers[mod] = @getNumber val
       # or it's a primitive
       when '1', '2', '20', '21', '22', '4', '5', '6', '7'
@@ -134,16 +134,16 @@ class MacroTool
         if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
       when 4
         points = []
-        for i in [ 3..3+2*args[2] ] by 2
+        for i in [ 3..(3 + 2 * args[2]) ] by 2
           points.push [
-            getSvgCoord(args[i], @format), getSvgCoord(args[i+1], @format)
+            getSvgCoord(args[i], @format), getSvgCoord(args[i + 1], @format)
           ]
         shape = shapes.outline { points: points }
         # rotate if necessary
         if rot = args[args.length - 1]
           shape.shape.polygon.transform = "rotate(#{rot})"
         if args[1] is 0 then mask = true
-        else @addBbox shape.bbox, args[args.length-1]
+        else @addBbox shape.bbox, args[args.length - 1]
       when 5
         # rotation only allowed if center is on the origin
         if args[6] isnt 0 and (args[3] isnt 0 or args[4] isnt 0)
@@ -202,15 +202,15 @@ class MacroTool
       # if necessary, create a new mask
       if @lastExposure isnt 0
         @lastExposure = 0
-        maskId ="macro-#{@name}-mask-#{unique()}"
+        maskId = "macro-#{@name}-mask-#{unique()}"
         m = { mask: { id: maskId } }
         m.mask._ = [
           {
             rect: {
               x: @bbox[0]
               y: @bbox[1]
-              width: @bbox[2]-@bbox[0]
-              height: @bbox[3]-@bbox[1]
+              width: @bbox[2] - @bbox[0]
+              height: @bbox[3] - @bbox[1]
               fill: '#fff'
             }
           }
@@ -226,7 +226,7 @@ class MacroTool
         # push the mask to the masks list
         @masks.push m
       # add our shape to the current mask
-      @masks[@masks.length-1].mask._.push shape.shape
+      @masks[@masks.length - 1].mask._.push shape.shape
     # if exposure was on, continue about our merry business
     else
       @lastExposure = 1
@@ -236,7 +236,7 @@ class MacroTool
           if s.mask? then @masks.push s else @shapes.push s
 
   # add a new bbox to the macro's exsisting bbox
-  addBbox: (bbox, rotation=0) ->
+  addBbox: (bbox, rotation = 0) ->
     unless rotation
       if @bbox[0] is null or bbox[0] < @bbox[0] then @bbox[0] = bbox[0]
       if @bbox[1] is null or bbox[1] < @bbox[1] then @bbox[1] = bbox[1]
@@ -245,8 +245,8 @@ class MacroTool
     # else if it's rotated, we're going to have to compensate
     else
       # get ready for some trig
-      s = Math.sin rotation*Math.PI/180
-      c = Math.cos rotation*Math.PI/180
+      s = Math.sin(rotation * Math.PI / 180)
+      c = Math.cos(rotation * Math.PI / 180)
       if Math.abs(s) < 0.000000001 then s = 0
       if Math.abs(c) < 0.000000001 then c = 0
       # get the points of the rectangle
@@ -258,8 +258,8 @@ class MacroTool
       ]
       # rotate and update
       for p in points
-        x = p[0]*c - p[1]*s
-        y = p[0]*s + p[1]*c
+        x = (p[0] * c) - (p[1] * s)
+        y = (p[0] * s) + (p[1] * c)
         if @bbox[0] is null or x < @bbox[0] then @bbox[0] = x
         if @bbox[1] is null or y < @bbox[1] then @bbox[1] = y
         if @bbox[2] is null or x > @bbox[2] then @bbox[2] = x
