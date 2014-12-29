@@ -6,8 +6,8 @@ class DrillReader
     @line = 0
     @blocks = drillFile.split /\r?\n/
 
-  nextBlock: () ->
-    if @line < @blocks.length then @blocks[++@line-1] else false
+  nextBlock: ->
+    if @line < @blocks.length then @blocks[++@line - 1] else false
 
 # export the module
 module.exports = DrillReader
