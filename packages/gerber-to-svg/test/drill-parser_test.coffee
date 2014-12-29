@@ -1,6 +1,6 @@
 # test suit for the NC drill file parser
-Parser = require '../src/drill-parser'
 expect = require('chai').expect
+Parser = require '../src/drill-parser'
 
 # warnings hook
 warnings = require './warn-capture'
@@ -153,8 +153,10 @@ describe 'NC drill file parser', ->
       p.format.zero = 'T'
       p.format.places = [2,4]
       expect( p.parseCommand('T01X01Y01') ).to.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1*factor, y: 1*factor}
+        set: { currentTool: 'T1' }
+        op: { do: 'flash', x: 1 * factor, y: 1 * factor }
       }
       expect( p.parseCommand('X01Y01T01') ).to.eql {
-        set: { currentTool: 'T1' }, op: { do: 'flash', x: 1*factor, y: 1*factor}
+        set: { currentTool: 'T1' }
+        op: { do: 'flash', x: 1 * factor, y: 1 * factor }
       }

@@ -10,13 +10,14 @@ tool = require './standard-tool'
 coordFactor = require('./svg-coord').factor
 
 # constants
-HALF_PI = Math.PI/2
-THREEHALF_PI = 3*HALF_PI
-TWO_PI = 2*Math.PI
+HALF_PI = Math.PI / 2
+THREEHALF_PI = 3 * HALF_PI
+TWO_PI = 2 * Math.PI
 # assumed units
 ASSUMED_UNITS = 'in'
 
 class Plotter
+
   constructor: (file = '', Reader, Parser) ->
     if Reader? then @reader = new Reader file
     if Parser? then @parser = new Parser
@@ -69,12 +70,12 @@ class Plotter
     @tools[code] = {
       trace: t.trace
       pad: (obj for obj in t.pad)
-      flash: (x, y) -> { use: { x: x, y: y, 'xlink:href': '#'+t.padId } }
-      bbox: (x=0, y=0) -> {
-        xMin: x+t.bbox[0]
-        yMin: y+t.bbox[1]
-        xMax: x+t.bbox[2]
-        yMax: y+t.bbox[3]
+      flash: (x, y) -> { use: { x: x, y: y, 'xlink:href': "##{t.padId}" } }
+      bbox: (x = 0, y = 0) -> {
+        xMin: x + t.bbox[0]
+        yMin: y + t.bbox[1]
+        xMax: x + t.bbox[2]
+        yMax: y + t.bbox[3]
       }
     }
     # set the current tool to the one just defined
@@ -86,7 +87,7 @@ class Plotter
     # finish any in progress path
     @finishPath()
     # throw an error if in region mode or if tool does not exist
-    if @region then throw new Error "cannot change tool when in region mode"
+    if @region then throw new Error 'cannot change tool when in region mode'
     # throw if tool doesn't exist if it's a gerber. if it's a drill, just
     # let it slide
     if not @tools[code]?
@@ -155,7 +156,7 @@ class Plotter
     # set default fill and stroke to current color in the group
     @group.g.fill = 'currentColor'; @group.g.stroke = 'currentColor'
     # flip vertically
-    @group.g.transform = "translate(0,#{@bbox.yMin+@bbox.yMax}) scale(1,-1)"
+    @group.g.transform = "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
 
   # finish step repeat method
   # really only does anything if clear layers overlap
@@ -211,9 +212,9 @@ class Plotter
       for x in [ 0...@stepRepeat.x ]
         for y in [ 0...@stepRepeat.y ]
           unless x is 0 and y is 0
-            u = { use: { 'xlink:href': '#'+srId } }
-            u.use.x = x*@stepRepeat.i if x isnt 0
-            u.use.y = y*@stepRepeat.j if y isnt 0
+            u = { use: { 'xlink:href': "##{srId}" } }
+            u.use.x = x * @stepRepeat.i if x isnt 0
+            u.use.y = y * @stepRepeat.j if y isnt 0
             @current.push u
       # adjust the bbox
       @layerBbox.xMax += (@stepRepeat.x - 1) * @stepRepeat.i
@@ -284,11 +285,11 @@ class Plotter
     unless @units?
       if @backupUnits?
         @units = @backupUnits
-        console.warn "Warning: units set to '#{@units}' according to
+        console.warn "units set to '#{@units}' according to
                       deprecated command G7#{if @units is 'in' then 0 else 1}"
       else
         @units = ASSUMED_UNITS
-        console.warn "Warning: no units set; assuming inches"
+        console.warn 'no units set; assuming inches'
     unless @notation?
       # if drill file, assume absolute notation
       if @parser?.fmat? then @notation = 'A'
@@ -325,7 +326,7 @@ class Plotter
         }
         @addBbox bbox, @layerBbox
       # check for a mode, and assume linear if necessary
-      if not @mode? then @mode = 'i'; console.warn 'Warning: no interpolation
+      if not @mode? then @mode = 'i'; console.warn ' no interpolation
         mode set. Assuming linear interpolation (G01)'
 
       # let's draw something
@@ -350,8 +351,8 @@ class Plotter
     # we're going to use implicit linetos after movetos for ease
     else
       # width and height of tool
-      halfWidth = t.pad[0].rect.width/2
-      halfHeight = t.pad[0].rect.height/2
+      halfWidth = t.pad[0].rect.width / 2
+      halfHeight = t.pad[0].rect.height / 2
       # corners of the start and end rects
       sxm = sx - halfWidth
       sxp = sx + halfWidth
@@ -362,7 +363,7 @@ class Plotter
       eym = ey - halfHeight
       eyp = ey + halfHeight
       # get the quadrant we're in
-      theta = Math.atan2 ey-sy, ex - sx
+      theta = Math.atan2 ey - sy, ex - sx
       # quadrant I
       if 0 <= theta < HALF_PI
         @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
@@ -381,7 +382,7 @@ class Plotter
     # lets try this for arc point comparison epsilon
     # this value seems strict enough to prevent invalid arcs but forgiving
     # enough to let most gerbers draw
-    arcEps = 1.5 * coordFactor * 10**-(@parser?.format.places[1] ? 7)
+    arcEps = 1.5 * coordFactor * 10 ** (-1 * (@parser?.format.places[1] ? 7))
     t = @tools[@currentTool]
     # throw an error if the tool is rectangular
     if not @region and not t.trace['stroke-width']
@@ -390,7 +391,7 @@ class Plotter
     if not @quad? then throw new Error 'arc quadrant mode has not been set'
     #
     # get the radius of the arc from the offsets
-    r = Math.sqrt i**2 + j**2
+    r = Math.sqrt i ** 2 + j ** 2
     # get the sweep flag (svg sweep flag is 0 for cw and 1 for ccw)
     sweep = if @mode is 'cw' then 0 else 1
     # large arc flag is if arc > 180 deg. this doesn't line up with gerber, so
@@ -400,11 +401,12 @@ class Plotter
     # valid candidates for center
     validCen = []
     # potential candidates
-    cand = [ [sx+i, sy+j] ]
-    if @quad is 's' then cand.push [sx-i, sy-j], [sx-i, sy+j], [sx+i, sy-j]
+    cand = [ [sx + i, sy + j] ]
+    if @quad is 's'
+      cand.push [sx - i, sy - j], [sx - i, sy + j], [sx + i, sy - j]
     # loop through the candidates and find centers that make sense
     for c in cand
-      dist = Math.sqrt (c[0] - ex)**2 + (c[1] - ey)**2
+      dist = Math.sqrt (c[0] - ex) ** 2 + (c[1] - ey) ** 2
       if (Math.abs r - dist) < arcEps then validCen.push { x: c[0], y: c[1] }
     # now let's calculate some angles
     thetaE = 0
@@ -414,15 +416,15 @@ class Plotter
     # check the points to make sure we have a valid arc
     for c in validCen
       # find the angles and make positive
-      thetaE = Math.atan2 ey-c.y, ex-c.x
+      thetaE = Math.atan2 ey - c.y, ex - c.x
       if thetaE < 0 then thetaE += TWO_PI
-      thetaS = Math.atan2 sy-c.y, sx-c.x
+      thetaS = Math.atan2 sy - c.y, sx - c.x
       if thetaS < 0 then thetaS += TWO_PI
       # adjust angles so math comes out right
       # in cw, the angle of the start should always be greater than the end
-      if @mode is 'cw' and thetaS < thetaE then thetaS+=TWO_PI
+      if @mode is 'cw' and thetaS < thetaE then thetaS += TWO_PI
       # in ccw, the start angle should be less than the end angle
-      else if @mode is 'ccw' and thetaE < thetaS then thetaE+=TWO_PI
+      else if @mode is 'ccw' and thetaE < thetaS then thetaE += TWO_PI
       # calculate the sweep angle (abs value for cw)
       theta = Math.abs(thetaE - thetaS)
       # in single quadrant mode, center is good if it's less than 90
@@ -468,7 +470,7 @@ class Plotter
     # check for special case: full circle
     if @quad is 'm' and zeroLength
       # we'll need two paths (180 deg each)
-      @path.push 'A', r, r, 0, 0, sweep, ex+2*i, ey+2*j
+      @path.push 'A', r, r, 0, 0, sweep, ex + 2 * i, ey + 2 * j
       # bbox is going to just be a rectangle
       xMin = cen.x - r - rTool
       yMin = cen.y - r - rTool

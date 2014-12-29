@@ -1,9 +1,10 @@
 # test suite for the gerber-to-svg function
-gerberToSvg = require '../src/gerber-to-svg'
-expect = require('chai').expect
 fs = require 'fs'
-coordFactor = require('../src/svg-coord').factor
+expect = require('chai').expect
+gerberToSvg = require '../src/gerber-to-svg'
 
+# factor for coordinate units
+coordFactor = require('../src/svg-coord').factor
 # stream hook for testing for warnings
 warnings = require './warn-capture'
 
@@ -56,8 +57,8 @@ describe 'gerber to svg function', ->
     result = gerberToSvg exGerb, { object: true }
     vbWidth  = result.svg.viewBox[2]
     vbHeight = result.svg.viewBox[3]
-    expect( result.svg.width ).to.eql  "#{vbWidth /coordFactor}in"
-    expect( result.svg.height ).to.eql "#{vbHeight/coordFactor}in"
+    expect( result.svg.width ).to.eql  "#{vbWidth / coordFactor}in"
+    expect( result.svg.height ).to.eql "#{vbHeight / coordFactor}in"
 
   describe 'converting an svg object into an svg string', ->
     it 'should be able to convert an svg object into an svg string', ->
@@ -79,7 +80,7 @@ describe 'gerber to svg function', ->
       gerberToSvg warnGerb
       # check that we got some warnigns
       expect( warnings.unhook().length ).to.not.equal 0
-      
+
     it 'should push warnings to an array if option is set', ->
       warnings = []
       # process a file that will produce warnings

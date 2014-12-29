@@ -9,7 +9,7 @@ SVG_COORD_E     = 3
 getSvgCoord = ( numberString, format ) ->
   # make sure we're dealing with a string
   numberString = "#{numberString}"
-  
+
   # pull out the sign and get the before and after segments ready
   before = ''
   after = ''
@@ -17,7 +17,7 @@ getSvgCoord = ( numberString, format ) ->
   if numberString[0] is '-' or numberString[0] is '+'
     sign = numberString[0]
     numberString = numberString[1..]
-  
+
   # check if the number has a decimal point or has been explicitely flagged
   if ('.' in numberString) or (not format.zero?)
     # make sure there's not more than one decimal
@@ -26,7 +26,7 @@ getSvgCoord = ( numberString, format ) ->
     [before, after] = [subNumbers[0], subNumbers[1]]
     after = '' if not after?
     before = '' if not before?
-    
+
   else
     # otherwise we're going to need a number format
     if typeof format?.places?[0] isnt 'number' and
@@ -40,17 +40,20 @@ getSvgCoord = ( numberString, format ) ->
       before += '0' while before.length < format.places[0]
     else if format.zero is 'L'
       for c, i in numberString
-        if numberString.length-i<=format.places[1] then after+=c else before+=c
+        if numberString.length - i <= format.places[1]
+          after += c
+        else
+          before += c
       # pad any missing zeros
       after = ('0' + after) while after.length < format.places[1]
-    
-  
+
+
   # pad after so we've got enough digits
   after += '0' while after.length < SVG_COORD_E
   # throw in a decimal point
   before = before + after[0...SVG_COORD_E]
-  after = if after.length > SVG_COORD_E then '.'+after[SVG_COORD_E..] else ''
-  
+  after = if after.length > SVG_COORD_E then ".#{after[SVG_COORD_E..]}" else ''
+
   # finally, parse the numberString
   Number(sign + before + after)
 

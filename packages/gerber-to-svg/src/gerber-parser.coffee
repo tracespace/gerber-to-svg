@@ -24,7 +24,7 @@ class GerberParser
     p[5] < 8 and p[6] < 8
       places = [ +p[5], +p[6] ]
     if not places? or not nota? or not zero?
-      throw new Error "invalid format specification"
+      throw new Error 'invalid format specification'
     @format.zero = zero; @format.places = places
     unless c.set? then c.set = {}
     c.set.notation = nota
@@ -34,7 +34,7 @@ class GerberParser
     unless c.tool? then c.tool = {}
     code = p.match(/^ADD\d{2,}/)?[0][2..]
     # get the shape and modifiers
-    [shape, mods] = p[2+code.length..].split ','
+    [shape, mods] = p[2 + code.length..].split ','
     mods = mods?.split 'X'
     # remove leading zeros from tool code
     code = code[0] + code[2..] while code[1] is '0'
@@ -127,7 +127,9 @@ class GerberParser
             i = p.match(/I[+-]?[\d\.]+/)?[0][1..]
             j = p.match(/J[+-]?[\d\.]+/)?[0][1..]
             # check for valid numbers and such
-            if x<1 or y<1 or (x>1 and not i? or i<0) or (y>1 and not j? or j<0)
+            if (x < 1 or y < 1) or
+            (x > 1 and (not i? or i < 0)) or
+            (y > 1 and (not j? or j < 0))
               throw new Error 'invalid step repeat'
             c.new.sr = { x: +x, y: +y }
             if i? then c.new.sr.i = getSvgCoord i, { places: @format.places }
@@ -143,7 +145,7 @@ class GerberParser
           when '4', '04' then return {}
           # interpolation mode
           when '1', '01', '2', '02', '3', '03'
-            code = code[code.length-1]
+            code = code[code.length - 1]
             m = if code is '1' then 'i' else if code is '2' then 'cw' else 'ccw'
             c.set = { mode: m }
           # G36 and 37 set the region mode on and off respectively
@@ -158,7 +160,7 @@ class GerberParser
       # interpolate blocks
       coord = parseCoord block.match(reCOORD)?[0], @format
       if op = block.match(/D0?[123]$/)?[0] or Object.keys(coord).length
-        if op? then op = op[op.length-1]
+        if op? then op = op[op.length - 1]
         op = switch op
           when '1' then 'int'
           when '2' then 'move'

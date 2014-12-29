@@ -96,7 +96,7 @@ standardTool = (tool, p) ->
     maskId = id + '-mask'
     mask = {
       mask: {
-        id: id + "-mask"
+        id: id + '-mask'
         _: [
           {
             rect: {
