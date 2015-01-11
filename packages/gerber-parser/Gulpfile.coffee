@@ -40,8 +40,8 @@ ZUUL_OPTS = [ '--concurrency', 2 ]
 
 handleCompileError = (e) ->
   if e.name is 'SyntaxError'
-    gutil.log e.stack 
-  else 
+    gutil.log e.stack
+  else
     gutil.log e.message
   @emit 'end'
 
@@ -54,13 +54,9 @@ gulp.task 'default', ->
     .pipe gulp.dest LIBDIR
 
 gulp.task 'standalone', ->
-  browserify ENTRY, {
-      extensions: [ '.coffee' ]
-      standalone: NAME
-    }
+  browserify ENTRY, { extensions: [ '.coffee' ], standalone: NAME }
     .transform 'coffeeify'
-    .bundle()
-      .on 'error', gutil.log
+    .bundle().on 'error', gutil.log
     .pipe source DIST+'.js'
     .pipe gulp.dest DISTDIR
     .pipe rename DIST+'.min.js'
@@ -95,7 +91,7 @@ gulp.task 'test', (cb) ->
         .on 'end', cb
     # return null so that cb fires correctly
     null
-        
+
 gulp.task 'coveralls', [ 'test' ], ->
   gulp.src './coverage/lcov.info'
     .pipe coveralls()
@@ -105,12 +101,12 @@ gulp.task 'browsers', (cb) ->
     if err? then cb err
     else if files?
       ZUUL_OPTS.push files...
-      child = spawn "zuul", ZUUL_OPTS, { stdio: 'inherit' }
+      child = spawn 'zuul', ZUUL_OPTS, { stdio: 'inherit' }
       child.on 'close', (code) ->
-        gutil.log "browser tests completed"
+        gutil.log 'browser tests completed'
         cb()
   null
-    
+
 gulp.task 'travis', [ 'test', 'coveralls' ], ->
 
 gulp.task 'testwatch', ['test' ], ->
@@ -124,10 +120,12 @@ gulp.task 'testvisual', [ 'watch' ], ->
         server.serveFile '/test/index.html', 200, {}, request, response
         gutil.log "served #{request.url}"
       else
-        server.serve(request, response, (error, result)->
-          if error then gutil.log "error serving #{request.url}"
-          else gutil.log "served #{request.url}"
+        server.serve(request, response, (error, result) ->
+          if error
+            gutil.log "error serving #{request.url}"
+          else
+            gutil.log "served #{request.url}"
         )
     ).resume()
   ).listen 4242
-  gutil.log "test server started at http://localhost:4242\n"
+  gutil.log 'test server started at http://localhost:4242\n'
