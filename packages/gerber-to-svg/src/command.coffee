@@ -79,14 +79,19 @@ run = ->
   write = (string, filename) ->
     if typeof string is 'object'
       string = JSON.stringify string, null, (if argv.pretty then '  ' else '')
-    unless argv.out then process.stdout.write string
+    unless argv.out
+      process.stdout.write string
     else
-      if argv['append-ext'] then newName = path.basename filename
-      else newName = path.basename filename, path.extname filename
+      if argv['append-ext']
+        newName = path.basename filename
+      else
+        newName = path.basename filename, path.extname filename
       newName = path.join argv.out, newName + '.svg'
       fs.writeFile newName, string, (error) ->
-        unless error then print "#{filename} converted to #{newName}"
-        else warn "Error writing to #{newName}: #{error.code}"
+        unless error
+          print "#{filename} converted to #{newName}"
+        else
+          "Error writing to #{newName}: #{error.code}"
 
   # add drill file if it was included
   if argv.drill? and argv.drill not in fileList then fileList.push argv.drill
