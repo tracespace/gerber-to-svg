@@ -24,25 +24,29 @@ VERSION = require('../package.json').version
 # TAKE A LOOK AT BANNER MICHAEL
 BANNER = '''
   Usage: gerber2svg [options] path/to/gerbers
-  Output:
-    `gerber2svg path/to/gerber.gbr` will write the svg to stdout
-    `gerber2svg -o some/dir path/to/gerber.gbr` will create some/dir/gerber.svg
-    `gerber2svg -d drill.drl -o out gerb/*` will process drill.drl as a drill
+  Examples:
+    `$ gerber2svg path/to/gerber.gbr` will write the svg to stdout
+    `$ gerber2svg -o some/dir path/to/gerb.gbr` will create some/dir/gerb.svg
+    `$ gerber2svg -d drill.drl -o out gerb/*` will process drill.drl as a drill
       file, everything in gerb as a Gerber file, and output to out
 '''
 
 OPTIONS = [
-  [ 'o', 'out', '        specify an output directory' ]
-  [ 'q', 'quiet', '      do not print warnings and messages' ]
-  [ 'p', 'pretty', '     align SVG output prettily' ]
-  [ 'd', 'drill', '      process following file as an NC (Excellon) drill file']
-  [ 'a', 'append-ext', ' append .svg rather than replace the extension' ]
-  [ 'j', 'json', '       output json rather than an xml string' ]
-  [ 'v', 'version', '    display version information' ]
-  [ 'h', 'help', '       display this help text' ]
+  ['o', 'out', '        specify an output directory']
+  ['q', 'quiet', '      do not print warnings and messages']
+  ['p', 'pretty', '     align SVG output prettily']
+  ['d', 'drill', '      process following file as an NC (Excellon) drill file']
+  ['f', 'format', "     override coordinate format with '[n_int,n_dec]'"]
+  ['z', 'zero', "       override zero suppression with 'L' or 'T'"]
+  ['u', 'units', "      override (without converting) units with 'mm' or 'in'"]
+  ['n', 'notation', "   override absolute/incremental notation with 'A' or 'I'"]
+  ['a', 'append-ext', ' append .svg rather than replace the extension']
+  ['j', 'json', '       output json rather than an xml string']
+  ['v', 'version', '    display version information']
+  ['h', 'help', '       display this help text']
 ]
-STRING_OPTS  = [ 'out', 'drill']
-BOOLEAN_OPTS = [ 'quiet', 'pretty', 'append-ext', 'json', 'version', 'help' ]
+STRING_OPTS  = ['out', 'drill', 'format', 'zero', 'units', 'notation']
+BOOLEAN_OPTS = ['quiet', 'pretty', 'append-ext', 'json', 'version', 'help']
 
 printOptions = ->
   console.log 'Options:'
@@ -72,7 +76,8 @@ run = ->
     return help()
 
   # console
-  warn = (string) -> console.error chalk.bold.yellow string unless argv.quiet
+  err = (string) -> console.error chalk.bold.red string
+  warn = (string) -> console.warn chalk.bold.yellow string unless argv.quiet
   print = (string) -> console.log chalk.bold.white string unless argv.quiet
 
   # write to the right place
@@ -93,8 +98,35 @@ run = ->
         else
           "Error writing to #{newName}: #{error.code}"
 
+  # process processing override options
+  # coordinate format
+  if argv.format?
+    try
+      places = JSON.parse argv.format
+      if places.length isnt 2 or
+      typeof places[0] isnt 'number' or
+      typeof places[1] isnt 'number'
+        throw new Error()
+    catch e
+      err "format must be specified as '[n_int,n_dec]'"
+      return help()
+    argv.format = places
+  # zero suppression
+  if argv.zero? and argv.zero isnt 'L' and argv.zero isnt 'T'
+    err "zero suppression must be either 'L' for leading or 'T' for trailing"
+    return help()
+  # units
+  if argv.units? and argv.units isnt 'mm' and argv.units isnt 'in'
+    err "units must be either 'mm' for millimeters or 'in' for inches"
+    return help()
+  # notation
+  if argv.notation? and argv.notation isnt 'A' and argv.notation isnt 'I'
+    err "notation must be either 'A' for absolute or 'I' for incremental"
+    return help()
+
   # add drill file if it was included
   if argv.drill? and argv.drill not in fileList then fileList.push argv.drill
+
   # loop through files
   for file in fileList
     do (file) ->
@@ -106,6 +138,10 @@ run = ->
               pretty: argv.pretty
               drill: (file is argv.drill)
               object: argv.json
+              places: argv.format
+              zero: argv.zero
+              units: argv.units
+              notation: argv.notation
             }
             write gerberToSvg(data, opts), file
           catch e

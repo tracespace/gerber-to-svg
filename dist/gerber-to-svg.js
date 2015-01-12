@@ -1,10 +1,18 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.gerberToSvg=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
-var DEFAULT_OPTS, Plotter, builder, coordFactor;
+var DEFAULT_OPTS, DrillParser, DrillReader, GerberParser, GerberReader, Plotter, builder, coordFactor;
 
 builder = require('./obj-to-xml');
 
 Plotter = require('./plotter');
+
+DrillReader = require('./drill-reader');
+
+DrillParser = require('./drill-parser');
+
+GerberReader = require('./gerber-reader');
+
+GerberParser = require('./gerber-parser');
 
 coordFactor = require('./svg-coord').factor;
 
@@ -12,11 +20,15 @@ DEFAULT_OPTS = {
   drill: false,
   pretty: false,
   object: false,
-  warnArr: null
+  warnArr: null,
+  places: null,
+  zero: null,
+  notation: null,
+  units: null
 };
 
-module.exports = function(gerber, options) {
-  var Parser, Reader, a, error, height, key, oldWarn, opts, p, root, val, width, xml, xmlObject, _ref;
+module.exports = function(file, options) {
+  var a, error, height, key, oldWarn, opts, p, parser, parserOpts, plotterOpts, reader, root, val, width, xml, xmlObject, _ref;
   if (options == null) {
     options = {};
   }
@@ -29,23 +41,37 @@ module.exports = function(gerber, options) {
     val = options[key];
     opts[key] = val;
   }
-  if (typeof gerber === 'object') {
-    if (gerber.svg != null) {
-      return builder(gerber, {
+  if (typeof file === 'object') {
+    if (file.svg != null) {
+      return builder(file, {
         pretty: opts.pretty
       });
     } else {
-      throw new Error("non SVG object cannot be converted to an SVG string");
+      throw new Error('non SVG object cannot be converted to an SVG string');
     }
   }
-  if (opts.drill) {
-    Reader = require('./drill-reader');
-    Parser = require('./drill-parser');
-  } else {
-    Reader = require('./gerber-reader');
-    Parser = require('./gerber-parser');
+  parserOpts = null;
+  if ((opts.places != null) || (opts.zero != null)) {
+    parserOpts = {
+      places: opts.places,
+      zero: opts.zero
+    };
   }
-  p = new Plotter(gerber, Reader, Parser);
+  if (opts.drill) {
+    reader = new DrillReader(file);
+    parser = new DrillParser(parserOpts);
+  } else {
+    reader = new GerberReader(file);
+    parser = new GerberParser(parserOpts);
+  }
+  plotterOpts = null;
+  if ((opts.notation != null) || (opts.units != null)) {
+    plotterOpts = {
+      notation: opts.notation,
+      units: opts.units
+    };
+  }
+  p = new Plotter(reader, parser, plotterOpts);
   oldWarn = null;
   root = null;
   if (Array.isArray(opts.warnArr)) {
@@ -120,7 +146,7 @@ module.exports = function(gerber, options) {
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":11,"./svg-coord":13}],2:[function(require,module,exports){
+},{"./drill-parser":3,"./drill-reader":4,"./gerber-parser":5,"./gerber-reader":6,"./obj-to-xml":9,"./plotter":12,"./svg-coord":14}],2:[function(require,module,exports){
 var getSvgCoord;
 
 getSvgCoord = require('./svg-coord').get;
@@ -150,8 +176,12 @@ module.exports = function(coord, format) {
 
 
 
-},{"./svg-coord":13}],3:[function(require,module,exports){
-var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, ZERO_BACKUP, getSvgCoord, parseCoord, reCOORD;
+},{"./svg-coord":14}],3:[function(require,module,exports){
+var ABS_COMMAND, DrillParser, INCH_COMMAND, INC_COMMAND, METRIC_COMMAND, PLACES_BACKUP, Parser, ZERO_BACKUP, getSvgCoord, parseCoord, reCOORD,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parser = require('./parser');
 
 parseCoord = require('./coord-parser');
 
@@ -174,13 +204,12 @@ ZERO_BACKUP = 'L';
 
 PLACES_BACKUP = [2, 4];
 
-DrillParser = (function() {
+DrillParser = (function(_super) {
+  __extends(DrillParser, _super);
+
   function DrillParser() {
-    this.format = {
-      zero: null,
-      places: null
-    };
     this.fmat = 'FMAT,2';
+    DrillParser.__super__.constructor.call(this, arguments[0]);
   }
 
   DrillParser.prototype.parseCommand = function(block) {
@@ -196,12 +225,16 @@ DrillParser = (function() {
         done: true
       };
     } else if (block === INCH_COMMAND[this.fmat] || block.match(/INCH/)) {
-      this.format.places = [2, 4];
+      if (this.format.places == null) {
+        this.format.places = [2, 4];
+      }
       command.set = {
         units: 'in'
       };
     } else if (block === METRIC_COMMAND || block.match(/METRIC/)) {
-      this.format.places = [3, 3];
+      if (this.format.places == null) {
+        this.format.places = [3, 3];
+      }
       command.set = {
         units: 'mm'
       };
@@ -232,9 +265,13 @@ DrillParser = (function() {
       }
     }
     if (block.match(/TZ/)) {
-      this.format.zero = 'L';
+      if (this.format.zero == null) {
+        this.format.zero = 'L';
+      }
     } else if (block.match(/LZ/)) {
-      this.format.zero = 'T';
+      if (this.format.zero == null) {
+        this.format.zero = 'T';
+      }
     }
     if (block.match(reCOORD)) {
       command.op = {
@@ -259,13 +296,13 @@ DrillParser = (function() {
 
   return DrillParser;
 
-})();
+})(Parser);
 
 module.exports = DrillParser;
 
 
 
-},{"./coord-parser":2,"./svg-coord":13}],4:[function(require,module,exports){
+},{"./coord-parser":2,"./parser":11,"./svg-coord":14}],4:[function(require,module,exports){
 var DrillReader;
 
 DrillReader = (function() {
@@ -291,7 +328,11 @@ module.exports = DrillReader;
 
 
 },{}],5:[function(require,module,exports){
-var GerberParser, getSvgCoord, parseCoord, reCOORD;
+var GerberParser, Parser, getSvgCoord, parseCoord, reCOORD,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parser = require('./parser');
 
 parseCoord = require('./coord-parser');
 
@@ -299,12 +340,11 @@ getSvgCoord = require('./svg-coord').get;
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
-GerberParser = (function() {
+GerberParser = (function(_super) {
+  __extends(GerberParser, _super);
+
   function GerberParser() {
-    this.format = {
-      zero: null,
-      places: null
-    };
+    return GerberParser.__super__.constructor.apply(this, arguments);
   }
 
   GerberParser.prototype.parseFormat = function(p, c) {
@@ -315,10 +355,14 @@ GerberParser = (function() {
       places = [+p[5], +p[6]];
     }
     if ((places == null) || (nota == null) || (zero == null)) {
-      throw new Error("invalid format specification");
+      throw new Error('invalid format specification');
     }
-    this.format.zero = zero;
-    this.format.places = places;
+    if (this.format.zero == null) {
+      this.format.zero = zero;
+    }
+    if (this.format.places == null) {
+      this.format.places = places;
+    }
     if (c.set == null) {
       c.set = {};
     }
@@ -496,7 +540,7 @@ GerberParser = (function() {
             y = (_ref2 = (_ref3 = p.match(/Y[+-]?[\d\.]+/)) != null ? _ref3[0].slice(1) : void 0) != null ? _ref2 : 1;
             i = (_ref4 = p.match(/I[+-]?[\d\.]+/)) != null ? _ref4[0].slice(1) : void 0;
             j = (_ref5 = p.match(/J[+-]?[\d\.]+/)) != null ? _ref5[0].slice(1) : void 0;
-            if (x < 1 || y < 1 || (x > 1 && (i == null) || i < 0) || (y > 1 && (j == null) || j < 0)) {
+            if ((x < 1 || y < 1) || (x > 1 && ((i == null) || i < 0)) || (y > 1 && ((j == null) || j < 0))) {
               throw new Error('invalid step repeat');
             }
             c["new"].sr = {
@@ -593,18 +637,18 @@ GerberParser = (function() {
 
   return GerberParser;
 
-})();
+})(Parser);
 
 module.exports = GerberParser;
 
 
 
-},{"./coord-parser":2,"./svg-coord":13}],6:[function(require,module,exports){
+},{"./coord-parser":2,"./parser":11,"./svg-coord":14}],6:[function(require,module,exports){
 var GerberReader;
 
 GerberReader = (function() {
   function GerberReader(gerberFile) {
-    this.gerberFile = gerberFile;
+    this.gerberFile = gerberFile != null ? gerberFile : '';
     this.line = 0;
     this.charIndex = 0;
     this.end = this.gerberFile.length;
@@ -1120,8 +1164,8 @@ MacroTool = (function() {
       points = [[bbox[0], bbox[1]], [bbox[2], bbox[1]], [bbox[2], bbox[3]], [bbox[0], bbox[3]]];
       for (_i = 0, _len = points.length; _i < _len; _i++) {
         p = points[_i];
-        x = p[0] * c - p[1] * s;
-        y = p[0] * s + p[1] * c;
+        x = (p[0] * c) - (p[1] * s);
+        y = (p[0] * s) + (p[1] * c);
         if (this.bbox[0] === null || x < this.bbox[0]) {
           this.bbox[0] = x;
         }
@@ -1181,7 +1225,7 @@ module.exports = MacroTool;
 
 
 
-},{"./macro-calc":7,"./pad-shapes":10,"./svg-coord":13,"./unique-id":14}],9:[function(require,module,exports){
+},{"./macro-calc":7,"./pad-shapes":10,"./svg-coord":14,"./unique-id":15}],9:[function(require,module,exports){
 var CKEY, DTAB, objToXml, repeat;
 
 repeat = function(pattern, count) {
@@ -1377,7 +1421,7 @@ polygon = function(p) {
   xMax = null;
   yMax = null;
   for (i = _i = 0, _ref = p.verticies; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-    theta = start + i * step;
+    theta = start + (i * step);
     rx = r * Math.cos(theta);
     ry = r * Math.sin(theta);
     if (Math.abs(rx) < 0.000000001) {
@@ -1690,7 +1734,40 @@ module.exports = {
 
 
 
-},{"./unique-id":14}],11:[function(require,module,exports){
+},{"./unique-id":15}],11:[function(require,module,exports){
+var Parser;
+
+Parser = (function() {
+  function Parser(formatOpts) {
+    var _ref, _ref1;
+    if (formatOpts == null) {
+      formatOpts = {};
+    }
+    this.format = {
+      zero: (_ref = formatOpts.zero) != null ? _ref : null,
+      places: (_ref1 = formatOpts.places) != null ? _ref1 : null
+    };
+    if (this.format.places != null) {
+      if ((!Array.isArray(this.format.places)) || this.format.places.length !== 2 || typeof this.format.places[0] !== 'number' || typeof this.format.places[1] !== 'number') {
+        throw new Error('parser places format must be an array of two numbers');
+      }
+    }
+    if (this.format.zero != null) {
+      if (typeof this.format.zero !== 'string' || (this.format.zero !== 'L' && this.format.zero !== 'T')) {
+        throw new Error("parser zero format must be either 'L' or 'T'");
+      }
+    }
+  }
+
+  return Parser;
+
+})();
+
+module.exports = Parser;
+
+
+
+},{}],12:[function(require,module,exports){
 var ASSUMED_UNITS, HALF_PI, Macro, Plotter, THREEHALF_PI, TWO_PI, coordFactor, tool, unique;
 
 unique = require('./unique-id');
@@ -1710,16 +1787,15 @@ TWO_PI = 2 * Math.PI;
 ASSUMED_UNITS = 'in';
 
 Plotter = (function() {
-  function Plotter(file, Reader, Parser) {
-    if (file == null) {
-      file = '';
+  function Plotter(reader, parser, opts) {
+    var _ref, _ref1;
+    this.reader = reader;
+    this.parser = parser;
+    if (opts == null) {
+      opts = {};
     }
-    if (Reader != null) {
-      this.reader = new Reader(file);
-    }
-    if (Parser != null) {
-      this.parser = new Parser;
-    }
+    this.units = (_ref = opts.units) != null ? _ref : null;
+    this.notation = (_ref1 = opts.notation) != null ? _ref1 : null;
     this.macros = {};
     this.tools = {};
     this.currentTool = '';
@@ -1739,7 +1815,6 @@ Plotter = (function() {
     };
     this.srOverClear = false;
     this.srOverCurrent = [];
-    this.units = null;
     this.mode = null;
     this.quad = null;
     this.lastOp = null;
@@ -1797,7 +1872,7 @@ Plotter = (function() {
           use: {
             x: x,
             y: y,
-            'xlink:href': '#' + t.padId
+            'xlink:href': "#" + t.padId
           }
         };
       },
@@ -1823,7 +1898,7 @@ Plotter = (function() {
     var _ref;
     this.finishPath();
     if (this.region) {
-      throw new Error("cannot change tool when in region mode");
+      throw new Error('cannot change tool when in region mode');
     }
     if (this.tools[code] == null) {
       if (!((_ref = this.parser) != null ? _ref.fmat : void 0)) {
@@ -1835,7 +1910,7 @@ Plotter = (function() {
   };
 
   Plotter.prototype.command = function(c) {
-    var code, m, params, state, val, _ref, _ref1, _ref2;
+    var code, m, params, state, val, _ref, _ref1;
     if (c.macro != null) {
       m = new Macro(c.macro, this.parser.format.places);
       this.macros[m.name] = m;
@@ -1844,24 +1919,27 @@ Plotter = (function() {
     _ref = c.set;
     for (state in _ref) {
       val = _ref[state];
-      if (state === 'units' && (this.units != null) && (((_ref1 = this.parser) != null ? _ref1.fmat : void 0) == null)) {
-        throw new Error('cannot redefine units');
-      } else if (state === 'notation' && (this.notation != null)) {
-        throw new Error('cannot redefine notation');
-      }
       if (state === 'region') {
         this.finishPath();
       }
-      if (state === 'currentTool') {
-        this.changeTool(val);
-      } else {
-        this[state] = val;
+      switch (state) {
+        case 'currentTool':
+          this.changeTool(val);
+          break;
+        case 'units':
+        case 'notation':
+          if (this[state] == null) {
+            this[state] = val;
+          }
+          break;
+        default:
+          this[state] = val;
       }
     }
     if (c.tool != null) {
-      _ref2 = c.tool;
-      for (code in _ref2) {
-        params = _ref2[code];
+      _ref1 = c.tool;
+      for (code in _ref1) {
+        params = _ref1[code];
         this.addTool(code, params);
       }
     }
@@ -1984,7 +2062,7 @@ Plotter = (function() {
           if (!(x === 0 && y === 0)) {
             u = {
               use: {
-                'xlink:href': '#' + srId
+                'xlink:href': "#" + srId
               }
             };
             if (x !== 0) {
@@ -2093,10 +2171,10 @@ Plotter = (function() {
     if (this.units == null) {
       if (this.backupUnits != null) {
         this.units = this.backupUnits;
-        console.warn("Warning: units set to '" + this.units + "' according to deprecated command G7" + (this.units === 'in' ? 0 : 1));
+        console.warn("units set to '" + this.units + "' according to deprecated command G7" + (this.units === 'in' ? 0 : 1));
       } else {
         this.units = ASSUMED_UNITS;
-        console.warn("Warning: no units set; assuming inches");
+        console.warn('no units set; assuming inches');
       }
     }
     if (this.notation == null) {
@@ -2139,7 +2217,7 @@ Plotter = (function() {
       }
       if (this.mode == null) {
         this.mode = 'i';
-        console.warn('Warning: no interpolation mode set. Assuming linear interpolation (G01)');
+        console.warn(' no interpolation mode set. Assuming linear interpolation (G01)');
       }
       if (this.mode === 'i') {
         return this.drawLine(sx, sy, ex, ey);
@@ -2193,7 +2271,7 @@ Plotter = (function() {
 
   Plotter.prototype.drawArc = function(sx, sy, ex, ey, i, j) {
     var arcEps, c, cand, cen, dist, large, r, rTool, sweep, t, theta, thetaE, thetaS, validCen, xMax, xMin, xn, xp, yMax, yMin, yn, yp, zeroLength, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    arcEps = 1.5 * coordFactor * Math.pow(10, -((_ref = (_ref1 = this.parser) != null ? _ref1.format.places[1] : void 0) != null ? _ref : 7));
+    arcEps = 1.5 * coordFactor * Math.pow(10, -1 * ((_ref = (_ref1 = this.parser) != null ? _ref1.format.places[1] : void 0) != null ? _ref : 7));
     t = this.tools[this.currentTool];
     if (!this.region && !t.trace['stroke-width']) {
       throw Error("cannot stroke an arc with non-circular tool " + this.currentTool);
@@ -2328,7 +2406,7 @@ module.exports = Plotter;
 
 
 
-},{"./macro-tool":8,"./standard-tool":12,"./svg-coord":13,"./unique-id":14}],12:[function(require,module,exports){
+},{"./macro-tool":8,"./standard-tool":13,"./svg-coord":14,"./unique-id":15}],13:[function(require,module,exports){
 var shapes, standardTool, unique;
 
 unique = require('./unique-id');
@@ -2408,7 +2486,7 @@ standardTool = function(tool, p) {
         throw new RangeError("" + tool + " hole width out of range (" + p.hole.width + "<0)");
       }
       if (!(p.hole.height >= 0)) {
-        throw new RangeError("" + tool + " hole height out of range");
+        throw new RangeError("" + tool + " hole height out of range (" + p.hole.height + "<0)");
       }
       hole = shapes.rect({
         cx: p.cx,
@@ -2424,7 +2502,7 @@ standardTool = function(tool, p) {
     maskId = id + '-mask';
     mask = {
       mask: {
-        id: id + "-mask",
+        id: id + '-mask',
         _: [
           {
             rect: {
@@ -2454,17 +2532,19 @@ module.exports = standardTool;
 
 
 
-},{"./pad-shapes":10,"./unique-id":14}],13:[function(require,module,exports){
-var SVG_COORD_E, SVG_COORD_FACTOR, getSvgCoord,
+},{"./pad-shapes":10,"./unique-id":15}],14:[function(require,module,exports){
+var SVG_COORD_E, getSvgCoord,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-SVG_COORD_FACTOR = 1000;
 
 SVG_COORD_E = 3;
 
 getSvgCoord = function(numberString, format) {
-  var after, before, c, i, sign, subNumbers, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-  numberString = "" + numberString;
+  var after, before, c, i, sign, subNumbers, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+  if (numberString != null) {
+    numberString = "" + numberString;
+  } else {
+    return NaN;
+  }
   before = '';
   after = '';
   sign = '+';
@@ -2477,15 +2557,9 @@ getSvgCoord = function(numberString, format) {
     if (subNumbers.length > 2) {
       return NaN;
     }
-    _ref = [subNumbers[0], subNumbers[1]], before = _ref[0], after = _ref[1];
-    if (after == null) {
-      after = '';
-    }
-    if (before == null) {
-      before = '';
-    }
+    _ref1 = [subNumbers[0], (_ref = subNumbers[1]) != null ? _ref : ''], before = _ref1[0], after = _ref1[1];
   } else {
-    if (typeof (format != null ? (_ref1 = format.places) != null ? _ref1[0] : void 0 : void 0) !== 'number' && typeof (format != null ? (_ref2 = format.places) != null ? _ref2[1] : void 0 : void 0) !== 'number') {
+    if (typeof (format != null ? (_ref2 = format.places) != null ? _ref2[0] : void 0 : void 0) !== 'number' || typeof (format != null ? (_ref3 = format.places) != null ? _ref3[1] : void 0 : void 0) !== 'number') {
       return NaN;
     }
     if (format.zero === 'T') {
@@ -2518,18 +2592,18 @@ getSvgCoord = function(numberString, format) {
     after += '0';
   }
   before = before + after.slice(0, SVG_COORD_E);
-  after = after.length > SVG_COORD_E ? '.' + after.slice(SVG_COORD_E) : '';
+  after = after.length > SVG_COORD_E ? "." + after.slice(SVG_COORD_E) : '';
   return Number(sign + before + after);
 };
 
 module.exports = {
   get: getSvgCoord,
-  factor: SVG_COORD_FACTOR
+  factor: Math.pow(10, SVG_COORD_E)
 };
 
 
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var generateUniqueId, id;
 
 id = 1000;

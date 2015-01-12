@@ -2,6 +2,8 @@
 # keeps track of coordinate format
 # takes a gerber block object and acts accordingly
 
+# generic parser
+Parser = require './parser'
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
@@ -11,10 +13,8 @@ getSvgCoord = require('./svg-coord').get
 # regular expression to match a coordinate
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g
 
-class GerberParser
-  constructor: ->
-    # coordinate format (places and zero suppression)
-    @format = { zero: null, places: null }
+# gerber parser class uses generic parser constructor
+class GerberParser extends Parser
 
   # parse a format block
   parseFormat: (p, c) ->
@@ -25,7 +25,8 @@ class GerberParser
       places = [ +p[5], +p[6] ]
     if not places? or not nota? or not zero?
       throw new Error 'invalid format specification'
-    @format.zero = zero; @format.places = places
+    @format.zero = zero unless @format.zero?
+    @format.places = places unless @format.places?
     unless c.set? then c.set = {}
     c.set.notation = nota
 

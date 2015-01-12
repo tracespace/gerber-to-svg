@@ -8,6 +8,7 @@ coordFactor = require('../src/svg-coord').factor
 # stream hook for testing for warnings
 warnings = require './warn-capture'
 
+formatGerb = fs.readFileSync './test/gerber/format-test.gbr', 'utf-8'
 exGerb = fs.readFileSync './test/gerber/gerber-spec-example-2.gbr', 'utf-8'
 exDrill = fs.readFileSync './test/drill/example1.drl', 'utf-8'
 warnGerb = fs.readFileSync './test/gerber/repeated-op-code-test.gbr', 'utf-8'
@@ -86,3 +87,29 @@ describe 'gerber to svg function', ->
       # process a file that will produce warnings
       gerberToSvg warnGerb, { warnArr: warnings }
       expect( warnings.length ).to.not.equal 0
+
+  describe 'overriding format options', ->
+    it 'should override the places if told to', ->
+      result = gerberToSvg formatGerb, {object: true, places: [2, 3]}
+      vbWidth = result.svg.viewBox[2]
+      vbHeight = result.svg.viewBox[3]
+      expect(vbWidth).to.equal 1
+      expect(vbHeight).to.equal 1
+    it 'should override the zero suppression if told to', ->
+      result = gerberToSvg formatGerb, {object: true, zero: 'T'}
+      vbWidth = result.svg.viewBox[2]
+      vbHeight = result.svg.viewBox[3]
+      expect(vbWidth).to.equal 10000
+      expect(vbHeight).to.equal 10000
+    it 'should override the notation if told to', ->
+      result = gerberToSvg formatGerb, {object: true, notation: 'I'}
+      vbWidth = result.svg.viewBox[2]
+      vbHeight = result.svg.viewBox[3]
+      expect(vbWidth).to.equal 20
+      expect(vbHeight).to.equal 20
+    it 'should override the units if told to', ->
+      result = gerberToSvg formatGerb, {object: true, units: 'mm'}
+      width = result.svg.width
+      height = result.svg.height
+      expect(width).to.match /mm/
+      expect(height).to.match /mm/
