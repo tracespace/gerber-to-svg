@@ -57,12 +57,13 @@ gulp.task 'standalone', ->
   browserify ENTRY, { extensions: [ '.coffee' ], standalone: NAME }
     .transform 'coffeeify'
     .bundle().on 'error', gutil.log
-    .pipe source DIST+'.js'
+    .pipe source "#{DIST}.js"
     .pipe gulp.dest DISTDIR
-    .pipe rename DIST+'.min.js'
+    .pipe rename "#{DIST}.min.js"
     .pipe streamify uglify {
       output: {
-        preamble: '/* copyright 2014 by mike cousins; shared under the terms of
+        preamble: '/* copyright 2015 by mike cousins and contributors; shared
+        under the terms of
         the MIT license. Source code available at
         github.com/mcous/gerber-to-svg */'
       }
