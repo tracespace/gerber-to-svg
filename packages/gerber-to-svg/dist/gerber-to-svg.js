@@ -213,7 +213,7 @@ DrillParser = (function(_super) {
   }
 
   DrillParser.prototype.parseCommand = function(block) {
-    var code, command, dia, k, v, _ref, _ref1, _ref2;
+    var code, command, dia, k, v, _base, _base1, _base2, _base3, _ref, _ref1, _ref2;
     command = {};
     if (block[0] === ';') {
       return command;
@@ -225,26 +225,26 @@ DrillParser = (function(_super) {
         done: true
       };
     } else if (block === INCH_COMMAND[this.fmat] || block.match(/INCH/)) {
-      if (this.format.places == null) {
-        this.format.places = [2, 4];
+      if ((_base = this.format).places == null) {
+        _base.places = [2, 4];
       }
       command.set = {
         units: 'in'
       };
     } else if (block === METRIC_COMMAND || block.match(/METRIC/)) {
-      if (this.format.places == null) {
-        this.format.places = [3, 3];
+      if ((_base1 = this.format).places == null) {
+        _base1.places = [3, 3];
       }
       command.set = {
         units: 'mm'
       };
     } else if (block === ABS_COMMAND) {
       command.set = {
-        notation: 'abs'
+        notation: 'A'
       };
     } else if (block === INC_COMMAND) {
       command.set = {
-        notation: 'inc'
+        notation: 'I'
       };
     } else if ((code = (_ref = block.match(/T\d+/)) != null ? _ref[0] : void 0)) {
       while (code[1] === '0') {
@@ -265,12 +265,12 @@ DrillParser = (function(_super) {
       }
     }
     if (block.match(/TZ/)) {
-      if (this.format.zero == null) {
-        this.format.zero = 'L';
+      if ((_base2 = this.format).zero == null) {
+        _base2.zero = 'L';
       }
     } else if (block.match(/LZ/)) {
-      if (this.format.zero == null) {
-        this.format.zero = 'T';
+      if ((_base3 = this.format).zero == null) {
+        _base3.zero = 'T';
       }
     }
     if (block.match(reCOORD)) {
@@ -348,7 +348,7 @@ GerberParser = (function(_super) {
   }
 
   GerberParser.prototype.parseFormat = function(p, c) {
-    var nota, places, zero;
+    var nota, places, zero, _base, _base1;
     zero = p[2] === 'L' || p[2] === 'T' ? p[2] : null;
     nota = p[3] === 'A' || p[3] === 'I' ? p[3] : null;
     if (p[4] === 'X' && p[7] === 'Y' && p.slice(5, 7) === p.slice(8, 10) && p[5] < 8 && p[6] < 8) {
@@ -357,11 +357,11 @@ GerberParser = (function(_super) {
     if ((places == null) || (nota == null) || (zero == null)) {
       throw new Error('invalid format specification');
     }
-    if (this.format.zero == null) {
-      this.format.zero = zero;
+    if ((_base = this.format).zero == null) {
+      _base.zero = zero;
     }
-    if (this.format.places == null) {
-      this.format.places = places;
+    if ((_base1 = this.format).places == null) {
+      _base1.places = places;
     }
     if (c.set == null) {
       c.set = {};
@@ -2149,7 +2149,7 @@ Plotter = (function() {
   };
 
   Plotter.prototype.operate = function(op) {
-    var bbox, ex, ey, shape, sx, sy, t, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+    var bbox, ex, ey, shape, sx, sy, t, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
     if (op["do"] === 'last') {
       op["do"] = this.lastOp;
       console.warn('modal operation codes are deprecated');
@@ -2217,18 +2217,12 @@ Plotter = (function() {
       }
       if (this.mode == null) {
         this.mode = 'i';
-        console.warn(' no interpolation mode set. Assuming linear interpolation (G01)');
+        console.warn('no interpolation mode set. Assuming linear (G01)');
       }
       if (this.mode === 'i') {
         return this.drawLine(sx, sy, ex, ey);
       } else {
-        if (op.i == null) {
-          op.i = 0;
-        }
-        if (op.j == null) {
-          op.j = 0;
-        }
-        return this.drawArc(sx, sy, ex, ey, op.i, op.j);
+        return this.drawArc(sx, sy, ex, ey, (_ref6 = op.i) != null ? _ref6 : 0, (_ref7 = op.j) != null ? _ref7 : 0);
       }
     }
   };

@@ -109,9 +109,9 @@ describe 'NC drill file parser', ->
   it 'should ignore leading zeros in tool name', ->
     expect( p.parseCommand('T01') ).to.eql { set: { currentTool: 'T1' } }
   it 'should return a set notation to abs with G90', ->
-    expect( p.parseCommand('G90') ).to.eql { set: { notation: 'abs' } }
+    expect( p.parseCommand('G90') ).to.eql { set: { notation: 'A' } }
   it 'should return a set notation to inc with G91', ->
-    expect( p.parseCommand('G91') ).to.eql { set: { notation: 'inc' } }
+    expect( p.parseCommand('G91') ).to.eql { set: { notation: 'I' } }
   it 'M70 (fmat1), M71, and M72 should still set units', ->
     expect( p.parseCommand('M71') ).to.eql { set: { units: 'mm' } }
     expect( p.parseCommand('M72') ).to.eql { set: { units: 'in' } }

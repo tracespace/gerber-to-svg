@@ -25,14 +25,14 @@ class GerberParser extends Parser
       places = [ +p[5], +p[6] ]
     if not places? or not nota? or not zero?
       throw new Error 'invalid format specification'
-    @format.zero = zero unless @format.zero?
-    @format.places = places unless @format.places?
-    unless c.set? then c.set = {}
+    @format.zero ?= zero
+    @format.places ?= places
+    c.set ?= {}
     c.set.notation = nota
 
   # parse a aperture definition block
   parseToolDef: (p, c) ->
-    unless c.tool? then c.tool = {}
+    c.tool ?= {}
     code = p.match(/^ADD\d{2,}/)?[0][2..]
     # get the shape and modifiers
     [shape, mods] = p[2 + code.length..].split ','
@@ -43,42 +43,42 @@ class GerberParser extends Parser
       # circle
       when 'C'
         if mods.length > 2 then hole = {
-          width:  getSvgCoord mods[1], { places: @format.places }
-          height: getSvgCoord mods[2], { places: @format.places }
+          width:  getSvgCoord mods[1], {places: @format.places}
+          height: getSvgCoord mods[2], {places: @format.places}
         }
         else if mods.length > 1 then hole = {
-          dia: getSvgCoord mods[1], { places: @format.places }
+          dia: getSvgCoord mods[1], {places: @format.places}
         }
         c.tool[code] = {
-          dia: getSvgCoord mods[0], { places: @format.places }
+          dia: getSvgCoord mods[0], {places: @format.places}
         }
         if hole? then c.tool[code].hole = hole
       # rectangle, obround
       when 'R', 'O'
         if mods.length > 3 then hole = {
-          width:  getSvgCoord mods[2], { places: @format.places }
-          height: getSvgCoord mods[3], { places: @format.places }
+          width:  getSvgCoord mods[2], {places: @format.places}
+          height: getSvgCoord mods[3], {places: @format.places}
         }
         else if mods.length > 2 then hole = {
-          dia: getSvgCoord mods[2], { places: @format.places }
+          dia: getSvgCoord mods[2], {places: @format.places}
         }
         c.tool[code] = {
-          width:  getSvgCoord mods[0], { places: @format.places }
-          height: getSvgCoord mods[1], { places: @format.places }
+          width:  getSvgCoord mods[0], {places: @format.places}
+          height: getSvgCoord mods[1], {places: @format.places}
         }
         if shape is 'O' then c.tool[code].obround = true
         if hole? then c.tool[code].hole = hole
       # polygon
       when 'P'
         if mods.length > 4 then hole = {
-          width:  getSvgCoord mods[3], { places: @format.places }
-          height: getSvgCoord mods[4], { places: @format.places }
+          width:  getSvgCoord mods[3], {places: @format.places}
+          height: getSvgCoord mods[4], {places: @format.places}
         }
         else if mods.length > 3 then hole = {
-          dia: getSvgCoord mods[3], { places: @format.places }
+          dia: getSvgCoord mods[3], {places: @format.places}
         }
         c.tool[code] = {
-          dia:       getSvgCoord mods[0], { places: @format.places }
+          dia:       getSvgCoord mods[0], {places: @format.places}
           verticies: +mods[1]
         }
         if mods.length > 2 then c.tool[code].degrees = +mods[2]
@@ -86,7 +86,7 @@ class GerberParser extends Parser
       # else aperture macro
       else
         mods = (+m for m in (mods ? []))
-        c.tool[code] = { macro: shape, mods: mods }
+        c.tool[code] = {macro: shape, mods: mods}
 
   # parse a block for the command
   parseCommand: (block = {}) ->
@@ -104,25 +104,26 @@ class GerberParser extends Parser
           # unit set
           when 'MO'
             u = p[2..3]
-            unless c.set? then c.set = {}
-            if u is 'IN' then c.set.units = 'in'
-            else if u is 'MM' then c.set.units = 'mm'
-            else throw new Error "#{p} is an invalid units setting"
+            c.set ?= {}
+            if u is 'IN'
+              c.set.units = 'in'
+            else if u is 'MM'
+              c.set.units = 'mm'
+            else
+              throw new Error "#{p} is an invalid units setting"
           # aperture definition
-          when 'AD'
-            @parseToolDef p, c
+          when 'AD' then @parseToolDef p, c
           # aperture macro
           # aperture macro can only appear alone in a parameter block, so return
-          when 'AM'
-            return { macro: param }
+          when 'AM' then return { macro: param }
           # new level polarity
           when 'LP'
-            unless c.new? then c.new = {}
+            c.new ?= {}
             c.new.layer = p[2] if p[2] is 'D' or p[2] is 'C'
             unless c.new.layer? then throw new Error 'invalid level polarity'
           # new step repeat
           when 'SR'
-            unless c.new? then c.new = {}
+            c.new ?= {}
             x = p.match(/X[+-]?[\d\.]+/)?[0][1..] ? 1
             y = p.match(/Y[+-]?[\d\.]+/)?[0][1..] ? 1
             i = p.match(/I[+-]?[\d\.]+/)?[0][1..]
@@ -133,11 +134,11 @@ class GerberParser extends Parser
             (y > 1 and (not j? or j < 0))
               throw new Error 'invalid step repeat'
             c.new.sr = { x: +x, y: +y }
-            if i? then c.new.sr.i = getSvgCoord i, { places: @format.places }
-            if j? then c.new.sr.j = getSvgCoord j, { places: @format.places }
+            if i? then c.new.sr.i = getSvgCoord i, {places: @format.places}
+            if j? then c.new.sr.j = getSvgCoord j, {places: @format.places}
     else if block = block.block
       # check for M02 (file done) code
-      if block is 'M02' then return { set: { done: true } }
+      if block is 'M02' then return {set: {done: true}}
       # check for G codes
       else if block[0] is 'G'
         # grab the gcode and start a switch case
@@ -148,14 +149,14 @@ class GerberParser extends Parser
           when '1', '01', '2', '02', '3', '03'
             code = code[code.length - 1]
             m = if code is '1' then 'i' else if code is '2' then 'cw' else 'ccw'
-            c.set = { mode: m }
+            c.set = {mode: m}
           # G36 and 37 set the region mode on and off respectively
-          when '36', '37' then c.set = { region: code is '36' }
+          when '36', '37' then c.set = {region: code is '36'}
           # G70 and 71 set the backup units to inches and mm respectively
           when '70', '71'
-            c.set = { backupUnits: if code is '70' then 'in' else 'mm' }
+            c.set = {backupUnits: if code is '70' then 'in' else 'mm'}
           when '74', '75'
-            c.set = { quad: if code is '74' then 's' else 'm' }
+            c.set = {quad: if code is '74' then 's' else 'm'}
       # check for coordinate operations
       # not an else if because G codes for mode set can go inline with
       # interpolate blocks
@@ -167,7 +168,7 @@ class GerberParser extends Parser
           when '2' then 'move'
           when '3' then 'flash'
           else 'last'
-        c.op = { do: op }
+        c.op = {do: op}
         c.op[axis] = val for axis, val of coord
       # check for a tool change
       # this might be on the same line as a legacy G54
@@ -175,5 +176,6 @@ class GerberParser extends Parser
         c.set = { currentTool: tool }
 
     # return the command
-    c
+    return c
+    
 module.exports = GerberParser
