@@ -1,6 +1,12 @@
 # ignore source and test files
-bower.json
 Gulpfile.coffee
-src/
-test/
-examples/
+src
+test
+coverage
+examples
+# configuration files
+bower.json
+.travis.yml
+.zuul.yml
+.gitattributes
+coffeelint.json

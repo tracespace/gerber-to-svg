@@ -6,7 +6,7 @@ node_js:
 - '0.10'
 script: gulp travis
 # build lib before deploy
-before_depoly: gulp
+before_deploy: gulp
 # deploy to npm
 deploy:
   provider: npm

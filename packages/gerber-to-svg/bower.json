@@ -1,6 +1,6 @@
 {
   "name": "gerber-to-svg",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "homepage": "https://github.com/mcous/gerber-to-svg",
   "description": "Gerber and NC drill file to SVG converter",
   "main": "dist/gerber-to-svg.js",
