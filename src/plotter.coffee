@@ -90,7 +90,7 @@ class Plotter
     if @region then throw new Error 'cannot change tool when in region mode'
     # throw if tool doesn't exist if it's a gerber. if it's a drill, just
     # let it slide
-    if not @tools[code]?
+    unless @tools[code]?
       unless @parser?.fmat then throw new Error "tool #{code} is not defined"
     # change the tool if it exists
     else @currentTool = code
@@ -111,7 +111,7 @@ class Plotter
         # change the tool if it was a tool change
         when 'currentTool' then @changeTool val
         # units and notation should not be overridden if already defined
-        when 'units', 'notation' then @[state] = val unless @[state]?
+        when 'units', 'notation' then @[state] ?= val
         # everything else just sets the property
         else @[state] = val
 
@@ -126,8 +126,11 @@ class Plotter
       # finish the in progress layer
       @finishLayer()
       # set the new params
-      if c.new.layer? then @polarity = c.new.layer
-      else if c.new.sr? then @finishSR(); @stepRepeat = c.new.sr
+      if c.new.layer?
+        @polarity = c.new.layer
+      else if c.new.sr?
+        @finishSR()
+        @stepRepeat = c.new.sr
 
 
   # go through the gerber file and return an xml object with the svg
@@ -137,7 +140,7 @@ class Plotter
       block = @reader.nextBlock()
       if block is false
         # if it's not a drill file
-        if not @parser?.fmat?
+        unless @parser?.fmat?
           throw new Error 'end of file encountered before required M02 command'
         else
           throw new Error 'end of drill file encountered before M00/M30 command'
@@ -318,26 +321,26 @@ class Plotter
         # start the path
         @path.push 'M', sx, sy
         # start the bbox
-        bbox = if not @region then t.bbox sx, sy else {
+        bbox = unless @region then t.bbox sx, sy else {
           xMin: sx, yMin: sy, xMax: sx, yMax: sy
         }
         @addBbox bbox, @layerBbox
       # check for a mode, and assume linear if necessary
-      if not @mode? then @mode = 'i'; console.warn ' no interpolation
-        mode set. Assuming linear interpolation (G01)'
+      unless @mode?
+        @mode = 'i'
+        console.warn 'no interpolation mode set. Assuming linear (G01)'
 
       # let's draw something
       if @mode is 'i'
         @drawLine sx, sy, ex, ey
       else
-        op.i = 0 unless op.i?; op.j = 0 unless op.j?
-        @drawArc sx, sy, ex, ey, op.i, op.j
+        @drawArc sx, sy, ex, ey, op.i ? 0, op.j ? 0
 
   # draw a line with the start and end point
   drawLine: (sx, sy, ex, ey) ->
     t = @tools[@currentTool]
     # add to the bbox
-    bbox = if not @region then t.bbox ex, ey else {
+    bbox = unless @region then t.bbox ex, ey else {
       xMin: ex, yMin: ey, xMax: ex, yMax: ey
     }
     @addBbox bbox, @layerBbox
@@ -385,7 +388,7 @@ class Plotter
     if not @region and not t.trace['stroke-width']
       throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
     # throw an error if quadrant mode was not set
-    if not @quad? then throw new Error 'arc quadrant mode has not been set'
+    unless @quad? then throw new Error 'arc quadrant mode has not been set'
     #
     # get the radius of the arc from the offsets
     r = Math.sqrt i ** 2 + j ** 2

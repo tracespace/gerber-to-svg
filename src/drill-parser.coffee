@@ -40,23 +40,23 @@ class DrillParser extends Parser
     # this will likely never happen
     if block is 'FMAT,1' then @fmat = block
     # end of file
-    else if block is 'M30' or block is 'M00' then command.set = { done: true }
+    else if block is 'M30' or block is 'M00' then command.set = {done: true}
     # inches command
     else if block is INCH_COMMAND[@fmat] or block.match /INCH/
       # set the format to 2.4
-      @format.places = [2, 4] unless @format.places?
+      @format.places ?= [2, 4]
       # add set units object
       command.set = { units: 'in' }
     # metric command
     else if block is METRIC_COMMAND or block.match /METRIC/
       # set the format to 3.3
-      @format.places = [3, 3] unless @format.places?
+      @format.places ?= [3, 3]
       # add set units command object
-      command.set = { units: 'mm' }
+      command.set = {units: 'mm'}
     # absolute notation
-    else if block is ABS_COMMAND then command.set = { notation: 'abs' }
+    else if block is ABS_COMMAND then command.set = {notation: 'A'}
     # incremental notation
-    else if block is INC_COMMAND then command.set = { notation: 'inc' }
+    else if block is INC_COMMAND then command.set = {notation: 'I'}
 
     # tool definition
     else if ( code = block.match(/T\d+/)?[0] )
@@ -74,9 +74,9 @@ class DrillParser extends Parser
     # drill file specifies keep rather than suppress, so flip for consistency
     # with gerber files
     if block.match /TZ/
-      @format.zero = 'L' unless @format.zero?
+      @format.zero ?= 'L'
     else if block.match /LZ/
-      @format.zero = 'T' unless @format.zero?
+      @format.zero ?= 'T'
 
     # finally, check for a drill command
     # some drill files may tack on tool changes at the end of files, so we'll

@@ -1,6 +1,6 @@
 {
   "name": "gerber-to-svg",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Gerber and NC drill file to SVG converter",
   "main": "lib/gerber-to-svg.js",
   "bin": {
