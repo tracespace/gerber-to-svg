@@ -4,36 +4,55 @@
 builder = require './obj-to-xml'
 Plotter = require './plotter'
 
+# readers and parsers
+DrillReader = require './drill-reader'
+DrillParser = require './drill-parser'
+GerberReader = require './gerber-reader'
+GerberParser = require './gerber-parser'
+
 # coordinate scale
 coordFactor = require('./svg-coord').factor
 
 DEFAULT_OPTS = {
+  # processing and output options
   drill: false
   pretty: false
   object: false
   warnArr: null
+  # parser options
+  places: null
+  zero: null
+  # plotter options
+  notation: null
+  units: null
 }
 
-module.exports = (gerber, options = {}) ->
+module.exports = (file, options = {}) ->
   # options
   opts = {}
   opts[key] = val for key, val of DEFAULT_OPTS
   opts[key] = val for key, val of options
 
   # check if an svg object was passed int
-  if typeof gerber is 'object'
-    if gerber.svg? then return builder gerber, { pretty: opts.pretty }
+  if typeof file is 'object'
+    if file.svg? then return builder file, { pretty: opts.pretty }
     else throw new Error 'non SVG object cannot be converted to an SVG string'
   # or we got a string, so plot the thing
   # get the correct reader and parser
+  parserOpts = null
+  if opts.places? or opts.zero?
+    parserOpts = {places: opts.places, zero: opts.zero}
   if opts.drill
-    Reader = require './drill-reader'
-    Parser = require './drill-parser'
+    reader = new DrillReader file
+    parser = new DrillParser parserOpts
   else
-    Reader = require './gerber-reader'
-    Parser = require './gerber-parser'
+    reader = new GerberReader file
+    parser = new GerberParser parserOpts
   # create the plotter
-  p = new Plotter gerber, Reader, Parser
+  plotterOpts = null
+  if opts.notation? or opts.units?
+    plotterOpts = {notation: opts.notation, units: opts.units}
+  p = new Plotter reader, parser, plotterOpts
   # capture console.warn if necessary
   oldWarn = null
   root = null
@@ -50,7 +69,6 @@ module.exports = (gerber, options = {}) ->
   finally
     # unhook the warning capture if it was hooked
     if oldWarn? and root? then root.console.warn = oldWarn
-
 
   # make sure the bbox is valid
   unless p.bbox.xMin >= p.bbox.xMax then width = p.bbox.xMax - p.bbox.xMin

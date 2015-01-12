@@ -16,16 +16,20 @@ Want to see this library in action right now? Go to [svgerber](http://svgerber.c
 
 #### options
 
-switch             | how it rolls
--------------------|-----------------------------------
-`-o, --out`        | specify an output directory
-`-q, --quiet`      | do not print warnings and messages
-`-p, --pretty`     | prettily align SVG output
-`-d, --drill`      | process following file as an NC (Excellon) drill file
-`-a, --append-ext` | append .svg rather than replace the old file extension
-`-j, --json`       | output the SVG in JSON rather than as an XML string
-`-v, --version`    | display version information
-`-h, --help`       | display help text
+switch             | type    | how it rolls
+-------------------|---------|-------------------------
+`-o, --out`        | string  | specify an output directory
+`-q, --quiet`      | boolean | do not print warnings and messages
+`-p, --pretty`     | boolean | prettily align SVG output
+`-d, --drill`      | string  | process following file as an NC (Excellon) drill
+`-f, --format`     | array   | override coordinate format with '[n_int,n_dec]'
+`-z, --zero`       | string  | override zero suppression with 'L' or 'T'
+`-u, --units`      | string  | override (without converting) units with 'mm' or 'in'
+`-n, --notation`   | string  | override absolute/incremental system with 'A' or 'I'
+`-a, --append-ext` | boolean | append .svg without replacing the file extension
+`-j, --json`       | boolean | output the SVG in JSON rather than as a string
+`-v, --version`    | boolean | display version information
+`-h, --help`       | boolean | display help text
 
 #### examples:
 * `gerber2svg path/to/gerber.gbr` will write the SVG to stdout
@@ -59,12 +63,16 @@ Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-
 
 #### options
 
-key       | default | how it be
-----------|---------|-------------------------------------------------------------
-`drill`   | false   | process the string as an NC drill file rather than a Gerber
-`pretty`  | false   | output the SVG XML string with line-breaks and two-space tabs
-`object`  | false   | return an XML object instead of a the default XML string
-`warnArr` | null    | if passed an array, will push warning strings to that array rather than console.warn
+key       | type       | default | how it be
+----------|------------|---------|---------------------------------------------
+`drill`   | boolean    | false   | process the string as an NC drill file rather than a Gerber
+`pretty`  | boolean    | false   | output the SVG XML string with line-breaks and two-space tabs
+`object`  | boolean    | false   | return an XML object instead of a the default XML string
+`warnArr` | array name | null    | if passed an array reference, will push warning strings to that array rather than console.warn
+`places`  | array      | null    | override any coordinate format settings in the file with [n_int-places, n_dec-places]
+`zero`    | string     | null    | override the coordinate zero-suppression with 'L' for leading or 'T' for trailing
+`notation`| string     | null    | override the coordinate notation with 'A' for absolute or 'I' for incremental
+`units`   | string     | null    | override the units (note: does not convert any numbers) with 'mm' or 'in'
 
 If opts.object is true, the returned object can be passed back into gerber-to-svg to get the XML string. The object will have the format:
 ``` javascript
@@ -153,7 +161,7 @@ If it messes up, open up an issue and attach your Gerber, if you can. I
 appreciate files to test on.
 
 ### problems with drill files
-If your drill file is a wildly different size than your Gerbers, or it's offset from your Gerbers, check for these things:
+If your drill file is a wildly different size than your Gerbers, or it's offset from your Gerbers, check for / try overriding these things:
 
 * The drill file processor assumes 2:4 precision for inches and 3:3 precision for millimeters
 * Leading zero suppression (identical to no suppression and keep trailing zeros in Excellon speak) will be assumed if left unspecified
@@ -171,7 +179,7 @@ Library files for Node live in lib/, standalone library files
 live in dist/, and the command line utility lives in bin/.
 
 ### unit testing
-This module uses mocha and shouldjs for unit testing. To run the tests once, run
+This module uses mocha and chai for unit testing. To run the tests once, run
 `$ gulp test`. To run the tests automatically when source or tests change, run `$ gulp testwatch`.
 
 There's also a visual test suite. Run `$ gulp testvisual` and point your browser

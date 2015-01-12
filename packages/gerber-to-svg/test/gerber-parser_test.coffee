@@ -29,11 +29,18 @@ describe 'gerber command parser', ->
       }
       expect( p.format.zero ).to.eql 'L'
       expect( p.format.places ).to.eql [3,4]
+      p = new Parser()
       expect( p.parseCommand param 'FSTIX77Y77' ).to.eql {
         set: { notation: 'I' }
       }
       expect( p.format.zero ).to.eql 'T'
       expect( p.format.places ).to.eql [7,7]
+
+    it 'should not override user set places or zero suppression', ->
+      p = new Parser {places: [4, 7], zero: 'T'}
+      p.parseCommand param 'FSLAX34Y34'
+      expect(p.format.zero).to.eql 'T'
+      expect(p.format.places).to.eql [4,7]
 
     it 'should throw error for bad options', ->
       expect( -> p.parseCommand param 'FSLPX34Y34' ).to.throw /invalid/

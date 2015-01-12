@@ -3,7 +3,7 @@
 # command block. Also keeps track of gerber file line number
 
 class GerberReader
-  constructor: (@gerberFile) ->
+  constructor: (@gerberFile = '') ->
     @line = 0
     # read the gerber character by charcter
     @charIndex = 0
@@ -40,5 +40,5 @@ class GerberReader
 
   getLine: ->
     @line
-    
+
 module.exports = GerberReader

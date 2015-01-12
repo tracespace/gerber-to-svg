@@ -6,9 +6,16 @@ fact = svgCoord.factor
 
 describe 'get svg coord function', ->
 
+  it "should factor the coordinates by #{fact}", ->
+    expect(fact).to.equal 1000
+
   it 'should return NaN for bad input', ->
-    expect( getSvgCoord '0.1.2', { places: [2, 4], zero: 'L' } ).to.be.NaN
+    expect(getSvgCoord()).to.be.NaN
+    expect( getSvgCoord '0.1.2').to.be.NaN
     expect( getSvgCoord '123', { zero: 'L' } ).to.be.NaN
+    expect( getSvgCoord '123', { zero: 'L', places: ['a', 2] } ).to.be.NaN
+    expect( getSvgCoord '123', { zero: 'L', places: [2, 'b'] } ).to.be.NaN
+    expect( getSvgCoord '123', { zero: 'L', places: [] } ).to.be.NaN
 
   it 'should convert decimal numbers into proper coords', ->
     expect( getSvgCoord '1.3', { places: [2, 4] } ).to.equal 1.3 * fact

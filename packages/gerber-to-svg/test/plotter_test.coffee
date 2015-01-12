@@ -1,12 +1,13 @@
 # test suite for plotter class
 expect = require('chai').expect
 Plotter = require '../src/plotter'
+DrillParser = require '../src/drill-parser'
 # stream hook for testing for warnings
 warnings = require './warn-capture'
 
 describe 'Plotter class', ->
   p = null
-  beforeEach -> p = new Plotter
+  beforeEach -> p = new Plotter()
 
   describe 'setting internal plotter state', ->
 
@@ -15,13 +16,19 @@ describe 'Plotter class', ->
       it 'should set the units to mm and in', ->
         p.command { set: { units: 'mm' } }
         expect( p.units ).to.eql 'mm'
-        p = new Plotter
+        p = new Plotter()
         p.command { set: { units: 'in' } }
         expect( p.units ).to.eql 'in'
 
-      it 'should throw if the units try to get redefined', ->
-        p.command { set: { units: 'mm' } }
-        expect( -> p.command { set: { units: 'in' } } ).to.throw /units/
+      it 'should should allow the user to overide the units', ->
+        p = new Plotter(null, null, {units: 'mm'})
+        expect(p.units).to.eql 'mm'
+        p.command {set: {units: 'in'}}
+        expect(p.units).to.eql 'mm'
+        p = new Plotter(null, null, {units: 'in'})
+        expect(p.units).to.eql 'in'
+        p.command {set: {units: 'mm'}}
+        expect(p.units).to.eql 'in'
 
       it 'should set the backup units', ->
         p.command { set: { backupUnits: 'mm' } }
@@ -36,13 +43,19 @@ describe 'Plotter class', ->
       it 'should set the notation mode', ->
         p.command { set: { notation: 'A' } }
         expect( p.notation ).to.eql 'A'
-        p = new Plotter
+        p = new Plotter()
         p.command { set: { notation: 'I' } }
         expect( p.notation ).to.eql 'I'
 
-      it 'should throw an error if the notation tries to get redefined', ->
-        p.command { set: { notation: 'A' } }
-        expect( -> p.command { set: { notation: 'I' } } ).to.throw /redefine/
+      it 'should allow the user to override the notation', ->
+        p = new Plotter null, null, {notation: 'A'}
+        expect(p.notation).to.eql 'A'
+        p.command {set: {notation: 'I'}}
+        expect(p.notation).to.eql 'A'
+        p = new Plotter null, null, {notation: 'I'}
+        expect(p.notation).to.eql 'I'
+        p.command {set: {notation: 'A'}}
+        expect(p.notation).to.eql 'I'
 
     describe 'changing the tool', ->
 
@@ -56,7 +69,7 @@ describe 'Plotter class', ->
 
       it 'should not throw missing tool exception for drill files', ->
         # drill files sometimes do this, so check for it
-        p = new Plotter '', null, require '../src/drill-parser'
+        p = new Plotter null, new DrillParser()
         expect( -> p.command { set: { currentTool: 'T0' } } ).to.not.throw()
 
       it 'should throw if region mode is on', ->
@@ -173,7 +186,7 @@ describe 'Plotter class', ->
           .to.throw /format/
 
       it 'should assume notation is absolute if not set on a drill file', ->
-        p = new Plotter '', null, require '../src/drill-parser'
+        p = new Plotter null, new DrillParser()
         p.units = 'in'
         p.command { tool: { T1: { dia: 1 } } }
         expect( -> p.command { op:{ do: 'flash', x: 1, y: 1 } } ).to.not.throw()
