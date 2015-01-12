@@ -18,9 +18,11 @@ ASSUMED_UNITS = 'in'
 
 class Plotter
 
-  constructor: (file = '', Reader, Parser) ->
-    if Reader? then @reader = new Reader file
-    if Parser? then @parser = new Parser
+  constructor: (@reader, @parser, opts = {}) ->
+    # parse options object
+    # options can be used for units and notation
+    @units = opts.units ? null
+    @notation = opts.notation ? null
     # tools and macros
     @macros = {}
     @tools = {}
@@ -35,8 +37,6 @@ class Plotter
     @stepRepeat = { x: 1, y: 1, i: 0, j: 0 }
     @srOverClear = false
     @srOverCurrent = []
-    # unit system
-    @units = null
     # operating mode
     @mode = null
     @quad = null
@@ -105,18 +105,15 @@ class Plotter
 
     # if there's a set command
     for state, val of c.set
-      # check for some specific things that shouldn't happen
-      # can't redifine units unless it's a drill file in which case let it
-      # do any damn thing it pleases
-      if state is 'units' and @units? and not @parser?.fmat?
-        throw new Error 'cannot redefine units'
-      # notation should not be defined
-      else if state is 'notation' and @notation?
-        throw new Error 'cannot redefine notation'
       # if the region mode changes, then we need to finish the current path
       if state is 'region' then @finishPath()
-      # tool changes are special, # else just set the stat
-      if state is 'currentTool' then @changeTool val else @[state] = val
+      switch state
+        # change the tool if it was a tool change
+        when 'currentTool' then @changeTool val
+        # units and notation should not be overridden if already defined
+        when 'units', 'notation' then @[state] = val unless @[state]?
+        # everything else just sets the property
+        else @[state] = val
 
     # if there's a tool command
     if c.tool? then @addTool code, params for code, params of c.tool
