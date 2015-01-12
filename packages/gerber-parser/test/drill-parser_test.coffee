@@ -9,7 +9,7 @@ factor = require('../src/svg-coord').factor
 
 describe 'NC drill file parser', ->
   p = null
-  beforeEach -> p = new Parser
+  beforeEach -> p = new Parser()
 
   it "should ignore comments (start with ';')", ->
     initialFmat = p.fmat
@@ -36,11 +36,21 @@ describe 'NC drill file parser', ->
     # also check that whitespace doesn't throw it off
     p.parseCommand 'INCH,TZ'
     expect( p.format.zero ).to.eql 'L'
+    p = new Parser()
     p.parseCommand 'INCH,LZ'
     expect( p.format.zero ).to.eql 'T'
+    p = new Parser()
     p.parseCommand 'INCH,TZ'
     expect( p.format.zero ).to.eql 'L'
+    p = new Parser()
     p.parseCommand 'INCH,LZ'
+    expect( p.format.zero ).to.eql 'T'
+  it 'should not overide a user set zero format', ->
+    p = new Parser {zero: 'L'}
+    p.parseCommand 'INCH,LZ'
+    expect( p.format.zero ).to.eql 'L'
+    p = new Parser {zero: 'T'}
+    p.parseCommand 'INCH,TZ'
     expect( p.format.zero ).to.eql 'T'
   it 'should warn and fall back to leading suppression if unspecified', ->
     p.format.places = [2,4]
@@ -60,8 +70,15 @@ describe 'NC drill file parser', ->
   it 'should use 3.3 format for metric and 2.4 for inches', ->
     p.parseCommand 'INCH'
     expect( p.format.places ).to.eql [ 2, 4 ]
+    p = new Parser()
     p.parseCommand 'METRIC'
     expect( p.format.places ).to.eql [ 3, 3 ]
+  it 'should not override user set places format', ->
+    p = new Parser {places: [3, 4]}
+    p.parseCommand 'INCH'
+    expect(p.format.places).to.eql [3, 4]
+    p.parseCommand 'METRIC'
+    expect(p.format.places).to.eql [3, 4]
   describe 'tool definitions', ->
     beforeEach ->
       p.format.zero = 'L'

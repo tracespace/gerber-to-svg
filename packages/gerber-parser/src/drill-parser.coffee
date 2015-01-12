@@ -2,6 +2,8 @@
 # keeps track of format stuff
 # has a parseCommand method that takes a block and acts accordingly
 
+# generic parser
+Parser = require './parser'
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
@@ -20,15 +22,13 @@ reCOORD = /[XY]{1,2}/
 ZERO_BACKUP = 'L'
 PLACES_BACKUP = [ 2, 4 ]
 
-class DrillParser
+class DrillParser extends Parser
   constructor: ->
-    # format for parsing coordinates, set by each file
-    # excellon specifies which zeros to keep, but here we're going to treat it
-    # as suppression to match gerber
-    @format = { zero: null, places: null }
-    # format of the drill file
-    # I don't think this is ever going to be used but whatever
+    # excellon format of the drill file
+    # I don't think this is ever going to be used because it's old but whatever
     @fmat = 'FMAT,2'
+    # call parent constructor
+    super(arguments[0])
 
   # parse a command block and return a command object
   parseCommand: (block) ->
@@ -44,13 +44,13 @@ class DrillParser
     # inches command
     else if block is INCH_COMMAND[@fmat] or block.match /INCH/
       # set the format to 2.4
-      @format.places = [2, 4]
+      @format.places = [2, 4] unless @format.places?
       # add set units object
       command.set = { units: 'in' }
     # metric command
     else if block is METRIC_COMMAND or block.match /METRIC/
       # set the format to 3.3
-      @format.places = [3, 3]
+      @format.places = [3, 3] unless @format.places?
       # add set units command object
       command.set = { units: 'mm' }
     # absolute notation
@@ -71,12 +71,12 @@ class DrillParser
         command.set = { currentTool: code }
 
     # allow this to be tacked on the end of a command to be lenient
-    # we're assuming trailing zero suppression, so we only care if the opposite
-    # is specified (TZ for keep trailing zeros)
+    # drill file specifies keep rather than suppress, so flip for consistency
+    # with gerber files
     if block.match /TZ/
-      @format.zero = 'L'
+      @format.zero = 'L' unless @format.zero?
     else if block.match /LZ/
-      @format.zero = 'T'
+      @format.zero = 'T' unless @format.zero?
 
     # finally, check for a drill command
     # some drill files may tack on tool changes at the end of files, so we'll

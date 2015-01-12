@@ -1,14 +1,13 @@
 # convert a decimal number or gerber/drill coordinate into an svg coordinate
 # coordinate is 1000x the gerber unit
 
-# svg coordinate scaling factor and power of ten exponened
-SVG_COORD_FACTOR = 1000
-SVG_COORD_E     = 3
+# svg coordinate scaling factor and power of ten exponent
+SVG_COORD_E = 3
 
 # function takes in the number string to be converted and the format object
 getSvgCoord = ( numberString, format ) ->
   # make sure we're dealing with a string
-  numberString = "#{numberString}"
+  if numberString? then numberString = "#{numberString}" else return NaN
 
   # pull out the sign and get the before and after segments ready
   before = ''
@@ -23,13 +22,11 @@ getSvgCoord = ( numberString, format ) ->
     # make sure there's not more than one decimal
     subNumbers = numberString.split '.'
     if subNumbers.length > 2 then return NaN
-    [before, after] = [subNumbers[0], subNumbers[1]]
-    after = '' if not after?
-    before = '' if not before?
+    [before, after] = [subNumbers[0], subNumbers[1] ? '']
 
   else
     # otherwise we're going to need a number format
-    if typeof format?.places?[0] isnt 'number' and
+    if typeof format?.places?[0] isnt 'number' or
     typeof format?.places?[1] isnt 'number'
       return NaN
     # split according to traling zero suppression or leading zero suppression
@@ -58,4 +55,4 @@ getSvgCoord = ( numberString, format ) ->
   Number(sign + before + after)
 
 # export
-module.exports = { get: getSvgCoord, factor: SVG_COORD_FACTOR }
+module.exports = { get: getSvgCoord, factor: 10 ** SVG_COORD_E }
