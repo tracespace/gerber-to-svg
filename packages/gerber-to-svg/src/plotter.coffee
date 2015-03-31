@@ -71,6 +71,7 @@ class Plotter
       trace: t.trace
       pad: (obj for obj in t.pad)
       flash: (x, y) -> { use: { x: x, y: y, 'xlink:href': "##{t.padId}" } }
+      flashed: false
       bbox: (x = 0, y = 0) -> {
         xMin: x + t.bbox[0]
         yMin: y + t.bbox[1]
@@ -306,7 +307,9 @@ class Plotter
       # check that region mode isn't on
       if @region then throw new Error 'cannot flash while in region mode'
       # add the pad to the definitions if necessary, and then flash the layer
-      if t.pad then @defs.push shape for shape in t.pad; t.pad = false
+      unless t.flashed
+        @defs.push shape for shape in t.pad
+        t.flashed = true
       @current.push t.flash ex, ey
       # update the bounding box
       @addBbox t.bbox(ex, ey), @layerBbox
@@ -368,7 +371,7 @@ class Plotter
       if 0 <= theta < HALF_PI
         @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
       # quadrant II
-      else if HALF_PI <= theta < Math.PI
+      else if HALF_PI <= theta <= Math.PI
         @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
       # quadrant III
       else if -Math.PI <= theta < -HALF_PI

@@ -225,9 +225,18 @@ describe 'Plotter class', ->
 
       it 'should add a pad with a flash', ->
         p.command { set: { currentTool: 'D10' } }
+        expect(p.tools.D10.flashed).to.be.false
         p.command { op: { do: 'flash', x: 2, y: 2 } }
+        expect(p.tools.D10.flashed).to.be.true
         expect( p.defs[0].circle ).to.contain { r: 1 }
         expect( p.current[0].use ).to.contain { x: 2, y: 2 }
+
+      it 'should only add a pad to defs once', ->
+        p.command { set: { currentTool: 'D10' } }
+        p.command { op: { do: 'flash', x: 2, y: 2 } }
+        p.command { op: { do: 'flash', x: 2, y: 2 } }
+        expect(p.tools.D10.pad).to.not.be.false
+        expect(p.defs).to.have.length 1
 
       it 'should add pads to the layer bbox', ->
         p.command { set: { currentTool: 'D11' } }
@@ -337,6 +346,34 @@ describe 'Plotter class', ->
           expect( p.path ).to.eql [
             'M', 0, 0
             'M', -1, -0.5, 4, -5.5, 6, -5.5, 6, -4.5, 1, 0.5, -1, 0.5, 'Z'
+          ]
+
+        it 'should handle a move along the positive x-axis', ->
+          p.command { op: { do: 'int', x: 5, y: 0 } }
+          expect( p.path ).to.eql [
+            'M', 0, 0
+            'M', -1, -0.5, 1, -0.5, 6, -0.5, 6, 0.5, 4, 0.5, -1, 0.5, 'Z'
+          ]
+
+        it 'should handle a move along the negative x-axis', ->
+          p.command { op: { do: 'int', x: -5, y: 0 } }
+          expect( p.path ).to.eql [
+            'M', 0, 0
+            'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 0.5, -6, 0.5, -6, -0.5, 'Z'
+          ]
+
+        it 'should handle a move along the positive y-axis', ->
+          p.command { op: { do: 'int', x: 0, y: 5 } }
+          expect( p.path ).to.eql [
+            'M', 0, 0
+            'M', -1, -0.5, 1, -0.5, 1, 0.5, 1, 5.5, -1, 5.5, -1, 4.5, 'Z'
+          ]
+
+        it 'should handle a move along the negative y-axis', ->
+          p.command { op: { do: 'int', x: 0, y: -5 } }
+          expect( p.path ).to.eql [
+            'M', 0, 0
+            'M', -1, -0.5, -1, -5.5, 1, -5.5, 1, -4.5, 1, 0.5, -1, 0.5, 'Z'
           ]
 
         it "should not have a stroke-width (it's filled instead)", ->
