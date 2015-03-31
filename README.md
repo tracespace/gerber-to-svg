@@ -21,7 +21,7 @@ switch             | type    | how it rolls
 `-o, --out`        | string  | specify an output directory
 `-q, --quiet`      | boolean | do not print warnings and messages
 `-p, --pretty`     | boolean | prettily align SVG output
-`-d, --drill`      | string  | process following file as an NC (Excellon) drill
+`-d, --drill`      | glob    | process input files matching this glob as NC (Excellon) drills
 `-f, --format`     | array   | override coordinate format with '[n_int,n_dec]'
 `-z, --zero`       | string  | override zero suppression with 'L' or 'T'
 `-u, --units`      | string  | override (without converting) units with 'mm' or 'in'
@@ -33,8 +33,8 @@ switch             | type    | how it rolls
 
 #### examples:
 * `gerber2svg path/to/gerber.gbr` will write the SVG to stdout
-* `gerber2svg -o some/dir path/to/gerber.gbr` will create some/dir/gerber.svg
-* `gerber2svg -d drill.drl -o out gerb/*` will process drill.drl as a drill file, everything in gerb as a Gerber file, and output to out
+* `gerber2svg -o some/dir -- path/to/gerber.gbr` will create some/dir/gerber.svg
+* `gerber2svg -d **/*.drl -o out -- gerb/*` will process any files in gerb that end in '.drl' as a drill files, everything else as Gerber files, and output to out
 
 ### api (node and browser)
 
@@ -129,7 +129,7 @@ Use the object output to align layers before getting the strings
 frontObj = gerberToSvg gerberFront, { object: true }
 backObj  = gerberToSvg gerberBack, { object: true }
 drillObj = gerberToSvg drillFile, { object: true, drill: true}
-# pull the origins from the viewBox
+# pull the layer origin offsets from the viewBox
 offsetFront = frontObj.svg.viewBox[0..1]
 offsetBack  = backObj.svg.viewBox[0..1]
 offsetDrill = drillObj.svg.viewBox[0..1]
@@ -140,7 +140,7 @@ drillString = gerberToSvg drillObj
 ```
 
 ## what you get
-Since Gerber is just an image format, this library does not attempt to identify nor infer anything about what the file represents (e.g. a copper layer, a silkscreen layer, etc.) It just takes in a Gerber and spits out an SVG. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/files/downloads/file/81/the_gerber_file_format_specification.pdf?d69271f6602e26ab2474ad625fe40c97). All the Gerber image features should be there.
+Since Gerber is just an image format, this library does not attempt to identify nor infer anything about what the file represents (e.g. a copper layer, a silkscreen layer, etc.) It just takes in a Gerber and spits out an SVG. This converter uses RS-274X and strives to be true to the [latest format specification](http://www.ucamco.com/downloads). All the Gerber image features should be there.
 
 Everywhere that is "dark" or "exposed" in the Gerber (think a copper trace
 or a line on the silkscreen) will be "currentColor" in the SVG. You can set this
@@ -157,8 +157,7 @@ The produced image should be correct, but if issues do occur, they'll most likel
 
 Certain exceptions to the spec have been made to allow some older and/or improperly written files to process, but if they're not technically to spec, they won't necessarily process without throwing an error. Try / catches are your friend.
 
-If it messes up, open up an issue and attach your Gerber, if you can. I
-appreciate files to test on.
+If it messes up, open up an issue and attach your Gerber, if you can. I appreciate files to test on.
 
 ### problems with drill files
 If your drill file is a wildly different size than your Gerbers, or it's offset from your Gerbers, check for / try overriding these things:
