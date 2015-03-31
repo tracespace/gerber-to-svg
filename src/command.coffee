@@ -4,6 +4,7 @@ path = require 'path'
 
 parseArgs = require 'minimist'
 chalk = require 'chalk'
+minimatch = require 'minimatch'
 
 gerberToSvg = require './gerber-to-svg'
 
@@ -27,15 +28,16 @@ BANNER = '''
   Examples:
     `$ gerber2svg path/to/gerber.gbr` will write the svg to stdout
     `$ gerber2svg -o some/dir path/to/gerb.gbr` will create some/dir/gerb.svg
-    `$ gerber2svg -d drill.drl -o out gerb/*` will process drill.drl as a drill
-      file, everything in gerb as a Gerber file, and output to out
+    `$ gerber2svg -d **/*.drl -o out -- gerb/*` will process any files in gerb
+        that end in '.drl' as a drill files, everything else as Gerber files,
+        and output to out
 '''
 
 OPTIONS = [
   ['o', 'out', '        specify an output directory']
   ['q', 'quiet', '      do not print warnings and messages']
   ['p', 'pretty', '     align SVG output prettily']
-  ['d', 'drill', '      process following file as an NC (Excellon) drill file']
+  ['d', 'drill', '      process files mathing this glob as NC drill files']
   ['f', 'format', "     override coordinate format with '[n_int,n_dec]'"]
   ['z', 'zero', "       override zero suppression with 'L' or 'T'"]
   ['u', 'units', "      override (without converting) units with 'mm' or 'in'"]
@@ -46,7 +48,7 @@ OPTIONS = [
   ['h', 'help', '       display this help text']
 ]
 STRING_OPTS  = ['out', 'drill', 'format', 'zero', 'units', 'notation']
-BOOLEAN_OPTS = ['quiet', 'pretty', 'append-ext', 'json', 'version', 'help']
+BOOLEAN_OPTS = ['quiet', 'pretty', 'json', 'append-ext', 'version', 'help']
 
 printOptions = ->
   console.log 'Options:'
@@ -80,6 +82,9 @@ run = ->
   warn = (string) -> console.warn chalk.bold.yellow string unless argv.quiet
   print = (string) -> console.log chalk.bold.white string unless argv.quiet
 
+  # file extension
+  fileExt = if argv.json then '.json' else '.svg'
+
   # write to the right place
   write = (string, filename) ->
     if typeof string is 'object'
@@ -91,7 +96,7 @@ run = ->
         newName = path.basename filename
       else
         newName = path.basename filename, path.extname filename
-      newName = path.join argv.out, newName + '.svg'
+      newName = path.join argv.out, newName + fileExt
       fs.writeFile newName, string, (error) ->
         unless error
           print "#{filename} converted to #{newName}"
@@ -125,7 +130,7 @@ run = ->
     return help()
 
   # add drill file if it was included
-  if argv.drill? and argv.drill not in fileList then fileList.push argv.drill
+  #if argv.drill? and argv.drill not in fileList then fileList.push argv.drill
 
   # loop through files
   for file in fileList
@@ -136,7 +141,7 @@ run = ->
             hook = stderr()
             opts = {
               pretty: argv.pretty
-              drill: (file is argv.drill)
+              drill: minimatch file, (argv.drill ? '')
               object: argv.json
               places: argv.format
               zero: argv.zero
