@@ -16,12 +16,11 @@ deploy:
   api_key:
     secure: gHhYjLHwFNd8uCkYQtyOk1uwRCpY0pzBzBc200+JJUxwKmXH9ZHiAKJGAx9/V/O5fwkXcl1NCz/+TSfBo/6gQz3lx1GUgnH0uazgPdaFeSAARiXK85aLp857rR9i8q9DLbGyQgWj07zdNen3Jmw7JU3tHBxNKYDtWXlTJFFcrCE=
   on:
+    node: iojs
     tags: true
     all_branches: true
 # run browser tests after a deploy
 after_deploy: gulp browsers
-addons:
-  sauce_connect: true
 env:
   global:
     - secure: SJVboTQgHqXU1UrY2zNkWzr9Gd75Qe8Uzyj7lCTK8C0P5Y9Jg+vE+bHOBKvehgXLmfrVGLZc93n6EilA52XWW0B6U3X6nPk/Pu9/fZRMK8AiyCLD0bfCgiPCikrNRdpp/1PHgbJyuaaYPlEhYE8SwmADGZk9UHFSPMlJQqDrQco=
