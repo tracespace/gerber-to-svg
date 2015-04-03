@@ -33,19 +33,22 @@ switch             | type    | how it rolls
 `-h, --help`       | boolean | display help text
 
 #### examples:
-* `gerber2svg path/to/gerber.gbr` will write the SVG to stdout
-* `gerber2svg -o some/dir -- path/to/gerber.gbr` will create some/dir/gerber.svg
-* `gerber2svg -d **/*.drl -o out -- gerb/*` will process any files in gerb that end in '.drl' as a drill files, everything else as Gerber files, and output to out
+* `$ gerber2svg path/to/gerber.gbr` will write the SVG to stdout
+* `$ gerber2svg -o some/dir -- path/to/gerber.gbr` will create some/dir/gerber.svg
+* `$ gerber2svg -d **/*.drl -o out -- gerb/*` will process any files in gerb that end in '.drl' as a drill files, everything else as Gerber files, and output to out
+* `$ gerber2svg -o out -j -- gerber.gbr` will output `gerber.json` in directory `out` 
 
 ### api (node and browser)
 
 For Node and Browserify:
 
-`$ npm install --save gerber-to-svg`
+1. `$ npm install --save gerber-to-svg`
+2. Add `var gerberToSvg = require('gerber-to-svg');` to your script
 
 With Bower:
 
-`$ bower install --save gerber-to-svg`
+1. `$ bower install --save gerber-to-svg`
+2. Add `<script src="/bower_components/gerber-to-svg/dist/gerber-to-svg.js"></script>` to your HTML
 
 If you'd rather not manage your packages:
 
@@ -54,11 +57,12 @@ If you'd rather not manage your packages:
 
 Use in your app with:
 ``` javascript
+var gerberToSvg = require('gerber-to-svg');
 // get an svg string
 var svgString = gerberToSvg(gerberString, opts);
 // get an svg object and then convert that object into a string
-var svgObj = gerberToSvg(gerberString, { object: true } )
-var svgString = gerberToSvg(svgObj)
+var svgObj = gerberToSvg(gerberString, {object: true});
+var svgString = gerberToSvg(svgObj);
 ```
 Where `gerberString` is the gerber file (e.g. from fs.readFile encoded with UTF-8) or an SVG object previously outputted by the function.
 
@@ -118,7 +122,7 @@ Output an SVG to the console
 var gerberToSvg = require('gerber-to-svg')
 // read a gerber file in as a string and convert it
 var gerberFile = require('fs').readFileSync('./path/to/file.gbr', 'utf-8')
-var svgString = gerberToSvg(gerberFile, { pretty: true } )
+var svgString = gerberToSvg(gerberFile, {pretty: true})
 // outputs pretty printed SVG
 console.log(svgString)
 ```
@@ -127,9 +131,9 @@ Use the object output to align layers before getting the strings
 
 ``` coffeescript
 # get the layer object
-frontObj = gerberToSvg gerberFront, { object: true }
-backObj  = gerberToSvg gerberBack, { object: true }
-drillObj = gerberToSvg drillFile, { object: true, drill: true}
+frontObj = gerberToSvg gerberFront, {object: true}
+backObj  = gerberToSvg gerberBack, {object: true}
+drillObj = gerberToSvg drillFile, {object: true, drill: true}
 # pull the layer origin offsets from the viewBox
 offsetFront = frontObj.svg.viewBox[0..1]
 offsetBack  = backObj.svg.viewBox[0..1]
@@ -154,9 +158,9 @@ SVG masks and groups.
 The bounding box is carefully calculated as the Gerber's being converted, so the `width` and `height` of the resulting SVG should be nearly (if not exactly) the real world size of the Gerber image. The SVG's `viewBox` is in Gerber units, so its `min-x` and `min-y` values can be used to align SVGs generated from different board layers.
 
 ## things to watch out for
-The produced image should be correct, but if issues do occur, they'll most likely be with arcs or step / repeat blocks. It's possible a floating point rounding error or several could throw things off.
+The produced image should be correct, but if issues do occur, they'll most likely be with arcs or step/repeat blocks. It's possible a floating point rounding error or several could throw things off.
 
-Certain exceptions to the spec have been made to allow some older and/or improperly written files to process, but if they're not technically to spec, they won't necessarily process without throwing an error. Try / catches are your friend.
+Certain exceptions to the spec have been made to allow some older and/or improperly written files to process, but if they're not technically to spec, they won't necessarily process without throwing an error. Try/catches are your friend.
 
 If it messes up, open up an issue and attach your Gerber, if you can. I appreciate files to test on.
 
