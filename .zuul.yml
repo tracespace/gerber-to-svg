@@ -1,11 +1,11 @@
 ui: mocha-bdd
 browsers:
   - name: chrome
-    version: 37..latest
+    version: 39..latest
   - name: safari
     version: 6..latest
   - name: firefox
-    version: 32..latest
+    version: 34..latest
   - name: ie
     version: 9..latest
   - name: iphone
@@ -18,4 +18,3 @@ browserify:
   - options:
       extensions:
         - .coffee
-      
