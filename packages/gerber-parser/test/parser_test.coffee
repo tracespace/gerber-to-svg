@@ -1,8 +1,13 @@
 # test suite for Parser parent class
+stream = require 'stream'
 expect = require('chai').expect
 Parser = require '../src/parser'
 
 describe 'Parser class', ->
+  it 'should be a transform stream', ->
+    p = new Parser()
+    expect(p).to.be.an.instanceOf stream.Transform
+
   it 'should initialize a format object with zero and places keys', ->
     p = new Parser()
     expect(p.format).to.have.keys ['zero', 'places']
@@ -20,7 +25,6 @@ describe 'Parser class', ->
     expect(p.format.places).to.eql [1, 4]
     p = new Parser {places: [3, 4]}
     expect(p.format.places).to.eql [3, 4]
-
 
   it 'should throw with bad options to the contructor', ->
     expect(-> p = new Parser {places: 'string'}).to.throw /places/
