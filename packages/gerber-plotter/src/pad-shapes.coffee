@@ -38,20 +38,20 @@ rect = (p) ->
 # regular polygon
 polygon = (p) ->
   unless p.dia? then throw new Error 'polygon requires diameter'
-  unless p.verticies? then throw new Error 'polygon requires verticies'
+  unless p.vertices? then throw new Error 'polygon requires vertices'
   unless p.cx? then throw new Error 'polygon function requires x center'
   unless p.cy? then throw new Error 'polygon function requires y center'
 
   start = if p.degrees? then p.degrees * Math.PI / 180 else 0
-  step = 2 * Math.PI / p.verticies
+  step = 2 * Math.PI / p.vertices
   r = p.dia / 2
   points = ''
   xMin = null
   yMin = null
   xMax = null
   yMax = null
-  # loop over the verticies and add them to the points string
-  for i in [0...p.verticies]
+  # loop over the vertices and add them to the points string
+  for i in [0...p.vertices]
     theta = start + (i * step)
     rx = r * Math.cos theta
     ry = r * Math.sin theta

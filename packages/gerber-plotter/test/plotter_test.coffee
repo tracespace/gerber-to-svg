@@ -263,7 +263,7 @@ describe 'Plotter class', ->
         expect( p.layerBbox ).to.eql { xMin: -1, yMin: -1, xMax: 6, yMax: 6 }
 
       it 'should throw an error for unstrokable tool outside region mode', ->
-        p.command { tool: { D13: { dia: 5, verticies: 5 } } }
+        p.command { tool: { D13: { dia: 5, vertices: 5 } } }
         expect( -> p.command { op: { do: 'int' } } ).to.throw /strokable tool/
 
       it 'should assume linear interpolation if none was specified', ->
@@ -509,7 +509,7 @@ describe 'Plotter class', ->
       describe 'region mode on', ->
 
         it 'should allow any tool to create a region', ->
-          p.command { tool: { D13: { dia: 5, verticies: 5 } } }
+          p.command { tool: { D13: { dia: 5, vertices: 5 } } }
           p.command { set: { region: true } }
           expect( -> p.command { op:{ do: 'int', x: 5, y: 5 } } ).to.not.throw()
 

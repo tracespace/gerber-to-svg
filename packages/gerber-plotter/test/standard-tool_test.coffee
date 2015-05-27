@@ -65,7 +65,7 @@ describe 'standard tool function', ->
 
   describe 'for polygon tools', ->
     it 'should return the correct points with no rotation specified', ->
-      result = standard tool, { dia: 4, verticies: 5 }
+      result = standard tool, { dia: 4, vertices: 5 }
       points = ''
       step = 2 * Math.PI / 5
       for v in [0..4]
@@ -74,7 +74,7 @@ describe 'standard tool function', ->
         if v isnt 4 then points += ' '
       expect( result.pad[0].polygon.points ).to.equal points
     it 'should return the correct points with rotation specified', ->
-      result = standard tool, { dia: 42.6, verticies: 7, degrees: 42 }
+      result = standard tool, { dia: 42.6, vertices: 7, degrees: 42 }
       points = ''
       start = 42 * Math.PI / 180
       step = 2 * Math.PI / 7
@@ -84,14 +84,14 @@ describe 'standard tool function', ->
         if v isnt 6 then points += ' '
       expect( result.pad[0].polygon.points ).to.equal points
     it 'should not be traceable', ->
-      result = standard tool, { dia: 4, verticies: 5 }
+      result = standard tool, { dia: 4, vertices: 5 }
       expect( result.trace ).to.be.false
-      result = standard tool, { dia: 42.6, verticies: 7, degrees: 42 }
+      result = standard tool, { dia: 42.6, vertices: 7, degrees: 42 }
       expect( result.trace ).to.be.false
     it 'should throw if the number of points is not between 3 and 12', ->
-      expect( -> result = standard tool, {dia: 10, verticies: 2} )
+      expect( -> result = standard tool, {dia: 10, vertices: 2} )
         .to.throw /points out of range/
-      expect( -> result = standard tool, {dia: 10, verticies: 13} )
+      expect( -> result = standard tool, {dia: 10, vertices: 13} )
         .to.throw /points out of range/
 
   describe 'with holes', ->

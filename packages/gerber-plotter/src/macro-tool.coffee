@@ -152,7 +152,7 @@ class MacroTool
           cx:  getSvgCoord args[3], @format
           cy:  getSvgCoord args[4], @format
           dia: getSvgCoord args[5], @format
-          verticies: args[2]
+          vertices: args[2]
           degrees: args[6]
         }
         if args[1] is 0 then mask = true else @addBbox shape.bbox

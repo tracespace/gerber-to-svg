@@ -43,7 +43,7 @@ describe 'shape functions', ->
 
   describe 'for regular polygons', ->
     it 'should return the correct points with no rotation specified', ->
-      result = shapes.polygon { cx: 0, cy: 0, dia: 4, verticies: 5 }
+      result = shapes.polygon { cx: 0, cy: 0, dia: 4, vertices: 5 }
       points = ''
       step = 2 * Math.PI / 5
       for v in [0..4]
@@ -56,7 +56,7 @@ describe 'shape functions', ->
         if v isnt 4 then points += ' '
       expect( result.shape.polygon.points ).to.equal points
     it 'should return the correct points with rotation specified', ->
-      re = shapes.polygon { cx: 0, cy: 0, dia: 42.6, verticies: 7, degrees: 42 }
+      re = shapes.polygon { cx: 0, cy: 0, dia: 42.6, vertices: 7, degrees: 42 }
       points = ''
       start = 42 * Math.PI / 180
       step = 2 * Math.PI / 7
@@ -66,18 +66,18 @@ describe 'shape functions', ->
         if v isnt 6 then points += ' '
       expect( re.shape.polygon.points ).to.equal points
     it 'should throw errors for missing paramters', ->
-      expect( -> shapes.polygon { cx: 0, cy: 0, verticies: 5 } )
+      expect( -> shapes.polygon { cx: 0, cy: 0, vertices: 5 } )
         .to.throw /requires diameter/
       expect( -> shapes.polygon { cx: 0, cy: 0, dia: 4 } )
-        .to.throw /requires verticies/
-      expect( -> shapes.polygon { cy: 0, dia: 4, verticies: 5 } )
+        .to.throw /requires vertices/
+      expect( -> shapes.polygon { cy: 0, dia: 4, vertices: 5 } )
         .to.throw /requires x center/
-      expect( -> shapes.polygon { cx: 0, dia: 4, verticies: 5 } )
+      expect( -> shapes.polygon { cx: 0, dia: 4, vertices: 5 } )
         .to.throw /requires y center/
     it 'should calculate the bounding box', ->
-      result = shapes.polygon { cx: 0, cy: 0, dia: 5, verticies: 4 }
+      result = shapes.polygon { cx: 0, cy: 0, dia: 5, vertices: 4 }
       expect( result.bbox ).to.eql [ -2.5, -2.5, 2.5, 2.5 ]
-      result = shapes.polygon { cx: 0, cy: 0, dia: 6, verticies: 8 }
+      result = shapes.polygon { cx: 0, cy: 0, dia: 6, vertices: 8 }
       expect( result.bbox ).to.eql [ -3, -3, 3, 3 ]
 
   describe 'for vector lines', ->

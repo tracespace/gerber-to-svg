@@ -17,7 +17,7 @@ standardTool = (tool, p) ->
   id = "tool-#{tool}-pad-#{unique()}"
   # figure out the tool
   shape = ''
-  if p.dia? and not p.verticies?
+  if p.dia? and not p.vertices?
     # we've got a circle tool unless there's confusion
     if p.obround? or p.width? or p.height? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
@@ -33,7 +33,7 @@ standardTool = (tool, p) ->
 
   else if p.width? and p.height?
     # rectangle or obround tool unless bad params
-    if p.dia? or p.verticies? or p.degrees?
+    if p.dia? or p.vertices? or p.degrees?
       throw new Error "incompatible parameters for tool #{tool}"
     # make sure side lengths are in range
     if p.width < 0
@@ -49,14 +49,14 @@ standardTool = (tool, p) ->
       p.dia = 0
     unless p.hole? or p.obround then result.trace = {}
 
-  else if p.dia? and p.verticies?
+  else if p.dia? and p.vertices?
     # we've got a polygon tool unless there's confusion
     if p.obround? or p.width? or p.height?
       throw new Error "incompatible parameters for tool #{tool}"
-    # make sure verticies are in range
-    if p.verticies < 3 or p.verticies > 12
+    # make sure vertices are in range
+    if p.vertices < 3 or p.vertices > 12
       throw new RangeError "#{tool} polygon points out of range
-        (#{p.verticies}<3 or >12)]"
+        (#{p.vertices}<3 or >12)]"
     shape = 'polygon'
 
   else
