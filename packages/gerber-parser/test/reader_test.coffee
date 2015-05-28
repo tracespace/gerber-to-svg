@@ -73,3 +73,17 @@ describe 'file reader transform stream', ->
 
     reader.on 'readable', handler
     reader.write '%FSLAX24Y24*MOIN*ADD10C,0.01*%'
+
+  it 'should emit param: false the end of a param block', (done) ->
+    paramCount = 0
+
+    handler = ->
+      data = reader.read()
+      if ++paramCount is 4
+        expect(data.param).to.be.false
+        expect(data.line).to.equal 1
+        reader.removeListener 'readable', handler
+        done()
+
+    reader.on 'readable', handler
+    reader.write '%AMSQUAREWITHHOLE*21,1,10,10,0,0,0*1,0,5,0,0*%'

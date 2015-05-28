@@ -31,10 +31,17 @@ class Parser extends Transform
     else if chunk.param?
       result = @parseParam chunk.param, chunk.line
 
-    err = if isError(result) then result else null
+    if isError(result)
+      done(result)
+      return
 
-    if result? and not err? then result.line = chunk.line
+    if result?
+      result.line = chunk.line
+      @push(result)
 
-    done(err, if err then {} else result)
+    done()
+
+  # _flush: (done) ->
+  #   done()
 
 module.exports = Parser

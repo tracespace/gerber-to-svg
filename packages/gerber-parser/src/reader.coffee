@@ -14,10 +14,14 @@ class Reader extends TransformStream
       readableObjectMode: true
     }
 
-  _transform: (chunk, encoding, callback) ->
+  _transform: (chunk, encoding, done) ->
     for char in chunk
       if char is '%'
-        @type = if @type is 'block' then 'param' else 'block'
+        if @type is 'block'
+          @type = 'param'
+        else
+          @push {param: false, line: @line}
+          @type = 'block'
       else if char is '*'
         output = {line: @line}
         output[@type] = @current.join ''
@@ -28,7 +32,7 @@ class Reader extends TransformStream
       else if char is '\n'
         @line++
 
-    callback()
+    done()
 
 
 module.exports = Reader

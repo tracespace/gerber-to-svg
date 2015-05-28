@@ -12,21 +12,79 @@ getSvgCoord = require('./svg-coord').get
 # constants
 # regular expression to match a coordinate
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g
-
+# regex to match a tool change
+reTOOL = /(G54)?D0*[1-9]\d+/
+# interpolation mode
+reINT = /G0*[123]/
 # gerber parser class uses generic parser constructor
 class GerberParser extends Parser
 
   # parse a block
   parseBlock: (block, line) ->
+    # check for comment
+    if /^G0*4/.test block then return null
+
+    # check for end of file
+    if block is 'M02' then return {set: {done: true}}
+
+    # check for tool change
+    if reTOOL.test block then return @parseToolChange block, line
+
+    # check for interpolation mode
+    if intMode = block.match(reINT)
+      switch intMode[0][-1..]
+        when '1' then mode = 'i'
+        when '2' then mode = 'cw'
+        when '3' then mode = 'ccw'
+      return {set: {mode: mode}}
+
+    # check for region mode
+    if block is 'G36' then return {set: {region: true}}
+    if block is 'G37' then return {set: {region: false}}
+
+    # check for backup units (deprecated commands)
+    if block is 'G70' then return {set: {backupUnits: 'in'}}
+    if block is 'G71' then return {set: {backupUnits: 'mm'}}
+
+    # check for arc mode
+    if block is 'G74' then return {set: {quad: 's'}}
+    if block is 'G75' then return {set: {quad: 'm'}}
 
   # parse a parameter
   parseParam: (param, line) ->
-    switch code = param[0..1]
-      # format set
-      when 'FS' then return @parseFormat param, line
+    # if the param block has ended, finish up an AM if it's in progress
+    if param is false
+      macro = {}
+      macro[@macroName] = @macroBlocks
+      @macroName = ''
+      return {macro: macro}
 
-      # aperture definition
-      when 'AD' then return @parseToolDef param, line
+    # otherwise grab the code
+    code = param[0..1]
+
+    # check for format set
+    if code is 'FS' then return @parseFormat param, line
+
+    # check for units set
+    if code is 'MO' then return @parseUnits param, line
+
+    # check for aperture definition
+    if code is 'AD' then return @parseToolDef param, line
+
+    # check for aperture macro start or in progress
+    if code is 'AM'
+      @macroName = param[2..]
+      @macroBlocks = []
+      return null
+    if @macroName
+      @macroBlocks.push param
+      return null
+
+    # check for level polarity
+    if code is 'LP' then return @parsePolarity param, line
+
+    # check for step repeat
+    if code is 'SR' then return @parseStepRepeat param, line
 
   # parse a format block
   parseFormat: (p, l) ->
@@ -53,6 +111,20 @@ class GerberParser extends Parser
     @format.places ?= x
 
     return {set: {notation: nota}}
+
+  # parse a unit mode block
+  parseUnits: (p, l) ->
+    mode = p[2..]
+    if mode is 'IN'
+      units = 'in'
+    else if mode is 'MM'
+      units = 'mm'
+    else
+      return new Error """
+        line #{l} - #{mode} is an invalid units mode; mode must be "IN" or "MM"
+      """
+
+    return {set: {units: units}}
 
   # parse a aperture definition parameter block
   parseToolDef: (p, l) ->
@@ -116,82 +188,52 @@ class GerberParser extends Parser
         if mods.length > 2 then tool[code].degrees = Number mods[2]
         if hole? then tool[code].hole = hole
 
+      # else aperture macro
+      else
+        mods = (Number(m) for m in (mods ? []))
+        tool[code].macro = shape
+        tool[code].mods = mods
+
     return {tool: tool}
 
-  #     # else aperture macro
-  #     else
-  #       mods = (+m for m in (mods ? []))
-  #       c.tool[code] = {macro: shape, mods: mods}
-  #
-  # # parse a block for the command
-  # parseCommand: (block = {}) ->
-  #   # command
-  #   c = {}
-  #   # we're either going to have a parameter or a block
-  #   if param = block.param
-  #     # param will be an array of blocks, so let's loop through them
-  #     for p in param
-  #       # parameter code is first two letters
-  #       switch code = p[0..1]
-  #         # format set
-  #         when 'FS'
-  #           @parseFormat p, c
-  #         # unit set
-  #         when 'MO'
-  #           u = p[2..3]
-  #           c.set ?= {}
-  #           if u is 'IN'
-  #             c.set.units = 'in'
-  #           else if u is 'MM'
-  #             c.set.units = 'mm'
-  #           else
-  #             throw new Error "#{p} is an invalid units setting"
-  #         # aperture definition
-  #         when 'AD' then @parseToolDef p, c
-  #         # aperture macro
-  #         # aperture macro can only appear alone in a parameter block, so return
-  #         when 'AM' then return { macro: param }
-  #         # new level polarity
-  #         when 'LP'
-  #           c.new ?= {}
-  #           c.new.layer = p[2] if p[2] is 'D' or p[2] is 'C'
-  #           unless c.new.layer? then throw new Error 'invalid level polarity'
-  #         # new step repeat
-  #         when 'SR'
-  #           c.new ?= {}
-  #           x = p.match(/X[+-]?[\d\.]+/)?[0][1..] ? 1
-  #           y = p.match(/Y[+-]?[\d\.]+/)?[0][1..] ? 1
-  #           i = p.match(/I[+-]?[\d\.]+/)?[0][1..]
-  #           j = p.match(/J[+-]?[\d\.]+/)?[0][1..]
-  #           # check for valid numbers and such
-  #           if (x < 1 or y < 1) or
-  #           (x > 1 and (not i? or i < 0)) or
-  #           (y > 1 and (not j? or j < 0))
-  #             throw new Error 'invalid step repeat'
-  #           c.new.sr = { x: +x, y: +y }
-  #           if i? then c.new.sr.i = getSvgCoord i, {places: @format.places}
-  #           if j? then c.new.sr.j = getSvgCoord j, {places: @format.places}
-  #   else if block = block.block
-  #     # check for M02 (file done) code
-  #     if block is 'M02' then return {set: {done: true}}
-  #     # check for G codes
-  #     else if block[0] is 'G'
-  #       # grab the gcode and start a switch case
-  #       switch code = block[1..].match(/^\d{1,2}/)?[0]
-  #         # ignore comments
-  #         when '4', '04' then return {}
-  #         # interpolation mode
-  #         when '1', '01', '2', '02', '3', '03'
-  #           code = code[code.length - 1]
-  #           m = if code is '1' then 'i' else if code is '2' then 'cw' else 'ccw'
-  #           c.set = {mode: m}
-  #         # G36 and 37 set the region mode on and off respectively
-  #         when '36', '37' then c.set = {region: code is '36'}
-  #         # G70 and 71 set the backup units to inches and mm respectively
-  #         when '70', '71'
-  #           c.set = {backupUnits: if code is '70' then 'in' else 'mm'}
-  #         when '74', '75'
-  #           c.set = {quad: if code is '74' then 's' else 'm'}
+  parsePolarity: (p, l) ->
+    if p[2] is 'D' or p[2] is 'C'
+      return {new: {layer: p[2]}}
+    else
+      return new Error "line #{l} - level polarity must be 'D' or 'C'"
+
+  parseStepRepeat: (p, l) ->
+    x = p.match(/X[+-]?[\d\.]+/)?[0][1..] ? 1
+    y = p.match(/Y[+-]?[\d\.]+/)?[0][1..] ? 1
+    i = p.match(/I[+-]?[\d\.]+/)?[0][1..]
+    j = p.match(/J[+-]?[\d\.]+/)?[0][1..]
+
+    # check for valid numbers and such
+    if x < 1
+      return new Error "line #{l} - X must be a positive integer if in SR block"
+    if y < 1
+      return new Error "line #{l} - Y must be a positive integer if in SR block"
+    if i < 0 or (x > 1 and not i?)
+      return new Error """
+        line #{l} - I must be a positive number if X is present in SR block
+      """
+    if j < 0 or (y > 1 and not j?)
+      return new Error """
+        line #{l} - J must be a positive number if Y is present in SR block
+      """
+
+    # if valid, parse the numbers and return the object
+    sr = {x: Number(x), y: Number(y)}
+    if i? then sr.i = getSvgCoord i, {places: @format.places}
+    if j? then sr.j = getSvgCoord j, {places: @format.places}
+    return {new: {sr: sr}}
+
+  parseToolChange: (b, l) ->
+    code = b.match(/D\d+/)[0]
+    code = code[0] + code[2..] while code[1] is '0'
+    return {set: {currentTool: code}}
+
+
   #     # check for coordinate operations
   #     # not an else if because G codes for mode set can go inline with
   #     # interpolate blocks
