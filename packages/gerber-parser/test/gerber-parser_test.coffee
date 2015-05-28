@@ -407,43 +407,72 @@ describe 'gerber command parser', ->
 
     it 'should parse an interpolation command', (done) ->
       cb = done
-      results = [{do: 'int', x: .22 * F, y: 0}, {do: 'int', y: 1.1 * F}]
+      results = [
+        {do: 'int', x: 1 * F, y: 1 * F, i: 2 * F, j: 2 * F}
+        {do: 'int', x: .22 * F, y: 0}
+        {do: 'int', x: 1.1 * F}
+        {do: 'int', y: 1.1 * F}
+        {do: 'int'}
+      ]
 
       p.on 'readable', handler
-      p.write block 'X22Y0D01', 1
-      p.write block 'Y110D1', 2
+      p.write block 'X100Y100I200J200D01', 2
+      p.write block 'X22Y0D01', 2
+      p.write block 'X110D1', 3
+      p.write block 'Y110D1', 4
+      p.write block 'D01', 5
 
-    it.skip 'should parse a move command', ->
-      expect( p.parseCommand block 'X300Y1D02' ).to.eql {
-        op: { do: 'move', x: 3 * F, y: .01 * F }
-      }
-      expect( p.parseCommand block 'X-100D2' ).to.eql {
-        op: { do: 'move', x: -1 * F }
-      }
+    it 'should parse a move command', (done) ->
+      cb = done
+      results = [
+        {do: 'move', x: 3 * F, y: .01 * F}
+        {do: 'move', x: -1 * F}
+        {do: 'move'}
+      ]
 
-    it.skip 'should parse a flash command', ->
-      expect( p.parseCommand block 'X75Y-140D03' ).to.eql {
-        op: { do: 'flash', x: .75 * F, y: -1.4 * F }
-      }
-      expect( p.parseCommand block 'X1Y1D3' ).to.eql {
-        op: { do: 'flash', x: .01 * F, y: .01 * F }
-      }
+      p.on 'readable', handler
+      p.write block 'X300Y1D02', 1
+      p.write block 'X-100D2', 2
+      p.write block 'D02', 3
 
-    it.skip 'should interpolate with an inline mode set', ->
-      expect( p.parseCommand block 'G01X01Y01D01' ).to.eql {
-        set: { mode: 'i' }
-        op: { do: 'int', x: .01 * F, y: .01 * F }
-      }
-      expect( p.parseCommand block 'G02X01Y01D01' ).to.eql {
-        set: { mode: 'cw' }
-        op: { do: 'int', x: .01 * F, y: .01 * F }
-      }
-      expect( p.parseCommand block 'G03X01Y01D01' ).to.eql {
-        set: { mode: 'ccw' }
-        op: { do: 'int', x: .01 * F, y: .01 * F }
-      }
+    it 'should parse a flash command', (done) ->
+      cb = done
+      results = [
+        {do: 'flash', x: 3 * F, y: .01 * F}
+        {do: 'flash', x: -1 * F}
+        {do: 'flash'}
+      ]
 
-    it.skip 'should send a last operation command if the op code is missing', ->
-      expect( p.parseCommand block 'X01Y01' ).to.eql {
-        op: { do: 'last', x: .01 * F, y: .01 * F }
-      }
+      p.on 'readable', handler
+      p.write block 'X300Y1D03', 1
+      p.write block 'X-100D3', 2
+      p.write block 'D03', 3
+
+    it 'should interpolate with an inline mode set', (done) ->
+      blockCount = 0
+      results = [
+        {mode: 'i'}, {do: 'int', x: .01 * F, y: .01 * F}
+        {mode: 'cw'}, {do: 'int', x: .01 * F, y: .01 * F}
+        {mode: 'ccw'}, {do: 'int', x: .01 * F, y: .01 * F}
+      ]
+
+      handler = ->
+        data = p.read()
+        expect(data.set).to.eql results[blockCount]
+        expect(data.op).to.eql results[blockCount + 1]
+        blockCount += 2
+        if blockCount >= results.length
+          p.removeListener 'readable', handler
+          done()
+
+      p.on 'readable', handler
+      p.write block 'G01X01Y01D01', 1
+      p.write block 'G02X01Y01D01', 2
+      p.write block 'G03X01Y01D01', 3
+
+    it 'should send a last operation command if op code is missing', (done) ->
+      p.once 'readable', ->
+        expect(p.read().op).to.eql {do: 'last', x: .01 * F, y: .01 * F}
+        done()
+
+      p.write block 'X01Y01'

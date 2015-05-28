@@ -16,6 +16,8 @@ reCOORD = /([XYIJ][+-]?\d+){1,4}/g
 reTOOL = /(G54)?D0*[1-9]\d+/
 # interpolation mode
 reINT = /G0*[123]/
+# operation codes
+reOP = /D0*[123]$/
 # gerber parser class uses generic parser constructor
 class GerberParser extends Parser
 
@@ -30,14 +32,6 @@ class GerberParser extends Parser
     # check for tool change
     if reTOOL.test block then return @parseToolChange block, line
 
-    # check for interpolation mode
-    if intMode = block.match(reINT)
-      switch intMode[0][-1..]
-        when '1' then mode = 'i'
-        when '2' then mode = 'cw'
-        when '3' then mode = 'ccw'
-      return {set: {mode: mode}}
-
     # check for region mode
     if block is 'G36' then return {set: {region: true}}
     if block is 'G37' then return {set: {region: false}}
@@ -49,6 +43,34 @@ class GerberParser extends Parser
     # check for arc mode
     if block is 'G74' then return {set: {quad: 's'}}
     if block is 'G75' then return {set: {quad: 'm'}}
+
+    # the mode and operation commands may be doubled up
+    modeOp = null
+
+    # check for interpolation mode
+    if intMode = block.match reINT
+      switch intMode[0][-1..]
+        when '1' then mode = 'i'
+        when '2' then mode = 'cw'
+        when '3' then mode = 'ccw'
+      modeOp = {set: {mode: mode}}
+
+    # check for operation commands
+    coordMatch = block.match(reCOORD)?[0]
+    if (opType = block.match reOP) or coordMatch?
+      op = {}
+      coord = parseCoord coordMatch, @format
+      op[axis] = val for axis, val of coord
+      switch opType?[0]?[-1..]
+        when '1' then op.do = 'int'
+        when '2' then op.do = 'move'
+        when '3' then op.do = 'flash'
+        else op.do = 'last'
+      if modeOp? then modeOp.op = op else modeOp = {op: op}
+
+    # return a mode or operation command if it happened
+    return modeOp
+
 
   # parse a parameter
   parseParam: (param, line) ->
@@ -232,27 +254,5 @@ class GerberParser extends Parser
     code = b.match(/D\d+/)[0]
     code = code[0] + code[2..] while code[1] is '0'
     return {set: {currentTool: code}}
-
-
-  #     # check for coordinate operations
-  #     # not an else if because G codes for mode set can go inline with
-  #     # interpolate blocks
-  #     coord = parseCoord block.match(reCOORD)?[0], @format
-  #     if op = block.match(/D0?[123]$/)?[0] or Object.keys(coord).length
-  #       if op? then op = op[op.length - 1]
-  #       op = switch op
-  #         when '1' then 'int'
-  #         when '2' then 'move'
-  #         when '3' then 'flash'
-  #         else 'last'
-  #       c.op = {do: op}
-  #       c.op[axis] = val for axis, val of coord
-  #     # check for a tool change
-  #     # this might be on the same line as a legacy G54
-  #     else if tool = block.match(/D\d+$/)?[0]
-  #       c.set = { currentTool: tool }
-  #
-  #   # return the command
-  #   return c
 
 module.exports = GerberParser
