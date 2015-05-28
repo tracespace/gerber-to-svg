@@ -8,7 +8,7 @@ fs = require 'fs'
 # svg coord factor
 factor = require('../src/svg-coord').factor
 
-describe 'the plot method of the Plotter class', ->
+describe.skip 'the plot method of the Plotter class', ->
 
   it 'should plot example 1 from the gerber spec', ->
     testGerb = fs.readFileSync 'test/gerber/gerber-spec-example-1.gbr', 'utf-8'
