@@ -218,13 +218,15 @@ describe 'gerber command parser', ->
         p.write param 'ADD12P,5X4X0X0.6', 3
         p.write param 'ADD13P,5X4X0X0.6X0.5', 4
 
-  #
-  #   describe 'with aperture macros', ->
-  #
-  #     it 'should parse an aperture macro with modifiers', ->
-  #       expect( p.parseCommand param 'ADD10CIRC,1X0.5' ).to.eql {
-  #         tool: { D10: { macro: 'CIRC', mods: [ 1, 0.5 ] } }
-  #       }
+
+    describe 'with aperture macros', ->
+      it 'should parse an aperture macro with modifiers', ->
+        p.once 'readable', ->
+          data = p.read()
+          expect(data.tool).to.eql {D10: {macro: 'CIRC', mods: [1, 0.5]}}
+
+        p.write param 'ADD10CIRC,1X0.5', 1
+
   #
   #     it 'should parse a macro with no modifiers', ->
   #       expect( p.parseCommand param 'ADD11RECT' ).to.eql {
