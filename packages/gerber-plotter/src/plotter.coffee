@@ -35,19 +35,23 @@ class Plotter extends TransformStream
   _transform: (chunk, encoding, done) ->
     # check if there's a set command
     for state, val of chunk.set
-
+      # set the plotters state as required
       # if setting current tool, make sure it exists and region mode is off
       if state is 'currentTool'
         unless @tools[val]?
-          @emit 'warning', new Warning("tool #{val} is not defined", chunk.line)
+          @emit 'warning', new Warning("tool #{val} is undefined", chunk.line)
         if @region
           done new Error """
             line #{chunk.line} - cannot change tool while region mode is on
           """
           return
 
-      # set the plotters state as required
-      this[state] ?= val
+      # units and notation should not be overridden if already defined
+      if state is 'units' or state is 'backupUnits' or state is 'notation'
+        @[state] ?= val
+      # everything else just sets the property
+      else
+        @[state] = val
 
     done()
 
@@ -170,14 +174,14 @@ class Plotter extends TransformStream
   # # go through the gerber file and return an xml object with the svg
   # plot: ->
   #   until @done
-  #     # grab the next command. if it returns false we've hit the end of the file
+  #     # grab the next command. if it returns false we've hit end of file
   #     block = @reader.nextBlock()
   #     if block is false
   #       # if it's not a drill file
   #       unless @parser?.fmat?
-  #         throw new Error 'end of file encountered before required M02 command'
+  #         throw new Error 'end of file encountered before M02 command'
   #       else
-  #         throw new Error 'end of drill file encountered before M00/M30 command'
+  #         throw new Error 'end of drill file before M00/M30 command'
   #     else
   #       @command @parser.parseCommand block
   #   # finish and return the xml object
@@ -275,7 +279,7 @@ class Plotter extends TransformStream
   #     # shift in the bbox rect to keep everything
   #     w = @bbox.xMax - @bbox.xMin; h = @bbox.yMax - @bbox.yMin
   #     @current.unshift {
-  #       rect: {x: @bbox.xMin, y: @bbox.yMin, width: w, height: h, fill: '#fff'}
+  #      rect: {x: @bbox.xMin, y: @bbox.yMin, width: w, height: h, fill: '#fff'}
   #     }
   #     # push the masks to the definitions
   #     @defs.push { mask: { id: id, color: '#000', _: @current}}
@@ -422,7 +426,7 @@ class Plotter extends TransformStream
   #   t = @tools[@currentTool]
   #   # throw an error if the tool is rectangular
   #   if not @region and not t.trace['stroke-width']
-  #     throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
+  #  throw  Error "cannot stroke an arc with non-circular tool #{@currentTool}"
   #   # throw an error if quadrant mode was not set
   #   unless @quad? then throw new Error 'arc quadrant mode has not been set'
   #   #
