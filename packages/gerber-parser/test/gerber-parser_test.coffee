@@ -359,7 +359,7 @@ describe 'gerber command parser', ->
 
     p.on 'readable', handler
     p.write block 'D10', 1
-    p.write block 'G54D11', 2
+    p.write block 'G54D011', 2
 
   describe 'operating modes', ->
     beforeEach -> type = 'set'

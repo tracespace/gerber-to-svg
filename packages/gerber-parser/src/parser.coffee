@@ -9,10 +9,6 @@ class Parser extends Transform
       zero: formatOpts.zero ? null
       places: formatOpts.places ? null
     }
-    super {
-      readableObjectMode: true
-      writableObjectMode: true
-    }
 
     # make sure places was set correctly
     if @format.places?
@@ -24,6 +20,11 @@ class Parser extends Transform
     # make sure zero was set correctly
     if @format.zero? and @format.zero isnt 'L' and @format.zero isnt 'T'
       throw new Error "parser zero format must be either 'L' or 'T'"
+
+    super {
+      readableObjectMode: true
+      writableObjectMode: true
+    }
 
   _transform: (chunk, encoding, done) ->
     if chunk.block?
@@ -37,7 +38,7 @@ class Parser extends Transform
 
     if result?
       result.line = chunk.line
-      @push(result)
+      @push result
 
     done()
 
