@@ -35,16 +35,21 @@ class Plotter extends TransformStream
   _transform: (chunk, encoding, done) ->
     # check if there's a set command
     for state, val of chunk.set
-      # if we're setting the current tool, make sure it exists
-      if state is 'currentTool' and not @tools[val]?
-        @emit 'warning', new Warning("tool #{val} is not defined", chunk.line)
+
+      # if setting current tool, make sure it exists and region mode is off
+      if state is 'currentTool'
+        unless @tools[val]?
+          @emit 'warning', new Warning("tool #{val} is not defined", chunk.line)
+        if @region
+          done new Error """
+            line #{chunk.line} - cannot change tool while region mode is on
+          """
+          return
+
+      # set the plotters state as required
       this[state] ?= val
 
-
     done()
-
-  _changeTool: (tool) ->
-
 
   # constructor: (@reader, @parser, opts = {}) ->
   #   # parse options object

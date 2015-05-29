@@ -84,17 +84,17 @@ describe 'Plotter class', ->
           expect(w.message).to.match /tool D10/
           expect(w.line).to.equal 4
           done()
+
         p.write {set: {currentTool: 'D10'}, line: 4}
 
-      it.skip 'should not throw missing tool exception for drill files', ->
-        # drill files sometimes do this, so check for it
-        p = new Plotter null, new DrillParser()
-        expect( -> p.write { set: { currentTool: 'T0' } } ).to.not.throw()
+      it 'should error if region mode is on', (done) ->
+        p.once 'error', (e) ->
+          expect(e.message).to.match /line 3 .*tool.*region/
+          done()
 
-      it.skip 'should throw if region mode is on', ->
         p.region = true
         p.tools.D10 = {}
-        expect( -> p.write { set: { currentTool: 'D10' } } ).to.throw /tool/
+        p.write {set: {currentTool: 'D10'}, line: 3}
 
     it.skip 'should set the interpolation mode', ->
       p.write { set: { mode: 'i' } }
