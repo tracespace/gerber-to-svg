@@ -77,7 +77,7 @@ describe 'Plotter class', ->
       it 'should change to tool to an existing tool', ->
         p.tools.D10 = {}
         p.write {set: {currentTool: 'D10'}}
-        expect(p.currentTool).to.eql 'D10'
+        expect(p.currentTool).to.equal p.tools.D10
 
       it 'should error if the tool doesnt exist', (done) ->
         p.once 'warning', (w) ->
@@ -120,7 +120,19 @@ describe 'Plotter class', ->
       p.write {set: {done: true}}
       expect(p.done).to.be.true
 
-  describe.skip 'new layer commands', ->
+  it 'should handle empty objects in the stream without complaint', (done) ->
+    p.on 'error', -> throw new Error 'complained'
+    p.on 'warning', -> throw new Error 'complained'
+
+    p.write {set: {units: 'in'}}
+    p.write {}
+    p.write {set: backupUnits: 'in'}
+    expect(p.units).to.eql 'in'
+    expect(p.backupUnits).to.eql 'in'
+
+    setTimeout done, 10
+
+  describe 'new layer commands', ->
 
     it.skip 'should finish any in progress layer', ->
       p.current = ['stuff']
@@ -130,26 +142,30 @@ describe 'Plotter class', ->
       p.write {new: {layer: 'C'}}
       expect(p.current).to.be.empty
 
-    it.skip 'should set step repeat params', ->
+    it 'should set step repeat params', ->
+      expect(p.stepRepeat).to.eql {x: 1, y: 1, i: 0, j: 0}
       p.write {new: {sr: {x: 2, y: 3, i: 7, j: 2}}}
       expect(p.stepRepeat).to.eql {x: 2, y: 3, i: 7, j: 2}
       p.write {new: {sr: {x: 1, y: 1}}}
       expect(p.stepRepeat).to.eql {x: 1, y: 1}
 
-    it.skip 'should set polarity param', ->
+    it 'should set polarity param', ->
       p.write {new: {layer: 'C'}}
       expect(p.polarity).to.eql 'C'
       p.write {new: {layer: 'D'}}
       expect(p.polarity).to.eql 'D'
 
-  describe.skip 'defining new tools', ->
+    it 'should throw if it gets an bad new command', ->
+      expect(-> p.write {new: {foo: 'bar'}}).to.throw /unknown new command/
 
-    it.skip 'should add a standard tool to the tools object', ->
+  describe 'defining new tools', ->
+
+    it 'should add a standard tool to the tools object', ->
       p.write {tool: {D10: {dia: 10}}}
       expect(p.tools.D10.trace).to.contain {
         fill: 'none'
         'stroke-width': 10
-     }
+      }
       expect(p.tools.D10.pad).to.have.length 1
       expect(p.tools.D10.pad[0].circle.r).to.eql 5
       flash = p.tools.D10.flash(1.0, 3.6)
@@ -158,16 +174,28 @@ describe 'Plotter class', ->
       expect(flash.use['xlink:href']).to.match /D10/
       expect(p.tools.D10.bbox(1.0, 3.6)).to.eql {
         xMin: -4, yMin: -1.4, xMax: 6, yMax: 8.6
-     }
+      }
 
-    describe.skip 'tool macros', ->
+    it 'should set the current tool to the new tool', ->
+      p.write {tool: {D10: {dia: 10}}}
+      expect(p.currentTool).to.equal p.tools.D10
+
+    it 'should error if the tool already exists', (done) ->
+      p.once 'error', (e) ->
+        expect(e.message).to.match /line 8 .*D10.*previously defined/
+        done()
+
+      p.write {tool: {D10: {dia: 10}}, line: 7}
+      p.write {tool: {D10: {dia: 8}}, line: 8}
+
+    describe 'tool macros', ->
 
       beforeEach ->
         p.parser = {format: {places: [2, 4]}}
-        p.write {macro: ['AMRECT1', '21,1,$1,$2,0,0,0']}
+        p.write {macro: {RECT1: ['21,1,$1,$2,0,0,0']}}
 
-      it.skip 'should add the macro to the macros list', ->
-        expect(p.macros.RECT1.name).to.eql 'RECT1'
+      it 'should add the macro to the macros list', ->
+        expect(p.macros.RECT1).to.exist
 
       it.skip 'should add macro tools to the tools object', ->
         p.write {tool: {D10: {macro: 'RECT1', mods: [2, 1]}}}

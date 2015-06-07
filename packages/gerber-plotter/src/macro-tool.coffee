@@ -12,13 +12,9 @@ getSvgCoord = require('./svg-coord').get
 
 class MacroTool
   # constructor takes in macro blocks
-  constructor: (blocks, numberFormat) ->
+  constructor: (@blocks = [], numberFormat) ->
     # macro modifiers
     @modifiers = {}
-    # block 0 is going to be AMmacroname
-    @name = blocks[0][2..]
-    # save the rest of the blocks
-    @blocks = blocks[1..]
     # array of shape objects
     @shapes = []
     # array of mask objects

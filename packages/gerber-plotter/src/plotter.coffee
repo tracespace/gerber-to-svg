@@ -25,35 +25,105 @@ class Plotter extends TransformStream
     @units = opts.units
     @notation = opts.notation
 
-    # defined tools
+    # defined tools and macros
     @tools = {}
+    @macros = {}
+
+    # layer properties
+    @stepRepeat = {x: 1, y: 1, i: 0, j: 0}
 
     # object mode transform
     super {objectMode: true}
 
   # main transform method; called on incoming parser objects
   _transform: (chunk, encoding, done) ->
-    # check if there's a set command
-    for state, val of chunk.set
-      # set the plotters state as required
+    # check for different commands
+    if chunk.set?
+      @handleSet chunk.set, chunk.line, done
+    else if chunk.new?
+      @handleNew chunk.new, chunk.line, done
+    else if chunk.tool?
+      @handleTool chunk.tool, chunk.line, done
+    else if chunk.macro?
+      @handleMacro chunk.macro, chunk.line, done
+    else
+      done()
+
+  # handle a set command to set the plotter's state as required
+  handleSet: (set, line, done) ->
+    for state, val of set
       # if setting current tool, make sure it exists and region mode is off
       if state is 'currentTool'
         unless @tools[val]?
-          @emit 'warning', new Warning("tool #{val} is undefined", chunk.line)
+          @emit 'warning', new Warning("tool #{val} is undefined", line)
         if @region
-          done new Error """
-            line #{chunk.line} - cannot change tool while region mode is on
+          return done new Error """
+            line #{line} - cannot change tool while region mode is on
           """
-          return
+
+        # if all is good, change the tool
+        @changeTool val
 
       # units and notation should not be overridden if already defined
-      if state is 'units' or state is 'backupUnits' or state is 'notation'
+      else if state is 'units' or state is 'backupUnits' or state is 'notation'
         @[state] ?= val
       # everything else just sets the property
       else
         @[state] = val
 
     done()
+
+  # handle new layer commands
+  handleNew: (newLayer, line, done) ->
+    # handle a new step repeat layer
+    if newLayer.sr?
+      @stepRepeat = newLayer.sr
+    else if newLayer.layer?
+      @polarity = newLayer.layer
+    else
+      throw new Error "#{newLayer} is a poorly formatted or unknown new command"
+
+    done()
+
+  # add a tool to the tool list
+  handleTool: (toolCommand, line, done) ->
+    code = Object.keys(toolCommand)[0]
+    params = toolCommand[code]
+
+    if @tools[code]?
+      return done new Error "line #{line} - tool #{code} was previously defined"
+
+    # if params.macro? then t = @macros[params.macro].run code, params.mods
+    t = tool code, params
+
+    # set the object in the tools collection
+    @tools[code] = {
+      trace: t.trace
+      pad: (obj for obj in t.pad)
+      flash: (x, y) -> { use: { x: x, y: y, 'xlink:href': "##{t.padId}" } }
+      flashed: false
+      bbox: (x = 0, y = 0) -> {
+        xMin: x + t.bbox[0]
+        yMin: y + t.bbox[1]
+        xMax: x + t.bbox[2]
+        yMax: y + t.bbox[3]
+      }
+    }
+
+    # set the current tool to the one just defined and finish
+    @changeTool code
+    done()
+
+  # handle a new macro command
+  handleMacro: (macroCommand, line, done) ->
+    name = Object.keys(macroCommand)[0]
+    blocks = macroCommand[name]
+    @macros[name] = new Macro blocks
+    done()
+
+  # chenge the current tool
+  changeTool: (code) ->
+    @currentTool = @tools[code]
 
   # constructor: (@reader, @parser, opts = {}) ->
   #   # parse options object
