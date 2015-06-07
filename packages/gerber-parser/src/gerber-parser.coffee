@@ -4,6 +4,8 @@
 
 # generic parser
 Parser = require './parser'
+# warning object
+Warning = require './warning'
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
@@ -168,45 +170,74 @@ class GerberParser extends Parser
     switch shape
       # circle
       when 'C'
-        if mods.length > 2 then hole = {
-          width:  getSvgCoord mods[1], {places: @format.places}
-          height: getSvgCoord mods[2], {places: @format.places}
-        }
-        else if mods.length > 1 then hole = {
-          dia: getSvgCoord mods[1], {places: @format.places}
-        }
+        dia = getSvgCoord mods[0], {places: @format.places}
 
-        tool[code].dia = getSvgCoord mods[0], {places: @format.places}
+        if mods.length > 2
+          hole = {
+            width:  getSvgCoord mods[1], {places: @format.places}
+            height: getSvgCoord mods[2], {places: @format.places}
+          }
+          if ((hole.width ** 2) + (hole.height ** 2)) ** 0.5 > dia
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        else if mods.length > 1
+          hole = {
+            dia: getSvgCoord mods[1], {places: @format.places}
+          }
+          if hole.dia > dia
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        tool[code].dia = dia
         if hole? then tool[code].hole = hole
 
       # rectangle, obround
       when 'R', 'O'
-        if mods.length > 3 then hole = {
-          width:  getSvgCoord mods[2], {places: @format.places}
-          height: getSvgCoord mods[3], {places: @format.places}
-        }
-        else if mods.length > 2 then hole = {
-          dia: getSvgCoord mods[2], {places: @format.places}
-        }
+        width = getSvgCoord mods[0], {places: @format.places}
+        height = getSvgCoord mods[1], {places: @format.places}
 
-        tool[code].width = getSvgCoord mods[0], {places: @format.places}
-        tool[code].height = getSvgCoord mods[1], {places: @format.places}
+        if mods.length > 3
+          hole = {
+            width:  getSvgCoord mods[2], {places: @format.places}
+            height: getSvgCoord mods[3], {places: @format.places}
+          }
+          if (hole.width > width) or (hole.height > height)
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        else if mods.length > 2
+          hole = {
+            dia: getSvgCoord mods[2], {places: @format.places}
+          }
+          if (hole.dia > width) or (hole.dia > height)
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        tool[code].width = width
+        tool[code].height = height
         if shape is 'O' then tool[code].obround = true
         if hole? then tool[code].hole = hole
 
-
       # polygon
       when 'P'
-        if mods.length > 4 then hole = {
-          width:  getSvgCoord mods[3], {places: @format.places}
-          height: getSvgCoord mods[4], {places: @format.places}
-        }
-        else if mods.length > 3 then hole = {
-          dia: getSvgCoord mods[3], {places: @format.places}
-        }
+        vertices = Number mods[1]
+        dia = getSvgCoord mods[0], {places: @format.places}
 
-        tool[code].dia = getSvgCoord mods[0], {places: @format.places}
-        tool[code].vertices = Number mods[1]
+        if mods.length > 4
+          hole = {
+            width:  getSvgCoord mods[3], {places: @format.places}
+            height: getSvgCoord mods[4], {places: @format.places}
+          }
+          # TODO: make this check better
+          if ((hole.width ** 2) + (hole.height ** 2)) ** 0.5 > dia
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        else if mods.length > 3
+          hole = {
+            dia: getSvgCoord mods[3], {places: @format.places}
+          }
+          if hole.dia > dia * Math.cos Math.PI / vertices
+            return new Error "#{code} hole cannot be larger than the shape"
+
+        tool[code].dia = dia
+        tool[code].vertices = vertices
         if mods.length > 2 then tool[code].degrees = Number mods[2]
         if hole? then tool[code].hole = hole
 
@@ -215,6 +246,24 @@ class GerberParser extends Parser
         mods = (Number(m) for m in (mods ? []))
         tool[code].macro = shape
         tool[code].mods = mods
+
+    # check for parameter errors
+    if dia < 0
+      return new RangeError "#{code} diameter cannot be negative"
+    if width < 0
+      return new RangeError "#{code} width cannot be negative"
+    if height < 0
+      return new RangeError "#{code} height cannot be negative"
+    if vertices < 3 or vertices > 12
+      return new RangeError "#{code} polygon vertices must be between 3 and 12"
+    if hole?.dia < 0 or hole?.width < 0 or hole?.height < 0
+      return new RangeError "#{code} hole dimensions cannot be negative"
+
+    # also keep an eye out for zero-size non-circles
+    if width is 0 or height is 0 or (vertices? and dia is 0)
+      @emit 'warning', new Warning """
+        #{code} zero-size shapes (except circles) are not technically allowed
+      """
 
     return {tool: tool}
 

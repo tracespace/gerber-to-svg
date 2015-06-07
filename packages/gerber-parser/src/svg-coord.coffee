@@ -5,7 +5,7 @@
 SVG_COORD_E = 3
 
 # function takes in the number string to be converted and the format object
-getSvgCoord = ( numberString, format ) ->
+getSvgCoord = (numberString, format) ->
   # make sure we're dealing with a string
   if numberString? then numberString = "#{numberString}" else return NaN
 
@@ -43,7 +43,8 @@ getSvgCoord = ( numberString, format ) ->
           before += c
       # pad any missing zeros
       after = ('0' + after) while after.length < format.places[1]
-
+    else
+      return NaN
 
   # pad after so we've got enough digits
   after += '0' while after.length < SVG_COORD_E

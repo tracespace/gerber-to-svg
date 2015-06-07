@@ -32,9 +32,7 @@ class Parser extends Transform
     else if chunk.param?
       result = @parseParam chunk.param, chunk.line
 
-    if isError(result)
-      done(result)
-      return
+    if isError result then return done result
 
     if result?
       result.line = chunk.line

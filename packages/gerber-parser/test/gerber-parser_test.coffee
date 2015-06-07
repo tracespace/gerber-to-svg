@@ -1,6 +1,7 @@
 # test suite for GerberParser class
 expect = require('chai').expect
 Parser = require '../src/gerber-parser'
+Warning = require '../src/warning'
 # svg coordinate F
 F = require('../src/svg-coord').factor
 
@@ -26,7 +27,7 @@ describe 'gerber command parser', ->
         p.removeListener 'readable', handler
         cb()
 
-  it 'should ignore comments (start with G04)', ->
+  it 'should ignore comments (start with G04)', (done) ->
     initialFormat = { zero: p.format.zero, places: p.format.places }
 
     p.once 'readable', ->
@@ -39,7 +40,10 @@ describe 'gerber command parser', ->
     p.write block 'G04 G36'
     p.write block 'G04 M02'
 
-    setTimeout((-> expect(p.format).to.eql initialFormat), 1)
+    setTimeout ->
+      expect(p.format).to.eql initialFormat
+      done()
+    , 1
 
   describe 'parsing the format block', ->
     it 'should parse absolute notation', (done) ->
@@ -236,6 +240,180 @@ describe 'gerber command parser', ->
         p.write param 'ADD12P,5X4X0X0.6', 3
         p.write param 'ADD13P,5X4X0X0.6X0.5', 4
 
+      describe 'error checking', ->
+        it 'should not allow negative diameters', (done) ->
+          count = 0
+          commands = [
+            'ADD10C,-1'
+            'ADD11P,-4X5'
+          ]
+
+          handler = (e) ->
+            expect(e.message).to.match /diameter cannot be negative/
+            if ++count >= commands.length
+              p.removeListener 'error', handler
+              done()
+
+          p.on 'error', handler
+          p.write param c for c in commands
+
+        it 'should not allow negative side widths', (done) ->
+          count = 0
+          commands = [
+            'ADD10R,-1X1'
+            'ADD11O,-2X4'
+          ]
+
+          handler = (e) ->
+            expect(e.message).to.match /width cannot be negative/
+            if ++count >= commands.length
+              p.removeListener 'error', handler
+              done()
+
+          p.on 'error', handler
+          p.write param c for c in commands
+
+        it 'should not allow negative side heights', (done) ->
+          count = 0
+          commands = [
+            'ADD10R,1X-1'
+            'ADD11O,2X-4'
+          ]
+
+          handler = (e) ->
+            expect(e.message).to.match /height cannot be negative/
+            if ++count >= commands.length
+              p.removeListener 'error', handler
+              done()
+
+          p.on 'error', handler
+          p.write param c for c in commands
+
+        it 'should not allow invalid numbers of vertices', (done) ->
+          count = 0
+          commands = [
+            'ADD10P,6X2'
+            'ADD10P,8X13'
+          ]
+
+          handler = (e) ->
+            expect(e.message).to.match /between 3 and 12/
+            if ++count >= commands.length
+              p.removeListener 'error', handler
+              done()
+
+          p.on 'error', handler
+          p.write param c for c in commands
+
+        it 'should not allow negative hole dimensions', (done) ->
+          count = 0
+          commands = [
+            'ADD10C,6X-2'
+            'ADD11R,4X3X-2X1'
+            'ADD12O,4X3X2X-1'
+          ]
+
+          handler = (e) ->
+            expect(e.message).to.match /hole.*cannot be negative/
+            if ++count >= commands.length
+              p.removeListener 'error', handler
+              done()
+
+          p.on 'error', handler
+          p.write param c for c in commands
+
+        describe 'for holes', ->
+          it 'should not allow holes bigger than circle tools', (done) ->
+            count = 0
+            commands = [
+              'ADD10C,50X51'
+              'ADD11C,100X81X60'
+              'ADD12C,100X60X81'
+            ]
+
+            handler = (e) ->
+              expect(e.message).to.match /hole.*larger than the shape/
+              if ++count >= commands.length
+                p.removeListener 'error', handler
+                done()
+
+            p.on 'error', handler
+            p.write param c for c in commands
+
+          it 'should not allow holes bigger than rectangles/obrounds', (done) ->
+            count = 0
+            commands = [
+              'ADD13R,10X50X11'
+              'ADD13R,50X10X11'
+              'ADD14O,50X10X40X11'
+              'ADD15O,10X50X11X40'
+            ]
+
+            handler = (e) ->
+              expect(e.message).to.match /hole.*larger than the shape/
+              if ++count >= commands.length
+                p.removeListener 'error', handler
+                done()
+
+            p.on 'error', handler
+            p.write param c for c in commands
+
+          it 'should not allow holes bigger than polygons', (done) ->
+            count = 0
+            commands = [
+              'ADD16P,100X7X0X91'
+              'ADD17P,100X5X0X71X71'
+            ]
+
+            handler = (e) ->
+              expect(e.message).to.match /hole.*larger than the shape/
+              if ++count >= commands.length
+                p.removeListener 'error', handler
+                done()
+
+            p.on 'error', handler
+            p.write param c for c in commands
+
+        it 'should allow zero size circles without complaint', (done) ->
+          fail = (e) ->
+            p.removeListener 'warning', fail
+            p.removeListener 'error', fail
+            throw new Error e.message
+
+          p.on 'error', fail
+          p.on 'warning', fail
+          p.once 'readable', ->
+            p.removeListener 'error', fail
+            p.removeListener 'warning', fail
+            done()
+          p.write param 'ADD10C,0'
+
+        it 'should warn that zero-size rects are not allowed', (done) ->
+          count = 0
+          commands = [
+            'ADD11R,0X2'
+            'ADD12R,1X0'
+            'ADD13O,0X2'
+            'ADD14O,1X0'
+          ]
+
+          handler = (w) ->
+            expect(w).to.be.an.instanceOf Warning
+            expect(w.message).to.match /zero-size/
+            if ++count >= commands.length
+              p.removeListener 'warning', handler
+              done()
+
+          p.on 'warning', handler
+          p.write param c for c in commands
+
+        it 'should warn that zero-size polygons are not allowed', (done) ->
+          p.once 'warning', (w) ->
+            expect(w).to.be.an.instanceOf Warning
+            expect(w.message).to.match /zero-size/
+            done()
+
+          p.write param 'ADD10P,0X4'
 
     describe 'with aperture macros', ->
       it 'should parse an aperture macro with modifiers', (done) ->
@@ -476,3 +654,33 @@ describe 'gerber command parser', ->
         done()
 
       p.write block 'X01Y01'
+
+  it 'should not emit anything if passed empty param', (done) ->
+    p.once 'readable', ->
+      throw new Error 'empty block emitted something'
+
+    p.write param '', 100
+    setTimeout done, 10
+
+  it 'should not emit anything if passed empty block', (done) ->
+    p.once 'readable', ->
+      throw new Error 'empty param emitted something'
+
+    p.write block '', 100
+    setTimeout done, 10
+
+  it 'should handle empty objects in the stream without complaint', (done) ->
+    p.once 'error', -> throw new Error 'complained'
+    p.once 'warning', -> throw new Error 'complained'
+
+    reads = 0
+    handleReadable = ->
+      p.read()
+      if ++reads >= 2
+        p.removeListener 'readable', handleReadable
+        done()
+
+    p.on 'readable', handleReadable
+    p.write param 'MOMM', 1
+    p.write {}
+    p.write block 'G71', 2
