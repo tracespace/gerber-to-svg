@@ -6,7 +6,7 @@ factor = require('../src/svg-coord').factor
 # test macro
 m = null
 
-describe 'tool macro class', ->
+describe.skip 'tool macro class', ->
 
   it 'should save the blocks for processing', ->
     m = new Macro ['0 block 0', '0 block 1', '0 block 2']
