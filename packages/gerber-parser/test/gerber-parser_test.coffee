@@ -433,33 +433,353 @@ describe 'gerber command parser', ->
         p.write param 'ADD11RECT', 1
 
   describe 'aperture macro blocks', ->
-    it 'should pass along the blocks if an aperture macro', (done) ->
+    it 'should get the name', (done) ->
       p.once 'readable', ->
         data = p.read()
-        expect(data.macro).to.eql {RECT1: ['21,1,1,1,0,0,0']}
+        expect(data.macro.RECT1).to.exist
         done()
 
       p.write param 'AMRECT1', 1
-      p.write param '21,1,1,1,0,0,0', 2
       p.write param false
 
     it 'should know when the aperture macro is over', (done) ->
       type = 'macro'
       cb = done
       results = [
-        {RECT1: ['0 macro comment', '21,1,1,1,0,0,0']}
-        {RECT2: ['0 macro comment', '21,1,1,1,0,0,0']}
+        {RECT1: []}
+        {RECT2: []}
       ]
 
       p.on 'readable', handler
       p.write param 'AMRECT1', 1
-      p.write param '0 macro comment', 2
-      p.write param '21,1,1,1,0,0,0', 3
-      p.write param false, 3
-      p.write param 'AMRECT2', 4
-      p.write param '0 macro comment', 5
-      p.write param '21,1,1,1,0,0,0', 6
-      p.write param false, 6
+      p.write param false, 2
+      p.write param 'AMRECT2', 3
+      p.write param false, 4
+
+    describe 'primitive blocks', ->
+      it 'should parse a circle primitive', (done) ->
+        p.once 'readable', ->
+          r = p.read()
+          expect(r.macro.CIRC1).to.eql [
+            {shape: 'circle', exp: '1', dia: '5-$1', cx: '1', cy: '2'}
+          ]
+          done()
+
+        p.write param 'AMCIRC1', 1
+        p.write param '1,1,5-$1,1,2', 2
+        p.write param false, 2
+
+      it 'should parse a vector primitive', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            VECT1: [
+              {
+                shape: 'vector'
+                exp: '1'
+                width: '2'
+                x1: '3'
+                y1: '4'
+                x2: '5'
+                y2: '6'
+                rot: '7'
+              }
+            ]
+          }
+          {
+            VECT2: [
+              {
+                shape: 'vector'
+                exp: '0'
+                width: '$1'
+                x1: '$2'
+                y1: '$3'
+                x2: '$4'
+                y2: '$5'
+                rot: '$6'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMVECT1', 1
+        p.write param '2,1,2,3,4,5,6,7', 2
+        p.write param false, 2
+        p.write param 'AMVECT2', 3
+        p.write param '20,0,$1,$2,$3,$4,$5,$6', 4
+        p.write param false, 4
+
+      it 'should parse a rectangle primitive', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            RECT1: [
+              {
+                shape: 'rect'
+                exp: '1'
+                cx: '2'
+                cy: '3'
+                width: '4'
+                height: '5'
+                rot: '6'
+              }
+            ]
+          }
+          {
+            RECT2: [
+              {
+                shape: 'rect'
+                exp: '0'
+                cx: '$1'
+                cy: '$2'
+                width: '$3'
+                height: '$4'
+                rot: '$5'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMRECT1', 1
+        p.write param '21,1,2,3,4,5,6', 2
+        p.write param false, 2
+        p.write param 'AMRECT2', 3
+        p.write param '21,0,$1,$2,$3,$4,$5', 4
+        p.write param false, 4
+
+      it 'should parse a lower left rectangle primitive', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            RECT1: [
+              {
+                shape: 'lowerLeftRect'
+                exp: '1'
+                x: '2'
+                y: '3'
+                width: '4'
+                height: '5'
+                rot: '6'
+              }
+            ]
+          }
+          {
+            RECT2: [
+              {
+                shape: 'lowerLeftRect'
+                exp: '0'
+                x: '$1'
+                y: '$2'
+                width: '$3'
+                height: '$4'
+                rot: '$5'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMRECT1', 1
+        p.write param '22,1,2,3,4,5,6', 2
+        p.write param false, 2
+        p.write param 'AMRECT2', 3
+        p.write param '22,0,$1,$2,$3,$4,$5', 4
+        p.write param false, 4
+
+      it 'should parse a outline polygon', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            OUT1: [
+              {
+                shape: 'outline'
+                exp: '1'
+                points: ['1', '2', '3', '4', '5', '6', '7', '8']
+                rot: '9'
+              }
+            ]
+          }
+          {
+            OUT2: [
+              {
+                shape: 'outline'
+                exp: '0'
+                points: ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8']
+                rot: '$9'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMOUT1', 1
+        p.write param '4,1,3,1,2,3,4,5,6,7,8,9', 2
+        p.write param false, 2
+        p.write param 'AMOUT2', 3
+        p.write param '4,0,3,$1,$2,$3,$4,$5,$6,$7,$8,$9', 4
+        p.write param false, 4
+
+      it 'should parse a regular polygon', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            POLY1: [
+              {
+                shape: 'polygon'
+                exp: '1'
+                vertices: '3'
+                cx: '4'
+                cy: '5'
+                dia: '6'
+                rot: '7'
+              }
+            ]
+          }
+          {
+            POLY2: [
+              {
+                shape: 'polygon'
+                exp: '0'
+                vertices: '$1'
+                cx: '$2'
+                cy: '$3'
+                dia: '$4'
+                rot: '$5'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMPOLY1', 1
+        p.write param '5,1,3,4,5,6,7', 2
+        p.write param false, 2
+        p.write param 'AMPOLY2', 3
+        p.write param '5,0,$1,$2,$3,$4,$5', 4
+        p.write param false, 4
+
+      it 'should parse a moire primitive', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            MOIRE1: [
+              {
+                shape: 'moire'
+                exp: '1'
+                cx: '1'
+                cy: '2'
+                outerDia: '3'
+                ringThx: '4'
+                ringGap: '5'
+                maxRings: '6'
+                crossThx: '7'
+                crossLength: '8'
+                rot: '9'
+              }
+            ]
+          }
+          {
+            MOIRE2: [
+              {
+                shape: 'moire'
+                exp: '0'
+                cx: '$1'
+                cy: '$2'
+                outerDia: '$3'
+                ringThx: '$4'
+                ringGap: '$5'
+                maxRings: '$6'
+                crossThx: '$7'
+                crossLength: '$8'
+                rot: '$9'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMMOIRE1', 1
+        p.write param '6,1,1,2,3,4,5,6,7,8,9', 2
+        p.write param false, 2
+        p.write param 'AMMOIRE2', 3
+        p.write param '6,0,$1,$2,$3,$4,$5,$6,$7,$8,$9', 4
+        p.write param false, 4
+
+      it 'should parse a thermal primitive', (done) ->
+        type = 'macro'
+        cb = done
+        results = [
+          {
+            THERMAL1: [
+              {
+                shape: 'thermal'
+                exp: '1'
+                cx: '1'
+                cy: '2'
+                outerDia: '3'
+                innerDia: '4'
+                gap: '5'
+                rot: '6'
+              }
+            ]
+          }
+          {
+            THERMAL2: [
+              {
+                shape: 'thermal'
+                exp: '0'
+                cx: '$1'
+                cy: '$2'
+                outerDia: '$3'
+                innerDia: '$4'
+                gap: '$5'
+                rot: '$6'
+              }
+            ]
+          }
+        ]
+
+        p.on 'readable', handler
+        p.write param 'AMTHERMAL1', 1
+        p.write param '7,1,1,2,3,4,5,6', 2
+        p.write param false, 2
+        p.write param 'AMTHERMAL2', 3
+        p.write param '7,0,$1,$2,$3,$4,$5,$6', 4
+        p.write param false, 4
+
+      it 'should parse a variable definition', (done) ->
+        p.once 'readable', ->
+          result = p.read()
+          expect(result.macro.VAR1).to.eql [{modifier: '$3', value: '$1+$2'}]
+          done()
+
+        p.write param 'AMVAR1', 1
+        p.write param '$3=$1+$2', 2
+        p.write param false, 2
+
+      it 'should warn if uppercase X used for multiplication', (done) ->
+        warned = false
+        p.once 'warning', (w) ->
+          expect(w.message).to.match /line 7 .*multiplication/
+          warned = true
+
+        p.once 'readable', ->
+          result = p.read()
+          expect(result.macro.VAR1[0].value).to.eql '$1x($2x$3)'
+          expect(warned).to.be.true
+          done()
+
+        p.write param 'AMVAR1', 6
+        p.write param '$3=$1X($2X$3)', 7
+        p.write param false, 7
 
   describe 'level polarity', ->
 

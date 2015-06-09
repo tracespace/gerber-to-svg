@@ -101,7 +101,7 @@ class GerberParser extends Parser
       @macroBlocks = []
       return null
     if @macroName
-      @macroBlocks.push param
+      @macroBlocks.push @parseMacroBlock param, line
       return null
 
     # check for level polarity
@@ -303,5 +303,89 @@ class GerberParser extends Parser
     code = b.match(/D\d+/)[0]
     code = code[0] + code[2..] while code[1] is '0'
     return {set: {currentTool: code}}
+
+  parseMacroBlock: (b, l) ->
+    # a macro block is either going to be a primitive or a variable definition
+    # a variable definition has an equals sign in it
+    if '=' in b
+      [modifier, value] = b.split '='
+
+      # check for common error of 'X' instead of 'x' for multiplication
+      # fix automatically but emit a warning
+      if 'X' in value
+        @emit 'warning', new Warning """
+          line #{l} - macros should use lowercase 'x' for multiplication
+        """
+        value = value.replace /X/g, 'x'
+
+      return {modifier: modifier, value: value}
+
+    # else it's a primitive
+    mods = b.split ','
+    code = mods[0]
+    exp = mods[1]
+    rot = mods[mods.length - 1] unless code is '1'
+    primitive = switch code
+      when '1'
+        {shape: 'circle', dia: mods[2], cx: mods[3], cy: mods[4]}
+      when '2', '20'
+        {
+          shape: 'vector'
+          width: mods[2]
+          x1: mods[3]
+          y1: mods[4]
+          x2: mods[5]
+          y2: mods[6]
+        }
+      when '21'
+        {
+          shape: 'rect'
+          cx: mods[2]
+          cy: mods[3]
+          width: mods[4]
+          height: mods[5]
+        }
+      when '22'
+        {
+          shape: 'lowerLeftRect'
+          x: mods[2]
+          y: mods[3]
+          width: mods[4]
+          height: mods[5]
+        }
+      when '4'
+        {shape: 'outline', points: mods[3..-2]}
+      when '5'
+        {
+          shape: 'polygon'
+          vertices: mods[2]
+          cx: mods[3]
+          cy: mods[4]
+          dia: mods[5]
+        }
+      when '6'
+        {
+          shape: 'moire'
+          cx: mods[2]
+          cy: mods[3]
+          outerDia: mods[4]
+          ringThx: mods[5]
+          ringGap: mods[6]
+          maxRings: mods[7]
+          crossThx: mods[8]
+          crossLength: mods[9]
+        }
+      when '7'
+        {
+          shape: 'thermal'
+          cx: mods[2]
+          cy: mods[3]
+          outerDia: mods[4]
+          innerDia: mods[5]
+          gap: mods[6]
+        }
+    primitive.exp = exp
+    if rot? then primitive.rot = rot
+    return primitive
 
 module.exports = GerberParser
