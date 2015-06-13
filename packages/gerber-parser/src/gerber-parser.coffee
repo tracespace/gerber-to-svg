@@ -101,7 +101,8 @@ class GerberParser extends Parser
       @macroBlocks = []
       return null
     if @macroName
-      @macroBlocks.push @parseMacroBlock param, line
+      nextBlock = @parseMacroBlock param, line
+      if nextBlock? then @macroBlocks.push nextBlock
       return null
 
     # check for level polarity
@@ -340,18 +341,18 @@ class GerberParser extends Parser
       when '21'
         {
           shape: 'rect'
-          cx: mods[2]
-          cy: mods[3]
-          width: mods[4]
-          height: mods[5]
+          width: mods[2]
+          height: mods[3]
+          cx: mods[4]
+          cy: mods[5]
         }
       when '22'
         {
           shape: 'lowerLeftRect'
-          x: mods[2]
-          y: mods[3]
-          width: mods[4]
-          height: mods[5]
+          width: mods[2]
+          height: mods[3]
+          x: mods[4]
+          y: mods[5]
         }
       when '4'
         {shape: 'outline', points: mods[3..-2]}
@@ -384,8 +385,12 @@ class GerberParser extends Parser
           innerDia: mods[5]
           gap: mods[6]
         }
-    primitive.exp = exp
-    if rot? then primitive.rot = rot
+      else
+        null
+
+    if primitive?
+      primitive.exp = exp
+      if rot? then primitive.rot = rot
     return primitive
 
 module.exports = GerberParser

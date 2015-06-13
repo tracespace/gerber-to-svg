@@ -520,10 +520,10 @@ describe 'gerber command parser', ->
               {
                 shape: 'rect'
                 exp: '1'
-                cx: '2'
-                cy: '3'
-                width: '4'
-                height: '5'
+                width: '2'
+                height: '3'
+                cx: '4'
+                cy: '5'
                 rot: '6'
               }
             ]
@@ -533,10 +533,10 @@ describe 'gerber command parser', ->
               {
                 shape: 'rect'
                 exp: '0'
-                cx: '$1'
-                cy: '$2'
-                width: '$3'
-                height: '$4'
+                width: '$1'
+                height: '$2'
+                cx: '$3'
+                cy: '$4'
                 rot: '$5'
               }
             ]
@@ -560,10 +560,10 @@ describe 'gerber command parser', ->
               {
                 shape: 'lowerLeftRect'
                 exp: '1'
-                x: '2'
-                y: '3'
-                width: '4'
-                height: '5'
+                width: '2'
+                height: '3'
+                x: '4'
+                y: '5'
                 rot: '6'
               }
             ]
@@ -573,10 +573,10 @@ describe 'gerber command parser', ->
               {
                 shape: 'lowerLeftRect'
                 exp: '0'
-                x: '$1'
-                y: '$2'
-                width: '$3'
-                height: '$4'
+                width: '$1'
+                height: '$2'
+                x: '$3'
+                y: '$4'
                 rot: '$5'
               }
             ]
@@ -764,6 +764,42 @@ describe 'gerber command parser', ->
         p.write param 'AMVAR1', 1
         p.write param '$3=$1+$2', 2
         p.write param false, 2
+
+      it 'should parse multiple things (including comments)', (done) ->
+        p.once 'readable', ->
+          result = p.read()
+          expect(result.macro.MACRO1).to.deep.eql [
+            {
+              shape: 'outline'
+              exp: '1'
+              points: ['1', '2', '3', '4', '5', '6', '7', '8']
+              rot: '9'
+            }
+            {shape: 'circle', exp: '0', dia: '5-$1', cx: '1', cy: '2'}
+            {modifier: '$3', value: '$1+$2'}
+            {
+              shape: 'rect'
+              exp: '1'
+              width: '2'
+              height: '3'
+              cx: '4'
+              cy: '5'
+              rot: '6'
+            }
+          ]
+          done()
+
+        p.write param 'AMMACRO1', 1
+        p.write param '0 outline polygon', 2
+        p.write param '4,1,3,1,2,3,4,5,6,7,8,9', 3
+        p.write param '0 circle', 4
+        p.write param '1,0,5-$1,1,2', 5
+        p.write param '0 variable set', 6
+        p.write param '$3=$1+$2', 7
+        p.write param '0 rectangle', 8
+        p.write param '21,1,2,3,4,5,6', 9
+        p.write param '0 macro end', 10
+        p.write param false, 11
 
       it 'should warn if uppercase X used for multiplication', (done) ->
         warned = false
