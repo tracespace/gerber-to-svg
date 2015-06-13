@@ -118,34 +118,37 @@ lowerLeftRect = (p) ->
   }
 
 outline = (p) ->
-  unless Array.isArray(p.points) and p.points.length > 1
+  unless Array.isArray(p.points)
     throw new Error 'outline function requires points array'
+  unless p.points.length >= 4
+    throw new Error 'outline function requires more than one point'
+  unless p.points.length % 2 is 0
+    throw new Error 'outline function points array length must be even'
 
   xMin = null
   yMin = null
   xMax = null
   yMax = null
   pointString = ''
-  for point in p.points
-    unless (Array.isArray(point) and point.length is 2)
-      throw new Error 'outline function requires points array'
-    x = point[0]
-    y = point[1]
+  for point, i in p.points by 2
+    x = point
+    y = p.points[i + 1]
     if x < xMin or xMin is null then xMin = x
     if x > xMax or xMax is null then xMax = x
     if y < yMin or yMin is null then yMin = y
     if y > yMax or yMax is null then yMax = y
     pointString += " #{x},#{y}"
+
   # check the last point matches the first
-  xLast = p.points[p.points.length - 1][0]
-  yLast = p.points[p.points.length - 1][1]
-  unless xLast is p.points[0][0] and yLast is p.points[0][1]
+  xLast = p.points[p.points.length - 2]
+  yLast = p.points[p.points.length - 1]
+  unless xLast is p.points[0] and yLast is p.points[1]
     throw new RangeError 'last point must match first point of outline'
 
   # return the object
   {
-    shape: { polygon: { points: pointString[1..] } }
-    bbox: [ xMin, yMin, xMax, yMax ]
+    shape: {polygon: {points: pointString[1..]}}
+    bbox: [xMin, yMin, xMax, yMax]
   }
 
 moire = (p) ->

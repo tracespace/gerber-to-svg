@@ -131,21 +131,24 @@ describe 'shape functions', ->
 
   describe 'for outline polygons', ->
     it 'should return a polygon given proper parameters', ->
-      result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
-      expect( result.shape.polygon.points ).to.eql '0,0 1,0 1,1 0,0'
+      result = shapes.outline {points: [0, 0, 1, 0, 1, 1, 0, 0]}
+      expect(result.shape.polygon.points).to.eql '0,0 1,0 1,1 0,0'
+
     it 'should throw an error if the paramter isnt an array or is missing', ->
-      expect( -> shapes.outline {} ).to.throw /requires points array/
-      expect( -> shapes.outline { points: 5 } ).to.throw /requires points array/
-      expect( -> shapes.outline { points: [ [5,2] ] } )
-        .to.throw /requires points array/
-      expect( -> shapes.outline { points: [ [5,2], 6] } )
-        .to.throw /requires points array/
+      expect(-> shapes.outline {}).to.throw /requires points array/
+      expect(-> shapes.outline {points: 5}).to.throw /requires points array/
+      expect(-> shapes.outline {points: [5, 2]})
+        .to.throw /requires more than one point/
+      expect(-> shapes.outline {points: [5, 2, 6, 7, 8]})
+        .to.throw /must be even/
+
     it 'should throw an error if the last point doesnt match the first', ->
-      expect( -> shapes.outline { points: [ [1,0], [0,1] ] } )
+      expect(-> shapes.outline {points: [1, 0, 0, 1]})
         .to.throw /last point must match first point/
+
     it 'should calculate the bounding box', ->
-      result = shapes.outline { points: [ [0,0], [1,0], [1,1], [0,0] ] }
-      expect( result.bbox ).to.eql [ 0, 0, 1, 1 ]
+      result = shapes.outline {points: [0, 0, 1, 0, 1, 1, 0, 0]}
+      expect(result.bbox).to.eql [0, 0, 1, 1]
 
   describe 'for moirés', ->
     it 'should return an array of objects that creates a moiré', ->

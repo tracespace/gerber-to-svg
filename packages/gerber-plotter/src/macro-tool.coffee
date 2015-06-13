@@ -1,5 +1,11 @@
 # aperture macro class
 # parses an aperture macro and then returns the pad when the tool is defined
+EventEmitter = require('events').EventEmitter
+
+mapValues = require 'lodash.mapvalues'
+find = require 'lodash/collection/find' # TODO: replace with module
+filter = require 'lodash.filter'
+omit = require 'lodash.omit'
 
 # uses the pad shapes functions
 shapes = require './pad-shapes'
@@ -9,8 +15,10 @@ calc = require './macro-calc'
 unique = require './unique-id'
 # integer coordinate caluclator
 getSvgCoord = require('./svg-coord').get
+# warning object
+Warning = require './warning'
 
-class MacroTool
+class MacroTool extends EventEmitter
   # constructor takes in macro blocks
   constructor: (@blocks = [], numberFormat) ->
     # macro modifiers
@@ -22,9 +30,9 @@ class MacroTool
     # last exposure used
     @lastExposure = null
     # bounding box [xMin, yMin, xMax, yMax] of macro
-    @bbox = [ null, null, null, null ]
+    @bbox = [null, null, null, null]
     # format for coordinate and size values
-    @format = { places: numberFormat }
+    @format = {places: numberFormat}
 
   # run the macro and return the pad
   run: (tool, modifiers = []) ->
@@ -32,25 +40,32 @@ class MacroTool
     @lastExposure = null
     @shapes = []
     @masks = []
-    @bbox = [ null, null, null, null ]
+    @bbox = [null, null, null, null]
     @modifiers = {}
     @modifiers["$#{i+1}"] = m for m, i in modifiers
+
     # run the blocks
-    @runBlock b for b in @blocks
+    for b in @blocks
+      if b.shape?
+        @primitive b
+      else
+        @modifiers[b.modifier] = @getNumber b.value
+
+    # gather the shapes into a pad array
+    if @shapes.length is 1
+      pad = @shapes
+    else if @shapes.length > 1
+      pad = [{g: {_: @shapes}}]
+
     # generate an id for the pad
     padId = "tool-#{tool}-pad-#{unique()}"
-    pad = []
-    # get all the masks together first
-    pad.push m for m in @masks
-    # bundle the shapes if necessary
-    if @shapes.length > 1
-      group = { id: padId, _: [] }
-      group._.push s for s in @shapes
-      pad = [ { g: group } ]
-    else if @shapes.length is 1
-      shape = Object.keys(@shapes[0])[0]
-      @shapes[0][shape].id = padId
-      pad.push @shapes[0]
+    if pad?
+      shape = Object.keys(pad[0])[0]
+      pad[0][shape].id = padId
+
+    # put all the masks at the front of the pad array
+    pad.unshift m for m in @masks
+
     # return the pad, the bbox, and the pad id
     {
       pad: pad
@@ -59,137 +74,97 @@ class MacroTool
       trace: false
     }
 
-  # run a block and return the modified pad string
-  runBlock: (block) ->
-    # check the first character of the block
-    switch block[0]
-      # if we got ourselves a modifier, we should set it
-      when '$'
-        mod = block.match(/^\$\d+(?=\=)/)?[0]
-        val = block[(1 + mod.length)..]
-        @modifiers[mod] = @getNumber val
-      # or it's a primitive
-      when '1', '2', '20', '21', '22', '4', '5', '6', '7'
-        # split string at commas for arguments
-        args = block.split ','
-        # get the actual numbers and pass to the primitive method
-        args[i] = @getNumber a for a,i in args
-        @primitive args
-      else
-        # throw an error because I don't know what's going on
-        # unless it's a comment; in that case carry on
-        unless block[0] is '0'
-          throw new Error "'#{block}' unrecognized tool macro block"
-
   # identify the primitive and add shapes and masks to the macro
-  primitive: (args) ->
+  primitive: (p) ->
     mask = false
     rotation = false
-    shape = null
-    switch args[0]
-      # circle primitive
-      when 1
-        shape = shapes.circle {
-          dia: getSvgCoord args[2], @format
-          cx:  getSvgCoord args[3], @format
-          cy:  getSvgCoord args[4], @format
-        }
-        if args[1] is 0 then mask = true else @addBbox shape.bbox
-      # vector line primitive
-      when 2, 20
-        shape = shapes.vector {
-          width: getSvgCoord args[2], @format
-          x1:    getSvgCoord args[3], @format
-          y1:    getSvgCoord args[4], @format
-          x2:    getSvgCoord args[5], @format
-          y2:    getSvgCoord args[6], @format
-        }
-        # rotate if necessary
-        if args[7] then shape.shape.line.transform = "rotate(#{args[7]})"
-        # add the bounding box with rotation
-        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[7]
-      when 21
-        shape = shapes.rect {
-          cx:     getSvgCoord args[4], @format
-          cy:     getSvgCoord args[5], @format
-          width:  getSvgCoord args[2], @format
-          height: getSvgCoord args[3], @format
-        }
-        # rotate if necessary
-        if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
-        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
-      when 22
-        shape = shapes.lowerLeftRect {
-          x:      getSvgCoord args[4], @format
-          y:      getSvgCoord args[5], @format
-          width:  getSvgCoord args[2], @format
-          height: getSvgCoord args[3], @format
-        }
-        # rotate if necessary
-        if args[6] then shape.shape.rect.transform = "rotate(#{args[6]})"
-        if args[1] is 0 then mask = true else @addBbox shape.bbox, args[6]
-      when 4
-        points = []
-        for i in [ 3..(3 + 2 * args[2]) ] by 2
-          points.push [
-            getSvgCoord(args[i], @format), getSvgCoord(args[i + 1], @format)
-          ]
-        shape = shapes.outline { points: points }
-        # rotate if necessary
-        if rot = args[args.length - 1]
-          shape.shape.polygon.transform = "rotate(#{rot})"
-        if args[1] is 0 then mask = true
-        else @addBbox shape.bbox, args[args.length - 1]
-      when 5
-        # rotation only allowed if center is on the origin
-        if args[6] isnt 0 and (args[3] isnt 0 or args[4] isnt 0)
-          throw new RangeError 'polygon center must be 0,0 if rotated in macro'
-        shape = shapes.polygon {
-          cx:  getSvgCoord args[3], @format
-          cy:  getSvgCoord args[4], @format
-          dia: getSvgCoord args[5], @format
-          vertices: args[2]
-          degrees: args[6]
-        }
-        if args[1] is 0 then mask = true else @addBbox shape.bbox
-      # moire
-      when 6
-        # rotation only allowed if center is on the origin
-        if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
-          throw new RangeError 'moiré center must be 0,0 if rotated in macro'
-        shape = shapes.moire {
-          cx:          getSvgCoord args[1], @format
-          cy:          getSvgCoord args[2], @format
-          outerDia:    getSvgCoord args[3], @format
-          ringThx:     getSvgCoord args[4], @format
-          ringGap:     getSvgCoord args[5], @format
-          maxRings:    args[6]
-          crossThx:    getSvgCoord args[7], @format
-          crossLength: getSvgCoord args[8], @format
-        }
-        # rotate the crosshairs
-        if args[9] then for s in shape.shape
-          if s.line? then s.line.transform = "rotate(#{args[9]})"
-        @addBbox shape.bbox, args[9]
-      # thermal
-      when 7
-        # rotation only allowed if center is on the origin
-        if args[9] isnt 0 and (args[1] isnt 0 or args[2] isnt 0)
-          throw new RangeError 'thermal center must be 0,0 if rotated in macro'
-        shape = shapes.thermal {
-          cx:       getSvgCoord args[1], @format
-          cy:       getSvgCoord args[2], @format
-          outerDia: getSvgCoord args[3], @format
-          innerDia: getSvgCoord args[4], @format
-          gap:      getSvgCoord args[5], @format
-        }
-        # rotate and adjust bounding box
-        if args[6] then for s in shape.shape
-          if s.mask? then for m in s.mask._
-            if m.rect? then m.rect.transform = "rotate(#{args[6]})"
-        @addBbox shape.bbox, args[6]
+    shapeType = p.shape
+    mask = if p.exp? then @getNumber(p.exp) is 0
+
+    # some keys are just numbers, (i.e. not dimensions in svg coordinates)
+    vertices = if p.vertices? then @getNumber p.vertices, @format
+    rotation = if p.rot? then @getNumber p.rot
+    maxRings = if p.maxRings? then @getNumber p.maxRings
+
+    # other keys we need to call get the number in svg coordinates
+    p = mapValues (omit p, ['shape', 'exp', 'rot', 'maxRings']), (value) =>
+      if Array.isArray value
+        value = @getNumber value
+        (getSvgCoord v, @format for v in value)
       else
-        throw new Error "#{args[0]} is not a valid primitive code"
+        getSvgCoord @getNumber(value), @format
+
+    switch shapeType
+      when 'circle'
+        shape = shapes.circle {dia: p.dia, cx: p.cx, cy: p.cy}
+
+      when 'vector'
+        shape = shapes.vector {
+          width: p.width, x1: p.x1, y1: p.y1, x2: p.x2, y2: p.y2
+        }
+        if rotation then shape.shape.line.transform = "rotate(#{rotation})"
+
+      when 'rect'
+        shape = shapes.rect {
+          width: p.width, height: p.height, cx: p.cx, cy: p.cy
+        }
+        if rotation then shape.shape.rect.transform = "rotate(#{rotation})"
+
+      when 'lowerLeftRect'
+        shape = shapes.lowerLeftRect {
+          width: p.width, height: p.height, x: p.x, y: p.y
+        }
+        if rotation then shape.shape.rect.transform = "rotate(#{rotation})"
+
+      when 'outline'
+        shape = shapes.outline {points: p.points}
+        if rotation then shape.shape.polygon.transform = "rotate(#{rotation})"
+
+      when 'polygon'
+        # check to make sure we're allowed to rotate
+        if rotation and (p.cx isnt 0 or p.cy isnt 0)
+          @emit 'warning', new Warning '''
+            a macro polygon can only be rotated if its center is at 0, 0
+          '''
+          rotation = 0
+
+        shape = shapes.polygon {
+          vertices: vertices, cx: p.cx, cy: p.cy, dia: p.dia, degrees: rotation
+        }
+        # reset rotation so we don't mess up the bbox
+        rotation = 0
+
+      when 'moire'
+        shape = shapes.moire {
+          cx: p.cx, cy: p.cy, outerDia: p.outerDia
+          ringThx: p.ringThx, ringGap: p.ringGap, maxRings: maxRings
+          crossThx: p.crossThx, crossLength: p.crossLength
+        }
+        if rotation
+          if p.cx isnt 0 or p.cy isnt 0
+            @emit 'warning', new Warning '''
+              a macro moiré can only be rotated if its center is at 0, 0
+            '''
+            rotation = 0
+          else
+            lines = filter shape.shape, 'line'
+            obj.line.transform = "rotate(#{rotation})" for obj in lines
+
+      when 'thermal'
+        shape = shapes.thermal {
+          cx: p.cx, cy: p.cy
+          outerDia: p.outerDia, innerDia: p.innerDia, gap: p.gap
+        }
+        if rotation
+          if p.cx isnt 0 or p.cy isnt 0
+            @emit 'warning', new Warning '''
+              a macro thermal can only be rotated if its center is at 0, 0
+            '''
+            rotation = 0
+          else
+            thermalMask = find shape.shape, 'mask'
+            rects = filter thermalMask.mask._, 'rect'
+            obj.rect.transform = "rotate(#{rotation})" for obj in rects
 
     # now, we need to check our exposure
     if mask
@@ -219,12 +194,17 @@ class MacroTool
           group = { mask: "url(##{maskId})", _: [] }
           group._.push s for s in @shapes
           @shapes = [ { g: group } ]
+        else
+          # if the shapes array is empty, then there's nothing to see here
+          return
+
         # push the mask to the masks list
         @masks.push m
       # add our shape to the current mask
       @masks[@masks.length - 1].mask._.push shape.shape
     # if exposure was on, continue about our merry business
     else
+      @addBbox shape.bbox, rotation
       @lastExposure = 1
       unless Array.isArray shape.shape then @shapes.push shape.shape
       else
@@ -265,12 +245,18 @@ class MacroTool
 
   # parse a number in the format of a float string, a modifier, or a math string
   getNumber: (s) ->
+    # if s is an array, get all the numbers in the array
+    if Array.isArray s
+      (@getNumber e for e in s)
     # normal number all by itself
-    if s.match /^[+-]?[\d.]+$/ then Number s
+    else if s.match /^[+-]?[\d.]+$/
+      Number s
     # modifier all by its lonesome
-    else if s.match /^\$\d+$/ then Number @modifiers[s]
+    else if s.match /^\$\d+$/
+      @modifiers[s]
     # else we got us some maths
-    else @evaluate calc.parse s
+    else
+      @evaluate calc.parse s
 
   # evaluate a math string
   evaluate: (op) ->
