@@ -25,6 +25,9 @@ describe 'tool macro class', ->
       m.modifiers.$2 = 3.5
       expect(m.getNumber '$2').to.equal 3.5
 
+    it 'should return 0 for undefined modifiers', ->
+      expect(m.getNumber '$5').to.equal 0
+
     it 'should get all the numbers in an array', ->
       m.modifiers.$1 = 1
       m.modifiers.$2 = 2
@@ -535,3 +538,8 @@ describe 'tool macro class', ->
       result = m.run 'D11', [2]
       expect(result.pad.length).to.equal 1
       expect(result.pad[0].circle.r).to.equal 1 * factor
+
+    it 'should return an empty pad array with no bbox for an empty macro', ->
+      result = m.run()
+      expect(result.pad).to.eql []
+      expect(result.bbox).to.eql [Infinity, Infinity, -Infinity, -Infinity]

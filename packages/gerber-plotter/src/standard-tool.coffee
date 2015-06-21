@@ -9,7 +9,7 @@ unique = require './unique-id'
 shapes = require './pad-shapes'
 
 standardTool = (tool, p) ->
-  result = { pad: [], trace: false }
+  result = {pad: [], trace: false}
   # pad center
   p.cx = 0
   p.cy = 0

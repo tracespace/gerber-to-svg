@@ -3,7 +3,7 @@
 EventEmitter = require('events').EventEmitter
 
 mapValues = require 'lodash.mapvalues'
-find = require 'lodash/collection/find' # TODO: replace with module
+find = require 'lodash.find'
 filter = require 'lodash.filter'
 omit = require 'lodash.omit'
 
@@ -30,7 +30,7 @@ class MacroTool extends EventEmitter
     # last exposure used
     @lastExposure = null
     # bounding box [xMin, yMin, xMax, yMax] of macro
-    @bbox = [null, null, null, null]
+    @bbox = [Infinity, Infinity, -Infinity, -Infinity]
     # format for coordinate and size values
     @format = {places: numberFormat}
 
@@ -40,7 +40,7 @@ class MacroTool extends EventEmitter
     @lastExposure = null
     @shapes = []
     @masks = []
-    @bbox = [null, null, null, null]
+    @bbox = [Infinity, Infinity, -Infinity, -Infinity]
     @modifiers = {}
     @modifiers["$#{i+1}"] = m for m, i in modifiers
 
@@ -68,7 +68,7 @@ class MacroTool extends EventEmitter
 
     # return the pad, the bbox, and the pad id
     {
-      pad: pad
+      pad: pad ? []
       padId: padId
       bbox: @bbox
       trace: false
@@ -214,10 +214,10 @@ class MacroTool extends EventEmitter
   # add a new bbox to the macro's exsisting bbox
   addBbox: (bbox, rotation = 0) ->
     unless rotation
-      if @bbox[0] is null or bbox[0] < @bbox[0] then @bbox[0] = bbox[0]
-      if @bbox[1] is null or bbox[1] < @bbox[1] then @bbox[1] = bbox[1]
-      if @bbox[2] is null or bbox[2] > @bbox[2] then @bbox[2] = bbox[2]
-      if @bbox[3] is null or bbox[3] > @bbox[3] then @bbox[3] = bbox[3]
+      if bbox[0] < @bbox[0] then @bbox[0] = bbox[0]
+      if bbox[1] < @bbox[1] then @bbox[1] = bbox[1]
+      if bbox[2] > @bbox[2] then @bbox[2] = bbox[2]
+      if bbox[3] > @bbox[3] then @bbox[3] = bbox[3]
     # else if it's rotated, we're going to have to compensate
     else
       # get ready for some trig
@@ -236,10 +236,10 @@ class MacroTool extends EventEmitter
       for p in points
         x = (p[0] * c) - (p[1] * s)
         y = (p[0] * s) + (p[1] * c)
-        if @bbox[0] is null or x < @bbox[0] then @bbox[0] = x
-        if @bbox[1] is null or y < @bbox[1] then @bbox[1] = y
-        if @bbox[2] is null or x > @bbox[2] then @bbox[2] = x
-        if @bbox[3] is null or y > @bbox[3] then @bbox[3] = y
+        if x < @bbox[0] then @bbox[0] = x
+        if y < @bbox[1] then @bbox[1] = y
+        if x > @bbox[2] then @bbox[2] = x
+        if y > @bbox[3] then @bbox[3] = y
       # clear out any -0s for better svg output and tests
       @bbox = ((if b is -0 then 0 else b) for b in @bbox)
 
@@ -253,7 +253,7 @@ class MacroTool extends EventEmitter
       Number s
     # modifier all by its lonesome
     else if s.match /^\$\d+$/
-      @modifiers[s]
+      @modifiers[s] ? 0
     # else we got us some maths
     else
       @evaluate calc.parse s
