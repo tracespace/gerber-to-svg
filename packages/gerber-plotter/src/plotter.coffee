@@ -380,10 +380,6 @@ class Plotter extends TransformStream
 
   # draw an arc to the path with the given start point and center offset
   drawArc: (sX, sY, i, j, lineNumber) ->
-    # this value seems strict enough to prevent invalid arcs but forgiving
-    # enough to let most gerbers draw
-    arcEps = 1.5 * coordFactor * 10 ** (-1 * (@parser?.format.places[1] ? 7))
-
     # set offsets to default
     i ?= 0
     j ?= 0
@@ -409,7 +405,8 @@ class Plotter extends TransformStream
     # loop through the candidates and find centers that make sense
     for c in centerCandidates
       dist = Math.sqrt (c[0] - @x) ** 2 + (c[1] - @y) ** 2
-      if (Math.abs r - dist) < arcEps then validCenters.push {x: c[0], y: c[1]}
+      if (Math.abs r - dist) < @epsilon
+        validCenters.push {x: c[0], y: c[1]}
 
     # now let's calculate some angles
     thetaE = 0
@@ -451,7 +448,7 @@ class Plotter extends TransformStream
       @emit 'warning', new Warning "line #{lineNumber} - #{@mode} arc from
         (#{sX}, #{sY}) to (#{@x}, #{@y}) with center offset (#{i}, #{j}) is an
         impossible arc in #{if @quad is 's' then 'single' else 'multi'} quadrant
-        mode with epsilon set to #{arcEps}"
+        mode with epsilon set to #{@epsilon}"
       return
 
     # get the radius of the tool for bbox calcs
@@ -491,7 +488,9 @@ class Plotter extends TransformStream
       yMax = (Math.max sY, @y) + rTool
 
     # check for zerolength arc
-    zeroLength = (Math.abs(sX - @x) < arcEps) and (Math.abs(sY - @y) < arcEps)
+    xDiff = Math.abs sX - @x
+    yDiff = Math.abs sY - @y
+    zeroLength = (xDiff < @epsilon) and (yDiff < @epsilon)
     # check for special case: full circle
     if @quad is 'm' and zeroLength
       # we'll need two paths (180 deg each)

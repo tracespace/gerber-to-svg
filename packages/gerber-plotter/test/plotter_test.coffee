@@ -187,7 +187,6 @@ describe 'Plotter class', ->
 
     describe 'tool macros', ->
       beforeEach ->
-        p.parser = {format: {places: [2, 4]}}
         p.write {
           macro: {M: [{shape: 'circle', exp: '1', dia: '$1', cx: '0', cy: '0'}]}
           line: 6
@@ -217,6 +216,7 @@ describe 'Plotter class', ->
       p.units = 'in'
       p.notation = 'A'
       p.mode = 'i'
+      p.epsilon = 0.1
       p.write {tool: {D11: {width: 2, height: 1}}}
       p.write {tool: {D10: {dia: 2}}}
 
