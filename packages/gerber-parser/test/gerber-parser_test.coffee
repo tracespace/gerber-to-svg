@@ -50,7 +50,7 @@ describe 'gerber command parser', ->
       p.once 'readable', ->
         data = p.read()
         expect(data.line).to.eql 2
-        expect(data.set).to.eql {notation: 'A'}
+        expect(data.set.notation).to.eql 'A'
         done()
 
       p.write param 'FSLAX34Y34', 2
@@ -59,10 +59,19 @@ describe 'gerber command parser', ->
       p.once 'readable', ->
         data = p.read()
         expect(data.line).to.eql 3
-        expect(data.set).to.eql {notation: 'I'}
+        expect(data.set.notation).to.eql 'I'
         done()
 
       p.write param 'FSLIX34Y34', 3
+
+    it "should set the plotter's epsilon value", (done) ->
+      p.once 'readable', ->
+        data = p.read()
+        expect(data.line).to.eql 2
+        expect(data.set.epsilon).to.equal 0.15
+        done()
+
+      p.write param 'FSLAX34Y34', 2
 
     it 'should parse zero suppression and coordinate places', ->
       p.write param 'FSTAX77Y77', 1
@@ -73,12 +82,20 @@ describe 'gerber command parser', ->
       expect(p.format.zero).to.eql 'L'
       expect(p.format.places).to.eql [3,4]
 
-
     it 'should not override user set places or zero suppression', ->
       p = new Parser {places: [4, 7], zero: 'T'}
       p.write param 'FSLAX34Y34'
       expect(p.format.zero).to.eql 'T'
       expect(p.format.places).to.eql [4,7]
+
+    it 'should not reset the epsilon value given overide places', (done) ->
+      p = new Parser {places: [4, 7], zero: 'T'}
+      p.once 'readable', ->
+        data = p.read()
+        expect(data.set.epsilon).to.equal 0.00015
+        done()
+
+      p.write param 'FSLAX34Y34'
 
     it 'should emit an error for bad notation', (done) ->
       p.once 'error', (e) ->
@@ -455,6 +472,20 @@ describe 'gerber command parser', ->
       p.write param false, 2
       p.write param 'AMRECT2', 3
       p.write param false, 4
+
+    it 'should differentiate between macro and other params ending', (done) ->
+      handleReadable = ->
+        result = p.read()
+        expect(result.macro).to.not.exist
+
+      p.on 'readable', handleReadable
+      p.write param 'FSLAX34Y34', 1
+      p.write param false, 1
+
+      setTimeout ->
+        p.removeListener 'readable', handleReadable
+        done()
+      , 10
 
     describe 'primitive blocks', ->
       it 'should parse a circle primitive', (done) ->
@@ -985,17 +1016,18 @@ describe 'gerber command parser', ->
     it 'should interpolate with an inline mode set', (done) ->
       blockCount = 0
       results = [
-        {mode: 'i'}, {do: 'int', x: .01 * F, y: .01 * F}
-        {mode: 'cw'}, {do: 'int', x: .01 * F, y: .01 * F}
-        {mode: 'ccw'}, {do: 'int', x: .01 * F, y: .01 * F}
+        {set: {mode: 'i'}, line: 1}
+        {op: {do: 'int', x: .01 * F, y: .01 * F}, line: 1}
+        {set: {mode: 'cw'}, line: 2}
+        {op: {do: 'int', x: .01 * F, y: .01 * F}, line: 2}
+        {set: {mode: 'ccw'}, line: 3}
+        {op: {do: 'int', x: .01 * F, y: .01 * F}, line: 3}
       ]
 
       handler = ->
         data = p.read()
-        expect(data.set).to.eql results[blockCount]
-        expect(data.op).to.eql results[blockCount + 1]
-        blockCount += 2
-        if blockCount >= results.length
+        expect(data).to.eql results[blockCount]
+        if ++blockCount >= results.length
           p.removeListener 'readable', handler
           done()
 

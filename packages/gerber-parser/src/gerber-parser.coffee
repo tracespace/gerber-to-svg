@@ -2,6 +2,8 @@
 # keeps track of coordinate format
 # takes a gerber block object and acts accordingly
 
+isError = require 'lodash.iserror'
+
 # generic parser
 Parser = require './parser'
 # warning object
@@ -9,7 +11,9 @@ Warning = require './warning'
 # parse coordinate function
 parseCoord = require './coord-parser'
 # get integer function
-getSvgCoord = require('./svg-coord').get
+svgCoord = require('./svg-coord')
+getSvgCoord = svgCoord.get
+svgCoordFactor = svgCoord.factor
 
 # constants
 # regular expression to match a coordinate
@@ -24,92 +28,113 @@ reOP = /D0*[123]$/
 class GerberParser extends Parser
 
   # parse a block
-  parseBlock: (block, line) ->
+  parseBlock: (block, line, done) ->
     # check for comment
-    if /^G0*4/.test block then return null
+    if /^G0*4/.test block then return done()
 
     # check for end of file
-    if block is 'M02' then return {set: {done: true}}
+    else if block is 'M02'
+      @push {set: {done: true}, line: line}
 
     # check for tool change
-    if reTOOL.test block then return @parseToolChange block, line
+    else if reTOOL.test block
+      res = @parseToolChange block, line
+      if isError(res) then return done(res) else if res? then @push res
 
     # check for region mode
-    if block is 'G36' then return {set: {region: true}}
-    if block is 'G37' then return {set: {region: false}}
+    else if block is 'G36'
+      @push {set: {region: true}, line: line}
+    else if block is 'G37'
+      @push {set: {region: false}, line: line}
 
     # check for backup units (deprecated commands)
-    if block is 'G70' then return {set: {backupUnits: 'in'}}
-    if block is 'G71' then return {set: {backupUnits: 'mm'}}
+    else if block is 'G70'
+      @push {set: {backupUnits: 'in'}, line: line}
+    else if block is 'G71'
+      @push {set: {backupUnits: 'mm'}, line: line}
 
     # check for arc mode
-    if block is 'G74' then return {set: {quad: 's'}}
-    if block is 'G75' then return {set: {quad: 'm'}}
+    else if block is 'G74'
+      @push {set: {quad: 's'}, line: line}
+    else if block is 'G75'
+      @push {set: {quad: 'm'}, line: line}
 
-    # the mode and operation commands may be doubled up
-    modeOp = null
+    else
+      # check for interpolation mode
+      if intMode = block.match reINT
+        switch intMode[0][-1..]
+          when '1' then mode = 'i'
+          when '2' then mode = 'cw'
+          when '3' then mode = 'ccw'
+        @push {set: {mode: mode}, line: line}
 
-    # check for interpolation mode
-    if intMode = block.match reINT
-      switch intMode[0][-1..]
-        when '1' then mode = 'i'
-        when '2' then mode = 'cw'
-        when '3' then mode = 'ccw'
-      modeOp = {set: {mode: mode}}
+      # check for operation commands
+      coordMatch = block.match(reCOORD)?[0]
+      if (opType = block.match reOP) or coordMatch?
+        op = {}
+        coord = parseCoord coordMatch, @format
+        op[axis] = val for axis, val of coord
+        switch opType?[0]?[-1..]
+          when '1' then op.do = 'int'
+          when '2' then op.do = 'move'
+          when '3' then op.do = 'flash'
+          else op.do = 'last'
+        @push {op: op, line: line}
 
-    # check for operation commands
-    coordMatch = block.match(reCOORD)?[0]
-    if (opType = block.match reOP) or coordMatch?
-      op = {}
-      coord = parseCoord coordMatch, @format
-      op[axis] = val for axis, val of coord
-      switch opType?[0]?[-1..]
-        when '1' then op.do = 'int'
-        when '2' then op.do = 'move'
-        when '3' then op.do = 'flash'
-        else op.do = 'last'
-      if modeOp? then modeOp.op = op else modeOp = {op: op}
-
-    # return a mode or operation command if it happened
-    return modeOp
+    done()
 
 
   # parse a parameter
-  parseParam: (param, line) ->
+  parseParam: (param, line, done) ->
     # if the param block has ended, finish up an AM if it's in progress
     if param is false
-      macro = {}
-      macro[@macroName] = @macroBlocks
-      @macroName = ''
-      return {macro: macro}
+      if @macroName
+        macro = {}
+        macro[@macroName] = @macroBlocks
+        @macroName = ''
+        @push {macro: macro}
+
+      return done()
 
     # otherwise grab the code
     code = param[0..1]
 
     # check for format set
-    if code is 'FS' then return @parseFormat param, line
+    if code is 'FS'
+      res = @parseFormat param, line
+      if isError(res) then return done(res) else if res? then @push res
 
     # check for units set
-    if code is 'MO' then return @parseUnits param, line
+    else if code is 'MO'
+      res = @parseUnits param, line
+      if isError(res) then return done(res) else if res? then @push res
 
     # check for aperture definition
-    if code is 'AD' then return @parseToolDef param, line
+    else if code is 'AD'
+      res = @parseToolDef param, line
+      if isError(res) then return done(res) else if res? then @push res
 
     # check for aperture macro start or in progress
-    if code is 'AM'
+    else if code is 'AM'
       @macroName = param[2..]
       @macroBlocks = []
-      return null
-    if @macroName
+      return done()
+    else if @macroName
       nextBlock = @parseMacroBlock param, line
       if nextBlock? then @macroBlocks.push nextBlock
-      return null
+      return done()
 
     # check for level polarity
-    if code is 'LP' then return @parsePolarity param, line
+    else if code is 'LP'
+      res = @parsePolarity param, line
+      if isError(res) then return done(res) else if res? then @push res
 
     # check for step repeat
-    if code is 'SR' then return @parseStepRepeat param, line
+    else if code is 'SR'
+      res = @parseStepRepeat param, line
+      if isError(res) then return done(res) else if res? then @push res
+
+    done()
 
   # parse a format block
   parseFormat: (p, l) ->
@@ -135,7 +160,11 @@ class GerberParser extends Parser
     @format.zero ?= zero
     @format.places ?= x
 
-    return {set: {notation: nota}}
+    # this value seems strict enough to prevent invalid arcs but forgiving
+    # enough to let most gerbers draw
+    epsilon = 1.5 * svgCoordFactor * 10 ** (-@format.places[1])
+
+    return {set: {notation: nota, epsilon: epsilon}, line: l}
 
   # parse a unit mode block
   parseUnits: (p, l) ->
@@ -149,7 +178,7 @@ class GerberParser extends Parser
         line #{l} - #{mode} is an invalid units mode; mode must be "IN" or "MM"
       """
 
-    return {set: {units: units}}
+    return {set: {units: units}, line: l}
 
   # parse a aperture definition parameter block
   parseToolDef: (p, l) ->
@@ -266,11 +295,11 @@ class GerberParser extends Parser
         #{code} zero-size shapes (except circles) are not technically allowed
       """
 
-    return {tool: tool}
+    return {tool: tool, line: l}
 
   parsePolarity: (p, l) ->
     if p[2] is 'D' or p[2] is 'C'
-      return {new: {layer: p[2]}}
+      return {new: {layer: p[2]}, line: l}
     else
       return new Error "line #{l} - level polarity must be 'D' or 'C'"
 
@@ -298,12 +327,12 @@ class GerberParser extends Parser
     sr = {x: Number(x), y: Number(y)}
     if i? then sr.i = getSvgCoord i, {places: @format.places}
     if j? then sr.j = getSvgCoord j, {places: @format.places}
-    return {new: {sr: sr}}
+    return {new: {sr: sr}, line: l}
 
   parseToolChange: (b, l) ->
     code = b.match(/D\d+/)[0]
     code = code[0] + code[2..] while code[1] is '0'
-    return {set: {currentTool: code}}
+    return {set: {currentTool: code}, line: l}
 
   parseMacroBlock: (b, l) ->
     # a macro block is either going to be a primitive or a variable definition

@@ -1,7 +1,6 @@
 # generic file parser for gerber and drill files
 
 Transform = require('stream').Transform
-isError = require('lodash.iserror')
 
 class Parser extends Transform
   constructor: (formatOpts = {}) ->
@@ -28,19 +27,10 @@ class Parser extends Transform
 
   _transform: (chunk, encoding, done) ->
     if chunk.block?
-      result = @parseBlock chunk.block, chunk.line
+      @parseBlock chunk.block, chunk.line, done
     else if chunk.param?
-      result = @parseParam chunk.param, chunk.line
-
-    if isError result then return done result
-
-    if result?
-      result.line = chunk.line
-      @push result
-
-    done()
-
-  # _flush: (done) ->
-  #   done()
+      @parseParam chunk.param, chunk.line, done
+    else
+      done()
 
 module.exports = Parser
