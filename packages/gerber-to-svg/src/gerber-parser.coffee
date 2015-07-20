@@ -12,25 +12,28 @@ getSvgCoord = require('./svg-coord').get
 # constants
 # regular expression to match a coordinate
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g
+# regular expression to match format specification block
+# NOTE: does its best to tolerate non-standard specs
+reFS = ///
+  ^FS             # Format Specification
+  ([A-Z]?)        # leading/trailing zero suppression
+  ([A-Z]?)        # absolute/incremental coordinate notation
+  X([0-7])([0-7]) # integer/decimal places in coordinates
+  Y\3\4           # must be the same for X and Y
+///
 
 # gerber parser class uses generic parser constructor
 class GerberParser extends Parser
 
   # parse a format block
   parseFormat: (p, c) ->
-    zero = if p[2] is 'L' or p[2] is 'T' then p[2] else null
-    # FIX: treat "no zero suppression" as "suppress tailing zero"
-    if not zero?
-      p = ' ' + p
-      zero = 'T'
-    nota = if p[3] is 'A' or p[3] is 'I' then p[3] else null
-    if p[4] is 'X' and p[7] is 'Y' and p[5..6] is p[8..9] and
-    p[5] < 8 and p[6] < 8
-      places = [ +p[5], +p[6] ]
-    if not places? or not nota? or not zero?
+    if not (m = p.match reFS)
       throw new Error 'invalid format specification'
+    [_, zero, nota, pN, pM] = m
+    if zero isnt 'L' and zero isnt 'T' then zero = 'L' # defaults to leading
+    if nota isnt 'A' and nota isnt 'I' then nota = 'A' # defaults to absolute
     @format.zero ?= zero
-    @format.places ?= places
+    @format.places ?= [Number(pN), Number(pM)]
     c.set ?= {}
     c.set.notation = nota
 
