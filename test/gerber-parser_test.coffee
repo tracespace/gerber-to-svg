@@ -29,12 +29,27 @@ describe 'gerber command parser', ->
       }
       expect( p.format.zero ).to.eql 'L'
       expect( p.format.places ).to.eql [3,4]
-      p = new Parser()
+
+    it 'should handle it with good options', ->
       expect( p.parseCommand param 'FSTIX77Y77' ).to.eql {
         set: { notation: 'I' }
       }
       expect( p.format.zero ).to.eql 'T'
       expect( p.format.places ).to.eql [7,7]
+
+    it 'should handle it with omitted options and use defaults', ->
+      expect( p.parseCommand param 'FSX34Y34' ).to.eql {
+        set: { notation: 'A' }
+      }
+      expect( p.format.zero ).to.eql 'L'
+      expect( p.format.places ).to.eql [3,4]
+
+    it 'should handle it with non-standard options and use defaults', ->
+      expect( p.parseCommand param 'FSNAX34Y34' ).to.eql {
+        set: { notation: 'A' }
+      }
+      expect( p.format.zero ).to.eql 'L'
+      expect( p.format.places ).to.eql [3,4]
 
     it 'should not override user set places or zero suppression', ->
       p = new Parser {places: [4, 7], zero: 'T'}
@@ -43,8 +58,6 @@ describe 'gerber command parser', ->
       expect(p.format.places).to.eql [4,7]
 
     it 'should throw error for bad options', ->
-      expect( -> p.parseCommand param 'FSLPX34Y34' ).to.throw /invalid/
-      expect( -> p.parseCommand param 'FSFAX34Y34' ).to.throw /invalid/
       expect( -> p.parseCommand param 'FSLAX12Y34' ).to.throw /invalid/
       expect( -> p.parseCommand param 'FSLAX34' ).to.throw /invalid/
       expect( -> p.parseCommand param 'FSLAY34' ).to.throw /invalid/
