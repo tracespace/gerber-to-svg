@@ -19,6 +19,10 @@ class GerberParser extends Parser
   # parse a format block
   parseFormat: (p, c) ->
     zero = if p[2] is 'L' or p[2] is 'T' then p[2] else null
+    # FIX: treat "no zero suppression" as "suppress tailing zero"
+    if not zero?
+      p = ' ' + p
+      zero = 'T'
     nota = if p[3] is 'A' or p[3] is 'I' then p[3] else null
     if p[4] is 'X' and p[7] is 'Y' and p[5..6] is p[8..9] and
     p[5] < 8 and p[6] < 8
