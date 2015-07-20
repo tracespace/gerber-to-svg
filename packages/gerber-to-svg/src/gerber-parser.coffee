@@ -30,8 +30,14 @@ class GerberParser extends Parser
     if not (m = p.match reFS)
       throw new Error 'invalid format specification'
     [_, zero, nota, pN, pM] = m
-    if zero isnt 'L' and zero isnt 'T' then zero = 'L' # defaults to leading
-    if nota isnt 'A' and nota isnt 'I' then nota = 'A' # defaults to absolute
+    if zero isnt 'L' and zero isnt 'T'
+      console.warn 'gerber zero suppression is not specified. assuming
+        leading zero suppression (same as no zero suppression)'
+      zero = 'L'
+    if nota isnt 'A' and nota isnt 'I'
+      console.warn 'gerber coordinate notation is not specified. assuming
+        absolute notation'
+      nota = 'A'
     @format.zero ?= zero
     @format.places ?= [Number(pN), Number(pM)]
     c.set ?= {}
