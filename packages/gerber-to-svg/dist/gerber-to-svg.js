@@ -328,7 +328,7 @@ module.exports = DrillReader;
 
 
 },{}],5:[function(require,module,exports){
-var GerberParser, Parser, getSvgCoord, parseCoord, reCOORD,
+var GerberParser, Parser, getSvgCoord, parseCoord, reCOORD, reFS,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
 
@@ -340,6 +340,8 @@ getSvgCoord = require('./svg-coord').get;
 
 reCOORD = /([XYIJ][+-]?\d+){1,4}/g;
 
+reFS = /^FS([A-Z]?)([A-Z]?)X([0-7])([0-7])Y\3\4/;
+
 GerberParser = (function(superClass) {
   extend(GerberParser, superClass);
 
@@ -348,20 +350,24 @@ GerberParser = (function(superClass) {
   }
 
   GerberParser.prototype.parseFormat = function(p, c) {
-    var base, base1, nota, places, zero;
-    zero = p[2] === 'L' || p[2] === 'T' ? p[2] : null;
-    nota = p[3] === 'A' || p[3] === 'I' ? p[3] : null;
-    if (p[4] === 'X' && p[7] === 'Y' && p.slice(5, 7) === p.slice(8, 10) && p[5] < 8 && p[6] < 8) {
-      places = [+p[5], +p[6]];
-    }
-    if ((places == null) || (nota == null) || (zero == null)) {
+    var _, base, base1, m, nota, pM, pN, zero;
+    if (!(m = p.match(reFS))) {
       throw new Error('invalid format specification');
+    }
+    _ = m[0], zero = m[1], nota = m[2], pN = m[3], pM = m[4];
+    if (zero !== 'L' && zero !== 'T') {
+      console.warn('gerber zero suppression is not specified. assuming leading zero suppression (same as no zero suppression)');
+      zero = 'L';
+    }
+    if (nota !== 'A' && nota !== 'I') {
+      console.warn('gerber coordinate notation is not specified. assuming absolute notation');
+      nota = 'A';
     }
     if ((base = this.format).zero == null) {
       base.zero = zero;
     }
     if ((base1 = this.format).places == null) {
-      base1.places = places;
+      base1.places = [Number(pN), Number(pM)];
     }
     if (c.set == null) {
       c.set = {};
