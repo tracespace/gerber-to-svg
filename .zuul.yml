@@ -1,6 +1,6 @@
 ui: mocha-bdd
 browsers:
-- name: chrome
+  - name: chrome
     version: 42..latest
   - name: safari
     version: 7..latest
