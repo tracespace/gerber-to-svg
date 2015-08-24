@@ -1,0 +1,47 @@
+{
+  "name": "gerber-parser",
+  "version": "0.0.1",
+  "description": "A PCB Gerber/drill-file parser implemented as a Node transform-stream",
+  "main": "lib/gerber-parser.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "bundle": "echo 'task not implemented' && exit 1",
+    "lint": "eslint",
+    "test": "mocha",
+    "test-watch": "mocha --watch",
+    "browser-test": "echo 'task not implemented' && exit 1",
+    "browser-test-phantom": "echo 'task not implemented' && exit 1",
+    "browser-test-sauce": "echo 'task not implemented' && exit 1"
+  },
+  "precommit": [
+    "lint"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcous/gerber-parser.git"
+  },
+  "keywords": [
+    "PCB",
+    "Gerber",
+    "drill",
+    "circuit",
+    "board",
+    "transform",
+    "stream",
+    "hardware",
+    "electronics"
+  ],
+  "author": "Mike Cousins <mike@cousins.io> (http://cousins.io/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mcous/gerber-parser/issues"
+  },
+  "homepage": "https://github.com/mcous/gerber-parser#readme",
+  "devDependencies": {
+    "eslint": "^1.2.1",
+    "mocha": "^2.2.5",
+    "pre-commit": "^1.1.1"
+  }
+}
