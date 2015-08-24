@@ -11,9 +11,9 @@
     "pretest": "npm run lint",
     "test": "istanbul cover --include-all-sources _mocha",
     "test-watch": "mocha --reporter dot --watch",
-    "browser-test": "echo 'task not implemented' && exit 1",
-    "browser-test-phantom": "echo 'task not implemented' && exit 1",
-    "browser-test-sauce": "echo 'task not implemented' && exit 1",
+    "browser-test": "zuul --local -- ./test/*_test.js",
+    "browser-test-phantom": "zuul --phantom -- ./test/*_test.js",
+    "browser-test-sauce": "zuul -- ./test/*_test.js",
     "ci": "npm run test && coveralls < ./coverage/lcov.info"
   },
   "precommit": [
@@ -41,11 +41,13 @@
   },
   "homepage": "https://github.com/mcous/gerber-parser#readme",
   "devDependencies": {
+    "babelify": "^6.2.0",
     "chai": "^3.2.0",
     "coveralls": "^2.11.4",
     "eslint": "^1.2.1",
     "istanbul": "^0.3.18",
     "mocha": "^2.2.5",
-    "pre-commit": "^1.1.1"
+    "pre-commit": "^1.1.1",
+    "zuul": "^3.3.0"
   }
 }
