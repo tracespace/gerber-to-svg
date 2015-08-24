@@ -8,7 +8,7 @@
   },
   "scripts": {
     "bundle": "echo 'task not implemented' && exit 1",
-    "lint": "eslint",
+    "lint": "eslint lib/*.js test/*.js",
     "test": "mocha",
     "test-watch": "mocha --watch",
     "browser-test": "echo 'task not implemented' && exit 1",
