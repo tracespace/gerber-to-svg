@@ -60,7 +60,7 @@ const normalizeCoord = function(number, format) {
       }
 
       // pad any missing zeros
-      before = before + '0'.repeat(leading - before.length)
+      before += '0'.repeat(Math.max(0, (leading - before.length)))
     }
     else if (format.zero === 'L') {
       for (let i = 0; i < numberString.length; i++) {
@@ -74,7 +74,7 @@ const normalizeCoord = function(number, format) {
       }
 
       // pad any missing zeros
-      after = '0'.repeat(trailing - after.length) + after
+      after = '0'.repeat(Math.max(0, (trailing - after.length))) + after
     }
     else {
       return NaN
@@ -82,9 +82,7 @@ const normalizeCoord = function(number, format) {
   }
 
   // pad after so we've got enough digits
-  while (after.length < COORD_E) {
-    after += '0'
-  }
+  after += '0'.repeat(Math.max(0, (COORD_E - after.length)))
 
   // throw in a decimal point
   before = before + after.slice(0, COORD_E)

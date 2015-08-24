@@ -1,12 +1,12 @@
 // test suite for normalize coordinate function
 // input: a coordinate string from a gerber file
-// output: an integer in 1/1000's of whatever unit the Gerber is in
+// output: an number in 1/1000's of whatever unit the Gerber is in
 'use strict'
 
-var expect = require('chai').expect
-var normalize = require('../lib/_normalize-coord')
+const expect = require('chai').expect
+const normalize = require('../lib/_normalize-coord')
 
-var FACTOR = 1000
+const FACTOR = 1000
 
 describe('normalize coordinate', function() {
   it('should return NaN for bad input', function() {
