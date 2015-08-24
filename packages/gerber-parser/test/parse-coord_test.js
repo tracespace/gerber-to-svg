@@ -45,4 +45,8 @@ describe('coordinate parser', function() {
       x: 1.1 * FACTOR, y: -2.02 * FACTOR, i: 3.3 * FACTOR, j: 43.2 * FACTOR
     })
   })
+
+  it('should return an empty object if no string is passed in', function() {
+    expect(parseCoord()).to.eql({})
+  })
 })
