@@ -9,7 +9,7 @@
   "scripts": {
     "bundle": "echo 'task not implemented' && exit 1",
     "lint": "eslint lib/*.js test/*.js",
-    "test": "mocha",
+    "test": "istanbul cover _mocha",
     "test-watch": "mocha --watch",
     "browser-test": "echo 'task not implemented' && exit 1",
     "browser-test-phantom": "echo 'task not implemented' && exit 1",
@@ -41,7 +41,9 @@
   "homepage": "https://github.com/mcous/gerber-parser#readme",
   "devDependencies": {
     "chai": "^3.2.0",
+    "coveralls": "^2.11.4",
     "eslint": "^1.2.1",
+    "istanbul": "^0.3.18",
     "mocha": "^2.2.5",
     "pre-commit": "^1.1.1"
   }
