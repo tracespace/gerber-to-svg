@@ -1,6 +1,7 @@
-// # file reader base class
-// # transform stream
-//
+// file reader base class
+// transform stream
+'use strict'
+
 // TransformStream = require('stream').Transform
 //
 // class Reader extends TransformStream

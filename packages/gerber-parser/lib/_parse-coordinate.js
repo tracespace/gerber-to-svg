@@ -1,6 +1,7 @@
 // cordinate parser function
 // takes in a string with X_____Y_____I_____J_____ and a format object
 // returns an object of {x: number, y: number, etc} for coordinates it finds
+'use strict'
 
 // # convert to gerber integer
 // getSvgCoord = require('./svg-coord').get

@@ -1,4 +1,6 @@
-// # test suite for coordinate parser function
+// test suite for coordinate parser function
+'use strict'
+
 // expect = require('chai').expect
 // parseCoord = require '../src/coord-parser'
 // # svg coordinate factor

@@ -1,4 +1,6 @@
-// # test suite for stream based file reader
+// test suite for stream based file reader
+'use strict'
+
 // stream = require('stream')
 // expect = require('chai').expect
 // Reader = require('../src/reader')

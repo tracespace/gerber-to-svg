@@ -1,21 +1,22 @@
 // test suite for normalize coordinate function
 // input: a coordinate string from a gerber file
 // output: an integer in 1/1000's of whatever unit the Gerber is in
+'use strict'
 
 var expect = require('chai').expect
 var normalize = require('../lib/_normalize-coord')
 
 var FACTOR = 1000
 
-describe('get svg coord function', function() {
+describe('normalize coordinate', function() {
   it('should return NaN for bad input', function() {
     expect(normalize()).to.be.NaN
     expect(normalize('0.1.2')).to.be.NaN
-    expect(normalize('123', {zero: 'L'})).to.be.NaN
-    expect(normalize('123', {zero: 'L', places: ['a', 2]})).to.be.NaN
-    expect(normalize('123', {zero: 'L', places: [2, 'b']})).to.be.NaN
+    expect(normalize('45', {zero: 'L'})).to.be.NaN
+    expect(normalize('78', {zero: 'L', places: ['a', 2]})).to.be.NaN
+    expect(normalize('90', {zero: 'L', places: [2, 'b']})).to.be.NaN
     expect(normalize('123', {zero: 'L', places: []})).to.be.NaN
-    expect(normalize('123', {zero: 'foo', places: [2, 4]})).to.be.NaN
+    expect(normalize('456', {zero: 'foo', places: [2, 4]})).to.be.NaN
   })
 
   it('should convert decimal numbers into proper coords', function() {

@@ -1,59 +1,99 @@
 // convert a decimal number or gerber/drill coordinate into an svg coordinate
 // coordinate is 1000x the gerber unit
+'use strict'
 
 // svg coordinate scaling factor and power of ten exponent
-// var SVG_COORD_E = 3
+const COORD_E = 3
 
 // function takes in the number string to be converted and the format object
-var normalizeCoord // = function(numberString, format) {
-  // # make sure we're dealing with a string
-  // if numberString? then numberString = "#{numberString}" else return NaN
-  //
-  // # pull out the sign and get the before and after segments ready
-  // before = ''
-  // after = ''
-  // sign = '+'
-  // if numberString[0] is '-' or numberString[0] is '+'
-  //   sign = numberString[0]
-  //   numberString = numberString[1..]
-  //
-  // # check if the number has a decimal point or has been explicitely flagged
-  // if ('.' in numberString) or (not format.zero?)
-  //   # make sure there's not more than one decimal
-  //   subNumbers = numberString.split '.'
-  //   if subNumbers.length > 2 then return NaN
-  //   [before, after] = [subNumbers[0], subNumbers[1] ? '']
-  //
-  // else
-  //   # otherwise we're going to need a number format
-  //   if typeof format?.places?[0] isnt 'number' or
-  //   typeof format?.places?[1] isnt 'number'
-  //     return NaN
-  //   # split according to traling zero suppression or leading zero suppression
-  //   if format.zero is 'T'
-  //     for c, i in numberString
-  //       if i < format.places[0] then before += c else after += c
-  //     # pad any missing zeros
-  //     before += '0' while before.length < format.places[0]
-  //   else if format.zero is 'L'
-  //     for c, i in numberString
-  //       if numberString.length - i <= format.places[1]
-  //         after += c
-  //       else
-  //         before += c
-  //     # pad any missing zeros
-  //     after = ('0' + after) while after.length < format.places[1]
-  //   else
-  //     return NaN
-  //
-  // # pad after so we've got enough digits
-  // after += '0' while after.length < SVG_COORD_E
-  // # throw in a decimal point
-  // before = before + after[0...SVG_COORD_E]
-  // after = if after.length > SVG_COORD_E then ".#{after[SVG_COORD_E..]}" else ''
-  //
-  // # finally, parse the numberString
-  // Number(sign + before + after)
-// }
+const normalizeCoord = function(number, format) {
+  // make sure we're dealing with a string
+  if (number == null) {
+    return NaN
+  }
+  let numberString = '' + number
+
+  // pull out the sign and get the before and after segments ready
+  let before = ''
+  let after = ''
+  let sign = '+'
+  if ((numberString[0] === '-') || (numberString[0] === '+')) {
+    sign = numberString[0]
+    numberString = numberString.slice(1)
+  }
+
+  // check if the number has a decimal point or has been explicitely flagged
+  // if it does, we can just split by the decimal point to get leading and trailing
+  if (numberString.includes('.') || (format.zero == null)) {
+    // make sure there's not more than one decimal
+    let subNumbers = numberString.split('.')
+    if (subNumbers.length > 2) {
+      return NaN
+    }
+    before = subNumbers[0]
+    after = subNumbers[1] || ''
+  }
+
+  // otherwise we need to use the number format to split up the string properly
+  else {
+    // make sure format is valid
+    if (format.places == null || format.places.length !== 2) {
+      return NaN
+    }
+
+    let leading = format.places[0]
+    let trailing = format.places[1]
+    if (!Number.isFinite(leading) || !Number.isFinite(trailing)) {
+      return NaN
+    }
+
+    // split according to trailing zero suppression or leading zero suppression
+    if (format.zero === 'T') {
+      for (let i = 0; i < numberString.length; i++) {
+        let c = numberString[i]
+        if (i < leading) {
+          before += c
+        }
+        else {
+          after += c
+        }
+      }
+
+      // pad any missing zeros
+      before = before + '0'.repeat(leading - before.length)
+    }
+    else if (format.zero === 'L') {
+      for (let i = 0; i < numberString.length; i++) {
+        let c = numberString[i]
+        if (numberString.length - i <= trailing) {
+          after += c
+        }
+        else {
+          before += c
+        }
+      }
+
+      // pad any missing zeros
+      after = '0'.repeat(trailing - after.length) + after
+    }
+    else {
+      return NaN
+    }
+  }
+
+  // pad after so we've got enough digits
+  while (after.length < COORD_E) {
+    after += '0'
+  }
+
+  // throw in a decimal point
+  before = before + after.slice(0, COORD_E)
+  after = (after.length > COORD_E)
+    ? '.' + after.slice(COORD_E)
+    : ''
+
+  // finally, parse the numberString
+  return Number(sign + before + after)
+}
 
 module.exports = normalizeCoord
