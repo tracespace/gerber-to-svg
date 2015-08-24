@@ -1,0 +1,14 @@
+sudo: false
+language: node_js
+node_js:
+- iojs
+script: npm run-script ci
+deploy:
+  provider: npm
+  email: mike@cousins.io
+  api_key:
+    secure: LRLw5Hp7huwE9YK9afd/ls3BMv4M0x2nm0iN4NSfNTaP9pvKZH6gLRaC/T2BmuDBN/R/OdEfoxvslk6lM6xlCuFAHBUpfdaDoe89uOUjOiZigcVLPoW0/M3iHu5PfFB/SoEy7SR90+9VZJjjx/or0jPqx2kk7seiwTiK4GHnxCTOUn3fCjzAUVUFKreCfjcvPiawiY9cRbPpWnB/1yHyvmjfIEwEe1lGnCJKq97NvTim/c7TzWIAMvzwQRqn6zVNhfXPS3vY/OioEuIFPOhKJFgchPHWOiaNy+5+w1CmTyWNSpyYkBN4R4QnxqHpgUITBTfMw9CVXV47fxUgkj581JJFmOK3qFm77l1Po2rGHNrTCgCAYqJvIsy+3wMdHBw6tOW1oprr3grUt1GR5mZ4U54D0RAoNT+MgMB+hqlkPGN7YQ6WTumLMY9ei3Sp5Zy/xeWuy4QLM4/oGA40RxdYVEL/SxQ+wlWm9Lm3Y95vshlxolznKfLviIwWKw+9oTSZZlvliO/m/UNgmUkI+Z2eNMk1FIv8xqUP7+l6W82GLU/LIt6J14oQv51UtfWcl6iNOCwQ6FJCxwLhtHK/rvVaEuRWq8jbIO1v111YbToVlZmcu6TRd/mIrCu9GIKQtBo/cRmdDn9st+7wyPROx+0NdhsdKoesyK6F6G8OoGpQnhs=
+  on:
+    node: iojs
+    tags: true
+    all_branches: true

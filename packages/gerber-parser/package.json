@@ -7,13 +7,14 @@
     "test": "test"
   },
   "scripts": {
-    "bundle": "echo 'task not implemented' && exit 1",
     "lint": "eslint lib/*.js test/*.js",
-    "test": "istanbul cover _mocha",
-    "test-watch": "mocha --watch",
+    "pretest": "npm run lint",
+    "test": "istanbul cover --include-all-sources _mocha",
+    "test-watch": "mocha --reporter dot --watch",
     "browser-test": "echo 'task not implemented' && exit 1",
     "browser-test-phantom": "echo 'task not implemented' && exit 1",
-    "browser-test-sauce": "echo 'task not implemented' && exit 1"
+    "browser-test-sauce": "echo 'task not implemented' && exit 1",
+    "ci": "npm run test && coveralls < ./coverage/lcov.info"
   },
   "precommit": [
     "lint"
