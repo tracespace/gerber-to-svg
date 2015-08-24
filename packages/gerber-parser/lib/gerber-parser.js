@@ -28,15 +28,12 @@ function GerberParser(opts) {
     throw new Error("parser zero format must be either 'L' or 'T'")
   }
 
-  Transform.call()
+  Transform.call({decodeStrings: false, readableObjectMode: true})
 }
 
-// _transform: (chunk, encoding, done) ->
-//   if chunk.block?
-//     @parseBlock chunk.block, chunk.line, done
-//   else if chunk.param?
-//     @parseParam chunk.param, chunk.line, done
-//   else
-//     done()
+GerberParser.prototype._transform = function(chunk, encoding, done) {
+  this.push({error: 'not implemented'})
+  done()
+}
 
 module.exports = GerberParser
