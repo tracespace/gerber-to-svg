@@ -46,6 +46,7 @@
     "coveralls": "^2.11.4",
     "eslint": "^1.2.1",
     "istanbul": "^0.3.18",
+    "lodash.bind": "^3.1.0",
     "mocha": "^2.2.5",
     "pre-commit": "^1.1.1",
     "zuul": "^3.3.0"

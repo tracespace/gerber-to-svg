@@ -2,38 +2,24 @@
 'use strict'
 
 const Transform = require('stream').Transform
-const util = require('util')
+const applyOptions = require('./_apply-options')
 
-util.inherits(GerberParser, Transform)
-function GerberParser(opts) {
-  if (opts == null) {
-    opts = {}
-  }
-  this.format = {
-    zero: opts.zero || null,
-    places: opts.places || null
-  }
-
-  // make sure places was set correctly
-  if (this.format.places) {
-    if ((this.format.places.length !== 2) ||
-    (!Number.isFinite(this.format.places[0])) ||
-    (!Number.isFinite(this.format.places[1]))) {
-      throw new Error('parser places format must be an array of two numbers')
-    }
-  }
-
-  // make sure zero was set correctly
-  if (this.format.zero && (this.format.zero !== 'L') && (this.format.zero !== 'T')) {
-    throw new Error("parser zero format must be either 'L' or 'T'")
-  }
-
-  Transform.call({decodeStrings: false, readableObjectMode: true})
-}
-
-GerberParser.prototype._transform = function(chunk, encoding, done) {
+const transform = function(chunk, encoding, done) {
   this.push({error: 'not implemented'})
   done()
 }
 
-module.exports = GerberParser
+const parser = function(opts) {
+  // create a transform stream
+  let stream = new Transform({
+    decodeStrings: false,
+    readableObjectMode: true,
+    transform
+  })
+
+  // apply options and return
+  applyOptions(opts, stream)
+  return stream
+}
+
+module.exports = parser

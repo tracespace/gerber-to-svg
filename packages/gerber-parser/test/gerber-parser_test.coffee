@@ -27,75 +27,75 @@ describe 'gerber command parser', ->
         p.removeListener 'readable', handler
         cb()
 
-  it 'should ignore comments (start with G04)', (done) ->
-    initialFormat = { zero: p.format.zero, places: p.format.places }
-
-    p.once 'readable', ->
-      throw new Error 'comment triggered a push'
-
-    p.write block 'G04 MOIN'
-    p.write block 'G04 this is a comment'
-    p.write block 'G04 D03'
-    p.write block 'G04 D02'
-    p.write block 'G04 G36'
-    p.write block 'G04 M02'
-
-    setTimeout ->
-      expect(p.format).to.eql initialFormat
-      done()
-    , 1
+  # it 'should ignore comments (start with G04)', (done) ->
+  #   initialFormat = { zero: p.format.zero, places: p.format.places }
+  #
+  #   p.once 'readable', ->
+  #     throw new Error 'comment triggered a push'
+  #
+  #   p.write block 'G04 MOIN'
+  #   p.write block 'G04 this is a comment'
+  #   p.write block 'G04 D03'
+  #   p.write block 'G04 D02'
+  #   p.write block 'G04 G36'
+  #   p.write block 'G04 M02'
+  #
+  #   setTimeout ->
+  #     expect(p.format).to.eql initialFormat
+  #     done()
+  #   , 1
 
   describe 'parsing the format block', ->
-    it 'should parse absolute notation', (done) ->
-      p.once 'readable', ->
-        data = p.read()
-        expect(data.line).to.eql 2
-        expect(data.set.notation).to.eql 'A'
-        done()
+    # it 'should parse absolute notation', (done) ->
+    #   p.once 'readable', ->
+    #     data = p.read()
+    #     expect(data.line).to.eql 2
+    #     expect(data.set.notation).to.eql 'A'
+    #     done()
+    #
+    #   p.write param 'FSLAX34Y34', 2
 
-      p.write param 'FSLAX34Y34', 2
+    # it 'should parse incremental notation', (done) ->
+    #   p.once 'readable', ->
+    #     data = p.read()
+    #     expect(data.line).to.eql 3
+    #     expect(data.set.notation).to.eql 'I'
+    #     done()
+    #
+    #   p.write param 'FSLIX34Y34', 3
 
-    it 'should parse incremental notation', (done) ->
-      p.once 'readable', ->
-        data = p.read()
-        expect(data.line).to.eql 3
-        expect(data.set.notation).to.eql 'I'
-        done()
+    # it "should set the plotter's epsilon value", (done) ->
+    #   p.once 'readable', ->
+    #     data = p.read()
+    #     expect(data.line).to.eql 2
+    #     expect(data.set.epsilon).to.equal 0.15
+    #     done()
+    #
+    #   p.write param 'FSLAX34Y34', 2
 
-      p.write param 'FSLIX34Y34', 3
+    # it 'should parse zero suppression and coordinate places', ->
+    #   p.write param 'FSTAX77Y77', 1
+    #   expect(p.format.zero).to.eql 'T'
+    #   expect(p.format.places).to.eql [7,7]
+    #   p = new Parser()
+    #   p.write param 'FSLAX34Y34', 1
+    #   expect(p.format.zero).to.eql 'L'
+    #   expect(p.format.places).to.eql [3,4]
 
-    it "should set the plotter's epsilon value", (done) ->
-      p.once 'readable', ->
-        data = p.read()
-        expect(data.line).to.eql 2
-        expect(data.set.epsilon).to.equal 0.15
-        done()
-
-      p.write param 'FSLAX34Y34', 2
-
-    it 'should parse zero suppression and coordinate places', ->
-      p.write param 'FSTAX77Y77', 1
-      expect(p.format.zero).to.eql 'T'
-      expect(p.format.places).to.eql [7,7]
-      p = new Parser()
-      p.write param 'FSLAX34Y34', 1
-      expect(p.format.zero).to.eql 'L'
-      expect(p.format.places).to.eql [3,4]
-
-    it 'should not override user set places or zero suppression', ->
-      p = new Parser {places: [4, 7], zero: 'T'}
-      p.write param 'FSLAX34Y34'
-      expect(p.format.zero).to.eql 'T'
-      expect(p.format.places).to.eql [4,7]
-
-    it 'should not reset the epsilon value given overide places', (done) ->
-      p = new Parser {places: [4, 7], zero: 'T'}
-      p.once 'readable', ->
-        data = p.read()
-        expect(data.set.epsilon).to.equal 0.00015
-        done()
-
-      p.write param 'FSLAX34Y34'
+    # it 'should not override user set places or zero suppression', ->
+    #   p = new Parser {places: [4, 7], zero: 'T'}
+    #   p.write param 'FSLAX34Y34'
+    #   expect(p.format.zero).to.eql 'T'
+    #   expect(p.format.places).to.eql [4,7]
+    #
+    # it 'should not reset the epsilon value given overide places', (done) ->
+    #   p = new Parser {places: [4, 7], zero: 'T'}
+    #   p.once 'readable', ->
+    #     data = p.read()
+    #     expect(data.set.epsilon).to.equal 0.00015
+    #     done()
+    #
+    #   p.write param 'FSLAX34Y34'
 
     it 'should emit an error for bad notation', (done) ->
       p.once 'error', (e) ->

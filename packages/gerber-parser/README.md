@@ -12,23 +12,44 @@ A printed circuit board Gerber and drill file parser. Implemented as a Node tran
 
 This module is written in ES2016, and thus requires iojs/Node >= v3.0.0. To run in the browser, it should be transpiled to ES5 with a tool like [Babel](https://babeljs.io/) and bundled with a tool like [browserify](http://browserify.org/) or [webpack](http://webpack.github.io/).
 
+Tested natively in iojs v3.1.0 and with Babel and the Babel polyfill in the latest versions of Chrome, Safari, Firefox, and Internet Explorer.
+
 `$ npm install gerber-parser`
 
 ``` javascript
 var fs = require('fs')
-var GerberParser = require('gerber-parser')
+var gerberParser = require('gerber-parser')
 
-var gerberParser = new GerberParser()
-gerberParser.on('warning', function(w) {
+var parser = gerberParser()
+parser.on('warning', function(w) {
   console.warn(w.message)
 })
 
 fs.createReadStream('/path/to/gerber/file.gbr', {encoding: 'utf8'})
-  .pipe(gerberParser)
+  .pipe(parser)
   .on('data', function(obj) {
     console.log(obj)
   })
 ```
+
+### options
+
+The gerberParser factory function takes an options object and returns a transform stream. The options object can be used to override or certain details that would normally be parsed from the Gerber file or may be missing from the file entirely (which can happen a lot, especially with drill files).
+
+``` javascript
+var options = {
+  places: [3, 5],
+  zero: 'L'
+}
+var parser = gerberParser(options)
+```
+
+The available options are:
+
+ key    | value      | description
+--------|------------|-------------
+ places | [int, int] | Places before and after the decimal in coordinates
+ zero   | 'L' or 'T' | Leading or trailing zero suppression
 
 ## developing and contributing
 
