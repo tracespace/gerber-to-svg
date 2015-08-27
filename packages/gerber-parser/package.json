@@ -40,6 +40,10 @@
     "url": "https://github.com/mcous/gerber-parser/issues"
   },
   "homepage": "https://github.com/mcous/gerber-parser#readme",
+  "dependencies": {
+    "lodash.pick": "^3.1.0",
+    "lodash.assign": "^3.2.0"
+  },
   "devDependencies": {
     "babelify": "^6.2.0",
     "chai": "^3.2.0",
@@ -47,6 +51,7 @@
     "eslint": "^1.2.1",
     "istanbul": "^0.3.18",
     "lodash.bind": "^3.1.0",
+    "lodash.partial": "^3.1.1",
     "mocha": "^2.2.5",
     "pre-commit": "^1.1.1",
     "zuul": "^3.3.0"
