@@ -2,12 +2,14 @@
 // takes a string, transform stream, and a done callback
 'use strict'
 
+const commands = require('./_commands')
+
 // format spec regexp courtesy @summivox
 // const reFORMAT = /%FS([LT]?)([AI]?)X([0-7])([0-7])Y\3\4\*%/
 
-var parse = function(parser, block) {
+var parse = function(parser, block, line) {
   if (block === 'M02') {
-    return {set: {done: true}}
+    return commands.set(line, 'done', true)
   }
 
   return null

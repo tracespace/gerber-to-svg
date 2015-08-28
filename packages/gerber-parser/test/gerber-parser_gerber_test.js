@@ -30,7 +30,10 @@ describe('gerber parser with gerber files', function() {
 
   it('should end the file with a M02', function(done) {
     p.once('data', function(res) {
-      expect(res).to.eql({set: {done: true}})
+      expect(res.cmd).to.equal('set')
+      expect(res.key).to.equal('done')
+      expect(res.val).to.equal(true)
+      expect(res.line).to.equal(0)
       done()
     })
 

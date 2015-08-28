@@ -33,7 +33,7 @@ const transform = function(chunk, encoding, done) {
     this.index += next.read
     this.line += next.lines
 
-    const block = parseGerber(this, next.block)
+    const block = parseGerber(this, next.block, this.line)
     if (block) {
       this.push(block)
     }
