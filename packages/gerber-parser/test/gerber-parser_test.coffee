@@ -210,211 +210,211 @@ describe 'gerber command parser', ->
           p.write param 'ADD10P,0X4'
 
   describe 'aperture macro blocks', ->
-    it 'should get the name', (done) ->
-      p.once 'readable', ->
-        data = p.read()
-        expect(data.macro.RECT1).to.exist
-        done()
+    # it 'should get the name', (done) ->
+    #   p.once 'readable', ->
+    #     data = p.read()
+    #     expect(data.macro.RECT1).to.exist
+    #     done()
+    #
+    #   p.write param 'AMRECT1', 1
+    #   p.write param false
 
-      p.write param 'AMRECT1', 1
-      p.write param false
+    # it 'should know when the aperture macro is over', (done) ->
+    #   type = 'macro'
+    #   cb = done
+    #   results = [
+    #     {RECT1: []}
+    #     {RECT2: []}
+    #   ]
+    #
+    #   p.on 'readable', handler
+    #   p.write param 'AMRECT1', 1
+    #   p.write param false, 2
+    #   p.write param 'AMRECT2', 3
+    #   p.write param false, 4
 
-    it 'should know when the aperture macro is over', (done) ->
-      type = 'macro'
-      cb = done
-      results = [
-        {RECT1: []}
-        {RECT2: []}
-      ]
-
-      p.on 'readable', handler
-      p.write param 'AMRECT1', 1
-      p.write param false, 2
-      p.write param 'AMRECT2', 3
-      p.write param false, 4
-
-    it 'should differentiate between macro and other params ending', (done) ->
-      handleReadable = ->
-        result = p.read()
-        expect(result.macro).to.not.exist
-
-      p.on 'readable', handleReadable
-      p.write param 'FSLAX34Y34', 1
-      p.write param false, 1
-
-      setTimeout ->
-        p.removeListener 'readable', handleReadable
-        done()
-      , 10
+    # it 'should differentiate between macro and other params ending', (done) ->
+    #   handleReadable = ->
+    #     result = p.read()
+    #     expect(result.macro).to.not.exist
+    #
+    #   p.on 'readable', handleReadable
+    #   p.write param 'FSLAX34Y34', 1
+    #   p.write param false, 1
+    #
+    #   setTimeout ->
+    #     p.removeListener 'readable', handleReadable
+    #     done()
+    #   , 10
 
     describe 'primitive blocks', ->
-      it 'should parse a circle primitive', (done) ->
-        p.once 'readable', ->
-          r = p.read()
-          expect(r.macro.CIRC1).to.eql [
-            {shape: 'circle', exp: '1', dia: '5-$1', cx: '1', cy: '2'}
-          ]
-          done()
+      # it 'should parse a circle primitive', (done) ->
+      #   p.once 'readable', ->
+      #     r = p.read()
+      #     expect(r.macro.CIRC1).to.eql [
+      #       {shape: 'circle', exp: '1', dia: '5-$1', cx: '1', cy: '2'}
+      #     ]
+      #     done()
+      #
+      #   p.write param 'AMCIRC1', 1
+      #   p.write param '1,1,5-$1,1,2', 2
+      #   p.write param false, 2
 
-        p.write param 'AMCIRC1', 1
-        p.write param '1,1,5-$1,1,2', 2
-        p.write param false, 2
+      # it 'should parse a vector primitive', (done) ->
+      #   type = 'macro'
+      #   cb = done
+      #   results = [
+      #     {
+      #       VECT1: [
+      #         {
+      #           shape: 'vector'
+      #           exp: '1'
+      #           width: '2'
+      #           x1: '3'
+      #           y1: '4'
+      #           x2: '5'
+      #           y2: '6'
+      #           rot: '7'
+      #         }
+      #       ]
+      #     }
+      #     {
+      #       VECT2: [
+      #         {
+      #           shape: 'vector'
+      #           exp: '0'
+      #           width: '$1'
+      #           x1: '$2'
+      #           y1: '$3'
+      #           x2: '$4'
+      #           y2: '$5'
+      #           rot: '$6'
+      #         }
+      #       ]
+      #     }
+      #   ]
+      #
+      #   p.on 'readable', handler
+      #   p.write param 'AMVECT1', 1
+      #   p.write param '2,1,2,3,4,5,6,7', 2
+      #   p.write param false, 2
+      #   p.write param 'AMVECT2', 3
+      #   p.write param '20,0,$1,$2,$3,$4,$5,$6', 4
+      #   p.write param false, 4
 
-      it 'should parse a vector primitive', (done) ->
-        type = 'macro'
-        cb = done
-        results = [
-          {
-            VECT1: [
-              {
-                shape: 'vector'
-                exp: '1'
-                width: '2'
-                x1: '3'
-                y1: '4'
-                x2: '5'
-                y2: '6'
-                rot: '7'
-              }
-            ]
-          }
-          {
-            VECT2: [
-              {
-                shape: 'vector'
-                exp: '0'
-                width: '$1'
-                x1: '$2'
-                y1: '$3'
-                x2: '$4'
-                y2: '$5'
-                rot: '$6'
-              }
-            ]
-          }
-        ]
+      # it 'should parse a rectangle primitive', (done) ->
+      #   type = 'macro'
+      #   cb = done
+      #   results = [
+      #     {
+      #       RECT1: [
+      #         {
+      #           shape: 'rect'
+      #           exp: '1'
+      #           width: '2'
+      #           height: '3'
+      #           cx: '4'
+      #           cy: '5'
+      #           rot: '6'
+      #         }
+      #       ]
+      #     }
+      #     {
+      #       RECT2: [
+      #         {
+      #           shape: 'rect'
+      #           exp: '0'
+      #           width: '$1'
+      #           height: '$2'
+      #           cx: '$3'
+      #           cy: '$4'
+      #           rot: '$5'
+      #         }
+      #       ]
+      #     }
+      #   ]
+      #
+      #   p.on 'readable', handler
+      #   p.write param 'AMRECT1', 1
+      #   p.write param '21,1,2,3,4,5,6', 2
+      #   p.write param false, 2
+      #   p.write param 'AMRECT2', 3
+      #   p.write param '21,0,$1,$2,$3,$4,$5', 4
+      #   p.write param false, 4
 
-        p.on 'readable', handler
-        p.write param 'AMVECT1', 1
-        p.write param '2,1,2,3,4,5,6,7', 2
-        p.write param false, 2
-        p.write param 'AMVECT2', 3
-        p.write param '20,0,$1,$2,$3,$4,$5,$6', 4
-        p.write param false, 4
+      # it 'should parse a lower left rectangle primitive', (done) ->
+      #   type = 'macro'
+      #   cb = done
+      #   results = [
+      #     {
+      #       RECT1: [
+      #         {
+      #           shape: 'lowerLeftRect'
+      #           exp: '1'
+      #           width: '2'
+      #           height: '3'
+      #           x: '4'
+      #           y: '5'
+      #           rot: '6'
+      #         }
+      #       ]
+      #     }
+      #     {
+      #       RECT2: [
+      #         {
+      #           shape: 'lowerLeftRect'
+      #           exp: '0'
+      #           width: '$1'
+      #           height: '$2'
+      #           x: '$3'
+      #           y: '$4'
+      #           rot: '$5'
+      #         }
+      #       ]
+      #     }
+      #   ]
+      #
+      #   p.on 'readable', handler
+      #   p.write param 'AMRECT1', 1
+      #   p.write param '22,1,2,3,4,5,6', 2
+      #   p.write param false, 2
+      #   p.write param 'AMRECT2', 3
+      #   p.write param '22,0,$1,$2,$3,$4,$5', 4
+      #   p.write param false, 4
 
-      it 'should parse a rectangle primitive', (done) ->
-        type = 'macro'
-        cb = done
-        results = [
-          {
-            RECT1: [
-              {
-                shape: 'rect'
-                exp: '1'
-                width: '2'
-                height: '3'
-                cx: '4'
-                cy: '5'
-                rot: '6'
-              }
-            ]
-          }
-          {
-            RECT2: [
-              {
-                shape: 'rect'
-                exp: '0'
-                width: '$1'
-                height: '$2'
-                cx: '$3'
-                cy: '$4'
-                rot: '$5'
-              }
-            ]
-          }
-        ]
-
-        p.on 'readable', handler
-        p.write param 'AMRECT1', 1
-        p.write param '21,1,2,3,4,5,6', 2
-        p.write param false, 2
-        p.write param 'AMRECT2', 3
-        p.write param '21,0,$1,$2,$3,$4,$5', 4
-        p.write param false, 4
-
-      it 'should parse a lower left rectangle primitive', (done) ->
-        type = 'macro'
-        cb = done
-        results = [
-          {
-            RECT1: [
-              {
-                shape: 'lowerLeftRect'
-                exp: '1'
-                width: '2'
-                height: '3'
-                x: '4'
-                y: '5'
-                rot: '6'
-              }
-            ]
-          }
-          {
-            RECT2: [
-              {
-                shape: 'lowerLeftRect'
-                exp: '0'
-                width: '$1'
-                height: '$2'
-                x: '$3'
-                y: '$4'
-                rot: '$5'
-              }
-            ]
-          }
-        ]
-
-        p.on 'readable', handler
-        p.write param 'AMRECT1', 1
-        p.write param '22,1,2,3,4,5,6', 2
-        p.write param false, 2
-        p.write param 'AMRECT2', 3
-        p.write param '22,0,$1,$2,$3,$4,$5', 4
-        p.write param false, 4
-
-      it 'should parse a outline polygon', (done) ->
-        type = 'macro'
-        cb = done
-        results = [
-          {
-            OUT1: [
-              {
-                shape: 'outline'
-                exp: '1'
-                points: ['1', '2', '3', '4', '5', '6', '7', '8']
-                rot: '9'
-              }
-            ]
-          }
-          {
-            OUT2: [
-              {
-                shape: 'outline'
-                exp: '0'
-                points: ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8']
-                rot: '$9'
-              }
-            ]
-          }
-        ]
-
-        p.on 'readable', handler
-        p.write param 'AMOUT1', 1
-        p.write param '4,1,3,1,2,3,4,5,6,7,8,9', 2
-        p.write param false, 2
-        p.write param 'AMOUT2', 3
-        p.write param '4,0,3,$1,$2,$3,$4,$5,$6,$7,$8,$9', 4
-        p.write param false, 4
+      # it 'should parse a outline polygon', (done) ->
+      #   type = 'macro'
+      #   cb = done
+      #   results = [
+      #     {
+      #       OUT1: [
+      #         {
+      #           shape: 'outline'
+      #           exp: '1'
+      #           points: ['1', '2', '3', '4', '5', '6', '7', '8']
+      #           rot: '9'
+      #         }
+      #       ]
+      #     }
+      #     {
+      #       OUT2: [
+      #         {
+      #           shape: 'outline'
+      #           exp: '0'
+      #           points: ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8']
+      #           rot: '$9'
+      #         }
+      #       ]
+      #     }
+      #   ]
+      #
+      #   p.on 'readable', handler
+      #   p.write param 'AMOUT1', 1
+      #   p.write param '4,1,3,1,2,3,4,5,6,7,8,9', 2
+      #   p.write param false, 2
+      #   p.write param 'AMOUT2', 3
+      #   p.write param '4,0,3,$1,$2,$3,$4,$5,$6,$7,$8,$9', 4
+      #   p.write param false, 4
 
       it 'should parse a regular polygon', (done) ->
         type = 'macro'
@@ -607,33 +607,3 @@ describe 'gerber command parser', ->
         p.write param 'AMVAR1', 6
         p.write param '$3=$1X($2X$3)', 7
         p.write param false, 7
-
-  it 'should not emit anything if passed empty param', (done) ->
-    p.once 'readable', ->
-      throw new Error 'empty block emitted something'
-
-    p.write param '', 100
-    setTimeout done, 10
-
-  it 'should not emit anything if passed empty block', (done) ->
-    p.once 'readable', ->
-      throw new Error 'empty param emitted something'
-
-    p.write block '', 100
-    setTimeout done, 10
-
-  it 'should handle empty objects in the stream without complaint', (done) ->
-    p.once 'error', -> throw new Error 'complained'
-    p.once 'warning', -> throw new Error 'complained'
-
-    reads = 0
-    handleReadable = ->
-      p.read()
-      if ++reads >= 2
-        p.removeListener 'readable', handleReadable
-        done()
-
-    p.on 'readable', handleReadable
-    p.write param 'MOMM', 1
-    p.write {}
-    p.write block 'G71', 2

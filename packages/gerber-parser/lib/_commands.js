@@ -21,5 +21,11 @@ const op = function(key, val) {
   return {cmd: 'op', line: -1, key, val}
 }
 
-const commandMap = {set: set, done: done, level: level, tool: tool, op: op}
+const macro = function(key, val) {
+  return {cmd: 'macro', line: -1, key, val}
+}
+
+const commandMap = {
+  set: set, done: done, level: level, tool: tool, op: op, macro: macro
+}
 module.exports = commandMap

@@ -39,10 +39,14 @@ const getNext = function(type, chunk, start) {
       }
       else {
         paramFound = true
+        found.pop()
       }
     }
     else if (c === split) {
       splitFound = true
+      if (paramStarted) {
+        found.push(c)
+      }
     }
     else if ((' ' <= c) && (c <= '~')) {
       found.push(c)
@@ -52,8 +56,9 @@ const getNext = function(type, chunk, start) {
     blockFound = (splitFound && ((!paramStarted) || paramFound))
   }
 
-  const block = found.join('')
-  return {lines, read, block}
+  const block = (blockFound) ? found.join('') : ''
+  const rem = (!blockFound) ? found.join('') : ''
+  return {lines, read, block, rem}
 }
 
 module.exports = getNext

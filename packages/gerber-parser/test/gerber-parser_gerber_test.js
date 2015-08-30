@@ -30,7 +30,16 @@ describe('gerber parser with gerber files', function() {
 
   it('should do nothing with comments', function(done) {
     p.once('data', function() {
+      p.removeAllListeners('warning').removeAllListeners('error')
       throw new Error('should not have emitted from comments')
+    })
+    p.once('warning', function() {
+      p.removeAllListeners('data').removeAllListeners('error')
+      throw new Error('should not have warned from comments')
+    })
+    p.once('error', function() {
+      p.removeAllListeners('warning').removeAllListeners('data')
+      throw new Error('should not have errored from comments')
     })
 
     p.write('G04 MOIN*')
@@ -42,13 +51,60 @@ describe('gerber parser with gerber files', function() {
     setTimeout(done, 1)
   })
 
-  it('should end the file with a M02', function(done) {
-    p.once('data', function(res) {
-      expect(res.cmd).to.equal('done')
-      expect(res.line).to.equal(0)
+  it('should do nothing with "empty" blocks', function(done) {
+    p.once('data', function() {
+      p.removeAllListeners('warning').removeAllListeners('error')
+      throw new Error('should not have emitted from empty block')
+    })
+    p.once('warning', function() {
+      p.removeAllListeners('data').removeAllListeners('error')
+      throw new Error('should not have warned from empty block')
+    })
+    p.once('error', function() {
+      p.removeAllListeners('warning').removeAllListeners('data')
+      throw new Error('should not have errored from empty block')
+    })
+
+    p.write('*\n')
+    p.write('\n')
+    p.write('')
+    p.write('\n\n\n')
+    setTimeout(done, 1)
+  })
+
+  it('should warn if a block is unhandled', function(done) {
+    p.once('warning', function(w) {
+      expect(w.line).to.equal(0)
+      expect(w.message).to.match(/not recognized/)
       done()
     })
 
+    p.write('foobarbaz*\n')
+  })
+
+  it('should handle split blocks', function(done) {
+    p.once('data', function() {
+      p.removeAllListeners('warning').removeAllListeners('error')
+      throw new Error('should not have emitted from split comment')
+    })
+    p.once('warning', function() {
+      p.removeAllListeners('data').removeAllListeners('error')
+      throw new Error('should not have warned from split comment')
+    })
+    p.once('error', function() {
+      p.removeAllListeners('warning').removeAllListeners('data')
+      throw new Error('should not have errored from split comment')
+    })
+
+    p.write('G04 thi')
+    p.write('s is a comment*\n')
+    setTimeout(done, 1)
+  })
+
+  it('should end the file with a M02', function(done) {
+    const expected = [{cmd: 'done', line: 0}]
+
+    expectResults(expected, done)
     p.write('M02*\n')
   })
 
@@ -324,7 +380,137 @@ describe('gerber parser with gerber files', function() {
   })
 
   describe('aperture macros', function() {
+    it('should parse the name of the macro properly', function(done) {
+      const expected = [
+        {cmd: 'macro', line: 0, key: 'NAME1', val: []},
+        {cmd: 'macro', line: 1, key: 'CRAZY8', val: []}
+      ]
 
+      expectResults(expected, done)
+      p.write('%AMNAME1*%\n')
+      p.write('%AMCRAZY8*%\n')
+    })
+
+    describe('primitive blocks', function() {
+      const exp = '1'
+      it('should parse circle primitives', function(done) {
+        const expectedBlocks = [
+          {type: 'circle', exp, dia: '5', cx: '1', cy: '2'}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'CIRC1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMCIRC1*\n')
+        p.write('1,1,5,1,2*%\n')
+      })
+
+      it('should parse vector primitives', function(done) {
+        const width = '2'
+        const x1 = '3'
+        const y1 = '4'
+        const x2 = '5'
+        const y2 = '6'
+        const rot = '7'
+        const expectedBlocks = [
+          {type: 'vect', exp, width, x1, y1, x2, y2, rot},
+          {type: 'vect', exp, width, x1, y1, x2, y2, rot}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 2, key: 'VECT1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMVECT1*\n')
+        p.write('2,1,2,3,4,5,6,7*\n')
+        p.write('20,1,2,3,4,5,6,7*%\n')
+      })
+
+      it('should warn that primitive code 2 is deprecated', function(done) {
+        p.once('warning', function(w) {
+          expect(w.line).to.equal(1)
+          expect(w.message).to.match(/vector.*deprecated/)
+          done()
+        })
+
+        p.write('%AMVECT1*\n')
+        p.write('2,1,2,3,4,5,6,7*%\n')
+      })
+
+      it('should parse rectangle primitives', function(done) {
+        const width = '2'
+        const height = '3'
+        const expectedBlocks = [
+          {type: 'rect', exp, width, height, cx: '4', cy: '5', rot: '6'}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'RECT1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMRECT1*\n')
+        p.write('21,1,2,3,4,5,6*%\n')
+      })
+
+      it('should parse a lower left rectangle primitive', function(done) {
+        const width = '2'
+        const height = '3'
+        const expectedBlocks = [
+          {type: 'rectLL', exp, width, height, x: '4', y: '5', rot: '6'}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'RECTLL1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMRECTLL1*\n')
+        p.write('22,1,2,3,4,5,6*%\n')
+      })
+
+      it('should warn that primitive code 22 is deprecated', function(done) {
+        p.once('warning', function(w) {
+          expect(w.line).to.equal(1)
+          expect(w.message).to.match(/lower-left.*deprecated/)
+          done()
+        })
+
+        p.write('%AMRECTLL1*\n')
+        p.write('22,1,2,3,4,5,6*%\n')
+      })
+
+      it('should parse an outline polygon primitive', function(done) {
+        const points = ['3', '4', '5', '6', '7', '8']
+        const expectedShapes = [
+          {type: 'outline', exp, points, rot: '9'}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'OUT1', val: expectedShapes}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMOUT1*\n')
+        p.write('4,1,2,3,4,5,6,7,8,9*%\n')
+      })
+
+      it('should parse a regular polygon primitive', function(done) {
+        const vertices = '3'
+        const cx = '4'
+        const cy = '5'
+        const dia = '6'
+        const rot = '7'
+        const expectedShapes = [
+          {type: 'poly', exp, vertices, cx, cy, dia, rot}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'POLY1', val: expectedShapes}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMPOLY1*\n')
+        p.write('5,1,3,4,5,6,7*%\n')
+      })
+    })
   })
 
   describe('operations', function() {

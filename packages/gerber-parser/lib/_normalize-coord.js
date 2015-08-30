@@ -23,7 +23,7 @@ const normalizeCoord = function(number, format) {
   }
 
   // check if the number has a decimal point or has been explicitely flagged
-  // if it does, we can just split by the decimal point to get leading and trailing
+  // if it does, just split by the decimal point to get leading and trailing
   if (numberString.includes('.') || (format.zero == null)) {
     // make sure there's not more than one decimal
     const subNumbers = numberString.split('.')
@@ -34,7 +34,7 @@ const normalizeCoord = function(number, format) {
     after = subNumbers[1] || ''
   }
 
-  // otherwise we need to use the number format to split up the string properly
+  // otherwise we need to use the number format to split up the string
   else {
     const numberStringLen = numberString.length
 
@@ -49,7 +49,7 @@ const normalizeCoord = function(number, format) {
       return NaN
     }
 
-    // split according to trailing zero suppression or leading zero suppression
+    // split according to trailing or leading zero suppression
     if (format.zero === 'T') {
       for (let i = 0; i < numberStringLen; i++) {
         const c = numberString[i]
