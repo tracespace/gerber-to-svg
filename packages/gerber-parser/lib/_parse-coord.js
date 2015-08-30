@@ -22,11 +22,11 @@ const parse = function(coord, format) {
     throw new Error('cannot parse coordinate with format undefined')
   }
 
-  let parse = {}
+  const parse = {}
 
   // pull out the x, y, i, and j
-  for (let c of Object.keys(MATCH)) {
-    let match = coord.match(MATCH[c])
+  for (const c of Object.keys(MATCH)) {
+    const match = coord.match(MATCH[c])
     if (match) {
       parse[c] = normalize(match[1], format)
     }

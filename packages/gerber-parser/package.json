@@ -41,8 +41,9 @@
   },
   "homepage": "https://github.com/mcous/gerber-parser#readme",
   "dependencies": {
-    "lodash.pick": "^3.1.0",
-    "lodash.assign": "^3.2.0"
+    "lodash.assign": "^3.2.0",
+    "lodash.map": "^3.1.4",
+    "lodash.pick": "^3.1.0"
   },
   "devDependencies": {
     "babelify": "^6.2.0",
