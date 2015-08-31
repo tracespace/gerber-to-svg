@@ -510,6 +510,45 @@ describe('gerber parser with gerber files', function() {
         p.write('%AMPOLY1*\n')
         p.write('5,1,3,4,5,6,7*%\n')
       })
+
+      it('should parse a moire primitive', function(done) {
+        const expectedShapes = [
+          {
+            type: 'moire',
+            exp,
+            cx: '1', cy: '2', dia: '3',
+            ringThx: '4', ringGap: '5', maxRings: '6',
+            crossThx: '7', crossLen: '8',
+            rot: '9'
+          }
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'MOIRE1', val: expectedShapes}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMMOIRE1*\n')
+        p.write('6,1,1,2,3,4,5,6,7,8,9*%\n')
+      })
+
+      it('should parse a thermal primitive', function(done) {
+        const cx = '1'
+        const cy = '2'
+        const outerDia = '3'
+        const innerDia = '4'
+        const gap = '5'
+        const rot = '6'
+        const expectedShapes = [
+          {type: 'thermal', exp, cx, cy, outerDia, innerDia, gap, rot}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'THERMAL1', val: expectedShapes}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMTHERMAL1*\n')
+        p.write('7,1,1,2,3,4,5,6*%\n')
+      })
     })
   })
 

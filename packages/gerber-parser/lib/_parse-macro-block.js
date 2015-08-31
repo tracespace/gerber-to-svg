@@ -75,6 +75,35 @@ const parseMacroBlock = function(block) {
       rot: mods[6]
     }
   }
+
+  if (code === '6') {
+    return {
+      type: 'moire',
+      exp,
+      cx: mods[2],
+      cy: mods[3],
+      dia: mods[4],
+      ringThx: mods[5],
+      ringGap: mods[6],
+      maxRings: mods[7],
+      crossThx: mods[8],
+      crossLen: mods[9],
+      rot: mods[10]
+    }
+  }
+
+  if (code === '7') {
+    return {
+      type: 'thermal',
+      exp,
+      cx: mods[2],
+      cy: mods[3],
+      outerDia: mods[4],
+      innerDia: mods[5],
+      gap: mods[6],
+      rot: mods[7]
+    }
+  }
 }
 
 module.exports = parseMacroBlock
