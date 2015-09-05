@@ -1,15 +1,17 @@
 // function to parse a macro block into a primitive object
 'use strict'
 
+const map = require('lodash.map')
+
 // CAUTION: assumes parser will be bound to this
 const parseMacroBlock = function(block) {
   const mods = block.split(',')
   const code = mods[0]
-  const exp = mods[1]
+  const exp = Number(mods[1])
 
   // circle primitive
   if (code === '1') {
-    return {type: 'circle', exp, dia: mods[2], cx: mods[3], cy: mods[4]}
+    return {type: 'circle', exp, dia: Number(mods[2]), cx: Number(mods[3]), cy: Number(mods[4])}
   }
 
   // vector primitive
@@ -20,12 +22,12 @@ const parseMacroBlock = function(block) {
     return {
       type: 'vect',
       exp,
-      width: mods[2],
-      x1: mods[3],
-      y1: mods[4],
-      x2: mods[5],
-      y2: mods[6],
-      rot: mods[7]
+      width: Number(mods[2]),
+      x1: Number(mods[3]),
+      y1: Number(mods[4]),
+      x2: Number(mods[5]),
+      y2: Number(mods[6]),
+      rot: Number(mods[7])
     }
   }
 
@@ -34,11 +36,11 @@ const parseMacroBlock = function(block) {
     return {
       type: 'rect',
       exp,
-      width: mods[2],
-      height: mods[3],
-      cx: mods[4],
-      cy: mods[5],
-      rot: mods[6]
+      width: Number(mods[2]),
+      height: Number(mods[3]),
+      cx: Number(mods[4]),
+      cy: Number(mods[5]),
+      rot: Number(mods[6])
     }
   }
 
@@ -47,11 +49,11 @@ const parseMacroBlock = function(block) {
     return {
       type: 'rectLL',
       exp,
-      width: mods[2],
-      height: mods[3],
-      x: mods[4],
-      y: mods[5],
-      rot: mods[6]
+      width: Number(mods[2]),
+      height: Number(mods[3]),
+      x: Number(mods[4]),
+      y: Number(mods[5]),
+      rot: Number(mods[6])
     }
   }
 
@@ -59,8 +61,8 @@ const parseMacroBlock = function(block) {
     return {
       type: 'outline',
       exp,
-      points: mods.slice(3, -1),
-      rot: mods[mods.length - 1]
+      points: map(mods.slice(3, -1), Number),
+      rot: Number(mods[mods.length - 1])
     }
   }
 
@@ -68,11 +70,11 @@ const parseMacroBlock = function(block) {
     return {
       type: 'poly',
       exp,
-      vertices: mods[2],
-      cx: mods[3],
-      cy: mods[4],
-      dia: mods[5],
-      rot: mods[6]
+      vertices: Number(mods[2]),
+      cx: Number(mods[3]),
+      cy: Number(mods[4]),
+      dia: Number(mods[5]),
+      rot: Number(mods[6])
     }
   }
 
@@ -80,15 +82,15 @@ const parseMacroBlock = function(block) {
     return {
       type: 'moire',
       exp,
-      cx: mods[2],
-      cy: mods[3],
-      dia: mods[4],
-      ringThx: mods[5],
-      ringGap: mods[6],
-      maxRings: mods[7],
-      crossThx: mods[8],
-      crossLen: mods[9],
-      rot: mods[10]
+      cx: Number(mods[2]),
+      cy: Number(mods[3]),
+      dia: Number(mods[4]),
+      ringThx: Number(mods[5]),
+      ringGap: Number(mods[6]),
+      maxRings: Number(mods[7]),
+      crossThx: Number(mods[8]),
+      crossLen: Number(mods[9]),
+      rot: Number(mods[10])
     }
   }
 
@@ -96,13 +98,17 @@ const parseMacroBlock = function(block) {
     return {
       type: 'thermal',
       exp,
-      cx: mods[2],
-      cy: mods[3],
-      outerDia: mods[4],
-      innerDia: mods[5],
-      gap: mods[6],
-      rot: mods[7]
+      cx: Number(mods[2]),
+      cy: Number(mods[3]),
+      outerDia: Number(mods[4]),
+      innerDia: Number(mods[5]),
+      gap: Number(mods[6]),
+      rot: Number(mods[7])
     }
+  }
+
+  else {
+    this._warn(`${code} is an unrecognized primitive for a macro apeture`)
   }
 }
 

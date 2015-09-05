@@ -89,12 +89,19 @@ describe('gerber parser', function() {
       })
 
       it('should error if unknown after 65535 characters', function(done) {
-        this.timeout(200)
+        this.timeout(500)
         p.once('error', function(err) {
           expect(err.message).to.match(/determine filetype/)
           done()
         })
         p.write(';'.repeat(10000000))
+      })
+
+      it('should stash chunks if it cannot make a determination', function() {
+        p.write('G04 this line gets split into')
+        expect(p.stash).to.equal('G04 this line gets split into')
+        p.write('two chunks*\n')
+        expect(p.stash).to.be.empty
       })
     })
 

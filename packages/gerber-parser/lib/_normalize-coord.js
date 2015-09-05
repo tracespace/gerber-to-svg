@@ -3,7 +3,7 @@
 'use strict'
 
 // svg coordinate scaling factor and power of ten exponent
-const COORD_E = 3
+// const COORD_E = 3
 
 // function takes in the number string to be converted and the format object
 const normalizeCoord = function(number, format) {
@@ -83,17 +83,8 @@ const normalizeCoord = function(number, format) {
     }
   }
 
-  // pad after so we've got enough digits
-  after += '0'.repeat(Math.max(0, (COORD_E - after.length)))
-
-  // throw in a decimal point
-  before = before + after.slice(0, COORD_E)
-  after = (after.length > COORD_E)
-    ? '.' + after.slice(COORD_E)
-    : ''
-
   // finally, parse the numberString
-  return Number(sign + before + after)
+  return Number([sign + before, after].join('.'))
 }
 
 module.exports = normalizeCoord

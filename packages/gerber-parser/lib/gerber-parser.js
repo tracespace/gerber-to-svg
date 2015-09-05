@@ -21,7 +21,7 @@ const _transform = function(chunk, encoding, done) {
       if (this.index >= LIMIT) {
         return done(new Error('unable to determine filetype'))
       }
-      // this.stash.push(chunk)
+      this.stash += chunk
       return done()
     }
     else {

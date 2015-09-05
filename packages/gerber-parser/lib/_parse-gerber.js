@@ -158,7 +158,7 @@ const parse = function(parser, block) {
       parser._warn('trailing zero suppression has been deprecated')
     }
 
-    const epsilon = 1500 * Math.pow(10, -parser.format.places[1])
+    const epsilon = 1.5 * Math.pow(10, -parser.format.places[1])
     parser._push(commands.set('nota', nota))
     parser._push(commands.set('epsilon', epsilon))
     return
@@ -175,12 +175,7 @@ const parse = function(parser, block) {
     const y = stepRepeatMatch[2] || 1
     const i = stepRepeatMatch[3] || 0
     const j = stepRepeatMatch[4] || 0
-    const sr = {
-      x: Number(x),
-      y: Number(y),
-      i: Number(i) * 1000,
-      j: Number(j) * 1000
-    }
+    const sr = {x: Number(x), y: Number(y), i: Number(i), j: Number(j)}
     return parser._push(commands.level('stepRep', sr))
   }
 
@@ -241,10 +236,7 @@ const parse = function(parser, block) {
   }
 
   // if we reach here the block was unhandled, so warn if it is not empty
-  if (block.length) {
-    parser._warn(`block "${block}" was not recognized and was ignored`)
-  }
-  return
+  return parser._warn(`block "${block}" was not recognized and was ignored`)
 }
 
 module.exports = parse
