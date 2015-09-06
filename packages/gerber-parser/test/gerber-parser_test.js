@@ -101,9 +101,9 @@ describe('gerber parser', function() {
 
       it('should stash chunks if it cannot make a determination', function() {
         p.write('G04 this line gets split into')
-        expect(p.stash).to.equal('G04 this line gets split into')
+        expect(p._stash).to.equal('G04 this line gets split into')
         p.write('two chunks*\n')
-        expect(p.stash).to.be.empty
+        expect(p._stash).to.be.empty
       })
     })
 

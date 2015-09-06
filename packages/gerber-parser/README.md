@@ -1,4 +1,5 @@
 # gerber parser
+[![npm](https://img.shields.io/npm/v/gerber-parser.svg?style=flat-square)](https://www.npmjs.com/package/gerber-parser)
 [![Travis](https://img.shields.io/travis/mcous/gerber-parser.svg?style=flat-square)](https://travis-ci.org/mcous/gerber-parser)
 [![Coveralls](https://img.shields.io/coveralls/mcous/gerber-parser.svg?style=flat-square)](https://coveralls.io/github/mcous/gerber-parser)
 [![David](https://img.shields.io/david/mcous/gerber-parser.svg?style=flat-square)](https://david-dm.org/mcous/gerber-parser)

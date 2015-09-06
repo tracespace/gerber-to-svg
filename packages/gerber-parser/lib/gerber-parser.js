@@ -14,37 +14,37 @@ const LIMIT = 65535
 const _transform = function(chunk, encoding, done) {
   // determine filetype within 65535 characters
   if (!this.format.filetype) {
-    const filetype = determineFiletype(chunk, this.index, LIMIT)
-    this.index += chunk.length
+    const filetype = determineFiletype(chunk, this._index, LIMIT)
+    this._index += chunk.length
 
     if (!filetype) {
-      if (this.index >= LIMIT) {
+      if (this._index >= LIMIT) {
         return done(new Error('unable to determine filetype'))
       }
-      this.stash += chunk
+      this._stash += chunk
       return done()
     }
     else {
       this.format.filetype = filetype
-      this.index = 0
+      this._index = 0
     }
   }
 
   const filetype = this.format.filetype
-  const toProcess = this.stash + chunk
-  this.stash = ''
-  while (this.index < toProcess.length) {
-    const next = getNext(filetype, toProcess, this.index)
-    this.index += next.read
+  const toProcess = this._stash + chunk
+  this._stash = ''
+  while (this._index < toProcess.length) {
+    const next = getNext(filetype, toProcess, this._index)
+    this._index += next.read
     this.line += next.lines
-    this.stash += next.rem
+    this._stash += next.rem
 
     if (next.block) {
       parseGerber(this, next.block)
     }
   }
 
-  this.index = 0
+  this._index = 0
   done()
 }
 
@@ -70,9 +70,9 @@ const parser = function(opts) {
   stream._warn = _warn
 
   // parser properties
-  stream.stash = ''
+  stream._stash = ''
+  stream._index = 0
   stream.line = 0
-  stream.index = 0
   stream.format = {places: [], zero: null, filetype: null}
 
   // apply options and return

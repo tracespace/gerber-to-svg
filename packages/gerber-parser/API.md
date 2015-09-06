@@ -4,28 +4,22 @@ API documentation for gerber-parser. An understanding of the [Gerber file format
 ## create a gerber parser
 ``` javascript
 const gerberParser = require('gerber-parser')
-const parser = gerberParser(options)
+const parser = gerberParser(OPTIONS)
 ```
 
 ### usage
 Use the gerber parser like you would any other [Node stream](https://github.com/substack/stream-handbook).
 
-``` javascript
-parser.on('readable', function() {
-  const data = parser.read()
-})
-```
-
 ### options
 The gerberParser function takes an options object and returns a transform stream. The options object can be used to override or certain details that would normally be parsed from the Gerber file or may be missing from the file entirely (which can happen a lot, especially with drill files).
 
 ``` javascript
-var options = {
+const options = {
   places: [3, 5],
   zero: 'L',
   filetype: 'gerber'
 }
-var parser = gerberParser(options)
+const parser = gerberParser(options)
 ```
 
 The available options are:
@@ -55,6 +49,10 @@ parser.on('end', function() {
 //   filetype: 'gerber'
 // }
 ```
+
+### line
+
+`parser.line` indicated the current line of the gerber file that the parser is processing at any given moment. After parsing is done, it will indicate how many lines the file contained.
 
 ## events
 
