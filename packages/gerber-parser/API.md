@@ -52,7 +52,7 @@ parser.on('end', function() {
 
 ### line
 
-`parser.line` indicated the current line of the gerber file that the parser is processing at any given moment. After parsing is done, it will indicate how many lines the file contained.
+`parser.line` indicates the current line of the gerber file that the parser is processing at any given moment. After parsing is done, it will indicate one less than the number of lines the file contained (`parser.line` starts at 0).
 
 ## events
 

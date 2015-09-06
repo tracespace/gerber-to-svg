@@ -5,13 +5,15 @@ const map = require('lodash.map')
 const clone = require('lodash.clone')
 const set = require('lodash.set')
 
-const parseExpr = require('./_parse-macro-expression')
+const parseMacroExpr = require('./_parse-macro-expression')
 
 const reEXPR = /[\$+\-\/xX]/
 const reVAR_DEF = /^(\$[\d+])=(.+)/
 
 // CAUTION: assumes parser will be bound to this
 const parseMacroBlock = function(block) {
+  const parseExpr = parseMacroExpr.bind(this)
+
   // check first for a comment
   if (block[0] === '0') {
     return {type: 'comment'}
@@ -22,7 +24,7 @@ const parseMacroBlock = function(block) {
     const varDefMatch = block.match(reVAR_DEF)
     const varName = varDefMatch[1]
     const varExpr = varDefMatch[2]
-    const evaluate = parseExpr.bind(this)(varExpr)
+    const evaluate = parseExpr(varExpr)
 
     const setMods = function(mods) {
       return set(clone(mods), varName, evaluate(mods))
@@ -33,7 +35,7 @@ const parseMacroBlock = function(block) {
   // map a primitive param to a number or, if an expression, a function
   const modVal = function(m) {
     if (reEXPR.test(m)){
-      return parseExpr.bind(this)(m)
+      return parseExpr(m)
     }
     return Number(m)
   }
