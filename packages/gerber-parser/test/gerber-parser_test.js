@@ -60,7 +60,9 @@ describe('gerber parser', function() {
     describe('determining filetype', function() {
       it('should not set any filetype with a blank line', function() {
         p.write('\n')
-        expect(p.format.filetype).to.be.falsey
+        expect(p.format.filetype).to.be.null
+        p.write('')
+        expect(p.format.filetype).to.be.null
       })
 
       it('should set filetype to gerber if it sees a *', function() {
@@ -89,7 +91,7 @@ describe('gerber parser', function() {
       })
 
       it('should error if unknown after 65535 characters', function(done) {
-        this.timeout(500)
+        this.timeout(1000)
         p.once('error', function(err) {
           expect(err.message).to.match(/determine filetype/)
           done()
