@@ -9,6 +9,8 @@ browsers:
   - name: ie
     version: -1..latest
 browserify:
+  - options:
+    debug: true
   - transform: babelify
   - require: babelify/polyfill.js
     entry: true
