@@ -10,7 +10,7 @@ browsers:
     version: -1..latest
 browserify:
   - options:
-    debug: true
+      debug: true
   - transform: babelify
   - require: babelify/polyfill.js
     entry: true
