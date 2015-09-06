@@ -65,22 +65,22 @@ const parseToolDef = function(parser, block) {
 
   let val
   if (shape === 'circle') {
-    val = normalize(toolArgs[0], format)
+    val = [normalize(toolArgs[0], format)]
   }
   else if (shape === 'rect' || shape === 'obround') {
     val = [normalize(toolArgs[0], format), normalize(toolArgs[1], format)]
   }
   else if (shape === 'poly') {
-    val = [normalize(toolArgs[0], format), Number(toolArgs[1])]
+    val = [normalize(toolArgs[0], format), Number(toolArgs[1]), 0]
     if (toolArgs[2]) {
-      val.push(Number(toolArgs[2]))
+      val[2] = Number(toolArgs[2])
     }
   }
   else {
     val = map(toolArgs, Number)
   }
 
-  let hole = 0
+  let hole = []
   if (toolArgs[maxArgs - 1]) {
     hole = [
       normalize(toolArgs[maxArgs - 2], format),
@@ -88,7 +88,7 @@ const parseToolDef = function(parser, block) {
     ]
   }
   else if (toolArgs[maxArgs - 2]) {
-    hole = normalize(toolArgs[maxArgs - 2], format)
+    hole = [normalize(toolArgs[maxArgs - 2], format)]
   }
   const toolDef = {shape, val, hole}
   return parser._push(commands.tool(tool, toolDef))

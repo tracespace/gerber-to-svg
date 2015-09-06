@@ -313,9 +313,9 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle standard circles', function(done) {
       const expectedTools = [
-        {shape: 'circle', val: 1, hole: 0},
-        {shape: 'circle', val: 1, hole: 0.1},
-        {shape: 'circle', val: 1, hole: [0.2, 0.3]}
+        {shape: 'circle', val: [1], hole: []},
+        {shape: 'circle', val: [1], hole: [0.1]},
+        {shape: 'circle', val: [1], hole: [0.2, 0.3]}
       ]
       const expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},
@@ -331,8 +331,8 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle standard rectangles/obrounds', function(done) {
       const expectedTools = [
-        {shape: 'rect', val: [1, 2], hole: 0},
-        {shape: 'obround', val: [3, 4], hole: 0.1},
+        {shape: 'rect', val: [1, 2], hole: []},
+        {shape: 'obround', val: [3, 4], hole: [0.1]},
         {shape: 'rect', val: [5, 6], hole: [0.2, 0.3]}
       ]
       const expected = [
@@ -349,9 +349,9 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle standard polygons', function(done) {
       const expectedTools = [
-        {shape: 'poly', val: [1, 5], hole: 0},
-        {shape: 'poly', val: [2, 6, 45], hole: 0},
-        {shape: 'poly', val: [3, 7, 0], hole: 0.1},
+        {shape: 'poly', val: [1, 5, 0], hole: []},
+        {shape: 'poly', val: [2, 6, 45], hole: []},
+        {shape: 'poly', val: [3, 7, 0], hole: [0.1]},
         {shape: 'poly', val: [4, 8, 0], hole: [0.2, 0.3]}
       ]
       const expected = [
@@ -370,8 +370,8 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle aperture macro tools', function(done) {
       const expectedTools = [
-        {shape: 'CIRC', val: [1, 0.5], hole: 0},
-        {shape: 'RECT', val: [], hole: 0}
+        {shape: 'CIRC', val: [1, 0.5], hole: []},
+        {shape: 'RECT', val: [], hole: []}
       ]
       const expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},

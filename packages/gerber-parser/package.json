@@ -15,7 +15,7 @@
     "browser-test-phantom": "zuul --phantom -- ./test/*_test.js",
     "browser-test-sauce": "zuul -- ./test/*_test.js",
     "ci": "npm run test && npm run ci-no-pr",
-    "ci-no-pr": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-test-sauce",
+    "ci-no-pr": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-test-sauce || false",
     "postci": "coveralls < ./coverage/lcov.info"
   },
   "precommit": [
