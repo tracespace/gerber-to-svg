@@ -2,62 +2,96 @@
 'use strict'
 
 const map = require('lodash.map')
+const clone = require('lodash.clone')
+const set = require('lodash.set')
+
+const parseExpr = require('./_parse-macro-expression')
+
+const reEXPR = /[\$+\-\/xX]/
+const reVAR_DEF = /^(\$[\d+])=(.+)/
 
 // CAUTION: assumes parser will be bound to this
 const parseMacroBlock = function(block) {
-  const mods = block.split(',')
+  // check first for a comment
+  if (block[0] === '0') {
+    return {type: 'comment'}
+  }
+
+  // variable definition
+  if (reVAR_DEF.test(block)) {
+    const varDefMatch = block.match(reVAR_DEF)
+    const varName = varDefMatch[1]
+    const varExpr = varDefMatch[2]
+    const evaluate = parseExpr.bind(this)(varExpr)
+
+    const setMods = function(mods) {
+      return set(clone(mods), varName, evaluate(mods))
+    }
+    return {type: 'variable', set: setMods}
+  }
+
+  // map a primitive param to a number or, if an expression, a function
+  const modVal = function(m) {
+    if (reEXPR.test(m)){
+      return parseExpr.bind(this)(m)
+    }
+    return Number(m)
+  }
+
+  const mods = map(block.split(','), modVal)
   const code = mods[0]
-  const exp = Number(mods[1])
+  const exp = mods[1]
 
   // circle primitive
-  if (code === '1') {
-    return {type: 'circle', exp, dia: Number(mods[2]), cx: Number(mods[3]), cy: Number(mods[4])}
+  if (code === 1) {
+    return {type: 'circle', exp, dia: mods[2], cx: mods[3], cy: mods[4]}
   }
 
   // vector primitive
-  if (code === '2' || code === '20') {
-    if (code === '2') {
-      this._warn('macro apeture vector primitives with code 2 are deprecated')
-    }
+  if (code === 2) {
+    this._warn('macro apeture vector primitives with code 2 are deprecated')
+  }
+
+  if (code === 2 || code === 20) {
     return {
       type: 'vect',
       exp,
-      width: Number(mods[2]),
-      x1: Number(mods[3]),
-      y1: Number(mods[4]),
-      x2: Number(mods[5]),
-      y2: Number(mods[6]),
-      rot: Number(mods[7])
+      width: mods[2],
+      x1: mods[3],
+      y1: mods[4],
+      x2: mods[5],
+      y2: mods[6],
+      rot: mods[7]
     }
   }
 
   // center rectangle
-  if (code === '21') {
+  if (code === 21) {
     return {
       type: 'rect',
       exp,
-      width: Number(mods[2]),
-      height: Number(mods[3]),
-      cx: Number(mods[4]),
-      cy: Number(mods[5]),
-      rot: Number(mods[6])
+      width: mods[2],
+      height: mods[3],
+      cx: mods[4],
+      cy: mods[5],
+      rot: mods[6]
     }
   }
 
-  if (code === '22') {
+  if (code === 22) {
     this._warn('macro apeture lower-left rectangle primitives are deprecated')
     return {
       type: 'rectLL',
       exp,
-      width: Number(mods[2]),
-      height: Number(mods[3]),
-      x: Number(mods[4]),
-      y: Number(mods[5]),
-      rot: Number(mods[6])
+      width: mods[2],
+      height: mods[3],
+      x: mods[4],
+      y: mods[5],
+      rot: mods[6]
     }
   }
 
-  if (code === '4') {
+  if (code === 4) {
     return {
       type: 'outline',
       exp,
@@ -66,44 +100,44 @@ const parseMacroBlock = function(block) {
     }
   }
 
-  if (code === '5') {
+  if (code === 5) {
     return {
       type: 'poly',
       exp,
-      vertices: Number(mods[2]),
-      cx: Number(mods[3]),
-      cy: Number(mods[4]),
-      dia: Number(mods[5]),
-      rot: Number(mods[6])
+      vertices: mods[2],
+      cx: mods[3],
+      cy: mods[4],
+      dia: mods[5],
+      rot: mods[6]
     }
   }
 
-  if (code === '6') {
+  if (code === 6) {
     return {
       type: 'moire',
       exp,
-      cx: Number(mods[2]),
-      cy: Number(mods[3]),
-      dia: Number(mods[4]),
-      ringThx: Number(mods[5]),
-      ringGap: Number(mods[6]),
-      maxRings: Number(mods[7]),
-      crossThx: Number(mods[8]),
-      crossLen: Number(mods[9]),
-      rot: Number(mods[10])
+      cx: mods[2],
+      cy: mods[3],
+      dia: mods[4],
+      ringThx: mods[5],
+      ringGap: mods[6],
+      maxRings: mods[7],
+      crossThx: mods[8],
+      crossLen: mods[9],
+      rot: mods[10]
     }
   }
 
-  if (code === '7') {
+  if (code === 7) {
     return {
       type: 'thermal',
       exp,
-      cx: Number(mods[2]),
-      cy: Number(mods[3]),
-      outerDia: Number(mods[4]),
-      innerDia: Number(mods[5]),
-      gap: Number(mods[6]),
-      rot: Number(mods[7])
+      cx: mods[2],
+      cy: mods[3],
+      outerDia: mods[4],
+      innerDia: mods[5],
+      gap: mods[6],
+      rot: mods[7]
     }
   }
 

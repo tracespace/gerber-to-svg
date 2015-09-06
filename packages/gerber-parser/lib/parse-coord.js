@@ -4,7 +4,7 @@
 'use strict'
 
 // convert to normalized number
-const normalize = require('./_normalize-coord')
+const normalize = require('./normalize-coord')
 
 const MATCH = {
   x: /X([+-]?[\d\.]+)/,

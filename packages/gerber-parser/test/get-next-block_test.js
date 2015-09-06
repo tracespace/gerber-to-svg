@@ -3,7 +3,7 @@
 
 const expect = require('chai').expect
 const partial = require('lodash.partial')
-const getNextBlock = require('../lib/_get-next-block')
+const getNextBlock = require('../lib/get-next-block')
 
 describe('get next block', function() {
   it ('should throw with a bad filetype', function() {

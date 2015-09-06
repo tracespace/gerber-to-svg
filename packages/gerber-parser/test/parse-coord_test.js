@@ -2,7 +2,7 @@
 'use strict'
 
 const expect = require('chai').expect
-const parseCoord = require('../lib/_parse-coord')
+const parseCoord = require('../lib/parse-coord')
 
 // svg coordinate FACTOR
 const FORMAT = {places: [2, 3], zeros: null}

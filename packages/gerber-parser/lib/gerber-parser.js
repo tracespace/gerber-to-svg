@@ -5,7 +5,7 @@ const Transform = require('stream').Transform
 
 const applyOptions = require('./_apply-options')
 const determineFiletype = require('./_determine-filetype')
-const getNext = require('./_get-next-block')
+const getNext = require('./get-next-block')
 const parseGerber = require('./_parse-gerber')
 const warning = require('./_warning')
 

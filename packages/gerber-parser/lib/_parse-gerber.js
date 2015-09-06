@@ -5,8 +5,8 @@
 const map = require('lodash.map')
 
 const commands = require('./_commands')
-const normalize = require('./_normalize-coord')
-const parseCoord = require('./_parse-coord')
+const normalize = require('./normalize-coord')
+const parseCoord = require('./parse-coord')
 const parseMacroBlock = require('./_parse-macro-block')
 
 // g-code set matchers

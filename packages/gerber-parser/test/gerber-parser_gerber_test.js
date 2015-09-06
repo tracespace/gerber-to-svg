@@ -16,7 +16,6 @@ describe('gerber parser with gerber files', function() {
     const handleData = function(res) {
       expect(res).to.eql(expected.shift())
       if (!expected.length) {
-        p.removeListener('data', handleData)
         return done()
       }
     }
@@ -26,6 +25,12 @@ describe('gerber parser with gerber files', function() {
 
   beforeEach(function() {
     p = pFactory()
+  })
+
+  afterEach(function() {
+    p.removeAllListeners('data')
+    p.removeAllListeners('warning')
+    p.removeAllListeners('error')
   })
 
   it('should do nothing with comments', function(done) {
@@ -363,7 +368,7 @@ describe('gerber parser with gerber files', function() {
       p.write('%ADD13P,4X8X0X0.2X0.3*%\n')
     })
 
-    it('should handle aperture macros', function(done) {
+    it('should handle aperture macro tools', function(done) {
       const expectedTools = [
         {shape: 'CIRC', val: [1, 0.5], hole: 0},
         {shape: 'RECT', val: [], hole: 0}
@@ -393,6 +398,20 @@ describe('gerber parser with gerber files', function() {
 
     describe('primitive blocks', function() {
       const exp = 1
+
+      it('should parse comments', function(done) {
+        const expectedBlocks = [
+          {type: 'comment'}
+        ]
+        const expected = [
+          {cmd: 'macro', line: 1, key: 'NAME1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMNAME1*\n')
+        p.write('0 a comment*%\n')
+      })
+
       it('should parse circle primitives', function(done) {
         const expectedBlocks = [
           {type: 'circle', exp, dia: 5, cx: 1, cy: 2}
@@ -540,7 +559,116 @@ describe('gerber parser with gerber files', function() {
       })
     })
 
+    describe('variable set blocks', function() {
+      let mods
+      beforeEach(function() {
+        mods = {$1: 42}
+      })
 
+      const expectExprResults = function(expected, done) {
+        p.once('data', function(res) {
+          expect(res.cmd).to.equal('macro')
+          expect(res.key).to.equal('MODS1')
+
+          for (const v of res.val) {
+            const newMods = v.set(mods)
+            expect(v.type).to.equal('variable')
+            expect(newMods).to.eql(expected.shift())
+            expect(newMods).to.not.equal(mods)
+          }
+
+          done()
+        })
+      }
+
+      it('should return function that takes / returns mods', function(done) {
+        const expected = [
+          {$1: 42, $2: 1}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=1*%\n')
+      })
+
+      it('should parse addition', function(done) {
+        const expected = [
+          {$1: 42, $2: 3},
+          {$1: 42, $2: 56}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=1+2*\n')
+        p.write('$2=$1+14*%\n')
+      })
+
+      it('should parse subtraction', function(done) {
+        const expected = [
+          {$1: 42, $2: 3},
+          {$1: 42, $2: 21}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=5-2*\n')
+        p.write('$2=63-$1*%\n')
+      })
+
+      it('should parse multiplication with x and X', function(done) {
+        const expected = [
+          {$1: 42, $2: 21},
+          {$1: 42, $2: 6}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=$1x0.5*\n')
+        p.write('$2=2X3*%\n')
+      })
+
+      it('should warn that mult with X is incorrect', function(done) {
+        p.once('warning', function(w) {
+          expect(w.message).to.match(/multiplication/)
+          done()
+        })
+
+        p.write('%AMMODS1*\n')
+        p.write('$2=$1X1*%\n')
+      })
+
+      it('should parse division with /', function(done) {
+        const expected = [
+          {$1: 42, $2: 4},
+          {$1: 42, $2: 21}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=12/3*\n')
+        p.write('$2=$1/2*%\n')
+      })
+
+      it('should handle expressions with parentheses', function(done) {
+        const expected = [
+          {$1: 42, $2: 3}
+        ]
+
+        expectExprResults(expected, done)
+        p.write('%AMMODS1*\n')
+        p.write('$2=($1-30)x(2/(3+12-7))*%\n')
+      })
+    })
+
+    it('should parse params in primitives as expressions', function(done) {
+      p.once('data', function(d) {
+        expect(d.val[0].dia({$1: 4})).to.equal(5)
+        done()
+      })
+
+      p.write('%AMCIRC1*\n')
+      p.write('1,1,$1+1,1,2*%\n')
+    })
   })
 
   describe('operations', function() {

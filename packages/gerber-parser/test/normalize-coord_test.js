@@ -3,7 +3,7 @@
 'use strict'
 
 const expect = require('chai').expect
-const normalize = require('../lib/_normalize-coord')
+const normalize = require('../lib/normalize-coord')
 
 describe('normalize coordinate', function() {
   it('should return NaN for bad input', function() {
