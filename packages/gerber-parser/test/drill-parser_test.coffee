@@ -28,16 +28,6 @@ describe 'NC drill file parser', ->
     expect( warnings.unhook() ).to.match /assuming 2\:4/
 
 
-  it 'should return a set tool for a bare tool number', ->
-    expect( p.parseCommand('T1') ).to.eql { set: { currentTool: 'T1' } }
-    expect( p.parseCommand('T14') ).to.eql { set: { currentTool: 'T14' } }
-  it 'should ignore leading zeros in tool name', ->
-    expect( p.parseCommand('T01') ).to.eql { set: { currentTool: 'T1' } }
-  it 'should return a set notation to abs with G90', ->
-    expect( p.parseCommand('G90') ).to.eql { set: { notation: 'A' } }
-  it 'should return a set notation to inc with G91', ->
-    expect( p.parseCommand('G91') ).to.eql { set: { notation: 'I' } }
-
   describe 'drilling (flashing) at coordinates', ->
     it 'should parse the coordinates into numbers in suppress trailing zero', ->
       p.format.zero = 'T'

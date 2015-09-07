@@ -12,6 +12,7 @@ const reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trail
 
 const reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
 const reTOOL_DEF = /T0*(\d+)C([\d.]+)/
+const reTOOL_SET = /T0*(\d+)/
 
 const setUnits = function(parser, units) {
   const format = (units === 'in') ? [2, 4] : [3, 3]
@@ -82,6 +83,14 @@ const parse = function(parser, block) {
     return setUnits(parser, 'in')
   }
 
+  if (block === 'G90') {
+    return parser._push(commands.set('nota', 'A'))
+  }
+
+  if (block === 'G91') {
+    return parser._push(commands.set('nota', 'I'))
+  }
+
   if (reUNITS.test(block)) {
     const unitsMatch = block.match(reUNITS)
     const units = unitsMatch[1]
@@ -111,6 +120,11 @@ const parse = function(parser, block) {
     const tool = {shape: 'circle', val: [toolDia], hole: []}
 
     return parser._push(commands.tool(toolCode, tool))
+  }
+
+  if (reTOOL_SET.test(block)) {
+    const tool = block.match(reTOOL_SET)[1]
+    return parser._push(commands.set('tool', tool))
   }
 }
 

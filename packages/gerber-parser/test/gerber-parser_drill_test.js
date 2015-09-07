@@ -97,6 +97,16 @@ describe('gerber parser with gerber files', function() {
     p.write('M30\n')
   })
 
+  it('should set notation with G90 and G91', function(done) {
+    const expected = [
+      {cmd: 'set', line: 1, key: 'nota', val: 'A'},
+      {cmd: 'set', line: 2, key: 'nota', val: 'I'}
+    ]
+
+    expectResults(expected, done)
+    p.write('G90\n')
+    p.write('G91\n')
+  })
 
   describe('parsing unit set', function() {
     it('should set units and suppression with INCH / METRIC', function(done) {
@@ -180,11 +190,6 @@ describe('gerber parser with gerber files', function() {
   })
 
   describe('parsing tool definitions', function() {
-    beforeEach(function() {
-      p.format.zero = 'L'
-      p.format.places = [2, 4]
-    })
-
     it('should send a tool command', function(done) {
       const expectedTools = [
         {shape: 'circle', val: [0.015], hole: []},
@@ -200,13 +205,45 @@ describe('gerber parser with gerber files', function() {
       p.write('T13C0.142\n')
     })
 
-    // it 'should ignore feedrate and spindle speed', ->
-    //   expect( p.parseCommand 'T1C0.01F100S5').to.eql {
-    //     tool: { T1: { dia: .01 * factor } }
-    //   }
-    // it 'should ignore leading zeros in tool name', ->
-    //   expect( p.parseCommand 'T01C0.015' ).to.eql {
-    //     tool: { T1: { dia: .015 * factor } }
-    //   }
+    it('should ignore feedrate and spindle speed', function(done) {
+      const expectedTools = [
+        {shape: 'circle', val: [0.01], hole: []}
+      ]
+      const expected = [
+        {cmd: 'tool', line: 1, key: '1', val: expectedTools[0]}
+      ]
+
+      expectResults(expected, done)
+      p.write('T1C0.01F100S5\n')
+    })
+
+    it('should ignore leading zeros in tool name', function(done) {
+      const expectedTools = [
+        {shape: 'circle', val: [0.015], hole: []}
+      ]
+      const expected = [
+        {cmd: 'tool', line: 1, key: '23', val: expectedTools[0]}
+      ]
+
+      expectResults(expected, done)
+      p.write('T0023C0.015\n')
+    })
+  })
+
+  it('should set the tool with a tool number', function(done) {
+    const expected = [
+      {cmd: 'set', line: 1, key: 'tool', val: '1'},
+      {cmd: 'set', line: 2, key: 'tool', val: '14'},
+      {cmd: 'set', line: 3, key: 'tool', val: '5'},
+      {cmd: 'set', line: 4, key: 'tool', val: '0'},
+      {cmd: 'set', line: 5, key: 'tool', val: '0'}
+    ]
+
+    expectResults(expected, done)
+    p.write('T1\n')
+    p.write('T14\n')
+    p.write('T0005\n')
+    p.write('T0\n')
+    p.write('T000\n')
   })
 })
