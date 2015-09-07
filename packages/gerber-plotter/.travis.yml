@@ -1,0 +1,12 @@
+sudo: false
+language: node_js
+node_js:
+- iojs
+script: npm run-script ci
+deploy:
+  provider: npm
+  email: mike@cousins.io
+  on:
+    node: iojs
+    tags: true
+    all_branches: true
