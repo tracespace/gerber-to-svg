@@ -69,6 +69,11 @@ describe('gerber parser with gerber files', function() {
         p.write(';FORMAT={-:-/ absolute / inch / decimal}\n')
         expect(p.format.zero).to.equal('D')
         expect(p.format.places).to.eql([])
+
+        p = pFactory()
+        p.write(';FORMAT={3:3/ absolute / metric / keep zeros}\n')
+        expect(p.format.zero).to.equal('L')
+        expect(p.format.places).to.eql([3, 3])
       })
 
       it('should set backupUnits and backupNota', function(done) {
@@ -245,5 +250,110 @@ describe('gerber parser with gerber files', function() {
     p.write('T0005\n')
     p.write('T0\n')
     p.write('T000\n')
+  })
+
+  describe('parsing drill commands', function() {
+    it('should work with trailing suppression', function(done) {
+      p.format.places = [2, 4]
+      p.format.zero = 'T'
+
+      const expected = [
+        {cmd: 'op', line: 1, key: 'flash', val: {x: 0.16, y: 1.58}},
+        {cmd: 'op', line: 2, key: 'flash', val: {x: -1.795, y: 1.08}}
+      ]
+
+      expectResults(expected, done)
+      p.write('X0016Y0158\n')
+      p.write('X-01795Y0108\n')
+    })
+
+    it('should work with leading zeros suppressed', function(done) {
+      p.format.places = [2,4]
+      p.format.zero = 'L'
+
+      const expected = [
+        {cmd: 'op', line: 1, key: 'flash', val: {x: 0.005, y: 1.55}},
+        {cmd: 'op', line: 2, key: 'flash', val: {x: 1.685, y: -0.33}}
+      ]
+
+      expectResults(expected, done)
+      p.write('X50Y15500\n')
+      p.write('X16850Y-3300\n')
+    })
+
+    it('should parse with the places format', function(done) {
+      const expected = [
+        {cmd: 'op', line: 1, key: 'flash', val: {x: .755, y: 1.4}},
+        {cmd: 'op', line: 2, key: 'flash', val: {x: 7.55, y: 0.014}},
+        {cmd: 'op', line: 3, key: 'flash', val: {x: 8, y: 1.24}},
+        {cmd: 'op', line: 4, key: 'flash', val: {x: 80, y: 12.4}}
+      ]
+
+      expectResults(expected, done)
+
+      p.format.places = [2,4]
+      p.format.zero = 'L'
+      p.write('X7550Y14000\n')
+
+      p.format.places = [3,3]
+      p.write('X7550Y14\n')
+
+      p.format.zero = 'T'
+      p.format.places = [2,4]
+      p.write('X08Y0124\n')
+
+      p.format.places = [3,3]
+      p.write('X08Y0124\n')
+    })
+
+    it('should parse decimal coordinates', function(done) {
+      p.format.zero = 'L'
+      p.format.places = [2,4]
+
+      const expected = [
+        {cmd: 'op', line: 1, key: 'flash', val: {x: 0.755, y: 1.4}}
+      ]
+
+      expectResults(expected, done)
+      p.write('X0.7550Y1.4000\n')
+    })
+
+    it('should parse tool change at beginning / end of line', function(done) {
+      p.format.zero = 'T'
+      p.format.places = [2,4]
+
+      const expected = [
+        {cmd: 'set', line: 1, key: 'tool', val: '1'},
+        {cmd: 'op', line: 1, key: 'flash', val: {x: 1, y: 1}},
+        {cmd: 'set', line: 2, key: 'tool', val: '1'},
+        {cmd: 'op', line: 2, key: 'flash', val: {x: 1, y: 1}}
+      ]
+
+      expectResults(expected, done)
+      p.write('T01X01Y01\n')
+      p.write('X01Y01T01\n')
+    })
+
+    it('should warn / assume trailing if missing', function(done) {
+      p.format.places = [2, 4]
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/assuming trailing/)
+        expect(p.format.zero).to.equal('T')
+        done()
+      })
+
+      p.write('X1Y1\n')
+    })
+
+    it('should warn / assume [2, 4] places if missing', function(done) {
+      p.format.zero = 'L'
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/assuming \[2, 4\]/)
+        expect(p.format.places).to.eql([2, 4])
+        done()
+      })
+
+      p.write('X1Y1\n')
+    })
   })
 })

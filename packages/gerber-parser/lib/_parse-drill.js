@@ -6,13 +6,14 @@
 
 const commands = require('./_commands')
 const normalize = require('./normalize-coord')
-// const parseCoord = require('./parse-coord')
+const parseCoord = require('./parse-coord')
 
-const reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal)/
+const reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
 
 const reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
 const reTOOL_DEF = /T0*(\d+)C([\d.]+)/
-const reTOOL_SET = /T0*(\d+)/
+const reTOOL_SET = /T0*(\d+)(?!C)/
+const reCOORD = /((?:[XY][+-]?[\d.]+){1,2})/
 
 const setUnits = function(parser, units) {
   const format = (units === 'in') ? [2, 4] : [3, 3]
@@ -57,7 +58,7 @@ const parse = function(parser, block) {
       }
 
       // set zero suppression
-      if (suppression === 'leading') {
+      if (suppression === 'leading' || suppression === 'keep') {
         parser.format.zero = 'L'
       }
       else if (suppression === 'trailing') {
@@ -69,6 +70,42 @@ const parse = function(parser, block) {
     }
 
     return
+  }
+
+  if (reTOOL_DEF.test(block)) {
+    const toolMatch = block.match(reTOOL_DEF)
+    const toolCode = toolMatch[1]
+    const toolDia = normalize(toolMatch[2])
+    const tool = {shape: 'circle', val: [toolDia], hole: []}
+
+    return parser._push(commands.tool(toolCode, tool))
+  }
+
+  // tool set
+  if (reTOOL_SET.test(block)) {
+    const tool = block.match(reTOOL_SET)[1]
+
+    // allow tool set to fall through because it can happen on the
+    // same line as a coordinate operation
+    parser._push(commands.set('tool', tool))
+  }
+
+  // operations
+  if (reCOORD.test(block)) {
+    // ensure format is set properly
+    if (!parser.format.zero) {
+      parser.format.zero = 'T'
+      parser._warn('zero suppression missing; assuming trailing suppression')
+    }
+
+    if (!parser.format.places.length) {
+      parser.format.places = [2, 4]
+      parser._warn('places format missing; assuming [2, 4]')
+    }
+
+    const coordMatch = block.match(reCOORD)
+    const coord = parseCoord(coordMatch[1], parser.format)
+    return parser._push(commands.op('flash', coord))
   }
 
   if ((block === 'M00') || (block === 'M30')) {
@@ -113,19 +150,7 @@ const parse = function(parser, block) {
     return
   }
 
-  if (reTOOL_DEF.test(block)) {
-    const toolMatch = block.match(reTOOL_DEF)
-    const toolCode = toolMatch[1]
-    const toolDia = normalize(toolMatch[2])
-    const tool = {shape: 'circle', val: [toolDia], hole: []}
-
-    return parser._push(commands.tool(toolCode, tool))
-  }
-
-  if (reTOOL_SET.test(block)) {
-    const tool = block.match(reTOOL_SET)[1]
-    return parser._push(commands.set('tool', tool))
-  }
+  return
 }
 
 module.exports = parse

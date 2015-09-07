@@ -1,6 +1,6 @@
 # gerber parser api
 
-API documentation for gerber-parser. An understanding of the [Gerber file format specification](http://www.ucamco.com/en/guest/downloads) will help with understanding the parser API.
+API documentation for gerber-parser. An understanding of the [Gerber file format specification](http://www.ucamco.com/en/guest/downloads) and the [Excellon NC drill format](http://www.excellon.com/manuals/program.htm) (as poorly defined as it is) will help with understanding the parser API.
 
 ## create a gerber parser
 
