@@ -1,16 +1,20 @@
 # gerber parser api
+
 API documentation for gerber-parser. An understanding of the [Gerber file format specification](http://www.ucamco.com/en/guest/downloads) will help with understanding the parser API.
 
 ## create a gerber parser
+
 ``` javascript
 const gerberParser = require('gerber-parser')
 const parser = gerberParser(OPTIONS)
 ```
 
 ### usage
+
 Use the gerber parser like you would any other [Node stream](https://github.com/substack/stream-handbook).
 
 ### options
+
 The gerberParser function takes an options object and returns a transform stream. The options object can be used to override or certain details that would normally be parsed from the Gerber file or may be missing from the file entirely (which can happen a lot, especially with drill files).
 
 ``` javascript
@@ -36,7 +40,7 @@ A gerber parser has certain public properties. Any properties not listed here as
 
 ### format
 
-The format object `gerber.format` can be used once parsing has finished to determine any formatting decisions the parser made. Specifically, coordinate places format, zero suppression format, and filetype.
+The format object `parser.format` can be used once parsing has finished to determine any formatting decisions the parser made. Specifically, coordinate places format, zero suppression format, and filetype.
 
 ``` javascript
 parser.on('end', function() {
@@ -72,6 +76,7 @@ parser.on('warning', function(w) {
 ```
 
 ## transform stream objects
+
 Given a gerber or drill file stream, the parser will emit a stream of plotter command objects. Objects are of the format:
 
 ``` javascript
@@ -116,6 +121,7 @@ key           | val                 | description
 `backupUnits` | `mm` or `in`        | backup units (used if units missing)
 `epsilon`     | `[Number]`          | threshold for comparing two coordinates
 `nota`        | `A` or `I`          | absolute or incremental coord notation
+`backupNota`  | `A` or `I`          | backup notation (used if missing)
 `tool`        | `[Integer string]`  | currently used tool code
 
 ### operation objects

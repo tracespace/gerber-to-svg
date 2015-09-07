@@ -24,14 +24,8 @@ const normalizeCoord = function(number, format) {
 
   // check if the number has a decimal point or has been explicitely flagged
   // if it does, just split by the decimal point to get leading and trailing
-  if (numberString.includes('.') || (format.zero == null)) {
-    // make sure there's not more than one decimal
-    const subNumbers = numberString.split('.')
-    if (subNumbers.length > 2) {
-      return NaN
-    }
-    before = subNumbers[0]
-    after = subNumbers[1] || ''
+  if (numberString.includes('.') || (format == null) || (format.zero == null)) {
+    return Number(sign + numberString)
   }
 
   // otherwise we need to use the number format to split up the string

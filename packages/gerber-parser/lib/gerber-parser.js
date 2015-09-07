@@ -7,6 +7,7 @@ const applyOptions = require('./_apply-options')
 const determineFiletype = require('./_determine-filetype')
 const getNext = require('./get-next-block')
 const parseGerber = require('./_parse-gerber')
+const parseDrill = require('./_parse-drill')
 const warning = require('./_warning')
 
 const LIMIT = 65535
@@ -40,7 +41,12 @@ const _transform = function(chunk, encoding, done) {
     this._stash += next.rem
 
     if (next.block) {
-      parseGerber(this, next.block)
+      if (filetype === 'gerber') {
+        parseGerber(this, next.block)
+      }
+      else {
+        parseDrill(this, next.block)
+      }
     }
   }
 

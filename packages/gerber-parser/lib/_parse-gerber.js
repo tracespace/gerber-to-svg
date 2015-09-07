@@ -1,5 +1,5 @@
 // parse gerber function
-// takes a string, transform stream, and a done callback
+// takes a parser transform stream and a block string
 'use strict'
 
 const map = require('lodash.map')

@@ -11,47 +11,6 @@ describe 'NC drill file parser', ->
   p = null
   beforeEach -> p = new Parser()
 
-  it "should ignore comments (start with ';')", ->
-    initialFmat = p.fmat
-    initialFormat = { zero: p.format.zero, places: p.format.places }
-    expect( p.parseCommand ';INCH' ).to.eql {}
-    expect( p.parseCommand ';M71' ).to.eql {}
-    expect( p.parseCommand ';T1C0.015' ).to.eql {}
-    expect( p.parseCommand ';T1' ).to.eql {}
-    expect( p.parseCommand ';X0016Y0158' ).to.eql {}
-    expect( p.parseCommand ';INCH,TZ' ).to.eql {}
-    expect( p.fmat ).to.eql initialFmat
-    expect( p.format ).to.eql initialFormat
-  it 'should return a done command with M00 or M30', ->
-    expect( p.parseCommand 'M00' ).to.eql { set: { done: true } }
-    expect( p.parseCommand 'M30' ).to.eql { set: { done: true } }
-  it 'should return a set units command with INCH and METRIC', ->
-    expect( p.parseCommand 'INCH' ).to.eql { set: { units: 'in' } }
-    expect( p.parseCommand 'METRIC' ).to.eql { set: { units: 'mm' } }
-  it 'should also set units with M71 and M72', ->
-    expect( p.parseCommand 'M71' ).to.eql { set: { units: 'mm' } }
-    expect( p.parseCommand 'M72' ).to.eql { set: { units: 'in' } }
-  it 'should be able to set the zero suppression', ->
-    # excellon specifies which zeros to keep
-    # also check that whitespace doesn't throw it off
-    p.parseCommand 'INCH,TZ'
-    expect( p.format.zero ).to.eql 'L'
-    p = new Parser()
-    p.parseCommand 'INCH,LZ'
-    expect( p.format.zero ).to.eql 'T'
-    p = new Parser()
-    p.parseCommand 'INCH,TZ'
-    expect( p.format.zero ).to.eql 'L'
-    p = new Parser()
-    p.parseCommand 'INCH,LZ'
-    expect( p.format.zero ).to.eql 'T'
-  it 'should not overide a user set zero format', ->
-    p = new Parser {zero: 'L'}
-    p.parseCommand 'INCH,LZ'
-    expect( p.format.zero ).to.eql 'L'
-    p = new Parser {zero: 'T'}
-    p.parseCommand 'INCH,TZ'
-    expect( p.format.zero ).to.eql 'T'
   it 'should warn and fall back to leading suppression if unspecified', ->
     p.format.places = [2,4]
     # have a backup
@@ -67,42 +26,8 @@ describe 'NC drill file parser', ->
     p.parseCommand 'X50Y15500'
     expect( p.format.places ).to.eql [ 2, 4 ]
     expect( warnings.unhook() ).to.match /assuming 2\:4/
-  it 'should use 3.3 format for metric and 2.4 for inches', ->
-    p.parseCommand 'INCH'
-    expect( p.format.places ).to.eql [ 2, 4 ]
-    p = new Parser()
-    p.parseCommand 'METRIC'
-    expect( p.format.places ).to.eql [ 3, 3 ]
-  it 'should not override user set places format', ->
-    p = new Parser {places: [3, 4]}
-    p.parseCommand 'INCH'
-    expect(p.format.places).to.eql [3, 4]
-    p.parseCommand 'METRIC'
-    expect(p.format.places).to.eql [3, 4]
-  describe 'tool definitions', ->
-    beforeEach ->
-      p.format.zero = 'L'
-      p.format.places = [ 2, 4 ]
-    it 'should return a define tool command for tool definitions', ->
-      expect( p.parseCommand 'T1C0.015' ).to.eql {
-        tool: { T1: { dia: .015 * factor } }
-      }
-      expect( p.parseCommand 'T13C0.142' ).to.eql {
-        tool: { T13: { dia: .142 * factor } }
-      }
-    it 'should ignore feedrate and spindle speed', ->
-      expect( p.parseCommand 'T1C0.01F100S5').to.eql {
-        tool: { T1: { dia: .01 * factor } }
-      }
-    it 'should ignore leading zeros in tool name', ->
-      expect( p.parseCommand 'T01C0.015' ).to.eql {
-        tool: { T1: { dia: .015 * factor } }
-      }
-  it 'should assume FMAT,2, but identify FMAT,1', ->
-    expect( p.fmat ).to.eql 'FMAT,2'
-    expect( p.parseCommand('FMAT,1') ).to.eql {}
-    expect( p.fmat ).to.eql 'FMAT,1'
-    expect( p.parseCommand('M70') ).to.eql { set: { units: 'in' } }
+
+
   it 'should return a set tool for a bare tool number', ->
     expect( p.parseCommand('T1') ).to.eql { set: { currentTool: 'T1' } }
     expect( p.parseCommand('T14') ).to.eql { set: { currentTool: 'T14' } }
@@ -112,11 +37,6 @@ describe 'NC drill file parser', ->
     expect( p.parseCommand('G90') ).to.eql { set: { notation: 'A' } }
   it 'should return a set notation to inc with G91', ->
     expect( p.parseCommand('G91') ).to.eql { set: { notation: 'I' } }
-  it 'M70 (fmat1), M71, and M72 should still set units', ->
-    expect( p.parseCommand('M71') ).to.eql { set: { units: 'mm' } }
-    expect( p.parseCommand('M72') ).to.eql { set: { units: 'in' } }
-    p.fmat = 'FMAT,1'
-    expect( p.parseCommand('M70') ).to.eql { set: { units: 'in' } }
 
   describe 'drilling (flashing) at coordinates', ->
     it 'should parse the coordinates into numbers in suppress trailing zero', ->

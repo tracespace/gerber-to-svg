@@ -17,10 +17,10 @@ describe('normalize coordinate', function() {
   })
 
   it('should convert decimal numbers into proper coords', function() {
-    expect(normalize('1.3', {places: [2, 4]})).to.equal(1.3)
-    expect(normalize('-.343', {places: [2, 3]})).to.equal(-.343)
-    expect(normalize('+4.3478', {places: [2, 2]})).to.equal(4.3478)
-    expect(normalize('10', {places: [3, 4]})).to.equal(10)
+    expect(normalize('1.3')).to.equal(1.3)
+    expect(normalize('-.343')).to.equal(-.343)
+    expect(normalize('+4.3478')).to.equal(4.3478)
+    expect(normalize('10')).to.equal(10)
   })
 
   it('should convert trailing zero suppressed numbers into proper coords', function() {
