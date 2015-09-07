@@ -7,8 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "test": "istanbul cover --include-all-sources _mocha"
+    "lint": "eslint lib/*.js test/*.js",
+    "test": "istanbul cover --include-all-sources _mocha",
+    "posttest": "npm run lint"
   },
+  "pre-commit": [
+    "lint"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mcous/gerber-plotter.git"
