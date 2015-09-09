@@ -1,6 +1,43 @@
 // gerber plotter
 'use strict'
 
+const Transform = require('stream').Transform
+
+const applyOptions = require('./_apply-options.js')
+
+const _transform = function(chunk, encoding, done) {
+  const cmd = chunk.cmd
+  const key = chunk.key
+  const val = chunk.val
+
+  if (cmd === 'set') {
+    if (key === 'units') {
+      this.format.units = this.format.units || val
+    }
+    else {
+      this.format.nota = this.format.nota || val
+    }
+  }
+
+  return done()
+}
+
+const plotter = function(options) {
+  const stream = new Transform({
+    readableObjectMode: true,
+    writableObjectMode: true
+  })
+
+  stream._transform = _transform
+
+  stream.format = {units: null, nota: null}
+
+  applyOptions(options, stream.format)
+  return stream
+}
+
+module.exports = plotter
+
 // # is a transform stream
 // TransformStream = require('stream').Transform
 // # warning object

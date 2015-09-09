@@ -1,16 +1,75 @@
 // test suite for plotter
 'use strict'
 
-// expect = require('chai').expect
-//
-// Plotter = require '../src/plotter'
-// factor = require('../src/svg-coord').factor
-// Warning = require '../src/warning'
-//
-// describe 'Plotter class', ->
-//   p = null
-//   beforeEach ->
-//     p = new Plotter()
+const expect = require('chai').expect
+
+const plotter = require('../lib/gerber-plotter')
+
+describe('gerber plotter', function() {
+  let p
+  beforeEach(function() {
+    p = plotter()
+  })
+
+  describe('factory and options', function() {
+    it('should allow user to set units', function() {
+      p = plotter({units: 'mm'})
+      expect(p.format.units).to.equal('mm')
+      p = plotter({units: 'in'})
+      expect(p.format.units).to.equal('in')
+
+      expect(function() {p = plotter({units: 'foo'})}).to.throw(/units/)
+    })
+
+    it('should allow user to set notation', function() {
+      p = plotter({nota: 'A'})
+      expect(p.format.nota).to.equal('A')
+      p = plotter({nota: 'I'})
+      expect(p.format.nota).to.equal('I')
+
+      expect(function() {p = plotter({nota: 'foo'})}).to.throw(/notation/)
+    })
+
+    it('should throw if a options key is invalid', function() {
+      expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
+    })
+  })
+
+  describe('handling set commands', function() {
+    describe('format', function() {
+      it('should set units', function() {
+        p.write({cmd: 'set', key: 'units', val: 'mm'})
+        expect(p.format.units).to.equal('mm')
+
+        p = plotter()
+        p.write({cmd: 'set', key: 'units', val: 'in'})
+        expect(p.format.units).to.equal('in')
+      })
+
+      it('should not redefine units', function() {
+        p.format.units = 'in'
+        p.write({cmd: 'set', key: 'units', val: 'mm'})
+        expect(p.format.units).to.equal('in')
+      })
+
+      it('should set the notation', function() {
+        p.write({cmd: 'set', key: 'nota', val: 'A'})
+        expect(p.format.nota).to.equal('A')
+
+        p = plotter()
+        p.write({cmd: 'set', key: 'nota', val: 'I'})
+        expect(p.format.nota).to.equal('I')
+      })
+
+      it('should not redefine notation', function() {
+        p.format.nota = 'A'
+        p.write({cmd: 'set', key: 'nota', val: 'I'})
+        expect(p.format.nota).to.equal('A')
+      })
+    })
+  })
+})
+
 //
 //   describe 'setting internal plotter state', ->
 //     describe 'units', ->
@@ -26,16 +85,6 @@
 //         p.write {set: {units: 'mm'}}
 //         p.write {set: {units: 'in'}}
 //         expect(p.units).to.eql 'mm'
-//
-//       it 'should should allow the user to overide the units', ->
-//         p = new Plotter {units: 'mm'}
-//         expect(p.units).to.eql 'mm'
-//         p.write {set: {units: 'in'}}
-//         expect(p.units).to.eql 'mm'
-//         p = new Plotter {units: 'in'}
-//         expect(p.units).to.eql 'in'
-//         p.write {set: {units: 'mm'}}
-//         expect(p.units).to.eql 'in'
 //
 //       it 'should set the backup units', ->
 //         p.write {set: {backupUnits: 'mm'}}
@@ -55,16 +104,6 @@
 //         expect(p.notation).to.eql 'A'
 //         p = new Plotter()
 //         p.write {set: {notation: 'I'}}
-//         expect(p.notation).to.eql 'I'
-//
-//       it 'should allow the user to override the notation', ->
-//         p = new Plotter {notation: 'A'}
-//         expect(p.notation).to.eql 'A'
-//         p.write {set: {notation: 'I'}}
-//         expect(p.notation).to.eql 'A'
-//         p = new Plotter {notation: 'I'}
-//         expect(p.notation).to.eql 'I'
-//         p.write {set: {notation: 'A'}}
 //         expect(p.notation).to.eql 'I'
 //
 //       it 'should not redefine the notation', ->
