@@ -3,20 +3,59 @@
 
 const Transform = require('stream').Transform
 
-const applyOptions = require('./_apply-options.js')
+const applyOptions = require('./_apply-options')
+const warning = require('./_warning')
+
+const isFormatKey = function(key) {
+  return (
+    key === 'units' ||
+    key === 'backupUnits' ||
+    key === 'nota' ||
+    key === 'backupNota')
+}
 
 const _transform = function(chunk, encoding, done) {
   const cmd = chunk.cmd
+  const line = chunk.line
   const key = chunk.key
   const val = chunk.val
 
+  if (this._done) {
+    this.emit('warning', warning('ignoring extra command recieved after done command', line))
+    return done()
+  }
+
   if (cmd === 'set') {
-    if (key === 'units') {
-      this.format.units = this.format.units || val
+    // if we've got a format set
+    if (isFormatKey(key) && !this._formatLock[key]) {
+      this.format[key] = val
+      if (key === 'units' || key === 'nota') {
+        this._formatLock[key] = true
+      }
     }
+
+    // else if we're dealing with a tool change
+    else if (key === 'tool') {
+      if (this._region) {
+        this.emit('warning', warning('cannot change tool while region mode is on', line))
+      }
+      else if (!this._tools.has(val)) {
+        this.emit('warning', warning(`tool ${val} is not defined`, line))
+      }
+      else {
+        this._tool = this._tools.get(val)
+      }
+    }
+
+    // else region, interpolation, or arc mode
     else {
-      this.format.nota = this.format.nota || val
+      this[`_${key}`] = val
     }
+  }
+
+  // else done command
+  else {
+    this._done = true
   }
 
   return done()
@@ -30,9 +69,25 @@ const plotter = function(options) {
 
   stream._transform = _transform
 
-  stream.format = {units: null, nota: null}
+  stream.format = {
+    units: null,
+    backupUnits: 'in',
+    nota: null,
+    backupNota: 'A'
+  }
 
-  applyOptions(options, stream.format)
+  stream._formatLock = {
+    units: false,
+    backupUnits: false,
+    nota: false,
+    backupNota: false
+  }
+
+  stream._done = false
+  stream._tool = null
+  stream._tools = new Map()
+
+  applyOptions(options, stream.format, stream._formatLock)
   return stream
 }
 

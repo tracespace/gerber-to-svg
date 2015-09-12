@@ -13,8 +13,22 @@ const verifyNota = function(nota) {
 }
 
 const verifyMap = {
-  units: {check: verifyUnits, err: "units must be 'mm' or 'in'"},
-  nota: {check: verifyNota, err: "notation must be 'A' or 'I'"}
+  units: {
+    check: verifyUnits,
+    err: "units must be 'mm' or 'in'"
+  },
+  backupUnits: {
+    check: verifyUnits,
+    err: "backup units must be 'mm' or 'in'"
+  },
+  nota: {
+    check: verifyNota,
+    err: "notation must be 'A' or 'I'"
+  },
+  backupNota: {
+    check: verifyNota,
+    err: "backup notation must be 'A' or 'I'"
+  }
 }
 
 const pickOptions = function(value, key) {
@@ -29,8 +43,12 @@ const pickOptions = function(value, key) {
   return result
 }
 
-const apply = function(opts, target) {
-  assign(target, pick(opts, pickOptions))
+const apply = function(opts, target, lock) {
+  const verifiedOpts = pick(opts, pickOptions)
+  for (const k of Object.keys(verifiedOpts)) {
+    lock[k] = true
+  }
+  assign(target, verifiedOpts)
 }
 
 module.exports = apply

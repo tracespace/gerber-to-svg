@@ -24,10 +24,12 @@ const plotter = gerberPlotter(options)
 
 The available options are:
 
-key     | value        | description
---------|--------------|---------------------------------------------
-`units` | `mm` or `in` | PCB units
-`nota`  | `A` or `I`   | Absolute or incremental coordinate notation
+key           | value        | description
+--------------|--------------|---------------------------------------------
+`units`       | `mm` or `in` | PCB units
+`backupUnits` | `mm` or `in` | Backup units in case units are missing
+`nota`        | `A` or `I`   | Absolute or incremental coordinate notation
+`backupNota`  | `A` or `I`   | Backup notation in case notation is missing
 
 ## public properties
 
@@ -43,7 +45,9 @@ plotter.on('end', function() {
 // could print:
 // {
 //   units: 'in',
-//   nota: 'A'
+//   backupUnits: 'in',
+//   nota: 'A',
+//   backupNota: 'A'
 // }
 ```
 

@@ -21,6 +21,17 @@ describe('gerber plotter', function() {
       expect(function() {p = plotter({units: 'foo'})}).to.throw(/units/)
     })
 
+    it('should allow user to set backupUnits', function() {
+      p = plotter({backupUnits: 'mm'})
+      expect(p.format.backupUnits).to.equal('mm')
+      p = plotter({units: 'in'})
+      expect(p.format.units).to.equal('in')
+
+      expect(function() {
+        p = plotter({backupUnits: 'foo'})
+      }).to.throw(/backup units/)
+    })
+
     it('should allow user to set notation', function() {
       p = plotter({nota: 'A'})
       expect(p.format.nota).to.equal('A')
@@ -28,6 +39,22 @@ describe('gerber plotter', function() {
       expect(p.format.nota).to.equal('I')
 
       expect(function() {p = plotter({nota: 'foo'})}).to.throw(/notation/)
+    })
+
+    it('should allow user to set backup notation', function() {
+      p = plotter({backupNota: 'A'})
+      expect(p.format.backupNota).to.equal('A')
+      p = plotter({backupNota: 'I'})
+      expect(p.format.backupNota).to.equal('I')
+
+      expect(function() {
+        p = plotter({backupNota: 'foo'})
+      }).to.throw(/backup notation/)
+    })
+
+    it('should default backup units and notation to inches and abs', function() {
+      expect(p.format.backupUnits).to.equal('in')
+      expect(p.format.backupNota).to.equal('A')
     })
 
     it('should throw if a options key is invalid', function() {
@@ -47,7 +74,7 @@ describe('gerber plotter', function() {
       })
 
       it('should not redefine units', function() {
-        p.format.units = 'in'
+        p = plotter({units: 'in'})
         p.write({cmd: 'set', key: 'units', val: 'mm'})
         expect(p.format.units).to.equal('in')
       })
@@ -62,115 +89,111 @@ describe('gerber plotter', function() {
       })
 
       it('should not redefine notation', function() {
-        p.format.nota = 'A'
+        p = plotter({nota: 'A'})
         p.write({cmd: 'set', key: 'nota', val: 'I'})
         expect(p.format.nota).to.equal('A')
       })
+
+      it('should set the backup units', function() {
+        p.write({cmd: 'set', key: 'backupUnits', val: 'mm'})
+        expect(p.format.backupUnits).to.equal('mm')
+        p.write({cmd: 'set', key: 'backupUnits', val: 'in'})
+        expect(p.format.backupUnits).to.equal('in')
+      })
+
+      it('should not redefine the backupUnits set by user', function() {
+        p = plotter({backupUnits: 'in'})
+        p.write({cmd: 'set', key: 'backupUnits', val: 'mm'})
+        expect(p.format.backupUnits).to.equal('in')
+      })
+
+      it('should not redefine the backupNotation set by user', function() {
+        p = plotter({backupNota: 'A'})
+        p.write({cmd: 'set', key: 'backupNota', val: 'I'})
+        expect(p.format.backupNota).to.equal('A')
+      })
     })
+
+    describe('plotter state', function() {
+      it('should change the tool', function() {
+        const tool = {}
+        p._tools.set('10', tool)
+
+        p.write({cmd: 'set', key: 'tool', val: '10'})
+        expect(p._tool).to.equal(tool)
+      })
+
+      it('should warn if the tool doesnt exist', function(done) {
+        p.once('warning', function(w) {
+          expect(w.line).to.equal(10)
+          expect(w.message).to.match(/tool 10/)
+          expect(p._tool).to.be.null
+          done()
+        })
+
+        p.write({cmd: 'set', line: 10, key: 'tool', val: '10'})
+      })
+
+      it('should set the region mode', function() {
+        p.write({cmd: 'set', line: 10, key: 'region', val: true})
+        expect(p._region).to.be.true
+        p.write({cmd: 'set', line: 10, key: 'region', val: false})
+        expect(p._region).to.be.false
+      })
+
+      it ('should warn and ignore tool changes if region mode is on', function(done) {
+        p.once('warning', function(w) {
+          expect(w.line).to.equal(11)
+          expect(w.message).to.match(/region/)
+          expect(p._tool).to.be.null
+          done()
+        })
+
+        p._tools.set('10', {})
+        p.write({cmd: 'set', line: 10, key: 'region', val: true})
+        p.write({cmd: 'set', line: 11, key: 'tool', val: '10'})
+      })
+
+      it('should set the interpolation mode', function() {
+        p.write({cmd: 'set', key: 'mode', val: 'i'})
+        expect(p._mode).to.equal('i')
+        p.write({cmd: 'set', key: 'mode', val: 'cw'})
+        expect(p._mode).to.equal('cw')
+        p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+        expect(p._mode).to.equal('ccw')
+      })
+
+      it('should set the arc quadrant mode', function() {
+        p.write({cmd: 'set', key: 'quad', val: 's'})
+        expect(p._quad).to.equal('s')
+        p.write({cmd: 'set', key: 'quad', val: 'm'})
+        expect(p._quad).to.equal('m')
+      })
+    })
+  })
+
+  describe('handling done command', function() {
+    it('should set the done flag', function() {
+      p.write({cmd: 'done'})
+      expect(p._done).to.be.true
+    })
+
+    it('should warn if other commands come in after a done', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/done/)
+        done()
+      })
+
+      p.write({cmd: 'done'})
+      p.write({cmd: 'set', key: 'mode', val: 'i'})
+    })
+  })
+
+  describe.skip('handling new tool commands', function() {
+
   })
 })
 
-//
-//   describe 'setting internal plotter state', ->
-//     describe 'units', ->
-//       it 'should set the units to mm and in', ->
-//         p.write {set: {units: 'mm'}}
-//         expect(p.units).to.eql 'mm'
-//
-//         p = new Plotter()
-//         p.write {set: {units: 'in'}}
-//         expect(p.units).to.eql 'in'
-//
-//       it 'should not redefine the units', ->
-//         p.write {set: {units: 'mm'}}
-//         p.write {set: {units: 'in'}}
-//         expect(p.units).to.eql 'mm'
-//
-//       it 'should set the backup units', ->
-//         p.write {set: {backupUnits: 'mm'}}
-//         expect(p.backupUnits).to.eql 'mm'
-//         p = new Plotter()
-//         p.write {set: {backupUnits: 'in'}}
-//         expect(p.backupUnits).to.eql 'in'
-//
-//       it 'should not redefine the backupUnits', ->
-//         p.write {set: {backupUnits: 'in'}}
-//         p.write {set: {backupUnits: 'mm'}}
-//         expect(p.backupUnits).to.eql 'in'
-//
-//     describe 'notation', ->
-//       it 'should set the notation mode', ->
-//         p.write {set: {notation: 'A'}}
-//         expect(p.notation).to.eql 'A'
-//         p = new Plotter()
-//         p.write {set: {notation: 'I'}}
-//         expect(p.notation).to.eql 'I'
-//
-//       it 'should not redefine the notation', ->
-//         p.write {set: {notation: 'A'}}
-//         p.write {set: {notation: 'I'}}
-//         expect(p.notation).to.eql 'A'
-//
-//     describe 'changing the tool', ->
-//       it 'should change to tool to an existing tool', ->
-//         p.tools.D10 = {}
-//         p.write {set: {currentTool: 'D10'}}
-//         expect(p.currentTool).to.equal p.tools.D10
-//
-//       it 'should error if the tool doesnt exist', (done) ->
-//         p.once 'warning', (w) ->
-//           expect(w.message).to.match /tool D10/
-//           expect(w.line).to.equal 4
-//           done()
-//
-//         p.write {set: {currentTool: 'D10'}, line: 4}
-//
-//       it 'should error if region mode is on', (done) ->
-//         p.once 'error', (e) ->
-//           expect(e.message).to.match /line 3 .*tool.*region/
-//           done()
-//
-//         p.region = true
-//         p.tools.D10 = {}
-//         p.write {set: {currentTool: 'D10'}, line: 3}
-//
-//     describe 'trace modes', ->
-//       it 'should set the interpolation mode', ->
-//         p.write {set: {mode: 'i'}}
-//         expect(p.mode).to.eql 'i'
-//         p.write {set: {mode: 'cw'}}
-//         expect(p.mode).to.eql 'cw'
-//         p.write {set: {mode: 'ccw'}}
-//         expect(p.mode).to.eql 'ccw'
-//
-//       it 'should set the arc quadrant mode', ->
-//         p.write {set: {quad: 's'}}
-//         expect(p.quad).to.eql 's'
-//         p.write {set: {quad: 'm'}}
-//         expect(p.quad).to.eql 'm'
-//
-//       it 'should set the region mode', ->
-//         p.write {set: {region: true}}
-//         expect(p.region).to.eql true
-//         p.write {set: {region: false}}
-//         expect(p.region).to.eql false
-//
-//       it 'should set the file end flag', ->
-//         p.write {set: {done: true}}
-//         expect(p.done).to.be.true
-//
-//   it 'should handle empty objects in the stream without complaint', (done) ->
-//     p.on 'error', -> throw new Error 'complained'
-//     p.on 'warning', -> throw new Error 'complained'
-//
-//     p.write {set: {units: 'in'}}
-//     p.write {}
-//     p.write {set: backupUnits: 'in'}
-//     expect(p.units).to.eql 'in'
-//     expect(p.backupUnits).to.eql 'in'
-//
-//     setTimeout done, 10
-//
 //   describe 'new layer commands', ->
 //
 //     it 'should finish any in progress layer', ->
