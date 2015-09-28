@@ -10,8 +10,8 @@ node_js:
 # test browsers on node stable test
 matrix:
   include:
-    - node: node
-      env: TEST_BROWSER=true
+    - node_js: node
+      env: TEST_BROWSERS=true
 
 script: npm run-script ci
 
