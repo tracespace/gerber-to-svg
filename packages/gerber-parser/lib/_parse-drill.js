@@ -2,7 +2,7 @@
 // takes a parser transform stream and a block string
 'use strict'
 
-var numIsFinite = require('lodash.isFinite')
+var numIsFinite = require('lodash.isfinite')
 
 var commands = require('./_commands')
 var normalize = require('./normalize-coord')

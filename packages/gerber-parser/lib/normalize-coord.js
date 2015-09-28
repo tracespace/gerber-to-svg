@@ -2,7 +2,7 @@
 // coordinate is 1000x the gerber unit
 'use strict'
 
-var isFinite = require('lodash.isfinite')
+var numIsFinite = require('lodash.isfinite')
 var padLeft = require('lodash.padleft')
 var padRight = require('lodash.padright')
 
@@ -38,7 +38,7 @@ var normalizeCoord = function(number, format) {
 
     var leading = format.places[0]
     var trailing = format.places[1]
-    if (!isFinite(leading) || !isFinite(trailing)) {
+    if (!numIsFinite(leading) || !numIsFinite(trailing)) {
       return NaN
     }
 

@@ -4,12 +4,12 @@
 
 var assign = require('lodash.assign')
 var pick = require('lodash.pick')
-var isFinite = require('lodash.isfinite')
+var numIsFinite = require('lodash.isfinite')
 
 var verifyPlaces = function(p) {
   var isAnArray = Array.isArray(p)
   var correctLength = (p.length === 2)
-  var finite = (isFinite(p[0]) && isFinite(p[1]))
+  var finite = (numIsFinite(p[0]) && numIsFinite(p[1]))
   return (isAnArray && correctLength && finite)
 }
 
