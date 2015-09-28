@@ -1,14 +1,14 @@
 // function to determine filetype from a chunk
 'use strict'
 
-const determine = function(chunk, start, LIMIT) {
-  const limit = Math.min(LIMIT - start, chunk.length)
-  let current = []
-  let filetype = null
-  let index = -1
+var determine = function(chunk, start, LIMIT) {
+  var limit = Math.min(LIMIT - start, chunk.length)
+  var current = []
+  var filetype = null
+  var index = -1
 
   while((!filetype) && (++index < limit)) {
-    const c = chunk[index]
+    var c = chunk[index]
     if (c === '\n') {
       if (current.length + index) {
         filetype = 'drill'
@@ -17,7 +17,7 @@ const determine = function(chunk, start, LIMIT) {
     }
     else {
       current.push(c)
-      if ((c === '*') && current[0] !== ';') {
+      if ((c === '*') && (current[0] !== ';')) {
         filetype = 'gerber'
         current = []
       }

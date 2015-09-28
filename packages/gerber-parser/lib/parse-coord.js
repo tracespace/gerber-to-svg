@@ -3,17 +3,19 @@
 // returns an object of {x: number, y: number, etc} for coordinates it finds
 'use strict'
 
-// convert to normalized number
-const normalize = require('./normalize-coord')
+var transform = require('lodash.transform')
 
-const MATCH = {
+// convert to normalized number
+var normalize = require('./normalize-coord')
+
+var MATCH = {
   x: /X([+-]?[\d\.]+)/,
   y: /Y([+-]?[\d\.]+)/,
   i: /I([+-]?[\d\.]+)/,
   j: /J([+-]?[\d\.]+)/
 }
 
-const parse = function(coord, format) {
+var parse = function(coord, format) {
   if (coord == null) {
     return {}
   }
@@ -22,17 +24,15 @@ const parse = function(coord, format) {
     throw new Error('cannot parse coordinate with format undefined')
   }
 
-  const parse = {}
-
   // pull out the x, y, i, and j
-  for (const c of Object.keys(MATCH)) {
-    const match = coord.match(MATCH[c])
-    if (match) {
-      parse[c] = normalize(match[1], format)
+  var parsed = transform(MATCH, function(result, matcher, c) {
+    var coordMatch = coord.match(matcher)
+    if (coordMatch) {
+      result[c] = normalize(coordMatch[1], format)
     }
-  }
+  })
 
-  return parse
+  return parsed
 }
 
 module.exports = parse

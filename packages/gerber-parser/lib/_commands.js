@@ -1,31 +1,31 @@
 // factories to generate all possible parsed by a gerber command
 'use strict'
 
-const done = function() {
+var done = function() {
   return {cmd: 'done', line: -1}
 }
 
-const set = function(key, val) {
-  return {cmd: 'set', line: -1, key, val}
+var set = function(key, val) {
+  return {cmd: 'set', line: -1, key: key, val: val}
 }
 
-const level = function(key, val) {
-  return {cmd: 'level', line: -1, key, val}
+var level = function(key, val) {
+  return {cmd: 'level', line: -1, key: key, val: val}
 }
 
-const tool = function(key, val) {
-  return {cmd: 'tool', line: -1, key, val}
+var tool = function(key, val) {
+  return {cmd: 'tool', line: -1, key: key, val: val}
 }
 
-const op = function(key, val) {
-  return {cmd: 'op', line: -1, key, val}
+var op = function(key, val) {
+  return {cmd: 'op', line: -1, key: key, val: val}
 }
 
-const macro = function(key, val) {
-  return {cmd: 'macro', line: -1, key, val}
+var macro = function(key, val) {
+  return {cmd: 'macro', line: -1, key: key, val: val}
 }
 
-const commandMap = {
+var commandMap = {
   set: set, done: done, level: level, tool: tool, op: op, macro: macro
 }
 module.exports = commandMap

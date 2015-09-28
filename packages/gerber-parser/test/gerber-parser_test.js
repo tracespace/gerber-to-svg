@@ -1,41 +1,43 @@
 // test suite for the top level gerber parser class
 'use strict'
 
-const Transform = require('stream').Transform
-const expect = require('chai').expect
-const parser = require('../lib/gerber-parser')
+var Transform = require('stream').Transform
+var expect = require('chai').expect
+var repeat = require('lodash.repeat')
+
+var parser = require('../lib/gerber-parser')
 
 describe('gerber parser', function() {
   describe('factory and options', function() {
     it('should return a transform stream', function() {
-      const p = parser()
+      var p = parser()
       expect(p).to.be.an.instanceOf(Transform)
     })
 
     it('should allow setting the zero suppression', function() {
-      let p = parser({zero: 'L'})
+      var p = parser({zero: 'L'})
       expect(p.format.zero).to.equal('L')
       p = parser({zero: 'T'})
       expect(p.format.zero).to.equal('T')
     })
 
     it('should allow setting the number places format', function() {
-      let p = parser({places: [1, 4]})
+      var p = parser({places: [1, 4]})
       expect(p.format.places).to.eql([1, 4])
       p = parser({places: [3, 4]})
       expect(p.format.places).to.eql([3, 4])
     })
 
     it('should allow setting the filetype', function() {
-      let p = parser({filetype: 'gerber'})
+      var p = parser({filetype: 'gerber'})
       expect(p.format.filetype).to.equal('gerber')
       p = parser({filetype: 'drill'})
       expect(p.format.filetype).to.equal('drill')
     })
 
     it('should throw with bad options to the contructor', function() {
-      let p
-      let badOpts = {places: 'string'}
+      var p
+      var badOpts = {places: 'string'}
       expect(function() {p = parser(badOpts)}).to.throw(/places/)
       badOpts = {places: [1, 2, 3]}
       expect(function() {p = parser(badOpts)}).to.throw(/places/)
@@ -52,7 +54,7 @@ describe('gerber parser', function() {
   })
 
   describe('reading files', function() {
-    let p
+    var p
     beforeEach(function() {
       p = parser()
     })
@@ -96,7 +98,7 @@ describe('gerber parser', function() {
           expect(err.message).to.match(/determine filetype/)
           done()
         })
-        p.write(';'.repeat(10000000))
+        p.write(repeat(';', 10000000))
       })
 
       it('should stash chunks if it cannot make a determination', function() {
@@ -108,7 +110,7 @@ describe('gerber parser', function() {
     })
 
     it("should know what line it's on", function() {
-      p.write('*\n'.repeat(5))
+      p.write(repeat('*\n', 5))
       expect(p.line).to.equal(5)
     })
   })

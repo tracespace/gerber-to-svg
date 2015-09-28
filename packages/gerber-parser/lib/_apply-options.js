@@ -2,40 +2,41 @@
 // throws if invalid
 'use strict'
 
-const assign = require('lodash.assign')
-const pick = require('lodash.pick')
+var assign = require('lodash.assign')
+var pick = require('lodash.pick')
+var isFinite = require('lodash.isfinite')
 
-const verifyPlaces = function(p) {
-  const isAnArray = Array.isArray(p)
-  const correctLength = (p.length === 2)
-  const finite = (Number.isFinite(p[0]) && Number.isFinite(p[1]))
+var verifyPlaces = function(p) {
+  var isAnArray = Array.isArray(p)
+  var correctLength = (p.length === 2)
+  var finite = (isFinite(p[0]) && isFinite(p[1]))
   return (isAnArray && correctLength && finite)
 }
 
-const verifyZero = function(z) {
+var verifyZero = function(z) {
   return ((z === 'T') || (z === 'L'))
 }
 
-const verifyFiletype = function(f) {
+var verifyFiletype = function(f) {
   return ((f === 'gerber') || (f === 'drill'))
 }
 
-const verifyMap = {
+var verifyMap = {
   places: {check: verifyPlaces, err: 'places must be an array of two numbers 0-7'},
   zero: {check: verifyZero, err: "zero suppression must be 'L' or 'T'"},
   filetype: {check: verifyFiletype, err: "filetype must be 'drill' or 'gerber'"}
 }
 
-const pickOptions = function(value, key) {
-  const verification = verifyMap[key]
-  const result = verification.check(value)
+var pickOptions = function(value, key) {
+  var verification = verifyMap[key]
+  var result = verification.check(value)
   if (!result) {
     throw new Error(verification.err)
   }
   return result
 }
 
-const applyOptions = function(opts, target) {
+var applyOptions = function(opts, target) {
   assign(target, pick(opts, pickOptions))
 }
 

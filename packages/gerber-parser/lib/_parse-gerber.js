@@ -2,46 +2,46 @@
 // takes a parser transform stream and a block string
 'use strict'
 
-const map = require('lodash.map')
+var map = require('lodash.map')
 
-const commands = require('./_commands')
-const normalize = require('./normalize-coord')
-const parseCoord = require('./parse-coord')
-const parseMacroBlock = require('./_parse-macro-block')
+var commands = require('./_commands')
+var normalize = require('./normalize-coord')
+var parseCoord = require('./parse-coord')
+var parseMacroBlock = require('./_parse-macro-block')
 
 // g-code set matchers
-const reMODE = /^G0*([123])/
-const reREGION = /^G3([67])/
-const reARC = /^G7([45])/
-const reBKP_UNITS = /^G7([01])/
-const reCOMMENT = /^G0*4/
+var reMODE = /^G0*([123])/
+var reREGION = /^G3([67])/
+var reARC = /^G7([45])/
+var reBKP_UNITS = /^G7([01])/
+var reCOMMENT = /^G0*4/
 
 // tool changes
-const reTOOL = /^(?:G54)?D0*([1-9]\d+)/
+var reTOOL = /^(?:G54)?D0*([1-9]\d+)/
 
 // operations
-const reCOORD = /((?:[XYIJ][+-]?\d+){1,4})/
-const reOP = /D0*([123])$/
+var reCOORD = /((?:[XYIJ][+-]?\d+){1,4})/
+var reOP = /D0*([123])$/
 
 // parameter code matchers
-const reUNITS = /^%MO(IN|MM)/
+var reUNITS = /^%MO(IN|MM)/
 // format spec regexp courtesy @summivox
-const reFORMAT = /^%FS([LT]?)([AI]?)X([0-7])([0-7])Y\3\4/
-const rePOLARITY = /^%LP([CD])/
-const reSTEP_REP = /^%SR(?:X(\d+)Y(\d+)I([\d.]+)J([\d.]+))?/
-const reTOOL_DEF = /^%ADD(\d{2,})([A-Za-z_]\w*)(?:,((?:X?[\d.]+)*))?/
-const reMACRO = /^%AM([A-Za-z_]\w*)\*?(.*)/
+var reFORMAT = /^%FS([LT]?)([AI]?)X([0-7])([0-7])Y\3\4/
+var rePOLARITY = /^%LP([CD])/
+var reSTEP_REP = /^%SR(?:X(\d+)Y(\d+)I([\d.]+)J([\d.]+))?/
+var reTOOL_DEF = /^%ADD(\d{2,})([A-Za-z_]\w*)(?:,((?:X?[\d.]+)*))?/
+var reMACRO = /^%AM([A-Za-z_]\w*)\*?(.*)/
 
-const parseToolDef = function(parser, block) {
-  const format = {places: parser.format.places}
-  const toolMatch = block.match(reTOOL_DEF)
-  const tool = toolMatch[1]
-  const shapeMatch = toolMatch[2]
-  const toolArgs = (toolMatch[3]) ? toolMatch[3].split('X') : []
+var parseToolDef = function(parser, block) {
+  var format = {places: parser.format.places}
+  var toolMatch = block.match(reTOOL_DEF)
+  var tool = toolMatch[1]
+  var shapeMatch = toolMatch[2]
+  var toolArgs = (toolMatch[3]) ? toolMatch[3].split('X') : []
 
   // get the shape
-  let shape
-  let maxArgs
+  var shape
+  var maxArgs
   if (shapeMatch === 'C') {
     shape = 'circle'
     maxArgs = 3
@@ -63,7 +63,7 @@ const parseToolDef = function(parser, block) {
     maxArgs = 0
   }
 
-  let val
+  var val
   if (shape === 'circle') {
     val = [normalize(toolArgs[0], format)]
   }
@@ -80,7 +80,7 @@ const parseToolDef = function(parser, block) {
     val = map(toolArgs, Number)
   }
 
-  let hole = []
+  var hole = []
   if (toolArgs[maxArgs - 1]) {
     hole = [
       normalize(toolArgs[maxArgs - 2], format),
@@ -90,20 +90,20 @@ const parseToolDef = function(parser, block) {
   else if (toolArgs[maxArgs - 2]) {
     hole = [normalize(toolArgs[maxArgs - 2], format)]
   }
-  const toolDef = {shape, val, hole}
+  var toolDef = {shape: shape, val: val, hole: hole}
   return parser._push(commands.tool(tool, toolDef))
 }
 
-const parseMacroDef = function(parser, block) {
-  const macroMatch = block.match(reMACRO)
-  const name = macroMatch[1]
-  const blockMatch = (macroMatch[2].length) ? macroMatch[2].split('*') : []
-  const blocks = map(blockMatch, parseMacroBlock, parser)
+var parseMacroDef = function(parser, block) {
+  var macroMatch = block.match(reMACRO)
+  var name = macroMatch[1]
+  var blockMatch = (macroMatch[2].length) ? macroMatch[2].split('*') : []
+  var blocks = map(blockMatch, parseMacroBlock, parser)
 
   return parser._push(commands.macro(name, blocks))
 }
 
-const parse = function(parser, block) {
+var parse = function(parser, block) {
   if (reCOMMENT.test(block)) {
     return
   }
@@ -113,36 +113,36 @@ const parse = function(parser, block) {
   }
 
   if (reREGION.test(block)) {
-    const regionMatch = block.match(reREGION)[1]
-    const region = (regionMatch === '6') ? true : false
+    var regionMatch = block.match(reREGION)[1]
+    var region = (regionMatch === '6') ? true : false
     return parser._push(commands.set('region', region))
   }
 
   if (reARC.test(block)) {
-    const arcMatch = block.match(reARC)[1]
-    const arc = (arcMatch === '4') ? 's' : 'm'
+    var arcMatch = block.match(reARC)[1]
+    var arc = (arcMatch === '4') ? 's' : 'm'
     return parser._push(commands.set('arc', arc))
   }
 
   if (reUNITS.test(block)) {
-    const unitsMatch = block.match(reUNITS)[1]
-    const units = (unitsMatch === 'IN') ? 'in' : 'mm'
+    var unitsMatch = block.match(reUNITS)[1]
+    var units = (unitsMatch === 'IN') ? 'in' : 'mm'
     return parser._push(commands.set('units', units))
   }
 
   if (reBKP_UNITS.test(block)) {
-    const bkpUnitsMatch = block.match(reBKP_UNITS)[1]
-    const backupUnits = (bkpUnitsMatch === '0') ? 'in' : 'mm'
+    var bkpUnitsMatch = block.match(reBKP_UNITS)[1]
+    var backupUnits = (bkpUnitsMatch === '0') ? 'in' : 'mm'
     return parser._push(commands.set('backupUnits', backupUnits))
   }
 
   if (reFORMAT.test(block)) {
-    const formatMatch = block.match(reFORMAT)
-    const zero = formatMatch[1]
-    const nota = formatMatch[2]
-    const leading = Number(formatMatch[3])
-    const trailing = Number(formatMatch[4])
-    const format = parser.format
+    var formatMatch = block.match(reFORMAT)
+    var zero = formatMatch[1]
+    var nota = formatMatch[2]
+    var leading = Number(formatMatch[3])
+    var trailing = Number(formatMatch[4])
+    var format = parser.format
 
     format.zero = format.zero || zero
     if (!format.places.length) {
@@ -158,29 +158,29 @@ const parse = function(parser, block) {
       parser._warn('trailing zero suppression has been deprecated')
     }
 
-    const epsilon = 1.5 * Math.pow(10, -parser.format.places[1])
+    var epsilon = 1.5 * Math.pow(10, -parser.format.places[1])
     parser._push(commands.set('nota', nota))
     parser._push(commands.set('epsilon', epsilon))
     return
   }
 
   if (rePOLARITY.test(block)) {
-    const polarity = block.match(rePOLARITY)[1]
+    var polarity = block.match(rePOLARITY)[1]
     return parser._push(commands.level('polarity', polarity))
   }
 
   if (reSTEP_REP.test(block)) {
-    const stepRepeatMatch = block.match(reSTEP_REP)
-    const x = stepRepeatMatch[1] || 1
-    const y = stepRepeatMatch[2] || 1
-    const i = stepRepeatMatch[3] || 0
-    const j = stepRepeatMatch[4] || 0
-    const sr = {x: Number(x), y: Number(y), i: Number(i), j: Number(j)}
+    var stepRepeatMatch = block.match(reSTEP_REP)
+    var x = stepRepeatMatch[1] || 1
+    var y = stepRepeatMatch[2] || 1
+    var i = stepRepeatMatch[3] || 0
+    var j = stepRepeatMatch[4] || 0
+    var sr = {x: Number(x), y: Number(y), i: Number(i), j: Number(j)}
     return parser._push(commands.level('stepRep', sr))
   }
 
   if (reTOOL.test(block)) {
-    const tool = block.match(reTOOL)[1]
+    var tool = block.match(reTOOL)[1]
     return parser._push(commands.set('tool', tool))
   }
 
@@ -194,13 +194,13 @@ const parse = function(parser, block) {
 
   // finally, look for mode commands and operations
   // they may appear in the same block
-  const coordMatch = block.match(reCOORD)
-  const opMatch = block.match(reOP)
-  const modeMatch = block.match(reMODE)
+  var coordMatch = block.match(reCOORD)
+  var opMatch = block.match(reOP)
+  var modeMatch = block.match(reMODE)
 
   if (opMatch || coordMatch || modeMatch) {
     if (modeMatch) {
-      let mode
+      var mode
       if (modeMatch[1] === '1') {
         mode = 'i'
       }
@@ -214,11 +214,11 @@ const parse = function(parser, block) {
     }
 
     if (opMatch || coordMatch) {
-      const opCode = (opMatch) ? opMatch[1] : ''
-      const coordString = (coordMatch) ? coordMatch[1] : ''
-      const coord = parseCoord(coordString, parser.format)
+      var opCode = (opMatch) ? opMatch[1] : ''
+      var coordString = (coordMatch) ? coordMatch[1] : ''
+      var coord = parseCoord(coordString, parser.format)
 
-      let op = 'last'
+      var op = 'last'
       if (opCode === '1') {
         op = 'int'
       }
@@ -236,7 +236,7 @@ const parse = function(parser, block) {
   }
 
   // if we reach here the block was unhandled, so warn if it is not empty
-  return parser._warn(`block "${block}" was not recognized and was ignored`)
+  return parser._warn('block "' + block + '" was not recognized and was ignored')
 }
 
 module.exports = parse

@@ -2,29 +2,29 @@
 // returns {next: '_', read: [chars read], lines: [lines read]}
 'use strict'
 
-const getNext = function(type, chunk, start) {
+var getNext = function(type, chunk, start) {
   if (type !== 'gerber' && type !== 'drill') {
     throw new Error('filetype to get next block must be "drill" or "gerber"')
   }
 
   // parsing constants
-  const limit = chunk.length - start
-  const split = (type === 'gerber') ? '*' : '\n'
-  const param = (type === 'gerber') ? '%' : ''
+  var limit = chunk.length - start
+  var split = (type === 'gerber') ? '*' : '\n'
+  var param = (type === 'gerber') ? '%' : ''
 
   // search flags
-  let splitFound = false
-  let paramStarted = false
-  let paramFound = false
-  let blockFound = false
+  var splitFound = false
+  var paramStarted = false
+  var paramFound = false
+  var blockFound = false
 
   // chunk results
-  const found = []
-  let read = 0
-  let lines = 0
+  var found = []
+  var read = 0
+  var lines = 0
 
   while ((!blockFound) && (read < limit)) {
-    const c = chunk[start + read]
+    var c = chunk[start + read]
 
     // count newlines
     if (c === '\n') {
@@ -56,9 +56,9 @@ const getNext = function(type, chunk, start) {
     blockFound = (splitFound && ((!paramStarted) || paramFound))
   }
 
-  const block = (blockFound) ? found.join('') : ''
-  const rem = (!blockFound) ? found.join('') : ''
-  return {lines, read, block, rem}
+  var block = (blockFound) ? found.join('') : ''
+  var rem = (!blockFound) ? found.join('') : ''
+  return {lines: lines, read: read, block: block, rem: rem}
 }
 
 module.exports = getNext
