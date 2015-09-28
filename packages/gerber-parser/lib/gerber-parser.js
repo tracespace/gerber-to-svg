@@ -1,7 +1,7 @@
 // generic file parser for gerber and drill files
 'use strict'
 
-var Transform = require('stream').Transform
+var Transform = require('readable-stream').Transform
 
 var applyOptions = require('./_apply-options')
 var determineFiletype = require('./_determine-filetype')

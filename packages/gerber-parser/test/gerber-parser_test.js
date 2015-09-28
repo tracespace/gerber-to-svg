@@ -1,7 +1,7 @@
 // test suite for the top level gerber parser class
 'use strict'
 
-var Transform = require('stream').Transform
+var Transform = require('readable-stream').Transform
 var expect = require('chai').expect
 var repeat = require('lodash.repeat')
 

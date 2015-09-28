@@ -53,7 +53,8 @@
     "lodash.partial": "^3.1.1",
     "lodash.pick": "^3.1.0",
     "lodash.set": "^3.7.4",
-    "lodash.transform": "^3.0.4"
+    "lodash.transform": "^3.0.4",
+    "readable-stream": "^2.0.2"
   },
   "devDependencies": {
     "chai": "^3.2.0",
