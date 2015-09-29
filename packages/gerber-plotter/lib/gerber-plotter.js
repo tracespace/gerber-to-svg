@@ -53,6 +53,19 @@ const _transform = function(chunk, encoding, done) {
     }
   }
 
+  // else tool commands
+  else if (cmd === 'tool') {
+    const tool = {trace: []}
+    if (val.shape === 'circle' || val.shape === 'rect') {
+      if (val.hole.length === 0) {
+        tool.trace = val.val
+      }
+    }
+
+    this._tools.set(key, tool)
+    this._tool = tool
+  }
+
   // else done command
   else {
     this._done = true

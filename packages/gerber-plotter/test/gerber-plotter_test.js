@@ -189,8 +189,43 @@ describe('gerber plotter', function() {
     })
   })
 
-  describe.skip('handling new tool commands', function() {
+  describe('handling new tool commands', function() {
+    it('should set current tool to newly defined tool', function() {
+      const circle = {shape: 'circle', val: [4], hole: []}
+      p.write({cmd: 'tool', key: '10', val: circle})
+      expect(p._tools.get('10')).to.equal(p._tool)
+      p.write({cmd: 'tool', key: '15', val: circle})
+      expect(p._tools.get('15')).to.equal(p._tool)
+    })
 
+    it('should set trace width for circle and rectangle tools', function() {
+      const circle = {shape: 'circle', val: [4], hole: []}
+      const rect = {shape: 'rect', val: [2, 3], hole: []}
+
+      p.write({cmd: 'tool', key: '10', val: circle})
+      expect(p._tool.trace).to.eql([4])
+
+      p.write({cmd: 'tool', key: '11', val: rect})
+      expect(p._tool.trace).to.eql([2, 3])
+    })
+
+    it('should not set trace for untraceable tools', function() {
+      const circle = {shape: 'circle', val: [4], hole: [1, 1]}
+      const rect = {shape: 'rect', val: [2, 3], hole: [1]}
+      const obround = {shape: 'obround', val: [2, 3], hole: []}
+      const poly = {shape: 'poly', val: [2, 3, 4], hole: []}
+      const macro = {shape: 'SOME_MACRO', val: [], hole: []}
+      p.write({cmd: 'tool', key: '10', val: circle})
+      expect(p._tool.trace).to.eql([])
+      p.write({cmd: 'tool', key: '11', val: rect})
+      expect(p._tool.trace).to.eql([])
+      p.write({cmd: 'tool', key: '12', val: obround})
+      expect(p._tool.trace).to.eql([])
+      p.write({cmd: 'tool', key: '13', val: poly})
+      expect(p._tool.trace).to.eql([])
+      p.write({cmd: 'tool', key: '14', val: macro})
+      expect(p._tool.trace).to.eql([])
+    })
   })
 })
 
@@ -236,10 +271,6 @@ describe('gerber plotter', function() {
 //       expect(p.tools.D10.bbox(1.0, 3.6)).to.eql {
 //         xMin: -4, yMin: -1.4, xMax: 6, yMax: 8.6
 //       }
-//
-//     it 'should set the current tool to the new tool', ->
-//       p.write {tool: {D10: {dia: 10}}}
-//       expect(p.currentTool).to.equal p.tools.D10
 //
 //     it 'should error if the tool already exists', (done) ->
 //       p.once 'error', (e) ->
