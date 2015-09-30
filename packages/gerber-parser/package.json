@@ -1,11 +1,8 @@
 {
   "name": "gerber-parser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A PCB Gerber/drill-file parser implemented as a Node transform-stream",
   "main": "lib/gerber-parser.js",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
     "test": "istanbul cover --include-all-sources _mocha",

@@ -5,8 +5,8 @@ API documentation for gerber-parser. An understanding of the [Gerber file format
 ## create a gerber parser
 
 ``` javascript
-const gerberParser = require('gerber-parser')
-const parser = gerberParser(OPTIONS)
+var gerberParser = require('gerber-parser')
+var parser = gerberParser(OPTIONS)
 ```
 
 ### usage
@@ -18,12 +18,12 @@ Use the gerber parser like you would any other [Node stream](https://github.com/
 The gerberParser function takes an options object and returns a transform stream. The options object can be used to override or certain details that would normally be parsed from the Gerber file or may be missing from the file entirely (which can happen a lot, especially with drill files).
 
 ``` javascript
-const options = {
+var options = {
   places: [3, 5],
   zero: 'L',
   filetype: 'gerber'
 }
-const parser = gerberParser(options)
+var parser = gerberParser(options)
 ```
 
 The available options are:
@@ -68,7 +68,7 @@ A `warning` event is emitted if the parser encounters a recoverable problem whil
 
 ``` javascript
 // warning object
-const exampleWarning = {message: 'warning message', line: LINE_NO_IN_GERBER}
+var exampleWarning = {message: 'warning message', line: LINE_NO_IN_GERBER}
 
 parser.on('warning', function(w) {
   console.warn(`warning at line ${w.line}: ${w.message}`)
