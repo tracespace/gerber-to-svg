@@ -2,42 +2,42 @@
 // takes a parser transform stream and a block string
 'use strict'
 
-// const map = require('lodash.map')
+var numIsFinite = require('lodash.isfinite')
 
-const commands = require('./_commands')
-const normalize = require('./normalize-coord')
-const parseCoord = require('./parse-coord')
+var commands = require('./_commands')
+var normalize = require('./normalize-coord')
+var parseCoord = require('./parse-coord')
 
-const reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
+var reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
 
-const reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
-const reTOOL_DEF = /T0*(\d+)C([\d.]+)/
-const reTOOL_SET = /T0*(\d+)(?!C)/
-const reCOORD = /((?:[XY][+-]?[\d.]+){1,2})/
+var reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
+var reTOOL_DEF = /T0*(\d+)C([\d.]+)/
+var reTOOL_SET = /T0*(\d+)(?!C)/
+var reCOORD = /((?:[XY][+-]?[\d.]+){1,2})/
 
-const setUnits = function(parser, units) {
-  const format = (units === 'in') ? [2, 4] : [3, 3]
+var setUnits = function(parser, units) {
+  var format = (units === 'in') ? [2, 4] : [3, 3]
   if (parser.format.places.length === 0) {
     parser.format.places = format
   }
   return parser._push(commands.set('units', units))
 }
 
-const parse = function(parser, block) {
+var parse = function(parser, block) {
   // ignore comments
   if (block[0] === ';') {
 
     // check for kicad format hints
     if (reKI_HINT.test(block)) {
-      const kicadMatch = block.match(reKI_HINT)
-      const leading = Number(kicadMatch[1])
-      const trailing = Number(kicadMatch[2])
-      const absolute = kicadMatch[3]
-      const units = kicadMatch[4]
-      const suppression = kicadMatch[5]
+      var kicadMatch = block.match(reKI_HINT)
+      var leading = Number(kicadMatch[1])
+      var trailing = Number(kicadMatch[2])
+      var absolute = kicadMatch[3]
+      var unitSet = kicadMatch[4]
+      var suppressionSet = kicadMatch[5]
 
       // set format if we got numbers
-      if (!Number.isNaN(leading) && !Number.isNaN(trailing)) {
+      if (numIsFinite(leading) && numIsFinite(trailing)) {
         parser.format.places = [leading, trailing]
       }
 
@@ -50,7 +50,7 @@ const parse = function(parser, block) {
       }
 
       // send units
-      if (units === 'metric') {
+      if (unitSet === 'metric') {
         parser._push(commands.set('backupUnits', 'mm'))
       }
       else {
@@ -58,10 +58,10 @@ const parse = function(parser, block) {
       }
 
       // set zero suppression
-      if (suppression === 'leading' || suppression === 'keep') {
+      if (suppressionSet === 'leading' || suppressionSet === 'keep') {
         parser.format.zero = 'L'
       }
-      else if (suppression === 'trailing') {
+      else if (suppressionSet === 'trailing') {
         parser.format.zero = 'T'
       }
       else {
@@ -73,21 +73,21 @@ const parse = function(parser, block) {
   }
 
   if (reTOOL_DEF.test(block)) {
-    const toolMatch = block.match(reTOOL_DEF)
-    const toolCode = toolMatch[1]
-    const toolDia = normalize(toolMatch[2])
-    const tool = {shape: 'circle', val: [toolDia], hole: []}
+    var toolMatch = block.match(reTOOL_DEF)
+    var toolCode = toolMatch[1]
+    var toolDia = normalize(toolMatch[2])
+    var toolDef = {shape: 'circle', val: [toolDia], hole: []}
 
-    return parser._push(commands.tool(toolCode, tool))
+    return parser._push(commands.tool(toolCode, toolDef))
   }
 
   // tool set
   if (reTOOL_SET.test(block)) {
-    const tool = block.match(reTOOL_SET)[1]
+    var toolSet = block.match(reTOOL_SET)[1]
 
     // allow tool set to fall through because it can happen on the
     // same line as a coordinate operation
-    parser._push(commands.set('tool', tool))
+    parser._push(commands.set('tool', toolSet))
   }
 
   // operations
@@ -103,8 +103,8 @@ const parse = function(parser, block) {
       parser._warn('places format missing; assuming [2, 4]')
     }
 
-    const coordMatch = block.match(reCOORD)
-    const coord = parseCoord(coordMatch[1], parser.format)
+    var coordMatch = block.match(reCOORD)
+    var coord = parseCoord(coordMatch[1], parser.format)
     return parser._push(commands.op('flash', coord))
   }
 
@@ -129,9 +129,9 @@ const parse = function(parser, block) {
   }
 
   if (reUNITS.test(block)) {
-    const unitsMatch = block.match(reUNITS)
-    const units = unitsMatch[1]
-    const suppression = unitsMatch[2]
+    var unitsMatch = block.match(reUNITS)
+    var units = unitsMatch[1]
+    var suppression = unitsMatch[2]
 
     if (units === 'METRIC') {
       setUnits(parser, 'mm')

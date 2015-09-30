@@ -2,18 +2,18 @@
 // test subset - parsing gerber files
 'use strict'
 
-const expect = require('chai').expect
-const partial = require('lodash.partial')
+var expect = require('chai').expect
+var partial = require('lodash.partial')
 
-const parser = require('../lib/gerber-parser')
+var parser = require('../lib/gerber-parser')
 
 describe('gerber parser with gerber files', function() {
-  let p
-  const pFactory = partial(parser, {filetype: 'gerber'})
+  var p
+  var pFactory = partial(parser, {filetype: 'gerber'})
 
   // convenience function to expect an array of results
-  const expectResults = function(expected, done) {
-    const handleData = function(res) {
+  var expectResults = function(expected, done) {
+    var handleData = function(res) {
       expect(res).to.eql(expected.shift())
       if (!expected.length) {
         return done()
@@ -107,7 +107,7 @@ describe('gerber parser with gerber files', function() {
   })
 
   it('should end the file with a M02', function(done) {
-    const expected = [{cmd: 'done', line: 0}]
+    var expected = [{cmd: 'done', line: 0}]
 
     expectResults(expected, done)
     p.write('M02*\n')
@@ -115,7 +115,7 @@ describe('gerber parser with gerber files', function() {
 
   describe('general set commands (G-codes)', function() {
     it('should set region mode on/off with G36/7', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', key: 'region', val: true, line: 0},
         {cmd: 'set', key: 'region', val: false, line: 1}
       ]
@@ -125,7 +125,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should set interpolation mode with G01/2/3', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', key: 'mode', val: 'i', line: 0},
         {cmd: 'set', key: 'mode', val: 'cw', line: 1},
         {cmd: 'set', key: 'mode', val: 'ccw', line: 2},
@@ -140,7 +140,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should set the arc mode with G74/5', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', key: 'arc', val: 's', line: 0},
         {cmd: 'set', key: 'arc', val: 'm', line: 1}
       ]
@@ -152,7 +152,7 @@ describe('gerber parser with gerber files', function() {
 
   describe('unit set commands (MO parameter)', function() {
     it('should set units with %MOIN*% and %MOMM*%', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', key: 'units', val: 'in', line: 0},
         {cmd: 'set', key: 'units', val: 'mm', line: 1}
       ]
@@ -163,7 +163,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should set backup units with G70/1', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', key: 'backupUnits', val: 'in', line: 0},
         {cmd: 'set', key: 'backupUnits', val: 'mm', line: 1}
       ]
@@ -175,7 +175,7 @@ describe('gerber parser with gerber files', function() {
 
   describe('format block', function() {
     it('should parse zero suppression', function() {
-      let format = '%FSLAX34Y34*%'
+      var format = '%FSLAX34Y34*%'
       p.write(format)
       expect(p.format.zero).to.equal('L')
 
@@ -196,7 +196,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse places format', function() {
-      let format = '%FSLAX34Y34*%'
+      var format = '%FSLAX34Y34*%'
       p.write(format)
       expect(p.format.places).to.eql([3, 4])
 
@@ -207,7 +207,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should not override user-set places or suppression', function() {
-      const format = '%FSLAX34Y34*%'
+      var format = '%FSLAX34Y34*%'
       p.format.zero = 'T'
       p.format.places = [7, 7]
       p.write(format)
@@ -216,11 +216,11 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should set notation and epsilon', function(done) {
-      const format1 = '%FSLAX34Y34*%\n'
-      const format2 = '%FSLIX77Y77*%\n'
+      var format1 = '%FSLAX34Y34*%\n'
+      var format2 = '%FSLIX77Y77*%\n'
       // ensure it parses if suppression is missing
-      const format3 = '%FSAX66Y66*%\n'
-      const expected = [
+      var format3 = '%FSAX66Y66*%\n'
+      var expected = [
         {cmd: 'set', line: 0, key: 'nota', val: 'A'},
         {cmd: 'set', line: 0, key: 'epsilon', val: 1.5 * Math.pow(10, -4)},
         {cmd: 'set', line: 1, key: 'nota', val: 'I'},
@@ -239,7 +239,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should warn and set leading if suppression missing', function(done) {
-      const format = '%FSAX34Y34*%\n'
+      var format = '%FSAX34Y34*%\n'
       p.once('warning', function(w) {
         expect(w.line).to.equal(0)
         expect(w.message).to.match(/suppression missing/)
@@ -253,7 +253,7 @@ describe('gerber parser with gerber files', function() {
 
   describe('new level commands (SR/LP parameters)', function() {
     it('should parse a new level polarity', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'level', line: 0, key: 'polarity', val: 'D'},
         {cmd: 'level', line: 1, key: 'polarity', val: 'C'}
       ]
@@ -263,7 +263,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse a new step-repeat level', function(done) {
-      const expected = [
+      var expected = [
         {
           cmd: 'level',
           line: 0,
@@ -299,7 +299,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse a tool change block', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', line: 0, key: 'tool', val: '10'},
         {cmd: 'set', line: 1, key: 'tool', val: '11'},
         {cmd: 'set', line: 2, key: 'tool', val: '12'}
@@ -312,12 +312,12 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should handle standard circles', function(done) {
-      const expectedTools = [
+      var expectedTools = [
         {shape: 'circle', val: [1], hole: []},
         {shape: 'circle', val: [1], hole: [0.1]},
         {shape: 'circle', val: [1], hole: [0.2, 0.3]}
       ]
-      const expected = [
+      var expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},
         {cmd: 'tool', line: 1, key: '11', val: expectedTools[1]},
         {cmd: 'tool', line: 2, key: '12', val: expectedTools[2]}
@@ -330,12 +330,12 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should handle standard rectangles/obrounds', function(done) {
-      const expectedTools = [
+      var expectedTools = [
         {shape: 'rect', val: [1, 2], hole: []},
         {shape: 'obround', val: [3, 4], hole: [0.1]},
         {shape: 'rect', val: [5, 6], hole: [0.2, 0.3]}
       ]
-      const expected = [
+      var expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},
         {cmd: 'tool', line: 1, key: '11', val: expectedTools[1]},
         {cmd: 'tool', line: 2, key: '12', val: expectedTools[2]}
@@ -348,13 +348,13 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should handle standard polygons', function(done) {
-      const expectedTools = [
+      var expectedTools = [
         {shape: 'poly', val: [1, 5, 0], hole: []},
         {shape: 'poly', val: [2, 6, 45], hole: []},
         {shape: 'poly', val: [3, 7, 0], hole: [0.1]},
         {shape: 'poly', val: [4, 8, 0], hole: [0.2, 0.3]}
       ]
-      const expected = [
+      var expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},
         {cmd: 'tool', line: 1, key: '11', val: expectedTools[1]},
         {cmd: 'tool', line: 2, key: '12', val: expectedTools[2]},
@@ -369,11 +369,11 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should handle aperture macro tools', function(done) {
-      const expectedTools = [
+      var expectedTools = [
         {shape: 'CIRC', val: [1, 0.5], hole: []},
         {shape: 'RECT', val: [], hole: []}
       ]
-      const expected = [
+      var expected = [
         {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]},
         {cmd: 'tool', line: 1, key: '11', val: expectedTools[1]}
       ]
@@ -386,7 +386,7 @@ describe('gerber parser with gerber files', function() {
 
   describe('aperture macros', function() {
     it('should parse the name of the macro properly', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'macro', line: 0, key: 'NAME1', val: []},
         {cmd: 'macro', line: 1, key: 'CRAZY8', val: []}
       ]
@@ -397,13 +397,13 @@ describe('gerber parser with gerber files', function() {
     })
 
     describe('primitive blocks', function() {
-      const exp = 1
+      var exp = 1
 
       it('should parse comments', function(done) {
-        const expectedBlocks = [
+        var expectedBlocks = [
           {type: 'comment'}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'NAME1', val: expectedBlocks}
         ]
 
@@ -413,10 +413,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse circle primitives', function(done) {
-        const expectedBlocks = [
-          {type: 'circle', exp, dia: 5, cx: 1, cy: 2}
+        var expectedBlocks = [
+          {type: 'circle', exp: exp, dia: 5, cx: 1, cy: 2}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'CIRC1', val: expectedBlocks}
         ]
 
@@ -426,11 +426,11 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse vector primitives', function(done) {
-        const expectedBlocks = [
-          {type: 'vect', exp, width: 2, x1: 3, y1: 4, x2: 5, y2: 6, rot: 7},
-          {type: 'vect', exp, width: 2, x1: 3, y1: 4, x2: 5, y2: 6, rot: 7}
+        var expectedBlocks = [
+          {type: 'vect', exp: exp, width: 2, x1: 3, y1: 4, x2: 5, y2: 6, rot: 7},
+          {type: 'vect', exp: exp, width: 2, x1: 3, y1: 4, x2: 5, y2: 6, rot: 7}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 2, key: 'VECT1', val: expectedBlocks}
         ]
 
@@ -452,10 +452,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse rectangle primitives', function(done) {
-        const expectedBlocks = [
-          {type: 'rect', exp, width: 2, height: 3, cx: 4, cy: 5, rot: 6}
+        var expectedBlocks = [
+          {type: 'rect', exp: exp, width: 2, height: 3, cx: 4, cy: 5, rot: 6}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'RECT1', val: expectedBlocks}
         ]
 
@@ -465,10 +465,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse a lower left rectangle primitive', function(done) {
-        const expectedBlocks = [
-          {type: 'rectLL', exp, width: 2, height: 3, x: 4, y: 5, rot: 6}
+        var expectedBlocks = [
+          {type: 'rectLL', exp: exp, width: 2, height: 3, x: 4, y: 5, rot: 6}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'RECTLL1', val: expectedBlocks}
         ]
 
@@ -489,10 +489,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse an outline polygon primitive', function(done) {
-        const expectedShapes = [
-          {type: 'outline', exp, points: [3, 4, 5, 6, 7, 8], rot: 9}
+        var expectedShapes = [
+          {type: 'outline', exp: exp, points: [3, 4, 5, 6, 7, 8], rot: 9}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'OUT1', val: expectedShapes}
         ]
 
@@ -502,10 +502,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse a regular polygon primitive', function(done) {
-        const expectedShapes = [
-          {type: 'poly', exp, vertices: 3, cx: 4, cy: 5, dia: 6, rot: 7}
+        var expectedShapes = [
+          {type: 'poly', exp: exp, vertices: 3, cx: 4, cy: 5, dia: 6, rot: 7}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'POLY1', val: expectedShapes}
         ]
 
@@ -515,17 +515,17 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse a moire primitive', function(done) {
-        const expectedShapes = [
+        var expectedShapes = [
           {
             type: 'moire',
-            exp,
+            exp: exp,
             cx: 1, cy: 2, dia: 3,
             ringThx: 4, ringGap: 5, maxRings: 6,
             crossThx: 7, crossLen: 8,
             rot: 9
           }
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'MOIRE1', val: expectedShapes}
         ]
 
@@ -535,10 +535,10 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse a thermal primitive', function(done) {
-        const expectedShapes = [
-          {type: 'thermal', exp, cx: 1, cy: 2, outerDia: 3, innerDia: 4, gap: 5, rot: 6}
+        var expectedShapes = [
+          {type: 'thermal', exp: exp, cx: 1, cy: 2, outerDia: 3, innerDia: 4, gap: 5, rot: 6}
         ]
-        const expected = [
+        var expected = [
           {cmd: 'macro', line: 1, key: 'THERMAL1', val: expectedShapes}
         ]
 
@@ -560,29 +560,29 @@ describe('gerber parser with gerber files', function() {
     })
 
     describe('variable set blocks', function() {
-      let mods
+      var mods
       beforeEach(function() {
         mods = {$1: 42}
       })
 
-      const expectExprResults = function(expected, done) {
+      var expectExprResults = function(expected, done) {
         p.once('data', function(res) {
           expect(res.cmd).to.equal('macro')
           expect(res.key).to.equal('MODS1')
 
-          for (const v of res.val) {
-            const newMods = v.set(mods)
+          res.val.forEach(function(v) {
+            var newMods = v.set(mods)
             expect(v.type).to.equal('variable')
             expect(newMods).to.eql(expected.shift())
             expect(newMods).to.not.equal(mods)
-          }
+          })
 
           done()
         })
       }
 
       it('should return function that takes / returns mods', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 1}
         ]
 
@@ -592,7 +592,7 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse addition', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 3},
           {$1: 42, $2: 56}
         ]
@@ -604,7 +604,7 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse subtraction', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 3},
           {$1: 42, $2: 21}
         ]
@@ -616,7 +616,7 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse multiplication with x and X', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 21},
           {$1: 42, $2: 6}
         ]
@@ -638,7 +638,7 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should parse division with /', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 4},
           {$1: 42, $2: 21}
         ]
@@ -650,7 +650,7 @@ describe('gerber parser with gerber files', function() {
       })
 
       it('should handle expressions with parentheses', function(done) {
-        const expected = [
+        var expected = [
           {$1: 42, $2: 3}
         ]
 
@@ -678,7 +678,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse an interpolation command', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'op', line: 0, key: 'int', val: {x: 0.1, y: 0.2, i: 0.3, j: 0.4}},
         {cmd: 'op', line: 1, key: 'int', val: {x: 0.11, y: 0}},
         {cmd: 'op', line: 2, key: 'int', val: {x: 0.22}},
@@ -695,7 +695,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse a move command', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'op', line: 0, key: 'move', val: {x: 0.3, y: 0.001}},
         {cmd: 'op', line: 1, key: 'move', val: {x: -0.1}},
         {cmd: 'op', line: 2, key: 'move', val: {}}
@@ -708,7 +708,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should parse a flash command', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'op', line: 0, key: 'flash', val: {x: 0.3, y: 0.001}},
         {cmd: 'op', line: 1, key: 'flash', val: {x: -0.1}},
         {cmd: 'op', line: 2, key: 'flash', val: {}}
@@ -721,7 +721,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should send "last" operation if op code is missing', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'op', line: 0, key: 'last', val: {x: 0.3, y: 0.001}},
         {cmd: 'op', line: 1, key: 'last', val: {x: -0.1}}
       ]
@@ -732,7 +732,7 @@ describe('gerber parser with gerber files', function() {
     })
 
     it('should interpolate with inline mode set', function(done) {
-      const expected = [
+      var expected = [
         {cmd: 'set', line: 0, key: 'mode', val: 'i'},
         {cmd: 'op', line: 0, key: 'int', val: {x: 0.001, y: 0.001}},
         {cmd: 'set', line: 1, key: 'mode', val: 'cw'},

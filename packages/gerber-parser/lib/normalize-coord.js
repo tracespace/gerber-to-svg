@@ -2,21 +2,21 @@
 // coordinate is 1000x the gerber unit
 'use strict'
 
-// svg coordinate scaling factor and power of ten exponent
-// const COORD_E = 3
+var numIsFinite = require('lodash.isfinite')
+var padLeft = require('lodash.padleft')
+var padRight = require('lodash.padright')
 
 // function takes in the number string to be converted and the format object
-const normalizeCoord = function(number, format) {
+var normalizeCoord = function(number, format) {
   // make sure we're dealing with a string
   if (number == null) {
     return NaN
   }
-  let numberString = '' + number
+
+  var numberString = '' + number
 
   // pull out the sign and get the before and after segments ready
-  let before = ''
-  let after = ''
-  let sign = '+'
+  var sign = '+'
   if ((numberString[0] === '-') || (numberString[0] === '+')) {
     sign = numberString[0]
     numberString = numberString.slice(1)
@@ -24,53 +24,30 @@ const normalizeCoord = function(number, format) {
 
   // check if the number has a decimal point or has been explicitely flagged
   // if it does, just split by the decimal point to get leading and trailing
-  if (numberString.includes('.') || (format == null) || (format.zero == null)) {
+  var hasDecimal = (numberString.indexOf('.') !== -1)
+  if (hasDecimal || (format == null) || (format.zero == null)) {
     return Number(sign + numberString)
   }
 
   // otherwise we need to use the number format to split up the string
   else {
-    const numberStringLen = numberString.length
-
     // make sure format is valid
     if (format.places == null || format.places.length !== 2) {
       return NaN
     }
 
-    const leading = format.places[0]
-    const trailing = format.places[1]
-    if (!Number.isFinite(leading) || !Number.isFinite(trailing)) {
+    var leading = format.places[0]
+    var trailing = format.places[1]
+    if (!numIsFinite(leading) || !numIsFinite(trailing)) {
       return NaN
     }
 
-    // split according to trailing or leading zero suppression
+    // pad according to trailing or leading zero suppression
     if (format.zero === 'T') {
-      for (let i = 0; i < numberStringLen; i++) {
-        const c = numberString[i]
-        if (i < leading) {
-          before += c
-        }
-        else {
-          after += c
-        }
-      }
-
-      // pad any missing zeros
-      before += '0'.repeat(Math.max(0, (leading - before.length)))
+      numberString = padRight(numberString, leading + trailing, '0')
     }
     else if (format.zero === 'L') {
-      for (let i = 0; i < numberStringLen; i++) {
-        const c = numberString[i]
-        if (numberString.length - i <= trailing) {
-          after += c
-        }
-        else {
-          before += c
-        }
-      }
-
-      // pad any missing zeros
-      after = '0'.repeat(Math.max(0, (trailing - after.length))) + after
+      numberString = padLeft(numberString, leading + trailing, '0')
     }
     else {
       return NaN
@@ -78,7 +55,9 @@ const normalizeCoord = function(number, format) {
   }
 
   // finally, parse the numberString
-  return Number([sign + before, after].join('.'))
+  var before = numberString.slice(0, leading)
+  var after = numberString.slice(leading, leading + trailing)
+  return Number(sign + before + '.' + after)
 }
 
 module.exports = normalizeCoord

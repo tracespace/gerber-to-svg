@@ -1,11 +1,11 @@
 // test suite for coordinate parser function
 'use strict'
 
-const expect = require('chai').expect
-const parseCoord = require('../lib/parse-coord')
+var expect = require('chai').expect
+var parseCoord = require('../lib/parse-coord')
 
 // svg coordinate FACTOR
-const FORMAT = {places: [2, 3], zeros: null}
+var FORMAT = {places: [2, 3], zeros: null}
 
 describe('coordinate parser', function() {
   it('should throw if passed an incorrect format', function() {

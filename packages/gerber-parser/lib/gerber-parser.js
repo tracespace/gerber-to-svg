@@ -1,21 +1,23 @@
 // generic file parser for gerber and drill files
 'use strict'
 
-const Transform = require('stream').Transform
+var Transform = require('readable-stream').Transform
 
-const applyOptions = require('./_apply-options')
-const determineFiletype = require('./_determine-filetype')
-const getNext = require('./get-next-block')
-const parseGerber = require('./_parse-gerber')
-const parseDrill = require('./_parse-drill')
-const warning = require('./_warning')
+var applyOptions = require('./_apply-options')
+var determineFiletype = require('./_determine-filetype')
+var getNext = require('./get-next-block')
+var parseGerber = require('./_parse-gerber')
+var parseDrill = require('./_parse-drill')
+var warning = require('./_warning')
 
-const LIMIT = 65535
+var LIMIT = 65535
 
-const _transform = function(chunk, encoding, done) {
+var _transform = function(chunk, encoding, done) {
+  var filetype = this.format.filetype
+
   // determine filetype within 65535 characters
-  if (!this.format.filetype) {
-    const filetype = determineFiletype(chunk, this._index, LIMIT)
+  if (!filetype) {
+    filetype = determineFiletype(chunk, this._index, LIMIT)
     this._index += chunk.length
 
     if (!filetype) {
@@ -31,11 +33,11 @@ const _transform = function(chunk, encoding, done) {
     }
   }
 
-  const filetype = this.format.filetype
-  const toProcess = this._stash + chunk
+  var toProcess = this._stash + chunk
   this._stash = ''
+
   while (this._index < toProcess.length) {
-    const next = getNext(filetype, toProcess, this._index)
+    var next = getNext(filetype, toProcess, this._index)
     this._index += next.read
     this.line += next.lines
     this._stash += next.rem
@@ -54,18 +56,18 @@ const _transform = function(chunk, encoding, done) {
   done()
 }
 
-const _push = function(data) {
+var _push = function(data) {
   data.line = this.line
   this.push(data)
 }
 
-const _warn = function(message) {
+var _warn = function(message) {
   this.emit('warning', warning(message, this.line))
 }
 
-const parser = function(opts) {
+var parser = function(opts) {
   // create a transform stream
-  const stream = new Transform({
+  var stream = new Transform({
     decodeStrings: false,
     readableObjectMode: true
   })

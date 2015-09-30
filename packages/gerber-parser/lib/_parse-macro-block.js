@@ -1,18 +1,19 @@
 // function to parse a macro block into a primitive object
 'use strict'
 
-const map = require('lodash.map')
-const clone = require('lodash.clone')
-const set = require('lodash.set')
+var map = require('lodash.map')
+var clone = require('lodash.clone')
+var set = require('lodash.set')
+var bind = require('lodash.bind')
 
-const parseMacroExpr = require('./_parse-macro-expression')
+var parseMacroExpr = require('./_parse-macro-expression')
 
-const reEXPR = /[\$+\-\/xX]/
-const reVAR_DEF = /^(\$[\d+])=(.+)/
+var reEXPR = /[\$+\-\/xX]/
+var reVAR_DEF = /^(\$[\d+])=(.+)/
 
 // CAUTION: assumes parser will be bound to this
-const parseMacroBlock = function(block) {
-  const parseExpr = parseMacroExpr.bind(this)
+var parseMacroBlock = function(block) {
+  var parseExpr = bind(parseMacroExpr, this)
 
   // check first for a comment
   if (block[0] === '0') {
@@ -21,32 +22,32 @@ const parseMacroBlock = function(block) {
 
   // variable definition
   if (reVAR_DEF.test(block)) {
-    const varDefMatch = block.match(reVAR_DEF)
-    const varName = varDefMatch[1]
-    const varExpr = varDefMatch[2]
-    const evaluate = parseExpr(varExpr)
+    var varDefMatch = block.match(reVAR_DEF)
+    var varName = varDefMatch[1]
+    var varExpr = varDefMatch[2]
+    var evaluate = parseExpr(varExpr)
 
-    const setMods = function(mods) {
+    var setMods = function(mods) {
       return set(clone(mods), varName, evaluate(mods))
     }
     return {type: 'variable', set: setMods}
   }
 
   // map a primitive param to a number or, if an expression, a function
-  const modVal = function(m) {
+  var modVal = function(m) {
     if (reEXPR.test(m)){
       return parseExpr(m)
     }
     return Number(m)
   }
 
-  const mods = map(block.split(','), modVal)
-  const code = mods[0]
-  const exp = mods[1]
+  var mods = map(block.split(','), modVal)
+  var code = mods[0]
+  var exp = mods[1]
 
   // circle primitive
   if (code === 1) {
-    return {type: 'circle', exp, dia: mods[2], cx: mods[3], cy: mods[4]}
+    return {type: 'circle', exp: exp, dia: mods[2], cx: mods[3], cy: mods[4]}
   }
 
   // vector primitive
@@ -57,7 +58,7 @@ const parseMacroBlock = function(block) {
   if (code === 2 || code === 20) {
     return {
       type: 'vect',
-      exp,
+      exp: exp,
       width: mods[2],
       x1: mods[3],
       y1: mods[4],
@@ -71,7 +72,7 @@ const parseMacroBlock = function(block) {
   if (code === 21) {
     return {
       type: 'rect',
-      exp,
+      exp: exp,
       width: mods[2],
       height: mods[3],
       cx: mods[4],
@@ -84,7 +85,7 @@ const parseMacroBlock = function(block) {
     this._warn('macro apeture lower-left rectangle primitives are deprecated')
     return {
       type: 'rectLL',
-      exp,
+      exp: exp,
       width: mods[2],
       height: mods[3],
       x: mods[4],
@@ -96,7 +97,7 @@ const parseMacroBlock = function(block) {
   if (code === 4) {
     return {
       type: 'outline',
-      exp,
+      exp: exp,
       points: map(mods.slice(3, -1), Number),
       rot: Number(mods[mods.length - 1])
     }
@@ -105,7 +106,7 @@ const parseMacroBlock = function(block) {
   if (code === 5) {
     return {
       type: 'poly',
-      exp,
+      exp: exp,
       vertices: mods[2],
       cx: mods[3],
       cy: mods[4],
@@ -117,7 +118,7 @@ const parseMacroBlock = function(block) {
   if (code === 6) {
     return {
       type: 'moire',
-      exp,
+      exp: exp,
       cx: mods[2],
       cy: mods[3],
       dia: mods[4],
@@ -133,7 +134,7 @@ const parseMacroBlock = function(block) {
   if (code === 7) {
     return {
       type: 'thermal',
-      exp,
+      exp: exp,
       cx: mods[2],
       cy: mods[3],
       outerDia: mods[4],
@@ -144,7 +145,7 @@ const parseMacroBlock = function(block) {
   }
 
   else {
-    this._warn(`${code} is an unrecognized primitive for a macro apeture`)
+    this._warn(code + ' is an unrecognized primitive for a macro apeture')
   }
 }
 

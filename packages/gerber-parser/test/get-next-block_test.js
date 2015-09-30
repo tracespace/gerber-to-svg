@@ -1,31 +1,31 @@
 // tests for function that gets the next block from a chunk
 'use strict'
 
-const expect = require('chai').expect
-const partial = require('lodash.partial')
-const getNextBlock = require('../lib/get-next-block')
+var expect = require('chai').expect
+var partial = require('lodash.partial')
+var getNextBlock = require('../lib/get-next-block')
 
 describe('get next block', function() {
   it ('should throw with a bad filetype', function() {
-    const bad = function() {getNextBlock('foo', '', 0)}
+    var bad = function() {getNextBlock('foo', '', 0)}
     expect(bad).to.throw(/filetype/)
   })
 
   describe('from gerber files', function() {
-    const getNext = partial(getNextBlock, 'gerber')
+    var getNext = partial(getNextBlock, 'gerber')
 
     it('should split at *', function() {
-      const chunk = 'M02*'
-      const result = getNext(chunk, 0)
+      var chunk = 'M02*'
+      var result = getNext(chunk, 0)
 
       expect(result.block).to.equal('M02')
     })
 
     it('should return characters read', function() {
-      const chunk = 'G01*G02*G03*'
-      const res1 = getNext(chunk, 0)
-      const res2 = getNext(chunk, 4)
-      const res3 = getNext(chunk, 8)
+      var chunk = 'G01*G02*G03*'
+      var res1 = getNext(chunk, 0)
+      var res2 = getNext(chunk, 4)
+      var res3 = getNext(chunk, 8)
 
       expect(res1.block).to.equal('G01')
       expect(res2.block).to.equal('G02')
@@ -36,10 +36,10 @@ describe('get next block', function() {
     })
 
     it('should return newlines read', function() {
-      const chunk = 'G01*\nG02*\nG03*\n'
-      const res1 = getNext(chunk, 0)
-      const res2 = getNext(chunk, 4)
-      const res3 = getNext(chunk, 9)
+      var chunk = 'G01*\nG02*\nG03*\n'
+      var res1 = getNext(chunk, 0)
+      var res2 = getNext(chunk, 4)
+      var res3 = getNext(chunk, 9)
 
       expect(res1.block).to.equal('G01')
       expect(res2.block).to.equal('G02')
@@ -53,9 +53,9 @@ describe('get next block', function() {
     })
 
     it('should skip the end percent of a param', function() {
-      const chunk = '%FSLAX24Y24*%\n%MOIN*%\n'
-      const res1 = getNext(chunk, 0)
-      const res2 = getNext(chunk, 13)
+      var chunk = '%FSLAX24Y24*%\n%MOIN*%\n'
+      var res1 = getNext(chunk, 0)
+      var res2 = getNext(chunk, 13)
 
       expect(res1.block).to.equal('%FSLAX24Y24')
       expect(res2.block).to.equal('%MOIN')
@@ -67,14 +67,14 @@ describe('get next block', function() {
   })
 
   describe('from drill files', function() {
-    const getNext = partial(getNextBlock, 'drill')
+    var getNext = partial(getNextBlock, 'drill')
 
     it('should split at newlines', function() {
-      const chunk = 'G90\nG05\nM72\nM30\n'
-      const res1 = getNext(chunk, 0)
-      const res2 = getNext(chunk, 4)
-      const res3 = getNext(chunk, 8)
-      const res4 = getNext(chunk, 12)
+      var chunk = 'G90\nG05\nM72\nM30\n'
+      var res1 = getNext(chunk, 0)
+      var res2 = getNext(chunk, 4)
+      var res3 = getNext(chunk, 8)
+      var res4 = getNext(chunk, 12)
 
       expect(res1.block).to.equal('G90')
       expect(res2.block).to.equal('G05')

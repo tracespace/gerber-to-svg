@@ -1,4 +1,3 @@
 --reporter spec
 --ui bdd
---harmony_shipping
 --timeout 500ms
