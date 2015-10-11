@@ -3,7 +3,7 @@
 
 var assign = require('lodash.assign')
 var pick = require('lodash.pick')
-var forEach  = require('lodash.forEach')
+var forEach  = require('lodash.foreach')
 
 var verifyUnits = function(units) {
   return ((units === 'in') || (units === 'mm'))
