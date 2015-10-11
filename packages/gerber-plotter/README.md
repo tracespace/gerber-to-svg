@@ -11,19 +11,15 @@ A printed circuit board Gerber and drill file plotter. Implemented as a Node tra
 
 ## how to
 
-This module is written in ES2016, and thus requires iojs/Node >= v3.0.0. To run in the browser, it should be transpiled to ES5 with a tool like [Babel](https://babeljs.io/) and bundled with a tool like [browserify](http://browserify.org/) or [webpack](http://webpack.github.io/).
-
-Tested natively in iojs and with Babel and the Babel polyfill in the latest versions of Chrome, Safari, Firefox, and Internet Explorer.
-
 `$ npm install gerber-plotter`
 
 ``` javascript
-const fs = require('fs')
-const gerberParser = require('gerber-parser')
-const gerberPlotter = require('gerber-plotter')
+var fs = require('fs')
+var gerberParser = require('gerber-parser')
+var gerberPlotter = require('gerber-plotter')
 
-const parser = gerberParser()
-const plotter = gerberPlotter()
+var parser = gerberParser()
+var plotter = gerberPlotter()
 
 plotter.on('warning', function(w) {
   console.warn(`plotter warning at line ${w.line}: ${w.message}`)
@@ -37,13 +33,15 @@ fs.createReadStream('/path/to/gerber/file.gbr', {encoding: 'utf8'})
   })
 ```
 
+To run in this module in the browser, it should be bundled with a tool like [browserify](http://browserify.org/) or [webpack](http://webpack.github.io/).
+
 ## api
 
 See [API.md](./API.md)
 
 ## developing and contributing
 
-The code is written in ES2015 to run in "modern" versions of Node. Tests are written in [Mocha](http://mochajs.org/) and run in Node, [PhantomJS](http://phantomjs.org/), and a variety of browsers with [Zuul](https://github.com/defunctzombie/zuul) and [Open Sauce](https://saucelabs.com/opensauce/). All PRs should be accompanied by unit tests, with ideally one feature / bugfix per PR. Code linting happens with [ESLint](http://eslint.org/) automatically post-test and pre-commit.
+Tests are written in [Mocha](http://mochajs.org/) and run in Node, [PhantomJS](http://phantomjs.org/), and a variety of browsers with [Zuul](https://github.com/defunctzombie/zuul) and [Open Sauce](https://saucelabs.com/opensauce/). All PRs should be accompanied by unit tests, with ideally one feature / bugfix per PR. Code linting happens with [ESLint](http://eslint.org/) automatically post-test and pre-commit.
 
 Code is deployed on tags via [TravisCI](https://travis-ci.org/) and code coverage is tracked with [Coveralls](https://coveralls.io/).
 

@@ -1,7 +1,13 @@
 sudo: false
 language: node_js
 node_js:
-- iojs
+- 0.10
+- 0.12
+- node
+matrix:
+  include:
+    - node_js: node
+      env: TEST_BROWSERS=true
 script: npm run-script ci
 deploy:
   provider: npm
@@ -9,8 +15,9 @@ deploy:
   api_key:
     secure: KU4JnOVGfo1v9PN/r3EBV0ZGAi+J7jqQJ2UVNJ6Por4logFGHZlWiXy25wBzip8WC1TZ+V7zJZoms9AZU1lp0khSTCPIEVDkBInYQWPtcUQSdB++rbySkcBUNqS6o4+ipZuN2Pl+IdDiFgPCC6z1hwTW9nyjyhKnj+ocD+lg0BLPFRpq8JCbYEF78kt2AYJ4CtCU5kb/QjanWkKwizzkGthcAZmEzPhA64JvutQm6itBpNyDcL9rz5xrTvqx8D81udB9kjqXpzr3uLtoHkjp2NMEbCZ+XdCVFD2AyRgdwwM9b0UfsY6/1pXSjdkJjArpPN/ja/jMzW/7a+FTMeh5m0lYzu1rn45p9mKZPL5FzbcHC4Rz5pPzpEghtKN2aNkpELMiAKGVtx+aJMCb0VJx2Y+7TjH+6AXPrzeNwL6dvcKxgo9hG3nQBp8FZn082TuW8J6KZ7FZK75m0Dg7X5LzczW2nh4tqb6SHp1wiqgafnOjsJi85JQv63LZ5M6+T7Jqjo7JffacclVkeweJf6FWLlqlo8bDIZoFEYDvcpIX8dBZqwPd8fLN/kjrFI++djZ9wysIyMNYq2it0DEglh+r2ikuWm3p5d5/v4my3Z3pv+kAJLrSqGB5aGBIZe768MHTI4j4S3sIY5CQ5Ib7zZKnQ80FOwKvkABOND56RlYsLcs=
   on:
-    node: iojs
+    node: node
     tags: true
+    condition: $TEST_BROWSERS = true
     all_branches: true
 env:
   global:

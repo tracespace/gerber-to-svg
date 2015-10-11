@@ -1,12 +1,12 @@
 // test suite for plotter
 'use strict'
 
-const expect = require('chai').expect
+var expect = require('chai').expect
 
-const plotter = require('../lib/gerber-plotter')
+var plotter = require('../lib/gerber-plotter')
 
 describe('gerber plotter', function() {
-  let p
+  var p
   beforeEach(function() {
     p = plotter()
   })
@@ -116,8 +116,8 @@ describe('gerber plotter', function() {
 
     describe('plotter state', function() {
       it('should change the tool', function() {
-        const tool = {}
-        p._tools.set('10', tool)
+        var tool = {}
+        p._tools['10'] = tool
 
         p.write({cmd: 'set', key: 'tool', val: '10'})
         expect(p._tool).to.equal(tool)
@@ -149,7 +149,7 @@ describe('gerber plotter', function() {
           done()
         })
 
-        p._tools.set('10', {})
+        p._tools['10'] = {}
         p.write({cmd: 'set', line: 10, key: 'region', val: true})
         p.write({cmd: 'set', line: 11, key: 'tool', val: '10'})
       })
@@ -191,16 +191,16 @@ describe('gerber plotter', function() {
 
   describe('handling new tool commands', function() {
     it('should set current tool to newly defined tool', function() {
-      const circle = {shape: 'circle', val: [4], hole: []}
+      var circle = {shape: 'circle', val: [4], hole: []}
       p.write({cmd: 'tool', key: '10', val: circle})
-      expect(p._tools.get('10')).to.equal(p._tool)
+      expect(p._tools['10']).to.equal(p._tool)
       p.write({cmd: 'tool', key: '15', val: circle})
-      expect(p._tools.get('15')).to.equal(p._tool)
+      expect(p._tools['15']).to.equal(p._tool)
     })
 
     it('should set trace width for circle and rectangle tools', function() {
-      const circle = {shape: 'circle', val: [4], hole: []}
-      const rect = {shape: 'rect', val: [2, 3], hole: []}
+      var circle = {shape: 'circle', val: [4], hole: []}
+      var rect = {shape: 'rect', val: [2, 3], hole: []}
 
       p.write({cmd: 'tool', key: '10', val: circle})
       expect(p._tool.trace).to.eql([4])
@@ -210,11 +210,11 @@ describe('gerber plotter', function() {
     })
 
     it('should not set trace for untraceable tools', function() {
-      const circle = {shape: 'circle', val: [4], hole: [1, 1]}
-      const rect = {shape: 'rect', val: [2, 3], hole: [1]}
-      const obround = {shape: 'obround', val: [2, 3], hole: []}
-      const poly = {shape: 'poly', val: [2, 3, 4], hole: []}
-      const macro = {shape: 'SOME_MACRO', val: [], hole: []}
+      var circle = {shape: 'circle', val: [4], hole: [1, 1]}
+      var rect = {shape: 'rect', val: [2, 3], hole: [1]}
+      var obround = {shape: 'obround', val: [2, 3], hole: []}
+      var poly = {shape: 'poly', val: [2, 3, 4], hole: []}
+      var macro = {shape: 'SOME_MACRO', val: [], hole: []}
       p.write({cmd: 'tool', key: '10', val: circle})
       expect(p._tool.trace).to.eql([])
       p.write({cmd: 'tool', key: '11', val: rect})

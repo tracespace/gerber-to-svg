@@ -5,8 +5,8 @@ API documentation for `gerber-plotter`. An understanding of the [Gerber file for
 ## create a gerber plotter
 
 ``` javascript
-const gerberPlotter = require('gerber-plotter')
-const plotter = gerberParser(OPTIONS)
+var gerberPlotter = require('gerber-plotter')
+var plotter = gerberParser(OPTIONS)
 ```
 
 ### usage
@@ -18,8 +18,8 @@ Use the gerber plotter like you would any other [Node stream](https://github.com
 The gerberPlotter function takes an options object and returns a transform stream. The options object can be used to override or certain details that would normally be set by the incoming command stream or may be missing from the input stream entirely (which can happen a lot, especially with drill files).
 
 ``` javascript
-const options = {}
-const plotter = gerberPlotter(options)
+var options = {}
+var plotter = gerberPlotter(options)
 ```
 
 The available options are:
@@ -61,7 +61,7 @@ A `warning` event is emitted if the plotter encounters a recoverable problem whi
 
 ``` javascript
 // warning object
-const exampleWarning = {message: 'warning message', line: LINE_NO_IN_GERBER}
+var exampleWarning = {message: 'warning message', line: LINE_NO_IN_GERBER}
 
 plotter.on('warning', function(w) {
   console.warn(`plotter warning at line ${w.line}: ${w.message}`)

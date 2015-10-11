@@ -1,12 +1,13 @@
 // gerber plotter
 'use strict'
 
-const Transform = require('stream').Transform
+var Transform = require('readable-stream').Transform
+var has = require('lodash.has')
 
-const applyOptions = require('./_apply-options')
-const warning = require('./_warning')
+var applyOptions = require('./_apply-options')
+var warning = require('./_warning')
 
-const isFormatKey = function(key) {
+var isFormatKey = function(key) {
   return (
     key === 'units' ||
     key === 'backupUnits' ||
@@ -14,11 +15,11 @@ const isFormatKey = function(key) {
     key === 'backupNota')
 }
 
-const _transform = function(chunk, encoding, done) {
-  const cmd = chunk.cmd
-  const line = chunk.line
-  const key = chunk.key
-  const val = chunk.val
+var _transform = function(chunk, encoding, done) {
+  var cmd = chunk.cmd
+  var line = chunk.line
+  var key = chunk.key
+  var val = chunk.val
 
   if (this._done) {
     this.emit('warning', warning('ignoring extra command recieved after done command', line))
@@ -39,30 +40,30 @@ const _transform = function(chunk, encoding, done) {
       if (this._region) {
         this.emit('warning', warning('cannot change tool while region mode is on', line))
       }
-      else if (!this._tools.has(val)) {
-        this.emit('warning', warning(`tool ${val} is not defined`, line))
+      else if (!has(this._tools, val)) {
+        this.emit('warning', warning('tool ' + val + ' is not defined', line))
       }
       else {
-        this._tool = this._tools.get(val)
+        this._tool = this._tools[val]
       }
     }
 
     // else region, interpolation, or arc mode
     else {
-      this[`_${key}`] = val
+      this['_' + key] = val
     }
   }
 
   // else tool commands
   else if (cmd === 'tool') {
-    const tool = {trace: []}
+    var tool = {trace: []}
     if (val.shape === 'circle' || val.shape === 'rect') {
       if (val.hole.length === 0) {
         tool.trace = val.val
       }
     }
 
-    this._tools.set(key, tool)
+    this._tools[key] = tool
     this._tool = tool
   }
 
@@ -74,8 +75,8 @@ const _transform = function(chunk, encoding, done) {
   return done()
 }
 
-const plotter = function(options) {
-  const stream = new Transform({
+var plotter = function(options) {
+  var stream = new Transform({
     readableObjectMode: true,
     writableObjectMode: true
   })
@@ -98,7 +99,7 @@ const plotter = function(options) {
 
   stream._done = false
   stream._tool = null
-  stream._tools = new Map()
+  stream._tools = {}
 
   applyOptions(options, stream.format, stream._formatLock)
   return stream

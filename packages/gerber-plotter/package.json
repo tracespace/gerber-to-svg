@@ -3,20 +3,16 @@
   "version": "0.0.1",
   "description": "Transform stream that takes objects from gerber-parser and emits PCB image objects",
   "main": "lib/gerber-plotter.js",
-  "directories": {
-    "test": "./test",
-    "lib": "./lib"
-  },
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
     "test": "istanbul cover --include-all-sources _mocha",
     "posttest": "npm run lint",
     "test-watch": "mocha --reporter dot --watch",
-    "browser-test": "zuul --local -- ./test/*_test.js",
-    "browser-test-phantom": "zuul --phantom -- ./test/*_test.js",
-    "browser-test-sauce": "zuul -- ./test/*_test.js",
-    "ci": "npm run test && npm run ci-no-pr",
-    "ci-no-pr": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-test-sauce || true",
+    "browser": "zuul --local -- ./test/*_test.js",
+    "browser-phantom": "zuul --phantom -- ./test/*_test.js",
+    "browser-sauce": "zuul -- ./test/*_test.js",
+    "ci": "npm run test && ([ \"${TEST_BROWSERS}\" = \"true\" ] && npm run ci-browser || true)",
+    "ci-browser": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-sauce || true",
     "postci": "coveralls < ./coverage/lcov.info"
   },
   "pre-commit": [
@@ -59,6 +55,9 @@
   },
   "dependencies": {
     "lodash.assign": "^3.2.0",
-    "lodash.pick": "^3.1.0"
+    "lodash.foreach": "^3.0.3",
+    "lodash.has": "^3.2.1",
+    "lodash.pick": "^3.1.0",
+    "readable-stream": "^2.0.2"
   }
 }

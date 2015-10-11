@@ -1,18 +1,19 @@
 // apply options to the plotter
 'use strict'
 
-const assign = require('lodash.assign')
-const pick = require('lodash.pick')
+var assign = require('lodash.assign')
+var pick = require('lodash.pick')
+var forEach  = require('lodash.forEach')
 
-const verifyUnits = function(units) {
+var verifyUnits = function(units) {
   return ((units === 'in') || (units === 'mm'))
 }
 
-const verifyNota = function(nota) {
+var verifyNota = function(nota) {
   return ((nota === 'A') || (nota === 'I'))
 }
 
-const verifyMap = {
+var verifyMap = {
   units: {
     check: verifyUnits,
     err: "units must be 'mm' or 'in'"
@@ -31,23 +32,25 @@ const verifyMap = {
   }
 }
 
-const pickOptions = function(value, key) {
-  const verification = verifyMap[key]
+var pickOptions = function(value, key) {
+  var verification = verifyMap[key]
   if (!verification) {
-    throw new Error(`${key} is an invalid options key`)
+    throw new Error(key + ' is an invalid options key')
   }
-  const result = verification.check(value)
+  var result = verification.check(value)
   if (!result) {
     throw new Error(verification.err)
   }
   return result
 }
 
-const apply = function(opts, target, lock) {
-  const verifiedOpts = pick(opts, pickOptions)
-  for (const k of Object.keys(verifiedOpts)) {
-    lock[k] = true
-  }
+var apply = function(opts, target, lock) {
+  var verifiedOpts = pick(opts, pickOptions)
+
+  forEach(Object.keys(verifiedOpts), function(key) {
+    lock[key] = true
+  })
+
   assign(target, verifiedOpts)
 }
 
