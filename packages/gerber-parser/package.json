@@ -11,8 +11,8 @@
     "browser": "zuul --local -- ./test/*_test.js",
     "browser-phantom": "zuul --phantom -- ./test/*_test.js",
     "browser-sauce": "zuul -- ./test/*_test.js",
-    "ci": "npm run test && ([ \"${TEST_BROWSERS}\" = \"true\" ] && npm run ci-browser || true)",
-    "ci-browser": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-sauce || true",
+    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci-browser; fi",
+    "ci-browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run browser-sauce; fi",
     "postci": "coveralls < ./coverage/lcov.info"
   },
   "precommit": [
