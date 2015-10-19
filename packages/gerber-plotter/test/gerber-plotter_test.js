@@ -1,7 +1,11 @@
 // test suite for plotter
 'use strict'
 
-var expect = require('chai').expect
+var chai = require('chai')
+var chaiStats = require('chai-stats')
+
+chai.use(chaiStats)
+var expect = chai.expect
 
 var plotter = require('../lib/gerber-plotter')
 
@@ -226,7 +230,196 @@ describe('gerber plotter', function() {
       p.write({cmd: 'tool', key: '14', val: macro})
       expect(p._tool.trace).to.eql([])
     })
+
+    describe('pad shapes', function() {
+      it('should create pad shapes for standard circles', function() {
+        var circle0 = {shape: 'circle', val: [1], hole: []}
+        var circle1 = {shape: 'circle', val: [2], hole: [1]}
+        var circle2 = {shape: 'circle', val: [3], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: circle0})
+        expect(p._tool.pad).to.eql([{type: 'circle', cx: 0, cy: 0, r: 0.5}])
+
+        p.write({cmd: 'tool', key: '11', val: circle1})
+        expect(p._tool.pad).to.eql([
+          {type: 'circle', cx: 0, cy: 0, r: 1},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'circle', cx: 0, cy: 0, r: 0.5}
+        ])
+
+        p.write({cmd: 'tool', key: '12', val: circle2})
+        expect(p._tool.pad).to.eql([
+          {type: 'circle', cx: 0, cy: 0, r: 1.5},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 1, height: 1}
+        ])
+      })
+
+      it('should create pad shapes for standard rectangles', function() {
+        var rect0 = {shape: 'rect', val: [1, 2], hole: []}
+        var rect1 = {shape: 'rect', val: [3, 4], hole: [1]}
+        var rect2 = {shape: 'rect', val: [5, 6], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: rect0})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 1, height: 2}
+        ])
+
+        p.write({cmd: 'tool', key: '11', val: rect1})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 3, height: 4},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'circle', cx: 0, cy: 0, r: 0.5}
+        ])
+
+        p.write({cmd: 'tool', key: '12', val: rect2})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 5, height: 6},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 1, height: 1}
+        ])
+      })
+
+      it('should create pad shapes for standard obrounds', function() {
+        var obround0 = {shape: 'obround', val: [1, 2], hole: []}
+        var obround1 = {shape: 'obround', val: [4, 3], hole: [1]}
+        var obround2 = {shape: 'obround', val: [5, 6], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: obround0})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 0.5, ry: 0.5, width: 1, height: 2}
+        ])
+
+        p.write({cmd: 'tool', key: '11', val: obround1})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 1.5, ry: 1.5, width: 4, height: 3},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'circle', cx: 0, cy: 0, r: 0.5}
+        ])
+
+        p.write({cmd: 'tool', key: '12', val: obround2})
+        expect(p._tool.pad).to.eql([
+          {type: 'rect', cx: 0, cy: 0, rx: 2.5, ry: 2.5, width: 5, height: 6},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 1, height: 1}
+        ])
+      })
+
+      it('should create pad shapes for standard polygons', function() {
+        var poly0 = {shape: 'poly', val: [2, 3, 0], hole: []}
+        var poly1 = {shape: 'poly', val: [2, 6, 45], hole: [1]}
+        var poly2 = {shape: 'poly', val: [2, 12, 140], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: poly0})
+        expect(p._tool.pad).to.eql([
+          {type: 'poly', cx: 0, cy: 0, points: [
+            [1, 0],
+            [Math.cos(120 * Math.PI / 180), Math.sin(120 * Math.PI / 180)],
+            [Math.cos(240 * Math.PI / 180), Math.sin(240 * Math.PI / 180)]
+          ]}
+        ])
+
+        p.write({cmd: 'tool', key: '11', val: poly1})
+        var poly = p._tool.pad[0]
+        expect(p._tool.pad).to.have.length(3)
+        expect(poly).to.have.all.keys(['type', 'cx', 'cy', 'points'])
+        expect(poly.type).to.equal('poly')
+        expect(poly.cx).to.equal(0)
+        expect(poly.cy).to.equal(0)
+        expect(poly.points).to.almost.eql([
+          [Math.cos(45 * Math.PI / 180), Math.sin(45 * Math.PI / 180)],
+          [Math.cos(105 * Math.PI / 180), Math.sin(105 * Math.PI / 180)],
+          [Math.cos(165 * Math.PI / 180), Math.sin(165 * Math.PI / 180)],
+          [Math.cos(225 * Math.PI / 180), Math.sin(225 * Math.PI / 180)],
+          [Math.cos(285 * Math.PI / 180), Math.sin(285 * Math.PI / 180)],
+          [Math.cos(345 * Math.PI / 180), Math.sin(345 * Math.PI / 180)]
+        ], 10)
+        expect(p._tool.pad.slice(1)).to.eql([
+          {type: 'layer', polarity: 'clear'},
+          {type: 'circle', cx: 0, cy: 0, r: 0.5}
+        ])
+
+        p.write({cmd: 'tool', key: '12', val: poly2})
+        poly = p._tool.pad[0]
+        expect(p._tool.pad).to.have.length(3)
+        expect(poly).to.have.all.keys(['type', 'cx', 'cy', 'points'])
+        expect(poly.type).to.equal('poly')
+        expect(poly.cx).to.equal(0)
+        expect(poly.cy).to.equal(0)
+        expect(poly.points).to.almost.eql([
+          [Math.cos(140 * Math.PI / 180), Math.sin(140 * Math.PI / 180)],
+          [Math.cos(170 * Math.PI / 180), Math.sin(170 * Math.PI / 180)],
+          [Math.cos(200 * Math.PI / 180), Math.sin(200 * Math.PI / 180)],
+          [Math.cos(230 * Math.PI / 180), Math.sin(230 * Math.PI / 180)],
+          [Math.cos(260 * Math.PI / 180), Math.sin(260 * Math.PI / 180)],
+          [Math.cos(290 * Math.PI / 180), Math.sin(290 * Math.PI / 180)],
+          [Math.cos(320 * Math.PI / 180), Math.sin(320 * Math.PI / 180)],
+          [Math.cos(350 * Math.PI / 180), Math.sin(350 * Math.PI / 180)],
+          [Math.cos(380 * Math.PI / 180), Math.sin(380 * Math.PI / 180)],
+          [Math.cos(410 * Math.PI / 180), Math.sin(410 * Math.PI / 180)],
+          [Math.cos(440 * Math.PI / 180), Math.sin(440 * Math.PI / 180)],
+          [Math.cos(470 * Math.PI / 180), Math.sin(470 * Math.PI / 180)]
+        ], 10)
+        expect(p._tool.pad.slice(1)).to.eql([
+          {type: 'layer', polarity: 'clear'},
+          {type: 'rect', cx: 0, cy: 0, rx: 0, ry: 0, width: 1, height: 1}
+        ])
+      })
+    })
+
+    describe('pad bounding boxes', function() {
+      it('should calculate a bounding box for a circle', function() {
+        var circle0 = {shape: 'circle', val: [1], hole: []}
+        var circle1 = {shape: 'circle', val: [7], hole: [1]}
+        var circle2 = {shape: 'circle', val: [4], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: circle0})
+        expect(p._tool.box).to.eql([-0.5, -0.5, 0.5, 0.5])
+        p.write({cmd: 'tool', key: '11', val: circle1})
+        expect(p._tool.box).to.eql([-3.5, -3.5, 3.5, 3.5])
+        p.write({cmd: 'tool', key: '12', val: circle2})
+        expect(p._tool.box).to.eql([-2, -2, 2, 2])
+      })
+
+      it('should calculate a bounding box for a rects and obrounds', function() {
+        var rect0 = {shape: 'rect', val: [1, 2], hole: []}
+        var rect1 = {shape: 'rect', val: [7, 4], hole: [1]}
+        var obround0 = {shape: 'obround', val: [9, 8], hole: [1, 1]}
+        var obround1 = {shape: 'obround', val: [4, 1], hole: []}
+
+        p.write({cmd: 'tool', key: '10', val: rect0})
+        expect(p._tool.box).to.eql([-0.5, -1, 0.5, 1])
+        p.write({cmd: 'tool', key: '11', val: rect1})
+        expect(p._tool.box).to.eql([-3.5, -2, 3.5, 2])
+        p.write({cmd: 'tool', key: '12', val: obround0})
+        expect(p._tool.box).to.eql([-4.5, -4, 4.5, 4])
+        p.write({cmd: 'tool', key: '12', val: obround1})
+        expect(p._tool.box).to.eql([-2, -0.5, 2, 0.5])
+      })
+
+      it('should calculate a bounding box for a standard polygon', function() {
+        var poly0 = {shape: 'poly', val: [5, 4, 0], hole: []}
+        var poly1 = {shape: 'poly', val: [6, 8, 0], hole: [1]}
+        var poly2 = {shape: 'poly', val: [4 * Math.sqrt(2), 4, 45], hole: [1, 1]}
+
+        p.write({cmd: 'tool', key: '10', val: poly0})
+        expect(p._tool.box).to.eql([-2.5, -2.5, 2.5, 2.5])
+        p.write({cmd: 'tool', key: '11', val: poly1})
+        expect(p._tool.box).to.eql([-3, -3, 3, 3])
+        p.write({cmd: 'tool', key: '12', val: poly2})
+        expect(p._tool.box).to.almost.eql([-2, -2, 2, 2], 10)
+      })
+    })
   })
+
+  // describe('flashing pads', function() {
+  //   it('should emit a tool shape if pad has never been flashed', function(done) {
+  //     p.once('data', function(data) {
+  //
+  //       done()
+  //     })
+  //   })
+  // })
 })
 
 //   describe 'new layer commands', ->

@@ -6,6 +6,7 @@ var has = require('lodash.has')
 
 var applyOptions = require('./_apply-options')
 var warning = require('./_warning')
+var padShape = require('./_pad-shape')
 
 var isFormatKey = function(key) {
   return (
@@ -22,7 +23,10 @@ var _transform = function(chunk, encoding, done) {
   var val = chunk.val
 
   if (this._done) {
-    this.emit('warning', warning('ignoring extra command recieved after done command', line))
+    this.emit(
+      'warning',
+      warning('ignoring extra command recieved after done command', line))
+
     return done()
   }
 
@@ -56,7 +60,9 @@ var _transform = function(chunk, encoding, done) {
 
   // else tool commands
   else if (cmd === 'tool') {
-    var tool = {trace: []}
+    var shapeAndBox = padShape(val)
+    var tool = {trace: [], pad: shapeAndBox.shape, box: shapeAndBox.box}
+
     if (val.shape === 'circle' || val.shape === 'rect') {
       if (val.hole.length === 0) {
         tool.trace = val.val

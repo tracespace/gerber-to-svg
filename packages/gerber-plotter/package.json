@@ -11,8 +11,8 @@
     "browser": "zuul --local -- ./test/*_test.js",
     "browser-phantom": "zuul --phantom -- ./test/*_test.js",
     "browser-sauce": "zuul -- ./test/*_test.js",
-    "ci": "npm run test && ([ \"${TEST_BROWSERS}\" = \"true\" ] && npm run ci-browser || true)",
-    "ci-browser": "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && npm run browser-sauce || true",
+    "ci": "npm run test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci-browser; fi",
+    "ci-browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run browser-sauce; fi",
     "postci": "coveralls < ./coverage/lcov.info"
   },
   "pre-commit": [
@@ -42,6 +42,7 @@
   "devDependencies": {
     "babelify": "^6.3.0",
     "chai": "^3.2.0",
+    "chai-stats": "^0.3.0",
     "coveralls": "^2.11.4",
     "eslint": "^1.3.1",
     "istanbul": "^0.3.19",
