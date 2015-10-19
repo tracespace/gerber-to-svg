@@ -47,7 +47,15 @@ var parseMacroBlock = function(block) {
 
   // circle primitive
   if (code === 1) {
-    return {type: 'circle', exp: exp, dia: mods[2], cx: mods[3], cy: mods[4]}
+    return {
+      type: 'circle',
+      exp: exp,
+      dia: mods[2],
+      cx: mods[3],
+      cy: mods[4],
+      // handle optional rotation with circle primitives
+      rot: mods[5] || 0
+    }
   }
 
   // vector primitive

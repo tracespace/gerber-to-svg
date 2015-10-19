@@ -414,15 +414,17 @@ describe('gerber parser with gerber files', function() {
 
       it('should parse circle primitives', function(done) {
         var expectedBlocks = [
-          {type: 'circle', exp: exp, dia: 5, cx: 1, cy: 2}
+          {type: 'circle', exp: exp, dia: 5, cx: 1, cy: 2, rot: 0},
+          {type: 'circle', exp: exp, dia: 3, cx: 4, cy: 5, rot: 20}
         ]
         var expected = [
-          {cmd: 'macro', line: 1, key: 'CIRC1', val: expectedBlocks}
+          {cmd: 'macro', line: 2, key: 'CIRC1', val: expectedBlocks}
         ]
 
         expectResults(expected, done)
         p.write('%AMCIRC1*\n')
-        p.write('1,1,5,1,2*%\n')
+        p.write('1,1,5,1,2*\n')
+        p.write('1,1,3,4,5,20*%\n')
       })
 
       it('should parse vector primitives', function(done) {

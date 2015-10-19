@@ -238,7 +238,7 @@ A variable set block contains a function that takes the current set of macro mod
 
 ##### primitive blocks
 
-A primitive adjusts the macro image. All primitive objects have an exposure key `exp` that will be `0` if the primitive erases the existing image or `1` if it adds to the existing image. Most primitive objects have a rotation in degrees key `rot` that will rotate the primitive around the macro image's origin.
+A primitive adjusts the macro image. All primitive objects have an exposure key `exp` that will be `0` if the primitive erases the existing image or `1` if it adds to the existing image. They also have a rotation in degrees key `rot` that will rotate the primitive around the macro image's origin.
 
 All values in a primitive object will either be a `Number` or a function that takes the current modifier map and returns a number `(mods) => Number`
 
@@ -251,7 +251,7 @@ A **comment primitive** does nothing:
 A **circle primitive** adds a circle to the macro image:
 
 ``` javascript
-{type: 'circle', exp, dia, cx, cy}
+{type: 'circle', exp, dia, cx, cy, rot}
 ```
 
 A **vector primitive** adds a stroke with `width` and endpoints (`x1`, `y1`) and (`x2`, `y2`):
