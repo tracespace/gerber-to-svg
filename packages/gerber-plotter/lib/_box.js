@@ -17,7 +17,18 @@ var add = function(box, target) {
   ]
 }
 
+// adds a point to a bounding box
+var addPoint = function(box, point) {
+  return [
+    Math.min(box[0], point[0]),
+    Math.min(box[1], point[1]),
+    Math.max(box[2], point[0]),
+    Math.max(box[3], point[1])
+  ]
+}
+
 module.exports = {
   new: newBox,
-  add: add
+  add: add,
+  addPoint: addPoint
 }

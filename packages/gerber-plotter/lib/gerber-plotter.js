@@ -60,7 +60,15 @@ var _transform = function(chunk, encoding, done) {
 
   // else tool commands
   else if (cmd === 'tool') {
-    var shapeAndBox = padShape(val)
+    if (this._tools[key]) {
+      this.emit(
+        'warning',
+        warning('tool ' + key + ' is already defined; ignoring new definition', line))
+
+      return done()
+    }
+
+    var shapeAndBox = padShape(val, this._macros)
     var tool = {trace: [], pad: shapeAndBox.shape, box: shapeAndBox.box}
 
     if (val.shape === 'circle' || val.shape === 'rect') {
@@ -71,6 +79,12 @@ var _transform = function(chunk, encoding, done) {
 
     this._tools[key] = tool
     this._tool = tool
+  }
+
+  // else macro command
+  else if (cmd === 'macro') {
+    // save the macro
+    this._macros[key] = val
   }
 
   // else done command
@@ -106,6 +120,7 @@ var plotter = function(options) {
   stream._done = false
   stream._tool = null
   stream._tools = {}
+  stream._macros = {}
 
   applyOptions(options, stream.format, stream._formatLock)
   return stream
