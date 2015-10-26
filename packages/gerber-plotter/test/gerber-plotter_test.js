@@ -1,11 +1,7 @@
 // test suite for plotter
 'use strict'
 
-var chai = require('chai')
-var chaiStats = require('chai-stats')
-
-chai.use(chaiStats)
-var expect = chai.expect
+var expect = require('chai').expect
 
 var plotter = require('../lib/gerber-plotter')
 
@@ -329,8 +325,8 @@ describe('gerber plotter', function() {
         expect(p._tool.pad).to.eql([
           {type: 'poly', points: [
             [1, 0],
-            [Math.cos(120 * Math.PI / 180), Math.sin(120 * Math.PI / 180)],
-            [Math.cos(240 * Math.PI / 180), Math.sin(240 * Math.PI / 180)]
+            [-0.5, 0.8660254],
+            [-0.5, -0.8660254]
           ]}
         ])
 
@@ -339,13 +335,13 @@ describe('gerber plotter', function() {
         expect(p._tool.pad).to.have.length(3)
         expect(poly).to.have.all.keys(['type', 'points'])
         expect(poly.type).to.equal('poly')
-        expect(poly.points).to.almost.eql([
-          [Math.cos(45 * Math.PI / 180), Math.sin(45 * Math.PI / 180)],
-          [Math.cos(105 * Math.PI / 180), Math.sin(105 * Math.PI / 180)],
-          [Math.cos(165 * Math.PI / 180), Math.sin(165 * Math.PI / 180)],
-          [Math.cos(225 * Math.PI / 180), Math.sin(225 * Math.PI / 180)],
-          [Math.cos(285 * Math.PI / 180), Math.sin(285 * Math.PI / 180)],
-          [Math.cos(345 * Math.PI / 180), Math.sin(345 * Math.PI / 180)]
+        expect(poly.points).to.eql([
+          [0.70710678, 0.70710678],
+          [-0.25881905, 0.96592583],
+          [-0.96592583, 0.25881905],
+          [-0.70710678, -0.70710678],
+          [0.25881905, -0.96592583],
+          [0.96592583, -0.25881905]
         ], 10)
         expect(p._tool.pad.slice(1)).to.eql([
           {type: 'layer', polarity: 'clear'},
@@ -357,20 +353,20 @@ describe('gerber plotter', function() {
         expect(p._tool.pad).to.have.length(3)
         expect(poly).to.have.all.keys(['type', 'points'])
         expect(poly.type).to.equal('poly')
-        expect(poly.points).to.almost.eql([
-          [Math.cos(140 * Math.PI / 180), Math.sin(140 * Math.PI / 180)],
-          [Math.cos(170 * Math.PI / 180), Math.sin(170 * Math.PI / 180)],
-          [Math.cos(200 * Math.PI / 180), Math.sin(200 * Math.PI / 180)],
-          [Math.cos(230 * Math.PI / 180), Math.sin(230 * Math.PI / 180)],
-          [Math.cos(260 * Math.PI / 180), Math.sin(260 * Math.PI / 180)],
-          [Math.cos(290 * Math.PI / 180), Math.sin(290 * Math.PI / 180)],
-          [Math.cos(320 * Math.PI / 180), Math.sin(320 * Math.PI / 180)],
-          [Math.cos(350 * Math.PI / 180), Math.sin(350 * Math.PI / 180)],
-          [Math.cos(380 * Math.PI / 180), Math.sin(380 * Math.PI / 180)],
-          [Math.cos(410 * Math.PI / 180), Math.sin(410 * Math.PI / 180)],
-          [Math.cos(440 * Math.PI / 180), Math.sin(440 * Math.PI / 180)],
-          [Math.cos(470 * Math.PI / 180), Math.sin(470 * Math.PI / 180)]
-        ], 10)
+        expect(poly.points).to.eql([
+          [-0.76604444, 0.64278761],
+          [-0.98480775, 0.17364818],
+          [-0.93969262, -0.34202014],
+          [-0.64278761, -0.76604444],
+          [-0.17364818, -0.98480775],
+          [0.34202014, -0.93969262],
+          [0.76604444, -0.64278761],
+          [0.98480775, -0.17364818],
+          [0.93969262, 0.34202014],
+          [0.64278761, 0.76604444],
+          [0.17364818, 0.98480775],
+          [-0.34202014, 0.93969262]
+        ])
         expect(p._tool.pad.slice(1)).to.eql([
           {type: 'layer', polarity: 'clear'},
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 1}
@@ -418,11 +414,11 @@ describe('gerber plotter', function() {
         p.write({cmd: 'tool', key: '11', val: poly1})
         expect(p._tool.box).to.eql([-3, -3, 3, 3])
         p.write({cmd: 'tool', key: '12', val: poly2})
-        expect(p._tool.box).to.almost.eql([-2, -2, 2, 2], 10)
+        expect(p._tool.box).to.eql([-2, -2, 2, 2], 10)
       })
     })
 
-    describe('macro tools', function() {
+    describe('macro tool pads', function() {
       describe('primitives without rotation', function() {
         it('should ignore comment primitives', function() {
           var macro = {cmd: 'macro', key: 'EMPTY', val: [{type: 'comment'}]}
@@ -477,6 +473,139 @@ describe('gerber plotter', function() {
             {type: 'rect', cx: 3, cy: 4, width: 4, height: 2, r: 0}
           ])
           expect(p._tool.box).to.eql([1, 3, 5, 5])
+        })
+
+        it('should be able to handle lower-left rects', function() {
+          var blocks = [
+            {type: 'rectLL', exp: 1, width: 4, height: 2, x: 1, y: 3, rot: 0}
+          ]
+          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {type: 'rect', cx: 3, cy: 4, width: 4, height: 2, r: 0}
+          ])
+          expect(p._tool.box).to.eql([1, 3, 5, 5])
+        })
+
+        it('should be able to handle an outline primitive', function() {
+          var blocks = [
+            {type: 'outline', exp: 1, points: [0, 0, 1, 0, 1, 1, 0, 0], rot: 0}
+          ]
+          var macro = {cmd: 'macro', key: 'OPOLY', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'OPOLY', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {type: 'poly', points: [[0, 0], [1, 0], [1, 1]]}
+          ])
+          expect(p._tool.box).to.eql([0, 0, 1, 1])
+        })
+
+        it('should handle a regular polygon primitive', function() {
+          var blocks = [
+            {type: 'poly', exp: 1, vertices: 4, cx: 3, cy: 2, dia: 2, rot: 0}
+          ]
+          var macro = {cmd: 'macro', key: 'POLY', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'POLY', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([{
+            type: 'poly',
+            points: [[4, 2], [3, 3], [2, 2], [3, 1]]
+          }])
+          expect(p._tool.box).to.eql([2, 1, 4, 3])
+        })
+
+        it('should handle moiré primitives with only rings', function() {
+          var blocks = [{
+            type: 'moire',
+            exp: 1,
+            cx: 2,
+            cy: 3,
+            dia: 4,
+            ringThx: 0.4,
+            ringGap: 0.2,
+            maxRings: 2,
+            crossThx: 0.1,
+            crossLen: 5,
+            rot: 0
+          }]
+          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {type: 'ring', cx: 2, cy: 3, r: 1.8, width: 0.4},
+            {type: 'ring', cx: 2, cy: 3, r: 1.2, width: 0.4},
+            {type: 'rect', cx: 2, cy: 3, width: 5, height: 0.1, r: 0},
+            {type: 'rect', cx: 2, cy: 3, width: 0.1, height: 5, r: 0}
+          ])
+          expect(p._tool.box).to.eql([-0.5, 0.5, 4.5, 5.5])
+        })
+
+        it('should handle moirés with circle centers', function() {
+          var blocks = [{
+            type: 'moire',
+            exp: 1,
+            cx: 5,
+            cy: 5,
+            dia: 2.8,
+            ringThx: 0.5,
+            ringGap: 0.5,
+            maxRings: 2,
+            crossThx: 0.2,
+            crossLen: 2.5,
+            rot: 0
+          }]
+          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {type: 'ring', cx: 5, cy: 5, r: 1.15, width: 0.5},
+            {type: 'circle', cx: 5, cy: 5, r: 0.4},
+            {type: 'rect', cx: 5, cy: 5, width: 2.5, height: 0.2, r: 0},
+            {type: 'rect', cx: 5, cy: 5, width: 0.2, height: 2.5, r: 0}
+          ])
+          expect(p._tool.box).to.eql([3.6, 3.6, 6.4, 6.4])
+        })
+
+        it('should handle thermals', function() {
+          var blocks = [{
+            type: 'thermal',
+            exp: 1,
+            cx: 1,
+            cy: 1,
+            outerDia: 7,
+            innerDia: 5,
+            gap: 1,
+            rot: 0
+          }]
+          var macro = {cmd: 'macro', key: 'THRM', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'THRM', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {
+              type: 'clip',
+              shape: [
+                {type: 'rect', cx: 3, cy: 3, width: 3, height: 3, r: 0},
+                {type: 'rect', cx: -1, cy: 3, width: 3, height: 3, r: 0},
+                {type: 'rect', cx: -1, cy: -1, width: 3, height: 3, r: 0},
+                {type: 'rect', cx: 3, cy: -1, width: 3, height: 3, r: 0}
+              ],
+              clip: {type: 'ring', cx: 1, cy: 1, r: 3, width: 1}
+            }
+          ])
+          expect(p._tool.box).to.eql([-2.5, -2.5, 4.5, 4.5])
         })
       })
 
@@ -539,6 +668,220 @@ describe('gerber plotter', function() {
           ])
           expect(p._tool.box).to.eql([2.36602540, 0.09807622, 6.83012702, 3.83012702])
         })
+
+        it('should handle rotated lower-left rects', function() {
+          var blocks = [
+            {type: 'rectLL', exp: 1, width: 4, height: 2, x: 1, y: 3, rot: -30}
+          ]
+          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+
+          expect(p._tool.pad).to.eql([
+            {
+              type: 'poly',
+              points: [
+                [2.36602540, 2.09807622],
+                [5.83012702, 0.09807622],
+                [6.83012702, 1.83012702],
+                [3.36602540, 3.83012702]
+              ]
+            }
+          ])
+          expect(p._tool.box).to.eql([2.36602540, 0.09807622, 6.83012702, 3.83012702])
+        })
+
+        it('should handle rotated outline polygons', function() {
+          var blocks = [
+            {type: 'outline', exp: 1, points: [0, 0, 1, 0, 1, 1, 0, 0], rot: 150}
+          ]
+          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([{
+            type: 'poly',
+            points: [[0, 0], [-0.86602540, 0.5], [-1.36602540, -0.36602540]]
+          }])
+          expect(p._tool.box).to.eql([-1.36602540, -0.36602540, 0, 0.5])
+        })
+
+        it('should handle rotated regular polygons', function() {
+          var dia = 2 * Math.sqrt(2)
+          var blocks = [
+            {type: 'poly', exp: 1, vertices: 4, cx: 0, cy: 0, dia: dia, rot: 45}
+          ]
+          var macro = {cmd: 'macro', key: 'POLY', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'POLY', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([{
+            type: 'poly',
+            points: [[1, 1], [-1, 1], [-1, -1], [1, -1]]
+          }])
+          expect(p._tool.box).to.eql([-1, -1, 1, 1])
+        })
+
+        it('should handle rotated moires', function() {
+          var blocks = [{
+            type: 'moire',
+            exp: 1,
+            cx: 0,
+            cy: 0,
+            dia: 4,
+            ringThx: 0.4,
+            ringGap: 0.2,
+            maxRings: 2,
+            crossThx: 0.1,
+            crossLen: 5,
+            rot: -150
+          }]
+          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {type: 'ring', cx: 0, cy: 0, r: 1.8, width: 0.4},
+            {type: 'ring', cx: 0, cy: 0, r: 1.2, width: 0.4},
+            {type: 'poly', points: [
+              [2.19006351, 1.20669873],
+              [-2.14006351, -1.29330127],
+              [-2.19006351, -1.20669873],
+              [2.14006351, 1.29330127]
+            ]},
+            {type: 'poly', points: [
+              [1.29330127, -2.14006351],
+              [1.20669873, -2.19006351],
+              [-1.29330127, 2.14006351],
+              [-1.20669873, 2.19006351]
+            ]}
+          ])
+          expect(p._tool.box).to.eql(
+            [-2.19006351, -2.19006351, 2.19006351, 2.19006351])
+        })
+
+        it('should handle rotated thermals', function() {
+          var blocks = [{
+            type: 'thermal',
+            exp: 1,
+            cx: 0,
+            cy: 0,
+            outerDia: 4,
+            innerDia: 3,
+            gap: 0.2,
+            rot: 45
+          }]
+          var macro = {cmd: 'macro', key: 'THRM', val: blocks}
+          var tool = {cmd: 'tool', key: '10', val: {shape: 'THRM', val: [], hole: []}}
+
+          p.write(macro)
+          p.write(tool)
+          expect(p._tool.pad).to.eql([
+            {
+              type: 'clip',
+              shape: [
+                {type: 'poly', points: [
+                  [0, 0.14142136],
+                  [1.34350288, 1.48492424],
+                  [0, 2.82842712],
+                  [-1.34350288, 1.48492424]
+                ]},
+                {type: 'poly', points: [
+                  [-1.48492424, -1.34350288],
+                  [-0.14142136, 0],
+                  [-1.48492424, 1.34350288],
+                  [-2.82842712, 0]
+                ]},
+                {type: 'poly', points: [
+                  [0, -2.82842712],
+                  [1.34350288, -1.48492424],
+                  [0, -0.14142136],
+                  [-1.34350288, -1.48492424]
+                ]},
+                {type: 'poly', points: [
+                  [1.48492424, -1.34350288],
+                  [2.82842712, 0],
+                  [1.48492424, 1.34350288],
+                  [0.14142136, 0]
+                ]}
+              ],
+              clip: {type: 'ring', cx: 0, cy: 0, r: 1.75, width: 0.5}
+            }
+          ])
+          expect(p._tool.box).to.eql([-2, -2, 2, 2])
+        })
+      })
+
+      it('should handle modifiers and functional args', function() {
+        var blocks = [{
+          type: 'circle',
+          exp: 1,
+          dia: function(mods) {return mods.$1},
+          cx: function(mods) {return mods.$2},
+          cy: function(mods) {return mods.$3},
+          rot: function(mods) {return mods.$4}
+        }]
+        var mods = [4, 3, 2, 0]
+        var macro = {cmd: 'macro', key: 'CIRC', val: blocks}
+        var tool = {cmd: 'tool', key: '10', val: {shape: 'CIRC', val: mods, hole: []}}
+
+        p.write(macro)
+        p.write(tool)
+        expect(p._tool.pad).to.eql([{type: 'circle', cx: 3, cy: 2, r: 2}])
+      })
+
+      it('should handle variable sets', function() {
+        var blocks = [
+          {
+            type: 'variable',
+            set: function(mods) {
+              return {$1: 4, $2: 3, $3: mods.$2 - 1}
+            }
+          },
+          {
+            type: 'circle',
+            exp: 1,
+            dia: function(mods) {return mods.$1},
+            cx: function(mods) {return mods.$2},
+            cy: function(mods) {return mods.$3},
+            rot: 0
+          }
+        ]
+        var mods = [4, 3]
+        var macro = {cmd: 'macro', key: 'CIRC', val: blocks}
+        var tool = {cmd: 'tool', key: '10', val: {shape: 'CIRC', val: mods, hole: []}}
+
+        p.write(macro)
+        p.write(tool)
+        expect(p._tool.pad).to.eql([{type: 'circle', cx: 3, cy: 2, r: 2}])
+      })
+
+      it('should handle multiple primitives and exposure', function() {
+        var blocks = [
+          {type: 'circle', exp: 1, dia: 4, cx: -2, cy: 0, rot: 0},
+          {type: 'rect', exp: 0, width: 1, height: 1, cx: -1, cy: 0, rot: 0},
+          {type: 'rect', exp: 0, width: 1, height: 1, cx: 1, cy: 0, rot: 0},
+          {type: 'circle', exp: 1, dia: 4, cx: 2, cy: 0, rot: 0}
+        ]
+        var macro = {cmd: 'macro', key: 'MAC', val: blocks}
+        var tool = {cmd: 'tool', key: '10', val: {shape: 'MAC', val: [], hole: []}}
+
+        p.write(macro)
+        p.write(tool)
+        expect(p._tool.pad).to.eql([
+          {type: 'circle', cx: -2, cy: 0, r: 2},
+          {type: 'layer', polarity: 'clear'},
+          {type: 'rect', width: 1, height: 1, cx: -1, cy: 0, r: 0},
+          {type: 'rect', width: 1, height: 1, cx: 1, cy: 0, r: 0},
+          {type: 'layer', polarity: 'dark'},
+          {type: 'circle', cx: 2, cy: 0, r: 2}
+        ])
+        expect(p._tool.box).to.eql([-4, -2, 4, 2])
       })
     })
   })
@@ -553,60 +896,6 @@ describe('gerber plotter', function() {
   // })
 })
 
-//   describe 'new layer commands', ->
-//
-//     it 'should finish any in progress layer', ->
-//       p.current = ['stuff']
-//       p.write {new: {sr: {x: 2, y: 3, i: 7, j: 2}}}
-//       expect(p.current).to.be.empty
-//       p.current = ['more', 'stuff']
-//       p.write {new: {layer: 'C'}}
-//       expect(p.current).to.be.empty
-//
-//     it 'should set step repeat params', ->
-//       expect(p.stepRepeat).to.eql {x: 1, y: 1, i: 0, j: 0}
-//       p.write {new: {sr: {x: 2, y: 3, i: 7, j: 2}}}
-//       expect(p.stepRepeat).to.eql {x: 2, y: 3, i: 7, j: 2}
-//       p.write {new: {sr: {x: 1, y: 1}}}
-//       expect(p.stepRepeat).to.eql {x: 1, y: 1}
-//
-//     it 'should set polarity param', ->
-//       p.write {new: {layer: 'C'}}
-//       expect(p.polarity).to.eql 'C'
-//       p.write {new: {layer: 'D'}}
-//       expect(p.polarity).to.eql 'D'
-//
-//     it 'should throw if it gets an bad new command', ->
-//       expect(-> p.write {new: {foo: 'bar'}}).to.throw /unknown new command/
-//
-//   describe 'defining new tools', ->
-//
-//     describe 'tool macros', ->
-//       beforeEach ->
-//         p.write {
-//           macro: {M: [{shape: 'circle', exp: '1', dia: '$1', cx: '0', cy: '0'}]}
-//           line: 6
-//         }
-//
-//       it 'should add the macro to the macros list', ->
-//         expect(p.macros.M).to.exist
-//
-//       it 'should run macro tools to add them the tools object', ->
-//         p.write {tool: {D10: {macro: 'M', mods: [2]}}}
-//         expect(p.tools.D10.pad[0].circle).to.contain {r: 1 * factor}
-//
-//       it 'should pass along warnings from the Macro', (done) ->
-//         p.macros.M.run = ->
-//           @emit 'warning', new Warning 'foo bar'
-//           {pad: [], padId: 'foo', trace: false, bbox: [1, 2, 3, 4]}
-//
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /macro M.*line 5.*foo bar/
-//           done()
-//
-//         p.write {tool: {D10: {macro: 'M', mods: [2]}}, line: 5}
-//
 //   describe 'operating', ->
 //     beforeEach ->
 //       p.units = 'in'

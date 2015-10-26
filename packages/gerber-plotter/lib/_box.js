@@ -27,8 +27,18 @@ var addPoint = function(box, point) {
   ]
 }
 
+var addCircle = function(box, r, cx, cy) {
+  return [
+    Math.min(box[0], cx - r),
+    Math.min(box[1], cy - r),
+    Math.max(box[2], cx + r),
+    Math.max(box[3], cy + r)
+  ]
+}
+
 module.exports = {
   new: newBox,
   add: add,
-  addPoint: addPoint
+  addPoint: addPoint,
+  addCircle: addCircle
 }

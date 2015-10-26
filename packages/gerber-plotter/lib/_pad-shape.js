@@ -2,11 +2,19 @@
 'use strict'
 
 var reduce = require('lodash.reduce')
+var transform = require('lodash.transform')
+var mapValues = require('lodash.mapvalues')
+var isFunction = require('lodash.isfunction')
 
 var boundingBox = require('./_box')
 
 var roundToPrecision = function(number) {
-  return Math.round(number * 100000000) / 100000000
+  var rounded = Math.round(number * 100000000) / 100000000
+  // remove -0 for ease
+  if (rounded === 0) {
+    return 0
+  }
+  return rounded
 }
 
 var degreesToRadians = function(degrees) {
@@ -40,7 +48,7 @@ var circle = function(dia, cx, cy, rot) {
 
   return {
     shape: {type: 'circle', cx: cx, cy: cy, r: (dia / 2)},
-    box: [-r + cx, -r + cy, r + cx, r + cy]
+    box: boundingBox.addCircle(boundingBox.new(), r, cx, cy)
   }
 }
 
@@ -108,6 +116,26 @@ var rect = function(width, height, r, cx, cy, rot) {
   }
 }
 
+var outlinePolygon = function(flatPoints, rot) {
+  var points = []
+  var box = boundingBox.new()
+  var point
+  for(var i = 0; i < (flatPoints.length - 2); i += 2) {
+    point = [flatPoints[i], flatPoints[i + 1]]
+    if (rot) {
+      point = rotatePointAboutOrigin(point, rot)
+    }
+
+    points.push(point)
+    box = boundingBox.addPoint(box, point)
+  }
+
+  return {
+    shape: {type: 'poly', points: points},
+    box: box
+  }
+}
+
 var regularPolygon = function(dia, nPoints, rot, cx, cy) {
   cx = cx || 0
   cy = cy || 0
@@ -123,8 +151,8 @@ var regularPolygon = function(dia, nPoints, rot, cx, cy) {
   var y
   for (var n = 0; n < nPoints; n++) {
     theta = step * n + offset
-    x = r * Math.cos(theta)
-    y = r * Math.sin(theta)
+    x = cx + roundToPrecision(r * Math.cos(theta))
+    y = cy + roundToPrecision(r * Math.sin(theta))
 
     box = boundingBox.addPoint(box, [x, y])
     points.push([x, y])
@@ -136,11 +164,86 @@ var regularPolygon = function(dia, nPoints, rot, cx, cy) {
   }
 }
 
+// just returns a ring object, does not return a box
+var ring = function(cx, cy, r, width) {
+  return {type: 'ring', cx: cx, cy: cy, r: r, width: width}
+}
+
+var moire = function(dia, ringThx, ringGap, maxRings, crossThx, crossLen, cx, cy, rot) {
+  var r = dia / 2
+  var shape = []
+  var box = boundingBox.addCircle(boundingBox.new(), r, cx, cy)
+  var halfThx = ringThx / 2
+  var gapAndHalfThx = ringGap + halfThx
+
+  // add rings
+  while ((r > ringThx) && (shape.length < maxRings)) {
+    r -= halfThx
+    shape.push(ring(cx, cy, roundToPrecision(r), ringThx))
+    r -= gapAndHalfThx
+  }
+
+  // add a circle if necessary
+  if ((r > 0) && (shape.length < maxRings)) {
+    shape.push(circle(roundToPrecision(2 * r), cx, cy).shape)
+  }
+
+  // add cross hairs
+  var horCross = rect(crossLen, crossThx, 0, cx, cy, rot)
+  var verCross = rect(crossThx, crossLen, 0, cx, cy, rot)
+  shape.push(horCross.shape)
+  shape.push(verCross.shape)
+  box = boundingBox.add(box, horCross.box)
+  box = boundingBox.add(box, verCross.box)
+
+  return {shape: shape, box: box}
+}
+
+var thermal = function(cx, cy, outerDia, innerDia, gap, rot) {
+  var side = roundToPrecision((outerDia - gap) / 2)
+  var offset = roundToPrecision((outerDia + gap) / 4)
+  var width = roundToPrecision((outerDia - innerDia) / 2)
+  var r = roundToPrecision((outerDia - width) / 2)
+  var box = boundingBox.addCircle(boundingBox.new(), outerDia / 2, cx, cy)
+
+  var rects = [
+    rect(side, side, 0, cx + offset, cy + offset, rot).shape,
+    rect(side, side, 0, cx - offset, cy + offset, rot).shape,
+    rect(side, side, 0, cx - offset, cy - offset, rot).shape,
+    rect(side, side, 0, cx + offset, cy - offset, rot).shape
+  ]
+  var clip = ring(cx, cy, r, width)
+
+  return {
+    shape: {type: 'clip', shape: rects, clip: clip},
+    box: box
+  }
+}
+
 var runMacro = function(mods, blocks) {
   var emptyMacro = {shape: [], box: boundingBox.new()}
+  var exposure = 1
 
-  return reduce(blocks, function(result, block) {
+  return transform(blocks, function(result, block) {
     var shapeAndBox
+
+    if (block.type !== 'variable' && block.type !== 'comment') {
+      block = mapValues(block, function(value) {
+        if (isFunction(value)) {
+          return value(mods)
+        }
+
+        return value
+      })
+    }
+
+    if ((block.exp != null) && (block.exp !== exposure)) {
+      result.shape.push({
+        type: 'layer',
+        polarity: (block.exp === 1) ? 'dark' : 'clear'
+      })
+      exposure = block.exp
+    }
 
     switch (block.type) {
       case 'circle':
@@ -156,14 +259,51 @@ var runMacro = function(mods, blocks) {
         shapeAndBox = rect(block.width, block.height, 0, block.cx, block.cy, block.rot)
         break
 
+      case 'rectLL':
+        var hHeight = block.height / 2
+        var hWidth = block.width / 2
+        var cx = block.x + hWidth
+        var cy = block.y + hHeight
+        shapeAndBox = rect(block.width, block.height, 0, cx, cy, block.rot)
+        break
+
+      case 'outline':
+        shapeAndBox = outlinePolygon(block.points, block.rot)
+        break
+
+      case 'poly':
+        shapeAndBox = regularPolygon(
+          block.dia, block.vertices, block.rot, block.cx, block.cy)
+        break
+
+      case 'moire':
+        shapeAndBox = moire(
+          block.dia,
+          block.ringThx,
+          block.ringGap,
+          block.maxRings,
+          block.crossThx,
+          block.crossLen,
+          block.cx,
+          block.cy,
+          block.rot)
+        break
+
+      case 'thermal':
+        shapeAndBox = thermal(
+          block.cx, block.cy, block.outerDia, block.innerDia, block.gap, block.rot)
+        break
+
+      case 'variable':
+        mods = block.set(mods)
+        return true
+
       default:
-        return result
+        return true
     }
 
-    return {
-      shape: result.shape.concat(shapeAndBox.shape),
-      box: boundingBox.add(result.box, shapeAndBox.box)
-    }
+    result.shape = result.shape.concat(shapeAndBox.shape),
+    result.box = boundingBox.add(result.box, shapeAndBox.box)
   }, emptyMacro)
 }
 
@@ -194,7 +334,10 @@ var padShape = function(tool, macros) {
   // else we got a macro
   // run the macro and return
   else {
-    return runMacro({}, macros[toolShape])
+    var mods = transform(params, function(result, val, index) {
+      result['$' + (index + 1)] = val
+    })
+    return runMacro(mods, macros[toolShape])
   }
 
   // if we didn't return, we have a standard tool, so carry on accordingly
