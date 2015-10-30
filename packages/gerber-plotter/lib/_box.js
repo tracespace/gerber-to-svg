@@ -36,9 +36,19 @@ var addCircle = function(box, r, cx, cy) {
   ]
 }
 
+var translate = function(box, dx, dy) {
+  return [
+    box[0] + dx,
+    box[1] + dy,
+    box[2] + dx,
+    box[3] + dy
+  ]
+}
+
 module.exports = {
   new: newBox,
   add: add,
   addPoint: addPoint,
-  addCircle: addCircle
+  addCircle: addCircle,
+  translate: translate
 }

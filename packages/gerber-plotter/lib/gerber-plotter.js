@@ -1,12 +1,15 @@
 // gerber plotter
 'use strict'
 
-var Transform = require('readable-stream').Transform
+var TransformStream = require('readable-stream').Transform
 var has = require('lodash.has')
+var mapValues = require('lodash.mapValues')
 
 var applyOptions = require('./_apply-options')
 var warning = require('./_warning')
 var padShape = require('./_pad-shape')
+var operate = require('./_operate')
+var boundingBox = require('./_box')
 
 var isFormatKey = function(key) {
   return (
@@ -30,7 +33,27 @@ var _transform = function(chunk, encoding, done) {
     return done()
   }
 
-  if (cmd === 'set') {
+  // check for an operation
+  if (cmd === 'op') {
+    if (this.nota === 'I') {
+      val = mapValues(val, function(value, key) {
+        if (key === 'x') {
+          return (this._pos[0] + value)
+        }
+        if (key === 'y') {
+          return (this._pos[1] + value)
+        }
+
+        return value
+      }, this)
+    }
+
+    var result = operate(key, val, this._pos, this._tool, this._mode, this._quad, this)
+    this._pos = result.pos
+    this._box = boundingBox.add(this._box, result.box)
+  }
+
+  else if (cmd === 'set') {
     // if we've got a format set
     if (isFormatKey(key) && !this._formatLock[key]) {
       this.format[key] = val
@@ -69,7 +92,13 @@ var _transform = function(chunk, encoding, done) {
     }
 
     var shapeAndBox = padShape(val, this._macros)
-    var tool = {trace: [], pad: shapeAndBox.shape, box: shapeAndBox.box}
+    var tool = {
+      code: key,
+      trace: [],
+      pad: shapeAndBox.shape,
+      flashed: false,
+      box: shapeAndBox.box
+    }
 
     if (val.shape === 'circle' || val.shape === 'rect') {
       if (val.hole.length === 0) {
@@ -96,7 +125,7 @@ var _transform = function(chunk, encoding, done) {
 }
 
 var plotter = function(options) {
-  var stream = new Transform({
+  var stream = new TransformStream({
     readableObjectMode: true,
     writableObjectMode: true
   })
@@ -121,6 +150,11 @@ var plotter = function(options) {
   stream._tool = null
   stream._tools = {}
   stream._macros = {}
+  stream._pos = [0, 0]
+  stream._box = boundingBox.new()
+  stream._mode = null
+  stream._quad = null
+  stream._region = false
 
   applyOptions(options, stream.format, stream._formatLock)
   return stream

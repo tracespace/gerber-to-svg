@@ -57,9 +57,9 @@ describe('gerber plotter', function() {
       expect(p.format.backupNota).to.equal('A')
     })
 
-    it('should throw if a options key is invalid', function() {
-      expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
-    })
+    // it('should throw if a options key is invalid', function() {
+    //   expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
+    // })
   })
 
   describe('handling set commands', function() {
@@ -886,14 +886,69 @@ describe('gerber plotter', function() {
     })
   })
 
-  // describe('flashing pads', function() {
-  //   it('should emit a tool shape if pad has never been flashed', function(done) {
-  //     p.once('data', function(data) {
-  //
-  //       done()
-  //     })
-  //   })
-  // })
+  describe('handling operation commands', function() {
+    beforeEach(function() {
+      var tool = {shape: 'circle', val: [2], hole: []}
+      p.write({cmd: 'set', key: 'backupUnits', val: 'in'})
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'set', key: 'mode', val: 'i'})
+      p.write({cmd: 'tool', key: '10', val: tool})
+    })
+
+    it('should move the plotter', function() {
+      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3}})
+      expect(p._pos).to.eql([4, -3])
+      p.write({cmd: 'op', key: 'move', val: {y: 0}})
+      expect(p._pos).to.eql([4, 0])
+      p.write({cmd: 'op', key: 'flash', val: {x: -7}})
+      expect(p._pos).to.eql([-7, 0])
+    })
+
+    it('should move the plotter with incremental notation', function() {
+      p.nota = 'I'
+      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3}})
+      expect(p._pos).to.eql([4, -3])
+      p.write({cmd: 'op', key: 'move', val: {y: 1}})
+      expect(p._pos).to.eql([4, -2])
+      p.write({cmd: 'op', key: 'flash', val: {x: -7}})
+      expect(p._pos).to.eql([-3, -2])
+    })
+
+    describe('flashing pads', function() {
+      it('should emit a shape if first flash for tool', function(done) {
+        p.once('readable', function() {
+          var result = p.read()
+          expect(result).to.eql({
+            type: 'shape',
+            tool: '10',
+            shape: p._tool.pad
+          })
+          done()
+        })
+        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+      })
+
+      it('should emit a pad', function(done) {
+        p.once('data', function(result) {
+          expect(result.type).to.equal('shape')
+          p.once('data', function(result) {
+            expect(result).to.eql({type: 'pad', tool: '10', x: 1, y: 1})
+            done()
+          })
+        })
+        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+      })
+
+      it('should update the bounding box', function() {
+        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+        expect(p._box).to.eql([0, 0, 2, 2])
+      })
+    })
+
+    describe('creating strokes in non-region mode', function() {
+
+    })
+  })
 })
 
 //   describe 'operating', ->
@@ -940,65 +995,7 @@ describe('gerber plotter', function() {
 //
 //         p.write {op: {do: 'int', x: 1, y: 1}, line: 20}
 //
-//     it 'should move the plotter position with absolute notation', ->
-//       p.write {op: {do: 'int', x: 1, y: 2}}
-//       expect(p.x).to.eql 1
-//       expect(p.y).to.eql 2
-//       p.write {op: {do: 'move', x: 3, y: 4}}
-//       expect(p.x).to.eql 3
-//       expect(p.y).to.eql 4
-//       p.write {op: {do: 'flash', x: 5, y: 6}}
-//       expect(p.x).to.eql 5
-//       expect(p.y).to.eql 6
-//       p.write {op: {do: 'move', y: 7}}
-//       expect(p.x).to.eql 5
-//       expect(p.y).to.eql 7
-//       p.write {op: {do: 'move', x: 8}}
-//       expect(p.x).to.eql 8
-//       expect(p.y).to.eql 7
-//
-//     it 'should move the plotter with incremental notation', ->
-//       p.notation = 'I'
-//       p.write {op: {do: 'int', x: 1, y: 2}}
-//       expect(p.x).to.eql 1
-//       expect(p.y).to.eql 2
-//       p.write {op: {do: 'move', x: 3, y: 4}}
-//       expect(p.x).to.eql 4
-//       expect(p.y).to.eql 6
-//       p.write {op: {do: 'flash', x: 5, y: 6}}
-//       expect(p.x).to.eql 9
-//       expect(p.y).to.eql 12
-//       p.write {op: {do: 'flash', y: 7}}
-//       expect(p.x).to.eql 9
-//       expect(p.y).to.eql 19
-//       p.write {op: {do: 'flash', x: 8}}
-//       expect(p.x).to.eql 17
-//       expect(p.y).to.eql 19
-//
 //     describe 'flashing pads', ->
-//       it 'should add a pad with a flash', ->
-//         p.write {set: {currentTool: 'D10'}}
-//         p.write {op: {do: 'flash', x: 2, y: 2}}
-//         expect(p.defs[0].circle).to.contain {r: 1}
-//         expect(p.current[0].use).to.contain {x: 2, y: 2}
-//
-//       it 'should only add a pad to defs once', ->
-//         p.write {set: {currentTool: 'D10'}}
-//         p.write {op: {do: 'flash', x: 2, y: 2}}
-//         p.write {op: {do: 'flash', x: 2, y: 2}}
-//         expect(p.defs).to.have.length 1
-//
-//       it 'should add pads to the layer bbox', ->
-//         p.write {set: {currentTool: 'D11'}}
-//         p.write {op: {do: 'flash', x: 2, y: 2}}
-//         expect(p.layerBbox).to.eql {xMin: 1, yMin: 1.5, xMax: 3, yMax: 2.5}
-//         p.write {set: {currentTool: 'D10'}}
-//         p.write {op: {do: 'flash', x: 2, y: 2}}
-//         expect(p.layerBbox).to.eql {xMin: 1, yMin: 1, xMax: 3, yMax: 3}
-//         p.write {op: {do: 'flash', x: -2, y: -2}}
-//         expect(p.layerBbox).to.eql {xMin: -3, yMin: -3, xMax: 3, yMax: 3}
-//         p.write {op: {do: 'flash', x: 3, y: 3}}
-//         expect(p.layerBbox).to.eql {xMin: -3, yMin: -3, xMax: 4, yMax: 4}
 //
 //       it 'should emit an error if in region mode', (done) ->
 //         p.once 'error', (e) ->
@@ -1532,51 +1529,3 @@ describe('gerber plotter', function() {
 //           expect(p.srOverCurrent.length).to.equal 0
 //           expect(p.srOverClear).to.be.false
 //
-//   describe 'end of stream', ->
-//     it 'should emit an svg xml object when its stream ends', (done) ->
-//       p.once 'readable', ->
-//         svg = p.read().svg
-//         expect(svg.xmlns).to.eql 'http://www.w3.org/2000/svg'
-//         expect(svg.version).to.eql '1.1'
-//         expect(svg['xmlns:xlink']).to.eql 'http://www.w3.org/1999/xlink'
-//         expect(svg.width).to.eql '0.01in'
-//         expect(svg.height).to.eql '0.005in'
-//         expect(svg.viewBox).to.eql [0, 0, 10, 5]
-//         expect(svg['stroke-linecap']).to.eql 'round'
-//         expect(svg['stroke-linejoin']).to.eql 'round'
-//         expect(svg['stroke-width']).to.eql 0
-//         expect(svg.stroke).to.eql '#000'
-//
-//         defs = svg._[0].defs
-//         g = svg._[1].g
-//
-//         expect(defs._[0].circle.r).to.eql 1
-//         expect(g._[0].path.d).to.eql ['M', 1, 1, 'L', 9, 4]
-//         expect(g.fill).to.eql 'currentColor'
-//         expect(g.stroke).to.eql 'currentColor'
-//         expect(g.transform).to.eql 'translate(0,5) scale(1,-1)'
-//
-//         done()
-//
-//       p.write {set: {units: 'in', notation: 'A', mode: 'i'}}
-//       p.write {tool: {D10: {dia: 2}}}
-//       p.write {op: {do: 'move', x: 1, y: 1}}
-//       p.write {op: {do: 'int', x: 9, y: 4}}
-//       p.write {op: {do: 'flash', x: 1, y: 4}}
-//       p.end()
-//
-//     it 'should push out an empty image if no items', (done) ->
-//       p.once 'readable', ->
-//         svg = p.read().svg
-//         expect(svg.width).to.eql '0in'
-//         expect(svg.height).to.eql '0in'
-//         expect(svg.viewBox).to.eql [0, 0, 0, 0]
-//
-//         expect(svg._).to.be.empty
-//
-//         done()
-//
-//       p.write {set: {units: 'in', notation: 'A', mode: 'i'}}
-//       p.write {tool: {D10: {dia: 2}}}
-//       p.write {op: {do: 'move', x: 1, y: 1}}
-//       p.end()

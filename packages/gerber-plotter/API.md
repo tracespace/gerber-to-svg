@@ -73,5 +73,77 @@ plotter.on('warning', function(w) {
 The plotter will emit a stream of PCB image objects. Objects are of the format:
 
 ``` javascript
-{}
+{type: IMAGE_TYPE, ...}
+```
+
+### tool shape objects
+
+When a tool is going to be used to create a pad, the plotter will emit a shape for the tool once before the first flash:
+
+``` javascript
+{type: 'shape', tool: TOOL_CODE, shape: [SHAPE_OBJECTS...]}
+```
+
+Where `tool` is the unique tool code being used and `shape` is an array of shape objects. A tool shape object doesn't affect the overall image until that tool is used for a flash.
+
+A tool shape has a local origin that is different from the overall image origin. Any coordinates in the shape object array are in reference to that local origin. When a tool shape is flashed, it should be translated to the flash location.
+
+#### pad shape objects
+
+The pad shapes array is meant to be reduced to a single symbol by the consumer of the plotter stream. A pad shape object can be one of the following:
+
+**circle**
+
+A filed-in circle with radius `r` centered at (`cx`, `cy`):
+
+``` javascript
+{type: 'circle', r, cx, cy}
+```
+
+**rectangle**
+
+A filled-in rectangle with width `width`, height `height`, and corner radius `r` centered at (`cx`, `cy`):
+
+``` javascript
+{type: 'rect', width, height, r, cx, cy}
+```
+
+**polygon**
+
+A filled-in polygon defined by a series of line-segments connecting `points`:
+
+``` javascript
+{type: 'poly', points: [[X0, Y0], [X1, Y1], ..., [XN, YN]]}
+```
+
+**ring**
+
+A ring of radius `r` and stroke width `width` centered at (`cx`, `cy`):
+
+``` javascript
+{type: 'ring', r, width, cx, cy}
+```
+
+**clipped shape**
+
+A special nested structure that takes an array `shape` of rectangles or polygons as defined above and clips them with `clip` (which will be a ring shape as defined above). Used for thermal primitives in macro-defined tools:
+
+``` javascript
+{type: 'clip', shape: [RECTS_OR_POLYS...], clip: CLIPPING_RING}
+```
+
+**layer polarity change**
+
+A modifier that changes the subsequent shape polarities to `clear` or `dark`. By default, all shapes are `dark`. A dark shape creates an image, while a clear shape erases any shape that lies below it. Used for macro-defined tools and standard tools with holes:
+
+``` javascript
+{type: 'layer', polarity: 'clear' OR 'dark'}
+```
+
+### pad object
+
+A pad object creates a pad with a previously defined shape for `tool`, at a location (`x`, `y`):
+
+``` javascript
+{type: 'pad', tool: TOOL_CODE, x: X_COORDINATE, y: Y_COORDINATE}
 ```
