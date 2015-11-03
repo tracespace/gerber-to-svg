@@ -36,7 +36,10 @@ var addCircle = function(box, r, cx, cy) {
   ]
 }
 
-var translate = function(box, dx, dy) {
+var translate = function(box, delta) {
+  var dx = delta[0]
+  var dy = delta[1]
+  
   return [
     box[0] + dx,
     box[1] + dy,

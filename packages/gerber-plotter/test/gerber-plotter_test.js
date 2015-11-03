@@ -57,9 +57,9 @@ describe('gerber plotter', function() {
       expect(p.format.backupNota).to.equal('A')
     })
 
-    // it('should throw if a options key is invalid', function() {
-    //   expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
-    // })
+    it('should throw if a options key is invalid', function() {
+      expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
+    })
   })
 
   describe('handling set commands', function() {
@@ -889,6 +889,7 @@ describe('gerber plotter', function() {
   describe('handling operation commands', function() {
     beforeEach(function() {
       var tool = {shape: 'circle', val: [2], hole: []}
+      p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
       p.write({cmd: 'set', key: 'backupUnits', val: 'in'})
       p.write({cmd: 'set', key: 'nota', val: 'A'})
       p.write({cmd: 'set', key: 'mode', val: 'i'})
@@ -945,8 +946,127 @@ describe('gerber plotter', function() {
       })
     })
 
-    describe('creating strokes in non-region mode', function() {
+    describe('creating strokes and regions', function() {
+      it('should create a path graph with linear strokes', function() {
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
 
+        expect(p._path.traverse()).to.eql([
+          {type: 'line', start: [0, 0], end: [1, 1]},
+          {type: 'line', start: [1, 1], end: [1, 3]},
+          {type: 'line', start: [1, 3], end: [3, 3]}
+        ])
+      })
+
+      it('should handle moves in between strokes', function() {
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'move', val: {x: 1, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'move', val: {x: 3, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+
+        expect(p._path.traverse()).to.eql([
+          {type: 'line', start: [0, 0], end: [1, 1]},
+          {type: 'line', start: [1, 1], end: [1, 3]},
+          {type: 'line', start: [1, 3], end: [3, 3]}
+        ])
+      })
+
+      it('should update the box in non-region mode', function() {
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+
+        expect(p._box).to.eql([-1, -1, 4, 4])
+      })
+
+      it('should update the bounding box in region mode', function() {
+        p.write({cmd: 'set', key: 'region', val: true})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+
+        expect(p._box).to.eql([0, 0, 3, 3])
+      })
+
+      describe('arc strokes', function() {
+        it('should determine the center and radius in single quadrant mode', function() {
+          p.write({cmd: 'set', key: 'arc', val: 's'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1, j: 1.5}})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 4, y: -2, i: 1.5, j: 1}})
+          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1.5, j: 1}})
+
+          var R = Math.sqrt(Math.pow(1.5, 2) + 1)
+          expect(p._path.traverse()).to.eql([
+            {
+              type: 'arc',
+              start: [0, 0],
+              end: [2, 0],
+              center: [1, -1.5],
+              radius: R,
+              dir: 'cw'
+            },
+            {
+              type: 'arc',
+              start: [2, 0],
+              end: [4, 0],
+              center: [3, 1.5],
+              radius: R,
+              dir: 'ccw'
+            },
+            {
+              type: 'arc',
+              start: [4, 0],
+              end: [4, -2],
+              center: [2.5, -1],
+              radius: R,
+              dir: 'cw'
+            },
+            {
+              type: 'arc',
+              start: [4, -2],
+              end: [4, 0],
+              center: [2.5, -1],
+              radius: R,
+              dir: 'ccw'
+            }
+          ])
+        })
+
+        it('should use the actual offsets to get the center in multi-quadrant mode', function() {
+          p.write({cmd: 'set', key: 'arc', val: 'm'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: -1.5}})
+          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1, j: 1.5}})
+
+          var R = Math.sqrt(Math.pow(1.5, 2) + 1)
+          expect(p._path.traverse()).to.eql([
+            {
+              type: 'arc',
+              start: [0, 0],
+              end: [2, 0],
+              center: [1, -1.5],
+              radius: R,
+              dir: 'cw'
+            },
+            {
+              type: 'arc',
+              start: [2, 0],
+              end: [4, 0],
+              center: [3, 1.5],
+              radius: R,
+              dir: 'ccw'
+            }
+          ])
+        })
+      })
     })
   })
 })
@@ -1006,10 +1126,6 @@ describe('gerber plotter', function() {
 //         p.write {op: {do: 'flash', x: 2, y: 2}, line: 8}
 //
 //     describe 'paths', ->
-//       it 'should start a new path with an interpolate', ->
-//         p.write {op: {do: 'int', x: 5, y: 5}}
-//         expect(p.path[0..2]).to.eql ['M', 0, 0]
-//
 //       it 'should error for unstrokable tool outside region mode', (done) ->
 //         p.once 'error', (e) ->
 //           expect(e.message).to.match /line 50 .*D13.*strokable tool/
@@ -1027,31 +1143,6 @@ describe('gerber plotter', function() {
 //
 //         p.mode = null
 //         p.write {op: {do: 'int', x: 5, y: 5}, line: 42}
-//
-//       describe 'adding to a linear path', ->
-//         it 'should add a lineto with an int', ->
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           p.write {op: {do: 'int', x: 10, y: 10}}
-//           expect(p.path).to.eql ['M', 0, 0, 'L', 5, 5, 'L', 10, 10]
-//           expect(p.layerBbox).to.eql {xMin: -1, yMin: -1, xMax: 11, yMax: 11}
-//
-//         it 'should add a moveto with a move if there is a path', ->
-//           p.write {op: {do: 'move', x: 20, y: 20}}
-//           p.write {op: {do: 'move', x: 0, y: 0}}
-//           expect(p.path).to.be.empty
-//
-//           p.write {op: {do: 'int', x: 10, y: 10}}
-//           p.write {op: {do: 'move', x: 20, y: 20}}
-//           expect(p.path).to.eql ['M', 0, 0, 'L', 10, 10, 'M', 20, 20]
-//           expect(p.layerBbox).to.eql {xMin: -1, yMin: -1, xMax: 11, yMax: 11}
-//
-//         it 'should be able to pick up again after a move', ->
-//           p.write {op: {do: 'int', x: 10, y: 10}}
-//           p.write {op: {do: 'move', x: 20, y: 20}}
-//           p.write {op: {do: 'int', x: 15, y: 15}}
-//           expect p.path
-//             .to.eql ['M', 0, 0, 'L', 10, 10, 'M', 20, 20, 'L', 15, 15]
-//           expect(p.layerBbox).to.eql {xMin: -1, yMin: -1, xMax: 21, yMax: 21}
 //
 //       describe 'finishing the path', ->
 //         beforeEach -> p.path = ['M', 0, 0, 'L', 5, 5]

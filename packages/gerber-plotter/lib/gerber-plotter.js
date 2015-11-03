@@ -5,6 +5,7 @@ var TransformStream = require('readable-stream').Transform
 var has = require('lodash.has')
 var mapValues = require('lodash.mapValues')
 
+var PathGraph = require('./path-graph')
 var applyOptions = require('./_apply-options')
 var warning = require('./_warning')
 var padShape = require('./_pad-shape')
@@ -48,7 +49,18 @@ var _transform = function(chunk, encoding, done) {
       }, this)
     }
 
-    var result = operate(key, val, this._pos, this._tool, this._mode, this._quad, this)
+    var result = operate(
+      key,
+      val,
+      this._pos,
+      this._tool,
+      this._mode,
+      this._arc,
+      this._region,
+      this._path,
+      this._epsilon,
+      this)
+
     this._pos = result.pos
     this._box = boundingBox.add(this._box, result.box)
   }
@@ -153,8 +165,10 @@ var plotter = function(options) {
   stream._pos = [0, 0]
   stream._box = boundingBox.new()
   stream._mode = null
-  stream._quad = null
+  stream._arc = null
   stream._region = false
+  stream._path = new PathGraph()
+  stream._epsilon = null
 
   applyOptions(options, stream.format, stream._formatLock)
   return stream

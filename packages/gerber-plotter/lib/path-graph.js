@@ -21,6 +21,7 @@ var reverseSegment = function(segment) {
 
   if (segment.type === 'arc') {
     reversed.center = segment.center
+    reversed.radius = segment.radius
     reversed.dir = (segment.dir === 'cw') ? 'ccw' : 'cw'
   }
 

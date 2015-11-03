@@ -70,14 +70,13 @@ describe('path graphs', function() {
 
   it('should reverse arc segments during traversal', function() {
     p.add({type: 'line', start: [0, 0], end: [1, 0]})
-    p.add({type: 'arc', start: [2, 1, 0], end: [1, 0, 4.71238898], center: [1, 1], dir: 'cw'})
-    p.add(
-      {type: 'arc', start: [2, 1, 3.14159265], end: [3, 2, 1.57079632], center: [3, 1], dir: 'cw'})
+    p.add({type: 'arc', start: [2, 1], end: [1, 0], center: [1, 1], radius: 1, dir: 'cw'})
+    p.add({type: 'arc', start: [2, 1], end: [3, 2], center: [3, 1], radius: 1, dir: 'cw'})
 
     expect(p.traverse()).to.eql([
       {type: 'line', start: [0, 0], end: [1, 0]},
-      {type: 'arc', start: [1, 0, 4.71238898], end: [2, 1, 0], center: [1, 1], dir: 'ccw'},
-      {type: 'arc', start: [2, 1, 3.14159265], end: [3, 2, 1.57079632], center: [3, 1], dir: 'cw'}
+      {type: 'arc', start: [1, 0], end: [2, 1], center: [1, 1], radius: 1, dir: 'ccw'},
+      {type: 'arc', start: [2, 1], end: [3, 2], center: [3, 1], radius: 1, dir: 'cw'}
     ])
   })
 })
