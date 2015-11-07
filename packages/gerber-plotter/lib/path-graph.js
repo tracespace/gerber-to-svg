@@ -1,19 +1,12 @@
 // utilities to create a graph of path segments and traverse that graph
 'use strict'
 
-var forEach = require('lodash.foreach')
+var forEachRight = require('lodash.foreachright')
 var fill = require('lodash.fill')
+var find = require('lodash.find')
 
 var pointsEqual = function(point, target) {
   return ((point[0] === target[0]) && (point[1] === target[1]))
-}
-
-var segmentsAreAdjacent = function(segment, target) {
-  return (
-    pointsEqual(segment.start, target.start) ||
-    pointsEqual(segment.end, target.end) ||
-    pointsEqual(segment.start, target.end) ||
-    pointsEqual(segment.end, target.start))
 }
 
 var reverseSegment = function(segment) {
@@ -22,6 +15,7 @@ var reverseSegment = function(segment) {
   if (segment.type === 'arc') {
     reversed.center = segment.center
     reversed.radius = segment.radius
+    reversed.sweep = segment.sweep
     reversed.dir = (segment.dir === 'cw') ? 'ccw' : 'cw'
   }
 
@@ -29,57 +23,81 @@ var reverseSegment = function(segment) {
 }
 
 var PathGraph = function() {
-  this._segments = []
-  this._adjacency = []
+  this._points = []
+  this._edges = []
+
+  this.length = 0
 }
 
 PathGraph.prototype.add = function(newSeg) {
-  var newSegIndex = this._segments.length
-  this._adjacency[newSegIndex] = []
+  var start = find(this._points, function(point) {
+    return pointsEqual(point.position, newSeg.start)
+  })
 
-  forEach(this._segments, function(seg, index) {
-    if (segmentsAreAdjacent(seg, newSeg)) {
-      this._adjacency[index].push(newSegIndex)
-      this._adjacency[newSegIndex].push(index)
-    }
-  }, this)
+  var end = find(this._points, function(point) {
+    return pointsEqual(point.position, newSeg.end)
+  })
 
-  this._segments.push(newSeg)
+  if (!start) {
+    start = {position: newSeg.start, edges: []}
+    this._points.push(start)
+  }
+
+  if (!end) {
+    end = {position: newSeg.end, edges: []}
+    this._points.push(end)
+  }
+
+  var newEdgeIndex = this._edges.length
+  var edge = {segment: newSeg, start: start, end: end}
+  this._edges.push(edge)
+  this.length++
+
+  end.edges.push(newEdgeIndex)
+  start.edges.push(newEdgeIndex)
 }
 
 PathGraph.prototype.traverse = function() {
-  var seen = fill(Array(this._segments.length), false)
+  var walked = fill(Array(this._edges.length), false)
   var discovered = []
   var result = []
 
-  var next
-  var nextSegment
-  var lastEnd = []
-  while (result.length < this._segments.length) {
-    next = seen.indexOf(false)
-    discovered.push(next)
+  var current
+  var currentEdge
+  var currentEnd
+  var currentSegment
+  var lastEnd = {position: []}
+
+  while (result.length < this._edges.length) {
+    current = walked.indexOf(false)
+    discovered.push(current)
 
     while (discovered.length) {
-      next = discovered.pop()
+      current = discovered.pop()
 
-      if (!seen[next]) {
-        seen[next] = true
+      if (!walked[current]) {
+        walked[current] = true
+        currentEdge = this._edges[current]
+        currentEnd = currentEdge.end
 
-        forEach(this._adjacency[next], function(seg) {
-          if (!seen[seg]) {
+        // reverse segment if necessary
+        if (pointsEqual(lastEnd.position, currentEnd.position)) {
+          currentSegment = reverseSegment(currentEdge.segment)
+          lastEnd = currentEdge.start
+        }
+        else {
+          currentSegment = currentEdge.segment
+          lastEnd = currentEdge.end
+        }
+
+        // add non-walked adjacent nodes to the discovered stack
+        forEachRight(lastEnd.edges, function(seg) {
+          if (!walked[seg]) {
             discovered.push(seg)
           }
         })
 
-        nextSegment = this._segments[next]
-
-        // reverse segment if necessary
-        if (pointsEqual(lastEnd, nextSegment.end)) {
-          nextSegment = reverseSegment(nextSegment)
-        }
-
-        lastEnd = nextSegment.end
-        result.push(nextSegment)
+        result.push(currentSegment)
       }
     }
   }

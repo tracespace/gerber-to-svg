@@ -20,6 +20,20 @@ var isFormatKey = function(key) {
     key === 'backupNota')
 }
 
+var _finishPath = function() {
+  if (this._path.length) {
+    var path = this._path.traverse()
+    this._path = new PathGraph()
+
+    if (!this._region && (this._tool.trace.length === 1)) {
+      this.push({type: 'stroke', width: this._tool.trace[0], path: path})
+    }
+    else {
+      this.push({type: 'fill', path: path})
+    }
+  }
+}
+
 var _transform = function(chunk, encoding, done) {
   var cmd = chunk.cmd
   var line = chunk.line
@@ -66,15 +80,21 @@ var _transform = function(chunk, encoding, done) {
   }
 
   else if (cmd === 'set') {
-    // if we've got a format set
-    if (isFormatKey(key) && !this._formatLock[key]) {
+    // if region change, finish the path
+    if (key === 'region') {
+      this._finishPath()
+      this._region = val
+    }
+
+    // else we might need to set the format
+    else if (isFormatKey(key) && !this._formatLock[key]) {
       this.format[key] = val
       if (key === 'units' || key === 'nota') {
         this._formatLock[key] = true
       }
     }
 
-    // else if we're dealing with a tool change
+    // else if we're dealing with a tool change, finish the path and change
     else if (key === 'tool') {
       if (this._region) {
         this.emit('warning', warning('cannot change tool while region mode is on', line))
@@ -83,11 +103,12 @@ var _transform = function(chunk, encoding, done) {
         this.emit('warning', warning('tool ' + val + ' is not defined', line))
       }
       else {
+        this._finishPath()
         this._tool = this._tools[val]
       }
     }
 
-    // else region, interpolation, or arc mode
+    // else set interpolation or arc mode
     else {
       this['_' + key] = val
     }
@@ -118,6 +139,7 @@ var _transform = function(chunk, encoding, done) {
       }
     }
 
+    this._finishPath()
     this._tools[key] = tool
     this._tool = tool
   }
@@ -128,8 +150,13 @@ var _transform = function(chunk, encoding, done) {
     this._macros[key] = val
   }
 
+  // else layer command
+  else if (cmd === 'layer') {
+    this._finishPath()
+  }
+
   // else done command
-  else {
+  else if (cmd === 'done') {
     this._done = true
   }
 
@@ -143,6 +170,7 @@ var plotter = function(options) {
   })
 
   stream._transform = _transform
+  stream._finishPath = _finishPath
 
   stream.format = {
     units: null,
@@ -505,201 +533,6 @@ module.exports = plotter
 //
 //     done()
 //
-//   # draw a line from a start point to the current position
-//   drawLine: (sX, sY, lineNumber) ->
-//     # add start point and end point to the bbox
-//     if @region
-//       startBbox = {xMin: sX, yMin: sY, xMax: sX, yMax: sY}
-//       endBbox = {xMin: @x, yMin: @y, xMax: @x, yMax: @y}
-//     else
-//       startBbox = @currentTool.bbox sX, sY
-//       endBbox = @currentTool.bbox @x, @y
-//     addBbox startBbox, @layerBbox
-//     addBbox endBbox, @layerBbox
-//
-//     # write to the path
-//     # if it's a circle, then there will be a stroke-width and the line is easy
-//     if @region or @currentTool.trace['stroke-width']?
-//       @path.push 'L', @x, @y
-//
-//     # rectagular tools are complicated, though
-//     # we're going to use implicit linetos after movetos for ease
-//     else
-//       # width and height of tool
-//       halfWidth = @currentTool.pad[0].rect.width / 2
-//       halfHeight = @currentTool.pad[0].rect.height / 2
-//       # corners of the start and end rects
-//       sxm = sX - halfWidth
-//       sxp = sX + halfWidth
-//       sym = sY - halfHeight
-//       syp = sY + halfHeight
-//       exm = @x - halfWidth
-//       exp = @x + halfWidth
-//       eym = @y - halfHeight
-//       eyp = @y + halfHeight
-//       # get the quadrant we're in
-//       theta = Math.atan2 @y - sY, @x - sX
-//       # quadrant I
-//       if 0 <= theta < HALF_PI
-//         @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
-//       # quadrant II
-//       else if HALF_PI <= theta <= Math.PI
-//         @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
-//       # quadrant III
-//       else if -Math.PI <= theta < -HALF_PI
-//         @path.push 'M',sxp,sym,sxp,syp,sxm,syp,exm,eyp,exm,eym,exp,eym,'Z'
-//       # quadrant IV
-//       else if -HALF_PI <= theta < 0
-//         @path.push 'M',sxm,sym,exm,eym,exp,eym,exp,eyp,sxp,syp,sxm,syp,'Z'
-//       else
-//         throw new Error "rectangular stroke angle calculation yielded: #{theta}"
-//
-//   # draw an arc to the path with the given start point and center offset
-//   drawArc: (sX, sY, i, j, lineNumber) ->
-//     # set offsets to default
-//     i ?= 0
-//     j ?= 0
-//
-//     # get the radius of the arc from the offsets
-//     r = Math.sqrt i ** 2 + j ** 2
-//     # get the sweep flag (svg sweep flag is 0 for cw and 1 for ccw)
-//     sweep = if @mode is 'cw' then 0 else 1
-//     # large arc flag is if arc > 180 deg. this doesn't line up with gerber, so
-//     # we gotta calculate the arc length if we're in multi quadrant mode
-//     large = 0
-//
-//     # get some arc angles for bounding box, large flag, and arc check
-//     # valid candidates for center
-//     validCenters = []
-//     # potential candidates
-//     centerCandidates = [[sX + i, sY + j]]
-//     # in single quadrant mode, are offset signs are implicit, so we need to
-//     # check all possible combinations
-//     if @quad is 's'
-//       centerCandidates.push [sX - i, sY - j], [sX - i, sY + j], [sX + i, sY - j]
-//
-//     # loop through the candidates and find centers that make sense
-//     for c in centerCandidates
-//       dist = Math.sqrt (c[0] - @x) ** 2 + (c[1] - @y) ** 2
-//       if (Math.abs r - dist) < @epsilon
-//         validCenters.push {x: c[0], y: c[1]}
-//
-//     # now let's calculate some angles
-//     thetaE = 0
-//     thetaS = 0
-//     cen = null
-//     # at most, we'll have two candidates
-//     # check the points to make sure we have a valid arc
-//     for c in validCenters
-//       # find the angles and make positive
-//       thetaE = Math.atan2 @y - c.y, @x - c.x
-//       if thetaE < 0 then thetaE += TWO_PI
-//       thetaS = Math.atan2 sY - c.y, sX - c.x
-//       if thetaS < 0 then thetaS += TWO_PI
-//
-//       # adjust angles so math comes out right
-//       # in cw, the angle of the start should always be greater than the end
-//       if @mode is 'cw' and thetaS < thetaE
-//         thetaS += TWO_PI
-//       # in ccw, the start angle should be less than the end angle
-//       else if @mode is 'ccw' and thetaE < thetaS
-//         thetaE += TWO_PI
-//
-//       # calculate the sweep angle (abs value for cw)
-//       theta = Math.abs(thetaE - thetaS)
-//       # in single quadrant mode, center is good if it's less than 90
-//       if @quad is 's' and theta <= HALF_PI
-//         cen = c
-//       else if @quad is 'm'
-//         # if the sweep angle is >= 180, then its an svg large arc
-//         if theta >= Math.PI then large = 1
-//         # take the center
-//         cen = {x: c.x, y: c.y}
-//
-//       # break the loop if we've found a valid center
-//       if cen? then break
-//
-//     # if we didn't find a center, then it's an invalid arc
-//     unless cen?
-//       @emit 'warning', new Warning "line #{lineNumber} - #{@mode} arc from
-//         (#{sX}, #{sY}) to (#{@x}, #{@y}) with center offset (#{i}, #{j}) is an
-//         impossible arc in #{if @quad is 's' then 'single' else 'multi'} quadrant
-//         mode with epsilon set to #{@epsilon}"
-//       return
-//
-//     # get the radius of the tool for bbox calcs
-//     rTool = if @region then 0 else @currentTool.bbox().xMax
-//
-//     # switch start and end angles to CCW to make things easier
-//     # this ensures thetaS is always less than thetaE in these calculations
-//     if @mode is 'cw' then [thetaE, thetaS] = [thetaS, thetaE]
-//     # maxima targets for bounding box
-//     xp = if thetaS > 0 then TWO_PI else 0
-//     yp = HALF_PI + (if thetaS > HALF_PI then TWO_PI else 0)
-//     xn = Math.PI + (if thetaS > Math.PI then TWO_PI else 0)
-//     yn = THREEHALF_PI + (if thetaS > THREEHALF_PI then TWO_PI else 0)
-//
-//     # minimum x is either at the negative x axis or an endpoint
-//     if thetaS <= xn <= thetaE
-//       xMin = cen.x - r - rTool
-//     else
-//       xMin = (Math.min sX, @x) - rTool
-//
-//     # max x is going to be at positive x or endpoint
-//     if thetaS <= xp <= thetaE
-//       xMax = cen.x + r + rTool
-//     else
-//       xMax = (Math.max sX, @x) + rTool
-//
-//     # minimum y is either at negative y axis or an endpoint
-//     if thetaS <= yn <= thetaE
-//       yMin = cen.y - r - rTool
-//     else
-//       yMin = (Math.min sY, @y) - rTool
-//
-//     # max y is going to be at positive y or endpoint
-//     if thetaS <= yp <= thetaE
-//       yMax = cen.y + r + rTool
-//     else
-//       yMax = (Math.max sY, @y) + rTool
-//
-//     # check for zerolength arc
-//     xDiff = Math.abs sX - @x
-//     yDiff = Math.abs sY - @y
-//     zeroLength = (xDiff < @epsilon) and (yDiff < @epsilon)
-//     # check for special case: full circle
-//     if @quad is 'm' and zeroLength
-//       # we'll need two paths (180 deg each)
-//       @path.push 'A', r, r, 0, 0, sweep, @x + 2 * i, @y + 2 * j
-//       # bbox is going to just be a rectangle
-//       xMin = cen.x - r - rTool
-//       yMin = cen.y - r - rTool
-//       xMax = cen.x + r + rTool
-//       yMax = cen.y + r + rTool
-//
-//     # add the arc to the path
-//     @path.push 'A', r, r, 0, large, sweep, @x, @y
-//     # close the path if it was a zero length single quadrant arc
-//     @path.push 'Z' if @quad is 's' and zeroLength
-//
-//     # add the bounding box
-//     addBbox {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax}, @layerBbox
-//
-//   # finish the in progress path
-//   finishPath: ->
-//     if @path.length
-//       p = {path: {d: @path}}
-//
-//       # if we're in region mode, close, else apply stroke properties
-//       if @region
-//         @path.push 'Z'
-//       else
-//         p.path[key] = val for key, val of @currentTool.trace
-//
-//       # push to the current layer and empty the path
-//       @current.push p
-//       @path = []
-//
 //   finishLayer: ->
 //     # finish any in progress path
 //     @finishPath()
@@ -817,58 +650,5 @@ module.exports = plotter
 //     # flip vertically
 //     @group.g.transform = "translate(0,#{@bbox.yMin + @bbox.yMax}) scale(1,-1)"
 //
-//   # constructor: (@reader, @parser, opts = {}) ->
-//   #   # parse options object
-//   #   # options can be used for units and notation
-//   #   @units = opts.units ? null
-//   #   @notation = opts.notation ? null
-//   #   # tools and macros
-//   #   @macros = {}
-//   #   @tools = {}
-//   #   @currentTool = ''
-//   #   # array for pad and mask definitions and image group
-//   #   @defs = []
-//   #   @group = { g: { _: [] } }
-//   #   # current layer and its polarity
-//   #   @polarity = 'D'
-//   #   @current = []
-//   #   # step and repeat, initially set to no repeat
-//   #   @stepRepeat = { x: 1, y: 1, i: 0, j: 0 }
-//   #   @srOverClear = false
-//   #   @srOverCurrent = []
-//   #   # operating mode
-//   #   @mode = null
-//   #   @quad = null
-//   #   @lastOp = null
-//   #   @region = false
-//   #   @done = false
-//   #   # operation state (position and current region or trace path)
-//   #   @pos = { x: 0, y: 0 }
-//   #   @path = []
-//   #   # bounding boxes of plotted image and image wide stroke and fill props
-//   #   @attr = {
-//   #     'stroke-linecap': 'round'
-//   #     'stroke-linejoin': 'round'
-//   #     'stroke-width': 0
-//   #     stroke: '#000'
-//   #   }
-//
-//   #
-//   #
-//   # # go through the gerber file and return an xml object with the svg
-//   # plot: ->
-//   #   until @done
-//   #     # grab the next command. if it returns false we've hit end of file
-//   #     block = @reader.nextBlock()
-//   #     if block is false
-//   #       # if it's not a drill file
-//   #       unless @parser?.fmat?
-//   #         throw new Error 'end of file encountered before M02 command'
-//   #       else
-//   #         throw new Error 'end of drill file before M00/M30 command'
-//   #     else
-//   #       @command @parser.parseCommand block
-//   #   # finish and return the xml object
-//   #   @finish()
 //
 // module.exports = Plotter

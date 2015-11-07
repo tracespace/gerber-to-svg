@@ -2,16 +2,21 @@
 'use strict'
 
 var filter = require('lodash.filter')
-var find = require('lodash.find')
+var reduce = require('lodash.reduce')
+var forEach = require('lodash.foreach')
 
 var boundingBox = require('./_box')
 
 var HALF_PI = Math.PI / 2
+var PI = Math.PI
 var TWO_PI = Math.PI * 2
+var THREE_HALF_PI = 3 * Math.PI / 2
 
 // flash operation
 // returns a bounding box for the operation
 var flash = function(coord, tool, plotter) {
+  plotter._finishPath()
+
   // push the pad shape if needed
   if (!tool.flashed) {
     tool.flashed = true
@@ -20,6 +25,108 @@ var flash = function(coord, tool, plotter) {
 
   plotter.push({type: 'pad', tool: tool.code, x: coord[0], y: coord[1]})
   return boundingBox.translate(tool.box, coord)
+}
+
+// given a start, end, direction, arc quadrant mode, and list of potential centers, find the
+// angles of the start and end points, the sweep angle, and the center
+var findCenterAndAngles = function(start, end, mode, arc, centers) {
+  var thetaStart
+  var thetaEnd
+  var sweep
+  var candidate
+  var center
+  while (center == null && centers.length > 0) {
+    candidate = centers.pop()
+    thetaStart = Math.atan2(start[1] - candidate[1], start[0] - candidate[0])
+    thetaEnd = Math.atan2(end[1] - candidate[1], end[0] - candidate[0])
+
+    // in clockwise mode, ensure the start is greater than the end and check the sweep
+    if (mode === 'cw') {
+      thetaStart = (thetaStart >= thetaEnd) ? thetaStart : (thetaStart + TWO_PI)
+    }
+    // do the opposite for counter-clockwise
+    else {
+      thetaEnd = (thetaEnd >= thetaStart) ? thetaEnd : (thetaEnd + TWO_PI)
+    }
+
+    sweep = Math.abs(thetaStart - thetaEnd)
+
+    // in single quadrant mode, the center is only valid if the sweep is less than 90 degrees
+    if (arc === 's') {
+      if (sweep <= HALF_PI) {
+        center = candidate
+      }
+    }
+
+    // in multiquandrant mode there's only one candidate; we're within spec to assume it's good
+    else {
+      center = candidate
+    }
+  }
+
+  if (center == null) {
+    return undefined
+  }
+
+  // ensure the thetas are [0, TWO_PI)
+  thetaStart = (thetaStart >= 0) ? thetaStart : thetaStart + TWO_PI
+  thetaStart = (thetaStart < TWO_PI) ? thetaStart : thetaStart - TWO_PI
+  thetaEnd = (thetaEnd >= 0) ? thetaEnd : thetaEnd + TWO_PI
+  thetaEnd = (thetaEnd < TWO_PI) ? thetaEnd : thetaEnd - TWO_PI
+
+  return {
+    center: center,
+    sweep: sweep,
+    start: start.concat(thetaStart),
+    end: end.concat(thetaEnd)
+  }
+}
+
+var arcBox = function(startPoint, endPoint, center, r, region, tool, dir) {
+  var start
+  var end
+
+  // normalize direction to counter-clockwise
+  if (dir === 'cw') {
+    start = endPoint[2]
+    end = startPoint[2]
+  }
+  else {
+    start = startPoint[2]
+    end = endPoint[2]
+  }
+
+  // get bounding box definition points
+  var points = [startPoint, endPoint]
+
+  // check for sweep past 0 degeres
+  if (start > end) {
+    points.push([center[0] + r, center[1]])
+  }
+
+  // check for sweep past 90 degrees
+  if (start < HALF_PI && end > HALF_PI) {
+    points.push([center[0], center[1] + r])
+  }
+
+  // check for sweep past 180 degrees
+  if (start < PI && end > PI) {
+    points.push([center[0] - r, center[1]])
+  }
+
+  // check for sweep past 270 degrees
+  if (start < THREE_HALF_PI && end > THREE_HALF_PI) {
+    points.push([center[0], center[1] - r])
+  }
+
+  return reduce(points, function(result, m) {
+    if (!region) {
+      var mBox = boundingBox.translate(tool.box, m)
+      return boundingBox.add(result, mBox)
+    }
+
+    return boundingBox.addPoint(result, m)
+  }, boundingBox.new())
 }
 
 var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pathGraph) {
@@ -60,71 +167,29 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
     return ((Math.abs(startDist - r) <= epsilon) && (Math.abs(endDist - r) <= epsilon))
   })
 
-  // now use the sweep direction to find the correct center of the (at most) two valid centers
-  var center = (arc === 's') ? find(validCenters, function(c) {
-    var dyStart = start[1] - c[1]
-    var dxStart = start[0] - c[0]
-    var dyEnd = end[1] - c[1]
-    var dxEnd = end[0] - c[0]
+  var cenAndAngles = findCenterAndAngles(start, end, mode, arc, validCenters)
 
-    var thetaStart = Math.atan2(dyStart, dxStart)
-    var thetaEnd = Math.atan2(dyEnd, dxEnd)
+  // edge case: matching start and end in multi quadrant mode is a full circle
+  if ((arc === 'm') && (start[0] === end[0]) && (start[1] === end[1])) {
+    cenAndAngles.sweep = 2 * Math.PI
+  }
 
-    thetaStart = (thetaStart >= 0) ? thetaStart : (thetaStart + TWO_PI)
-    thetaEnd = (thetaEnd >= 0) ? thetaEnd : (thetaEnd + TWO_PI)
-
-    // console.log(c)
-    // console.log(thetaStart, thetaEnd)
-    // in clockwise, start must be greater than end unless it sweeps over the origin
-    if (
-    (mode === 'cw') &&
-    ((thetaStart > thetaEnd) || (Math.abs(thetaStart + TWO_PI - thetaEnd) <= HALF_PI))) {
-      return true
-    }
-
-    if (
-    (mode === 'ccw') &&
-    ((thetaEnd > thetaStart) || (Math.abs(thetaEnd + TWO_PI - thetaStart) <= HALF_PI))) {
-      return true
-    }
-
-    return false
-  }) : validCenters[0]
-
-  if (center != null) {
+  var box = boundingBox.new()
+  if (cenAndAngles != null) {
     pathGraph.add({
       type: 'arc',
-      start: start,
-      end: end,
-      center: center,
+      start: cenAndAngles.start,
+      end: cenAndAngles.end,
+      center: cenAndAngles.center,
+      sweep: cenAndAngles.sweep,
       radius: r,
       dir: mode
     })
+
+    box = arcBox(cenAndAngles.start, cenAndAngles.end, cenAndAngles.center, r,  region, tool, mode)
   }
 
-  return boundingBox.new()
-  //
-  //       # adjust angles so math comes out right
-  //       # in cw, the angle of the start should always be greater than the end
-  //       if @mode is 'cw' and thetaS < thetaE
-  //         thetaS += TWO_PI
-  //       # in ccw, the start angle should be less than the end angle
-  //       else if @mode is 'ccw' and thetaE < thetaS
-  //         thetaE += TWO_PI
-  //
-  //       # calculate the sweep angle (abs value for cw)
-  //       theta = Math.abs(thetaE - thetaS)
-  //       # in single quadrant mode, center is good if it's less than 90
-  //       if @quad is 's' and theta <= HALF_PI
-  //         cen = c
-  //       else if @quad is 'm'
-  //         # if the sweep angle is >= 180, then its an svg large arc
-  //         if theta >= Math.PI then large = 1
-  //         # take the center
-  //         cen = {x: c.x, y: c.y}
-  //
-  //       # break the loop if we've found a valid center
-  //       if cen? then break
+  return box
 }
 
 var drawLine = function(start, end, tool, region, pathGraph) {
@@ -142,11 +207,87 @@ var drawLine = function(start, end, tool, region, pathGraph) {
   return box
 }
 
+// interpolate a rectangle and emit the fill immdeiately
+var interpolateRect = function(start, end, tool, pathGraph, plotter) {
+  var hWidth = tool.trace[0] / 2
+  var hHeight = tool.trace[1] / 2
+  var theta = Math.atan2(end[1] - start[1], end[0] - start[0])
+
+  var sXMin = start[0] - hWidth
+  var sXMax = start[0] + hWidth
+  var sYMin = start[1] - hHeight
+  var sYMax = start[1] + hHeight
+  var eXMin = end[0] - hWidth
+  var eXMax = end[0] + hWidth
+  var eYMin = end[1] - hHeight
+  var eYMax = end[1] + hHeight
+
+  var points = []
+
+  // no movement
+  if (start[0] === end[0] && start[1] === end[1]) {
+    points.push([sXMin, sYMin], [sXMax, sYMin], [sXMax, sYMax], [sXMin, sYMax])
+  }
+
+  // check for first quadrant move
+  else if ((theta >= 0 && theta < HALF_PI)) {
+    points.push(
+      [sXMin, sYMin],
+      [sXMax, sYMin],
+      [eXMax, eYMin],
+      [eXMax, eYMax],
+      [eXMin, eYMax],
+      [sXMin, sYMax])
+  }
+
+  // check for second quadrant move
+  else if ((theta >= HALF_PI && theta < PI)) {
+    points.push(
+      [sXMax, sYMin],
+      [sXMax, sYMax],
+      [eXMax, eYMax],
+      [eXMin, eYMax],
+      [eXMin, eYMin],
+      [sXMin, sYMin])
+  }
+
+
+  //       if 0 <= theta < HALF_PI
+  //         @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
+  //       # quadrant II
+  //       else if HALF_PI <= theta <= Math.PI
+  //         @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
+  //       # quadrant III
+  //       else if -Math.PI <= theta < -HALF_PI
+  //         @path.push 'M',sxp,sym,sxp,syp,sxm,syp,exm,eyp,exm,eym,exp,eym,'Z'
+  //       # quadrant IV
+  //       else if -HALF_PI <= theta < 0
+  //         @path.push 'M',sxm,sym,exm,eym,exp,eym,exp,eyp,sxp,syp,sxm,syp,'Z'
+
+  forEach(points, function(p, i) {
+    var j = (i < (points.length - 1)) ? i + 1 : 0
+    pathGraph.add({type: 'line', start: p, end: points[j]})
+  })
+
+  plotter._finishPath()
+
+  return boundingBox.add(
+    boundingBox.translate(tool.box, start), boundingBox.translate(tool.box, end))
+}
+
 // interpolate operation
 // returns a bounding box for the operation
-var interpolate = function(start, end, offset, tool, mode, arc, region, epsilon, pathGraph) {
+var interpolate = function(
+  start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
+
   if (mode === 'i') {
-    return drawLine(start, end, tool, region, pathGraph)
+    // add a line to the path normally if region mode is on or the tool is a circle
+    if ((region === true) || (tool.trace.length === 1)) {
+      return drawLine(start, end, tool, region, pathGraph)
+    }
+
+    // else, the tool is a rectangle, which needs a special interpolation function
+    return interpolateRect(start, end, tool, pathGraph, plotter)
   }
 
   return drawArc(start, end, offset, tool, mode, arc, region, epsilon, pathGraph)
@@ -175,7 +316,7 @@ var operate = function(
 
     case 'int':
       box = interpolate(
-        start, end, offset, tool, mode, arc, region, epsilon, pathGraph)
+        start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter)
       break
 
     default:

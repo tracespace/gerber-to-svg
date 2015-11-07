@@ -2,8 +2,10 @@
 'use strict'
 
 var expect = require('chai').expect
+var forEach = require('lodash.foreach')
 
 var plotter = require('../lib/gerber-plotter')
+var boundingBox = require('../lib/_box')
 
 describe('gerber plotter', function() {
   var p
@@ -946,7 +948,7 @@ describe('gerber plotter', function() {
       })
     })
 
-    describe('creating strokes and regions', function() {
+    describe('interpolating to create strokes', function() {
       it('should create a path graph with linear strokes', function() {
         p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
         p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
@@ -1006,33 +1008,37 @@ describe('gerber plotter', function() {
           expect(p._path.traverse()).to.eql([
             {
               type: 'arc',
-              start: [0, 0],
-              end: [2, 0],
+              start: [0, 0, 2.158798930342464],
+              end: [2, 0, 0.982793723247329],
               center: [1, -1.5],
+              sweep: 1.1760052070951348,
               radius: R,
               dir: 'cw'
             },
             {
               type: 'arc',
-              start: [2, 0],
-              end: [4, 0],
+              start: [2, 0, 4.124386376837123],
+              end: [4, 0, 5.3003915839322575],
               center: [3, 1.5],
+              sweep: 1.1760052070951348,
               radius: R,
               dir: 'ccw'
             },
             {
               type: 'arc',
-              start: [4, 0],
-              end: [4, -2],
+              start: [4, 0, 0.5880026035475675],
+              end: [4, -2, 5.695182703632018],
               center: [2.5, -1],
+              sweep: 1.176005207095135,
               radius: R,
               dir: 'cw'
             },
             {
               type: 'arc',
-              start: [4, -2],
-              end: [4, 0],
+              start: [4, -2, 5.695182703632018],
+              end: [4, 0, 0.5880026035475675],
               center: [2.5, -1],
+              sweep: 1.176005207095135,
               radius: R,
               dir: 'ccw'
             }
@@ -1050,23 +1056,366 @@ describe('gerber plotter', function() {
           expect(p._path.traverse()).to.eql([
             {
               type: 'arc',
-              start: [0, 0],
-              end: [2, 0],
+              start: [0, 0, 2.158798930342464],
+              end: [2, 0, 0.982793723247329],
               center: [1, -1.5],
+              sweep: 1.1760052070951348,
               radius: R,
               dir: 'cw'
             },
             {
               type: 'arc',
-              start: [2, 0],
-              end: [4, 0],
+              start: [2, 0, 4.124386376837123],
+              end: [4, 0, 5.3003915839322575],
               center: [3, 1.5],
+              sweep: 1.1760052070951348,
               radius: R,
               dir: 'ccw'
             }
           ])
         })
+
+        it('should set the sweep to zero for matching start and end in single mode', function() {
+          p.write({cmd: 'set', key: 'arc', val: 's'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: 1}})
+
+          expect(p._path.traverse()).to.eql([
+            {
+              type: 'arc',
+              start: [0, 0, 0],
+              end: [0, 0, 0],
+              center: [-1, 0],
+              sweep: 0,
+              radius: 1,
+              dir: 'cw'
+            }
+          ])
+        })
+
+        it('should set the sweep to a full circle in multi mode', function() {
+          p.write({cmd: 'set', key: 'arc', val: 'm'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: -1}})
+
+          expect(p._path.traverse()).to.eql([
+            {
+              type: 'arc',
+              start: [0, 0, 0],
+              end: [0, 0, 0],
+              center: [-1, 0],
+              sweep: 2 * Math.PI,
+              radius: 1,
+              dir: 'cw'
+            }
+          ])
+        })
+
+        describe('bounding box', function() {
+          it('should usually use the arc end points', function() {
+            p.write({cmd: 'op', key: 'move', val: {x: 0.5, y: 0.866}})
+            p.write({cmd: 'set', key: 'mode', val: 'cw'})
+            p.write({cmd: 'set', key: 'arc', val: 's'})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
+            expect(p._box).to.eql([-0.5, -0.5, 1.8660, 1.8660])
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'move', val: {x: 0.5, y: 0.866}})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
+            expect(p._box).to.eql([0.5, 0.5, 0.8660, 0.8660])
+          })
+
+          it('should should set the min x when arc sweeps past 180 deg', function() {
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
+            p.write({cmd: 'set', key: 'mode', val: 'cw'})
+            p.write({cmd: 'set', key: 'arc', val: 's'})
+            p.write({cmd: 'op', key: 'int', val: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[0]).to.be.closeTo(-2, 0.00001)
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
+            p.write({cmd: 'op', key: 'int', val: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[0]).to.be.closeTo(-1, 0.00001)
+          })
+
+          it('should should set the min y when arc sweeps past 270 deg', function() {
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
+            p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+            p.write({cmd: 'set', key: 'arc', val: 's'})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[1]).to.be.closeTo(-2, 0.00001)
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[1]).to.be.closeTo(-1, 0.00001)
+          })
+
+          it('should should set the max x when arc sweeps past 0 deg', function() {
+            p.write({cmd: 'op', key: 'move', val: {x: 0.7071, y: -0.7071}})
+            p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+            p.write({cmd: 'set', key: 'arc', val: 's'})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[2]).to.be.closeTo(2, 0.00001)
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'move', val: {x: 0.7071, y: -0.7071}})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[2]).to.be.closeTo(1, 0.00001)
+          })
+
+          it('should should set the max y when arc sweeps past 90 deg', function() {
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: 0.7071}})
+            p.write({cmd: 'set', key: 'mode', val: 'cw'})
+            p.write({cmd: 'set', key: 'arc', val: 's'})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[3]).to.be.closeTo(2, 0.00001)
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: 0.7071}})
+            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            expect(p._box[3]).to.be.closeTo(1, 0.00001)
+          })
+        })
       })
+    })
+
+    describe('interpolating with rectangular tools', function() {
+      beforeEach(function() {
+        var rectTool = {shape: 'rect', val: [2, 1], hole: []}
+        p.write({cmd: 'tool', key: '11', val: rectTool})
+      })
+
+      it('should directly emit fills without adding to the path for rect tools', function(done) {
+        var path = [
+          {type: 'line', start: [-1, -0.5], end: [1, -0.5]},
+          {type: 'line', start: [1, -0.5], end: [1, 0.5]},
+          {type: 'line', start: [1, 0.5], end: [-1, 0.5]},
+          {type: 'line', start: [-1, 0.5], end: [-1, -0.5]}
+        ]
+
+        p.once('readable', function() {
+          var result = p.read()
+          expect(p._path.length).to.equal(0)
+          expect(result).to.eql({type: 'fill', path: path})
+
+          setTimeout(function() {
+            expect(p._box).to.eql([-1, -0.5, 1, 0.5])
+            done()
+          }, 1)
+        })
+
+        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+      })
+
+      it('should handle a first quadrant move', function(done) {
+        var path = [
+          {type: 'line', start: [-1, -0.5], end: [1, -0.5]},
+          {type: 'line', start: [1, -0.5], end: [6, 4.5]},
+          {type: 'line', start: [6, 4.5], end: [6, 5.5]},
+          {type: 'line', start: [6, 5.5], end: [4, 5.5]},
+          {type: 'line', start: [4, 5.5], end: [-1, 0.5]},
+          {type: 'line', start: [-1, 0.5], end: [-1, -0.5]}
+        ]
+
+        p.once('readable', function() {
+          var result = p.read()
+          expect(p._path.length).to.equal(0)
+          expect(result).to.eql({type: 'fill', path: path})
+
+          setTimeout(function() {
+            expect(p._box).to.eql([-1, -0.5, 6, 5.5])
+            done()
+          }, 1)
+        })
+
+        p.write({cmd: 'op', key: 'int', val: {x: 5, y: 5}})
+      })
+
+      it('should handle a second quadrant move', function(done) {
+        var path = [
+          {type: 'line', start: [1, -0.5], end: [1, 0.5]},
+          {type: 'line', start: [1, 0.5], end: [-4, 5.5]},
+          {type: 'line', start: [-4, 5.5], end: [-6, 5.5]},
+          {type: 'line', start: [-6, 5.5], end: [-6, 4.5]},
+          {type: 'line', start: [-6, 4.5], end: [-1, -0.5]},
+          {type: 'line', start: [-1, -0.5], end: [1, -0.5]}
+        ]
+
+        p.once('readable', function() {
+          var result = p.read()
+          expect(p._path.length).to.equal(0)
+          expect(result).to.eql({type: 'fill', path: path})
+
+          setTimeout(function() {
+            expect(p._box).to.eql([-6, -0.5, 1, 5.5])
+            done()
+          }, 1)
+        })
+
+        p.write({cmd: 'op', key: 'int', val: {x: -5, y: 5}})
+      })
+
+      it.skip('should handle a third quadrant move', function() {
+        // p.write({op: {do: 'int', x: -5, y: -5}})
+        // expect(p.path).to.eql [
+        //   'M', 0, 0
+        //   'M', 1, -0.5, 1, 0.5, -1, 0.5, -6, -4.5, -6, -5.5, -4, -5.5, 'Z'
+        // ]
+      })
+
+      it.skip('should handle a fourth quadrant move', function() {
+        // p.write {op: {do: 'int', x: 5, y: -5}}
+        // expect(p.path).to.eql [
+        //   'M', 0, 0
+        //   'M', -1, -0.5, 4, -5.5, 6, -5.5, 6, -4.5, 1, 0.5, -1, 0.5, 'Z'
+        // ]
+      })
+
+      it.skip('should handle a move along the positive x-axis', function() {
+        // p.write {op: {do: 'int', x: 5, y: 0}}
+        // expect(p.path).to.eql [
+        //  'M', 0, 0
+        //  'M', -1, -0.5, 1, -0.5, 6, -0.5, 6, 0.5, 4, 0.5, -1, 0.5, 'Z'
+        // ]
+      })
+
+      it.skip('should handle a move along the negative x-axis', function() {
+        // p.write {op: {do: 'int', x: -5, y: 0}}
+        // expect(p.path).to.eql [
+        //   'M', 0, 0
+        //   'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 0.5, -6, 0.5, -6, -0.5, 'Z'
+        // ]
+      })
+
+      it.skip('should handle a move along the positive y-axis', function() {
+        // p.write {op: {do: 'int', x: 0, y: 5}}
+        // expect(p.path).to.eql [
+        //   'M', 0, 0
+        //   'M', -1, -0.5, 1, -0.5, 1, 0.5, 1, 5.5, -1, 5.5, -1, 4.5, 'Z'
+        // ]
+      })
+
+      it.skip('should handle a move along the negative y-axis', function() {
+        // p.write {op: {do: 'int', x: 0, y: -5}}
+        // expect(p.path).to.eql [
+        //   'M', 0, 0
+        //   'M', -1, -0.5, -1, -5.5, 1, -5.5, 1, -4.5, 1, 0.5, -1, 0.5, 'Z'
+        // ]
+      })
+
+      it.skip('should do a normal stroke if region mode is on', function() {
+        // p.region = true
+        // p.write {op: {do: 'int', x: 5, y: 5}}
+        // expect(p.path).to.eql ['M', 0, 0, 'L', 5, 5]
+      })
+    })
+  })
+
+  describe('emitting strokes and regions', function() {
+    var path = [
+      {type: 'line', start: [0, 0], end: [1, 0]},
+      {type: 'line', start: [1, 0], end: [1, 1]},
+      {type: 'line', start: [1, 1], end: [0, 1]},
+      {type: 'line', start: [0, 1], end: [0, 0]}
+    ]
+
+    beforeEach(function() {
+      var tool0 = {shape: 'circle', val: [0.2], hole: []}
+      var tool1 = {shape: 'circle', val: [0.4], hole: []}
+      p.write({cmd: 'tool', key: '11', val: tool1})
+      p.write({cmd: 'tool', key: '10', val: tool0})
+      forEach(path, p._path.add, p._path)
+    })
+
+    it('should end the path and emit on a flash', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'op', key: 'flash', val: {x: 2, y: 2}})
+    })
+
+    it('should end the path on a tool change', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'set', key: 'tool', val: '10'})
+    })
+
+    it('should end the path on a tool definition', function(done) {
+      var tool = {shape: 'circle', val: [0.1], hole: []}
+
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'tool', key: '12', val: tool})
+    })
+
+    it('should end the path on a region change', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'set', key: 'region', val: true})
+    })
+
+    it('should end the path on a polarity change', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'layer', key: 'polarity', val: 'C'})
+    })
+
+    it('should end the path on a step repeat', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.write({cmd: 'layer', key: 'stepRep', val:	{x: 5, y: 5, i: 2, j: 2}})
+    })
+
+    it('should emit a stroke if region mode it off', function(done) {
+      var expected = {
+        type: 'stroke',
+        width: 0.2,
+        path: path
+      }
+
+      p.once('readable', function() {
+        var data = p.read()
+        expect(data).to.eql(expected)
+        done()
+      })
+
+      p._finishPath()
+    })
+
+    it('should emit a fill if region mode is on', function(done) {
+      var expected = {type: 'fill', path: path}
+
+      p.once('readable', function() {
+        var data = p.read()
+        expect(data).to.eql(expected)
+        done()
+      })
+
+      p._region = true
+      p._finishPath()
     })
   })
 })
@@ -1144,124 +1493,6 @@ describe('gerber plotter', function() {
 //         p.mode = null
 //         p.write {op: {do: 'int', x: 5, y: 5}, line: 42}
 //
-//       describe 'finishing the path', ->
-//         beforeEach -> p.path = ['M', 0, 0, 'L', 5, 5]
-//
-//         it 'should create a path object in the current layer', ->
-//           p.finishPath()
-//           expect(p.path).to.be.empty
-//           expect(p.current[0].path.d).to.eql ['M', 0, 0, 'L', 5, 5]
-//
-//         it 'should not create a path object if the path is empty', ->
-//           p.path = []
-//           p.finishPath()
-//           expect(p.current).to.be.empty
-//
-//         it 'should have trace properties if not in region mode', ->
-//           p.finishPath()
-//           path = p.current[0].path
-//           expect(path.fill).to.eql 'none'
-//           expect(path['stroke-width']).to.eql 2
-//
-//         it 'should end the path on a flash', ->
-//           p.write {op: {do: 'flash', x: 2, y: 2}}
-//           expect(p.path).to.be.empty
-//
-//         it 'should end the path on a tool change', ->
-//           p.write {set: {currentTool: 'D10'}}
-//           expect(p.path).to.be.empty
-//
-//         it 'should end the path on a region change', ->
-//           p.write {set: {region: true}}
-//           expect(p.path).to.be.empty
-//
-//         it 'should end the path on a polarity change', ->
-//           p.write {new: {layer: 'C'}}
-//           expect(p.path).to.be.empty
-//
-//         it 'should end the path on a step repeat', ->
-//           p.write {new: {sr: {x: 2, y: 2, i: 1, j: 2}}}
-//           expect(p.path).to.be.empty
-//
-//       describe 'stroking a rectangular tool', ->
-//         beforeEach -> p.write {set: {currentTool: 'D11'}}
-//
-//         # these are fun because they just drag the rectange without rotation
-//         # let's test each of the quadrants
-//         # width of tool is 2, height is 1
-//         it 'should handle a first quadrant move', ->
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 1, -0.5, 6, 4.5, 6, 5.5, 4, 5.5, -1, 0.5, 'Z'
-//          ]
-//
-//         it 'should handle a second quadrant move', ->
-//           p.write {op: {do: 'int', x: -5, y: 5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 5.5, -6, 5.5, -6, 4.5, 'Z'
-//          ]
-//
-//         it 'should handle a third quadrant move', ->
-//           p.write {op: {do: 'int', x: -5, y: -5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', 1, -0.5, 1, 0.5, -1, 0.5, -6, -4.5, -6, -5.5, -4, -5.5, 'Z'
-//          ]
-//
-//         it 'should handle a fourth quadrant move', ->
-//           p.write {op: {do: 'int', x: 5, y: -5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 4, -5.5, 6, -5.5, 6, -4.5, 1, 0.5, -1, 0.5, 'Z'
-//          ]
-//
-//         it 'should handle a move along the positive x-axis', ->
-//           p.write {op: {do: 'int', x: 5, y: 0}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 1, -0.5, 6, -0.5, 6, 0.5, 4, 0.5, -1, 0.5, 'Z'
-//          ]
-//
-//         it 'should handle a move along the negative x-axis', ->
-//           p.write {op: {do: 'int', x: -5, y: 0}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 0.5, -6, 0.5, -6, -0.5, 'Z'
-//          ]
-//
-//         it 'should handle a move along the positive y-axis', ->
-//           p.write {op: {do: 'int', x: 0, y: 5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, 1, -0.5, 1, 0.5, 1, 5.5, -1, 5.5, -1, 4.5, 'Z'
-//          ]
-//
-//         it 'should handle a move along the negative y-axis', ->
-//           p.write {op: {do: 'int', x: 0, y: -5}}
-//           expect(p.path).to.eql [
-//             'M', 0, 0
-//             'M', -1, -0.5, -1, -5.5, 1, -5.5, 1, -4.5, 1, 0.5, -1, 0.5, 'Z'
-//          ]
-//
-//         it "should not have a stroke-width (it's filled instead)", ->
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           p.finishPath()
-//           expect(p.current[0]).to.have.key 'path'
-//           expect(p.current[0].path).to.not.have.key 'stroke-width'
-//
-//         it 'should throw an error if the theta calculation messes up', ->
-//           p.x = undefined
-//           p.y = undefined
-//           expect(-> p.write {op: {do: 'int', x: 5, y: 5}})
-//             .to.throw /rectangular stroke angle calculation/
-//
-//         it 'should do a normal stroke if region mode is on', ->
-//           p.region = true
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           expect(p.path).to.eql ['M', 0, 0, 'L', 5, 5]
-//
 //       describe 'adding an arc to the path', ->
 //         it 'should emit an error if the tool is not circular', (done) ->
 //           p.once 'error', (e) ->
@@ -1293,21 +1524,6 @@ describe('gerber plotter', function() {
 //         describe 'single quadrant arc mode', ->
 //           beforeEach -> p.write {set: {quad: 's'}}
 //
-//           it 'should add a CW arc with a set to cw', ->
-//             p.write {set: {mode: 'cw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, i: 1}}
-//             expect(p.path[-8..]).to.eql ['A', 1, 1, 0, 0, 0, 1, 1]
-//
-//           it 'should add a CCW arc with a G03', ->
-//             p.write {set: {mode: 'ccw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, j: 1}}
-//             expect(p.path[-8..]).to.eql ['A', 1, 1, 0, 0, 1, 1, 1]
-//
-//           it 'should close the path on a zero length arc', ->
-//             p.write {set: {mode: 'ccw'}}
-//             p.write {op: {do: 'int', x: 0, y: 0, j: 1}}
-//             expect(p.path[-9..]).to.eql ['A', 1, 1, 0, 0, 1, 0, 0, 'Z']
-//
 //           it 'should warn for impossible arcs', (done) ->
 //             p.once 'warning', (w) ->
 //               expect(w).to.be.an.instanceOf Warning
@@ -1323,23 +1539,6 @@ describe('gerber plotter', function() {
 //         describe 'multi quadrant arc mode', ->
 //           beforeEach -> p.write {set: {quad: 'm'}}
 //
-//           it 'should add a CW arc with a G02', ->
-//             p.write {set: {mode: 'cw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, j: 1}}
-//             expect(p.path[-8..]).to.eql ['A', 1, 1, 0, 1, 0, 1, 1]
-//
-//           it 'should add a CCW arc with a G03', ->
-//             p.write {set: {mode: 'ccw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, i: 1}}
-//             expect(p.path[-8..]).to.eql ['A', 1, 1, 0, 1, 1, 1, 1]
-//
-//           it 'should add 2 paths for full circle if start is end', ->
-//             p.write {set: {mode: 'cw'}}
-//             p.write {op: {do: 'int', i: 1}}
-//             expect(p.path[-16..]).to.eql [
-//               'A', 1, 1, 0, 0, 0, 2, 0, 'A', 1, 1, 0, 0, 0, 0, 0
-//            ]
-//
 //           it 'should warn for impossible arc and add nothing to path', (done) ->
 //             p.once 'warning', (w) ->
 //               expect(w).to.be.an.instanceOf Warning
@@ -1352,55 +1551,6 @@ describe('gerber plotter', function() {
 //             p.write {set: {mode: 'cw'}}
 //             p.write {op: {do: 'int', x: 1, y: 1, j: -1}, line: 20}
 //
-//         # tool is a dia 2 circle for these tests
-//         describe 'adjusting the layer bbox', ->
-//           it 'sweeping past 180 deg determines min X', ->
-//             p.write {op: {do: 'move', x: -0.7071, y: -0.7071}}
-//             p.write {set: {mode: 'cw', quad: 's'}}
-//             p.write {
-//               op: {do: 'int', x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}
-//             }
-//             result = -2 - p.layerBbox.xMin
-//             expect(result).to.be.closeTo 0, 0.00001
-//
-//           it 'sweeping past 270 deg determines min Y', ->
-//             p.write {op: {do: 'move', x: 0.7071, y: -0.7071}}
-//             p.write {set: {mode: 'cw', quad: 's'}}
-//             p.write {
-//               op: {do: 'int', x: -0.7071, y: -0.7071, i: 0.7071, j: 0.7071}
-//             }
-//             result = -2 - p.layerBbox.yMin
-//             expect(result).to.be.closeTo 0, 0.00001
-//
-//           it 'sweeping past 90 deg determines max Y', ->
-//             p.write {op: {do: 'move', x: -0.7071, y: 0.7071}}
-//             p.write {set: {mode: 'cw', quad: 's'}}
-//             p.write {
-//               op: {do: 'int', x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}
-//             }
-//             result = 2 - p.layerBbox.yMax
-//             expect(result).to.be.closeTo 0, 0.00001
-//
-//           it 'sweeping past 0 deg determines max X', ->
-//             p.write {op: {do: 'move', x: 0.7071, y: 0.7071}}
-//             p.write {set: {mode: 'cw', quad: 's'}}
-//             p.write {
-//               op: {do: 'int', x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}
-//             }
-//             result = 2 - p.layerBbox.xMax
-//             expect(result).to.be.closeTo 0, 0.00001
-//
-//           it 'if its just hanging out, use the end points', ->
-//             p.write {op: {do: 'move', x: 0.5, y: 0.866}}
-//             p.write {set: {mode: 'cw', quad: 's'}}
-//             p.write {
-//               op: {do: 'int', x: 0.866, y: 0.5, i: 0.5, j: 0.866}
-//             }
-//             expect(p.layerBbox.xMin).to.equal -0.5
-//             expect(p.layerBbox.yMin).to.equal -0.5
-//             expect(p.layerBbox.xMax).to.equal 1.8660
-//             expect(p.layerBbox.yMax).to.equal 1.8660
-//
 //       describe 'region mode on', ->
 //         it 'should allow any tool to create a region', (done) ->
 //           p.once 'error', ->
@@ -1411,35 +1561,6 @@ describe('gerber plotter', function() {
 //           p.write {op: {do: 'int', x: 5, y: 5}}
 //
 //           setTimeout done, 10
-//
-//         it 'should not take tool into account when calculating bbox', ->
-//           p.write {set: {region: true}}
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           expect(p.layerBbox).to.eql {xMin: 0, yMin: 0, xMax: 5, yMax: 5}
-//
-//         it 'should not take tool into account when calculating arc bbox', ->
-//           p.write {set: {region: true}}
-//           p.write {op: {do: 'move', x: 0.5, y: 0.866}}
-//           p.write {set: {mode: 'cw', quad: 's'}}
-//           p.write {
-//             op: {do: 'int', x: 0.866, y: 0.5, i: 0.5, j: 0.866}
-//           }
-//           expect(p.layerBbox.xMin).to.equal 0.5
-//           expect(p.layerBbox.yMin).to.equal 0.5
-//           expect(p.layerBbox.xMax).to.equal 0.8660
-//           expect(p.layerBbox.yMax).to.equal 0.8660
-//
-//         it 'should finish current path with Z and add to the current layer', ->
-//           p.write {set: {region: true}}
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//           p.write {op: {do: 'int', x: 0, y: 5}}
-//           p.write {op: {do: 'int', x: 0, y: 0}}
-//           p.finishPath()
-//           path = p.current[0].path
-//           expect(path.d).to.eql [
-//             'M', 0, 0, 'L', 5, 5, 'L', 0, 5, 'L', 0, 0, 'Z'
-//           ]
-//           expect(path.fill).to.not.eql 'none'
 //
 //     describe 'modal operation codes', ->
 //       it 'should throw a warning if operation codes are used modally', (done) ->
