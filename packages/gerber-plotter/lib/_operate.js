@@ -15,8 +15,6 @@ var THREE_HALF_PI = 3 * Math.PI / 2
 // flash operation
 // returns a bounding box for the operation
 var flash = function(coord, tool, plotter) {
-  plotter._finishPath()
-
   // push the pad shape if needed
   if (!tool.flashed) {
     tool.flashed = true

@@ -1353,15 +1353,6 @@ describe('gerber plotter', function() {
       forEach(path, p._path.add, p._path)
     })
 
-    it('should end the path and emit on a flash', function(done) {
-      p.once('data', function() {
-        expect(p._path.length).to.equal(0)
-        done()
-      })
-
-      p.write({cmd: 'op', key: 'flash', val: {x: 2, y: 2}})
-    })
-
     it('should end the path on a tool change', function(done) {
       p.once('data', function() {
         expect(p._path.length).to.equal(0)
