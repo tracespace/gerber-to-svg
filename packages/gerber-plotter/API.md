@@ -81,16 +81,16 @@ The plotter will emit a stream of PCB image objects. Objects are of the format:
 When a tool is going to be used to create a pad, the plotter will emit a shape for the tool once before the first flash:
 
 ``` javascript
-{type: 'shape', tool: TOOL_CODE, shape: [SHAPE_OBJECTS...]}
+{type: 'shape', tool: TOOL_CODE, shape: [PRIMITIVE_OBJECTS...]}
 ```
 
-Where `tool` is the unique tool code being used and `shape` is an array of shape objects. A tool shape object doesn't affect the overall image until that tool is used for a flash.
+Where `TOOL_CODE` is the unique tool code being used and `PRIMITIVE_OBJECTS` are a collection of simple shapes that make up the pad. A tool shape object doesn't affect the overall image until that tool is used for a flash.
 
 A tool shape has a local origin that is different from the overall image origin. Any coordinates in the shape object array are in reference to that local origin. When a tool shape is flashed, it should be translated to the flash location.
 
-#### pad shape objects
+#### primitive shape objects
 
-The pad shapes array is meant to be reduced to a single symbol by the consumer of the plotter stream. A pad shape object can be one of the following:
+The primitive shapes array is meant to be reduced to a single symbol by the consumer of the plotter stream. A primitive shape object can be one of the following:
 
 **circle**
 
@@ -146,4 +146,41 @@ A pad object creates a pad with a previously defined shape for `tool`, at a loca
 
 ``` javascript
 {type: 'pad', tool: TOOL_CODE, x: X_COORDINATE, y: Y_COORDINATE}
+```
+
+### stroke and fill objects
+
+A stroke object is a series of segments defined by `path` with a stroke-width `width`. `SEGMENTS` are one of two segment objects as defined below. A stroke has round line-ends and round line-joins.
+
+A fill object is a filled in region bounded by `path`. The bounding path does not have a stroke width.
+
+Regardless of the order they appear in the gerber file itself, this library will try to ensure that any segments from a given tool until the region mode is changed will be places adjacently in `path`. For example, if the Gerber file says `MOVE TO (1, 1); LINE TO (2, 1); MOVE TO (2, 2); LINE TO (2, 1)`, the library will convert that to `LINE FROM (1, 1) TO (2, 1); LINE FROM (2, 1) TO (2, 2)`
+
+``` javascript
+{type: 'stroke', width: WIDTH, path: [SEGMENTS...]}
+{type: 'fill', path: [SEGMENTS...]}
+```
+
+#### line segments
+
+A line segment is a path from `start` to `end`
+
+``` javascript
+{type: 'line', start: [X0, Y0], end: [X1, Y1]}
+```
+
+#### arc segments
+
+A arc segment is a circular arc from `start` to `end` with radius `radius`, center: `center`, direction `dir` (`'cw'` or `'ccw'`), and arc angle `sweep`. All angles are in radians.
+
+``` javascript
+{
+  type: 'arc',
+  start: [X0, Y0, ANGLE0],
+  end: [X1, Y1, ANGLE1],
+  center: [XC, YC],
+  sweep: ARC_ANGLE,
+  radius: R,
+  dir: DIRECTION
+}
 ```
