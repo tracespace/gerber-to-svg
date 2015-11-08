@@ -1111,6 +1111,22 @@ describe('gerber plotter', function() {
           ])
         })
 
+        it('should warn and not add to path if arc is impossible', function(done) {
+          p.once('warning', function(w) {
+            expect(w.message).to.match(/impossible arc/)
+            expect(w.line).to.equal(12)
+
+            setTimeout(function() {
+              expect(p._path.length).to.equal(0)
+              done()
+            }, 5)
+          })
+
+          p.write({cmd: 'set', key: 'arc', val: 's'})
+          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1, i: 1}, line: 12})
+        })
+
         describe('bounding box', function() {
           it('should usually use the arc end points', function() {
             p.write({cmd: 'op', key: 'move', val: {x: 0.5, y: 0.866}})
@@ -1261,58 +1277,62 @@ describe('gerber plotter', function() {
         p.write({cmd: 'op', key: 'int', val: {x: -5, y: 5}})
       })
 
-      it.skip('should handle a third quadrant move', function() {
-        // p.write({op: {do: 'int', x: -5, y: -5}})
-        // expect(p.path).to.eql [
-        //   'M', 0, 0
-        //   'M', 1, -0.5, 1, 0.5, -1, 0.5, -6, -4.5, -6, -5.5, -4, -5.5, 'Z'
-        // ]
+      it('should handle a third quadrant move', function(done) {
+        var path = [
+          {type: 'line', start: [1, 0.5], end: [-1, 0.5]},
+          {type: 'line', start: [-1, 0.5], end: [-6, -4.5]},
+          {type: 'line', start: [-6, -4.5], end: [-6, -5.5]},
+          {type: 'line', start: [-6, -5.5], end: [-4, -5.5]},
+          {type: 'line', start: [-4, -5.5], end: [1, -0.5]},
+          {type: 'line', start: [1, -0.5], end: [1, 0.5]}
+        ]
+
+        p.once('readable', function() {
+          var result = p.read()
+          expect(p._path.length).to.equal(0)
+          expect(result).to.eql({type: 'fill', path: path})
+
+          setTimeout(function() {
+            expect(p._box).to.eql([-6, -5.5, 1, 0.5])
+            done()
+          }, 1)
+        })
+
+        p.write({cmd: 'op', key: 'int', val: {x: -5, y: -5}})
       })
 
-      it.skip('should handle a fourth quadrant move', function() {
-        // p.write {op: {do: 'int', x: 5, y: -5}}
-        // expect(p.path).to.eql [
-        //   'M', 0, 0
-        //   'M', -1, -0.5, 4, -5.5, 6, -5.5, 6, -4.5, 1, 0.5, -1, 0.5, 'Z'
-        // ]
+      it('should handle a fourth quadrant move', function(done) {
+        var path = [
+          {type: 'line', start: [-1, 0.5], end: [-1, -0.5]},
+          {type: 'line', start: [-1, -0.5], end: [4, -5.5]},
+          {type: 'line', start: [4, -5.5], end: [6, -5.5]},
+          {type: 'line', start: [6, -5.5], end: [6, -4.5]},
+          {type: 'line', start: [6, -4.5], end: [1, 0.5]},
+          {type: 'line', start: [1, 0.5], end: [-1, 0.5]}
+        ]
+
+        p.once('readable', function() {
+          var result = p.read()
+          expect(p._path.length).to.equal(0)
+          expect(result).to.eql({type: 'fill', path: path})
+
+          setTimeout(function() {
+            expect(p._box).to.eql([-1, -5.5, 6, 0.5])
+            done()
+          }, 1)
+        })
+
+        p.write({cmd: 'op', key: 'int', val: {x: 5, y: -5}})
       })
 
-      it.skip('should handle a move along the positive x-axis', function() {
-        // p.write {op: {do: 'int', x: 5, y: 0}}
-        // expect(p.path).to.eql [
-        //  'M', 0, 0
-        //  'M', -1, -0.5, 1, -0.5, 6, -0.5, 6, 0.5, 4, 0.5, -1, 0.5, 'Z'
-        // ]
-      })
+      it('should do a normal stroke if region mode is on', function(done) {
+        p._region = true
+        p.write({cmd: 'op', key: 'int', val: {x: 5, y: 5}})
 
-      it.skip('should handle a move along the negative x-axis', function() {
-        // p.write {op: {do: 'int', x: -5, y: 0}}
-        // expect(p.path).to.eql [
-        //   'M', 0, 0
-        //   'M', -1, -0.5, 1, -0.5, 1, 0.5, -4, 0.5, -6, 0.5, -6, -0.5, 'Z'
-        // ]
-      })
-
-      it.skip('should handle a move along the positive y-axis', function() {
-        // p.write {op: {do: 'int', x: 0, y: 5}}
-        // expect(p.path).to.eql [
-        //   'M', 0, 0
-        //   'M', -1, -0.5, 1, -0.5, 1, 0.5, 1, 5.5, -1, 5.5, -1, 4.5, 'Z'
-        // ]
-      })
-
-      it.skip('should handle a move along the negative y-axis', function() {
-        // p.write {op: {do: 'int', x: 0, y: -5}}
-        // expect(p.path).to.eql [
-        //   'M', 0, 0
-        //   'M', -1, -0.5, -1, -5.5, 1, -5.5, 1, -4.5, 1, 0.5, -1, 0.5, 'Z'
-        // ]
-      })
-
-      it.skip('should do a normal stroke if region mode is on', function() {
-        // p.region = true
-        // p.write {op: {do: 'int', x: 5, y: 5}}
-        // expect(p.path).to.eql ['M', 0, 0, 'L', 5, 5]
+        setTimeout(function() {
+          expect(p._path.traverse()).to.eql([{type: 'line', start: [0, 0], end: [5, 5]}])
+          done()
+        }, 10)
       })
     })
   })
@@ -1520,36 +1540,6 @@ describe('gerber plotter', function() {
 //
 //           p.write {set: {mode: 'cw'}}
 //           p.write {op: {do: 'int', x: 1, y: 1, i: 1}, line: 23}
-//
-//         describe 'single quadrant arc mode', ->
-//           beforeEach -> p.write {set: {quad: 's'}}
-//
-//           it 'should warn for impossible arcs', (done) ->
-//             p.once 'warning', (w) ->
-//               expect(w).to.be.an.instanceOf Warning
-//               expect(w.message).to.match /line 36 .*impossible arc/
-//               setTimeout ->
-//                 expect(p.path).to.not.contain 'A'
-//                 done()
-//               , 10
-//
-//             p.write {set: {mode: 'ccw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, i: 1}, line: 36}
-//
-//         describe 'multi quadrant arc mode', ->
-//           beforeEach -> p.write {set: {quad: 'm'}}
-//
-//           it 'should warn for impossible arc and add nothing to path', (done) ->
-//             p.once 'warning', (w) ->
-//               expect(w).to.be.an.instanceOf Warning
-//               expect(w.message).to.match /line 20 .*impossible arc/
-//               setTimeout ->
-//                 expect(p.path).to.not.contain 'A'
-//                 done()
-//               , 10
-//
-//             p.write {set: {mode: 'cw'}}
-//             p.write {op: {do: 'int', x: 1, y: 1, j: -1}, line: 20}
 //
 //       describe 'region mode on', ->
 //         it 'should allow any tool to create a region', (done) ->

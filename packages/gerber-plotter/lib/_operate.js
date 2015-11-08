@@ -129,7 +129,7 @@ var arcBox = function(startPoint, endPoint, center, r, region, tool, dir) {
   }, boundingBox.new())
 }
 
-var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pathGraph) {
+var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
   // get the radius of the arc from the offsets
   var r = Math.sqrt(Math.pow(offset[0], 2) + Math.pow(offset[1], 2))
 
@@ -188,6 +188,9 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
 
     box = arcBox(cenAndAngles.start, cenAndAngles.end, cenAndAngles.center, r,  region, tool, mode)
   }
+  else {
+    plotter._warn('skipping impossible arc')
+  }
 
   return box
 }
@@ -241,7 +244,7 @@ var interpolateRect = function(start, end, tool, pathGraph, plotter) {
   }
 
   // check for second quadrant move
-  else if ((theta >= HALF_PI && theta < PI)) {
+  else if ((theta >= HALF_PI && theta <= PI)) {
     points.push(
       [sXMax, sYMin],
       [sXMax, sYMax],
@@ -251,18 +254,27 @@ var interpolateRect = function(start, end, tool, pathGraph, plotter) {
       [sXMin, sYMin])
   }
 
+  // third quadrant move
+  else if ((theta >= -PI && theta < -HALF_PI)) {
+    points.push(
+      [sXMax, sYMax],
+      [sXMin, sYMax],
+      [eXMin, eYMax],
+      [eXMin, eYMin],
+      [eXMax, eYMin],
+      [sXMax, sYMin])
+  }
 
-  //       if 0 <= theta < HALF_PI
-  //         @path.push 'M',sxm,sym,sxp,sym,exp,eym,exp,eyp,exm,eyp,sxm,syp,'Z'
-  //       # quadrant II
-  //       else if HALF_PI <= theta <= Math.PI
-  //         @path.push 'M',sxm,sym,sxp,sym,sxp,syp,exp,eyp,exm,eyp,exm,eym,'Z'
-  //       # quadrant III
-  //       else if -Math.PI <= theta < -HALF_PI
-  //         @path.push 'M',sxp,sym,sxp,syp,sxm,syp,exm,eyp,exm,eym,exp,eym,'Z'
-  //       # quadrant IV
-  //       else if -HALF_PI <= theta < 0
-  //         @path.push 'M',sxm,sym,exm,eym,exp,eym,exp,eyp,sxp,syp,sxm,syp,'Z'
+  // fourth quadrant move
+  else {
+    points.push(
+      [sXMin, sYMax],
+      [sXMin, sYMin],
+      [eXMin, eYMin],
+      [eXMax, eYMin],
+      [eXMax, eYMax],
+      [sXMax, sYMax])
+  }
 
   forEach(points, function(p, i) {
     var j = (i < (points.length - 1)) ? i + 1 : 0
@@ -290,7 +302,7 @@ var interpolate = function(
     return interpolateRect(start, end, tool, pathGraph, plotter)
   }
 
-  return drawArc(start, end, offset, tool, mode, arc, region, epsilon, pathGraph)
+  return drawArc(start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter)
 }
 
 // takes the start point, the op type, the op coords, the tool, and the push function

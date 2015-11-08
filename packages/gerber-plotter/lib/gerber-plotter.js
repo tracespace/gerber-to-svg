@@ -34,16 +34,19 @@ var _finishPath = function() {
   }
 }
 
+var _warn = function(message) {
+  this.emit('warning', warning(message, this._line))
+}
+
 var _transform = function(chunk, encoding, done) {
   var cmd = chunk.cmd
-  var line = chunk.line
   var key = chunk.key
   var val = chunk.val
 
+  this._line = chunk.line
+
   if (this._done) {
-    this.emit(
-      'warning',
-      warning('ignoring extra command recieved after done command', line))
+    this._warn('ignoring extra command recieved after done command')
 
     return done()
   }
@@ -97,10 +100,10 @@ var _transform = function(chunk, encoding, done) {
     // else if we're dealing with a tool change, finish the path and change
     else if (key === 'tool') {
       if (this._region) {
-        this.emit('warning', warning('cannot change tool while region mode is on', line))
+        this._warn('cannot change tool while region mode is on')
       }
       else if (!has(this._tools, val)) {
-        this.emit('warning', warning('tool ' + val + ' is not defined', line))
+        this._warn('tool ' + val + ' is not defined')
       }
       else {
         this._finishPath()
@@ -117,9 +120,7 @@ var _transform = function(chunk, encoding, done) {
   // else tool commands
   else if (cmd === 'tool') {
     if (this._tools[key]) {
-      this.emit(
-        'warning',
-        warning('tool ' + key + ' is already defined; ignoring new definition', line))
+      this._warn('tool ' + key + ' is already defined; ignoring new definition')
 
       return done()
     }
@@ -171,6 +172,7 @@ var plotter = function(options) {
 
   stream._transform = _transform
   stream._finishPath = _finishPath
+  stream._warn = _warn
 
   stream.format = {
     units: null,
@@ -186,6 +188,7 @@ var plotter = function(options) {
     backupNota: false
   }
 
+  stream._line = 0
   stream._done = false
   stream._tool = null
   stream._tools = {}
