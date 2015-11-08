@@ -3,7 +3,7 @@
 
 var TransformStream = require('readable-stream').Transform
 var has = require('lodash.has')
-var mapValues = require('lodash.mapValues')
+var mapValues = require('lodash.mapvalues')
 
 var PathGraph = require('./path-graph')
 var applyOptions = require('./_apply-options')
