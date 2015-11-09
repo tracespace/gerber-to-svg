@@ -13,7 +13,7 @@ var reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailin
 var reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
 var reTOOL_DEF = /T0*(\d+)C([\d.]+)/
 var reTOOL_SET = /T0*(\d+)(?!C)/
-var reCOORD = /((?:[XY][+-]?[\d.]+){1,2})/
+var reCOORD = /((?:[XY][+-]?[\d.]+){1,2})(?:G85((?:[XY][+-]?[\d.]+){1,2}))?/
 
 var setUnits = function(parser, units) {
   var format = (units === 'in') ? [2, 4] : [3, 3]
@@ -105,6 +105,15 @@ var parse = function(parser, block) {
 
     var coordMatch = block.match(reCOORD)
     var coord = parseCoord(coordMatch[1], parser.format)
+
+    if (coordMatch[2]) {
+      parser._push(commands.op('move', coord))
+
+      coord = parseCoord(coordMatch[2], parser.format)
+
+      return parser._push(commands.op('int', coord))
+    }
+
     return parser._push(commands.op('flash', coord))
   }
 
