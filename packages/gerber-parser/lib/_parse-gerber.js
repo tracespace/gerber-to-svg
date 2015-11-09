@@ -14,6 +14,7 @@ var reMODE = /^G0*([123])/
 var reREGION = /^G3([67])/
 var reARC = /^G7([45])/
 var reBKP_UNITS = /^G7([01])/
+var reBKP_NOTA = /^G9([01])/
 var reCOMMENT = /^G0*4/
 
 // tool changes
@@ -162,6 +163,12 @@ var parse = function(parser, block) {
     parser._push(commands.set('nota', nota))
     parser._push(commands.set('epsilon', epsilon))
     return
+  }
+
+  if (reBKP_NOTA.test(block)) {
+    var bkpNotaMatch = block.match(reBKP_NOTA)[1]
+    var backupNota = (bkpNotaMatch === '0') ? 'A' : 'I'
+    return parser._push(commands.set('backupNota', backupNota))
   }
 
   if (rePOLARITY.test(block)) {

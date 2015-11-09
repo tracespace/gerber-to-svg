@@ -249,6 +249,17 @@ describe('gerber parser with gerber files', function() {
 
       p.write(format)
     })
+
+    it('should be able to set backup notation with G90/1', function(done) {
+      var expected = [
+        {cmd: 'set', line: 0, key: 'backupNota', val: 'A'},
+        {cmd: 'set', line: 1, key: 'backupNota', val: 'I'}
+      ]
+
+      expectResults(expected, done)
+      p.write('G90*\n')
+      p.write('G91*\n')
+    })
   })
 
   describe('new level commands (SR/LP parameters)', function() {
