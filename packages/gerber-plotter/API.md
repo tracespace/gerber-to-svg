@@ -134,7 +134,7 @@ A special nested structure that takes an array `shape` of rectangles or polygons
 
 **layer polarity change**
 
-A modifier that changes the subsequent shape polarities to `clear` or `dark`. By default, all shapes are `dark`. A dark shape creates an image, while a clear shape erases any shape that lies below it. Used for macro-defined tools and standard tools with holes:
+A modifier that changes the subsequent shape polarities to `clear` or `dark`. By default, all shapes are `dark`. A dark shape creates an image, while a clear shape erases any shape that lies below it (in that pad). Used for macro-defined tools and standard tools with holes:
 
 ``` javascript
 {type: 'layer', polarity: 'clear' OR 'dark'}
@@ -183,4 +183,32 @@ A arc segment is a circular arc from `start` to `end` with radius `radius`, cent
   radius: R,
   dir: DIRECTION
 }
+```
+
+### layer polarity objects
+
+A layer polarity object changes the polarity of subsequent image objects until the polarity is changed again. A polarity of 'dark' is the default, and adds to the overall image. A polarity of 'clear' subtracts from the overall image. The polarity object also includes `box`: the bounding box of the existing overall image.
+
+``` javascript
+{type: 'polarity', polarity: POLARITY, box: [X_MIN, Y_MIN, X_MAX, Y_MAX]}
+```
+
+### layer repeat objects
+
+A layer repeat object means all following objects will be repeated at `offsets`. For example, if a circle pad is flashed at (0, 0) and `offsets = [[1, 0], [0, 1], [1, 1]]`, that circle pad should appear at (0, 0), (1, 0), (0, 1), and (1, 1). Like the layer polarity object, the layer repeat object includes the current image's bounding box. The repeat is in effect until another repeat object is pushed. A repeat object with a zero-length `offsets` array means repeating has been turned off.
+
+Note that, according to the Gerber specification, if a clearing image appears in a repeated block and overlaps a previous block, it will clear the image in both blocks.
+
+``` javascript
+{type: 'repeat', offsets: [OFFSET_LOCATIONS...], box: [X_MIN, Y_MIN, X_MAX, Y_MAX]}
+```
+
+### end of stream
+
+At the end of the stream, the plotter will push out one last object. This object of type `size` contains the size and the units of the overall image.
+
+A box of `[Infinity, Infinity, -Infinity, -Infinity]` means there is no image.
+
+``` javascript
+{type: 'size', box: [X_MIN, Y_MIN, X_MAX, Y_MAX], units: UNITS}
 ```

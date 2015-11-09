@@ -14,7 +14,13 @@ var THREE_HALF_PI = 3 * Math.PI / 2
 
 // flash operation
 // returns a bounding box for the operation
-var flash = function(coord, tool, plotter) {
+var flash = function(coord, tool, region, plotter) {
+  // no flashing allowed in region mode
+  if (region) {
+    plotter._warn('flash in region ignored')
+    return boundingBox.new()
+  }
+
   // push the pad shape if needed
   if (!tool.flashed) {
     tool.flashed = true
@@ -290,6 +296,11 @@ var interpolateRect = function(start, end, tool, pathGraph, plotter) {
 var interpolate = function(
   start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
 
+  if ((region === false) && (tool.trace.length === 0)) {
+    plotter._warn('tool ' + tool.code + ' is not strokable; ignoring interpolate')
+    return boundingBox.new()
+  }
+
   if (mode === 'i') {
     // add a line to the path normally if region mode is on or the tool is a circle
     if ((region === true) || (tool.trace.length === 1)) {
@@ -298,6 +309,12 @@ var interpolate = function(
 
     // else, the tool is a rectangle, which needs a special interpolation function
     return interpolateRect(start, end, tool, pathGraph, plotter)
+  }
+
+  // else, make sure we're allowed to be drawing an arc, then draw an arc
+  if ((tool.trace.length !== 1) && (region === false)) {
+    plotter._warn('cannot draw an arc with a non-circular tool')
+    return boundingBox.new()
   }
 
   return drawArc(start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter)
@@ -321,7 +338,7 @@ var operate = function(
   var box
   switch (type) {
     case 'flash':
-      box = flash(end, tool, plotter)
+      box = flash(end, tool, region, plotter)
       break
 
     case 'int':
