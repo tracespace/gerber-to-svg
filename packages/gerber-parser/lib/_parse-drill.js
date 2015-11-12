@@ -109,6 +109,8 @@ var parse = function(parser, block) {
     if (coordMatch[2]) {
       parser._push(commands.op('move', coord))
 
+      parser._push(commands.set('mode', 'i'))
+
       coord = parseCoord(coordMatch[2], parser.format)
 
       return parser._push(commands.op('int', coord))
