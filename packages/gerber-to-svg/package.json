@@ -7,8 +7,20 @@
     "gerber2svg": "bin/gerber2svg"
   },
   "scripts": {
-    "test": "gulp test"
+    "lint": "eslint lib/*.js test/*.js",
+    "test": "istanbul cover --include-all-sources _mocha",
+    "posttest": "npm run lint",
+    "test-watch": "mocha --reporter dot --watch",
+    "browser": "zuul --local -- ./test/*_test.js",
+    "browser-phantom": "zuul --phantom -- ./test/*_test.js",
+    "browser-sauce": "zuul -- ./test/*_test.js",
+    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci-browser; fi",
+    "ci-browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run browser-sauce; fi",
+    "postci": "coveralls < ./coverage/lcov.info"
   },
+  "precommit": [
+    "lint"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/mcous/gerber-to-svg.git"
@@ -29,30 +41,24 @@
   "homepage": "https://github.com/mcous/gerber-to-svg",
   "devDependencies": {
     "brfs": "^1.2.0",
-    "browserify": "9.0.3",
-    "chai": "2.2.0",
-    "coffee-script": "^1.7.1",
-    "coffeeify": "^1.0.0",
-    "glob": "5.0.3",
-    "gulp": "^3.8.11",
-    "gulp-coffee": "^2.0.1",
-    "gulp-coffee-istanbul": "0.7.0",
-    "gulp-coffeelint": "^0.4.0",
-    "gulp-coveralls": "^0.1.2",
-    "gulp-mocha": "^2.0.0",
-    "gulp-rename": "^1.2.0",
-    "gulp-streamify": "0.0.5",
-    "gulp-uglify": "^1.0.1",
-    "gulp-util": "^3.0.1",
-    "jquery": "^2.1.1",
-    "node-static": "^0.7.4",
-    "phantomjs": "^1.9.16",
-    "vinyl-source-stream": "^1.0.0",
-    "zuul": "2.1.1"
+    "browserify": "^12.0.1",
+    "chai": "^3.4.1",
+    "coveralls": "^2.11.4",
+    "eslint": "^1.9.0",
+    "glob": "^5.0.15",
+    "istanbul": "^0.4.0",
+    "mocha": "^2.3.3",
+    "phantomjs": "^1.9.18",
+    "pre-commit": "^1.1.2",
+    "zuul": "^3.7.2"
   },
   "dependencies": {
-    "chalk": "1.0.0",
-    "minimatch": "2.0.4",
+    "chalk": "^1.1.1",
+    "gerber-parser": "^0.1.3",
+    "gerber-plotter": "^0.1.0",
+    "lodash.isstring": "^3.0.1",
+    "lodash.reduce": "^3.1.2",
+    "minimatch": "^3.0.0",
     "minimist": "^1.1.0"
   }
 }
