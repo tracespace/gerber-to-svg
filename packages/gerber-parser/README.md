@@ -19,7 +19,7 @@ var gerberParser = require('gerber-parser')
 
 var parser = gerberParser()
 parser.on('warning', function(w) {
-  console.warn(`warning at line ${w.line}: ${w.message}`)
+  console.warn('warning at line ' + w.line + ': ' + w.message)
 })
 
 fs.createReadStream('/path/to/gerber/file.gbr', {encoding: 'utf8'})

@@ -260,10 +260,10 @@ A **vector primitive** adds a stroke with `width` and endpoints (`x1`, `y1`) and
 {type: 'vect', exp, width, x1, y1, x2, y2, rot}
 ```
 
-A **rectangle primitive** adds a rectangle with `width` and `height` centered at (`x`, `y`):
+A **rectangle primitive** adds a rectangle with `width` and `height` centered at (`cx`, `cy`):
 
 ``` javascript
-{type: 'rect', exp, width, height, x, y, rot}
+{type: 'rect', exp, width, height, cx, cy, rot}
 ```
 
 A **lower-left rectangle primitive** adds a rectangle with `width` and `height` with its lower left point at at (`x`, `y`):
