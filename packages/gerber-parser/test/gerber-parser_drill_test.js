@@ -356,4 +356,30 @@ describe('gerber parser with gerber files', function() {
       p.write('X1Y1\n')
     })
   })
+
+  describe('parsing slot commands', function() {
+    it('should parse the slot commands', function(done) {
+      p.format.places = [2, 4]
+      p.format.zero = 'T'
+
+      var expected = [
+        {cmd: 'op', line: 1, key: 'move', val: {x: 0.16, y: 1.58}},
+        {cmd: 'set', line: 1, key: 'mode', val: 'i'},
+        {cmd: 'op', line: 1, key: 'int', val: {x: 1.795, y: -1.08}},
+        {cmd: 'op', line: 2, key: 'flash', val: {x: 1.23, y: -0.01}},
+        {cmd: 'op', line: 3, key: 'move', val: {x: 2.0, y: 0.1}},
+        {cmd: 'set', line: 3, key: 'mode', val: 'i'},
+        {cmd: 'op', line: 3, key: 'int', val: {y: -0.1}},
+        {cmd: 'op', line: 4, key: 'move', val: {y: 3.09}},
+        {cmd: 'set', line: 4, key: 'mode', val: 'i'},
+        {cmd: 'op', line: 4, key: 'int', val: {y: 3.29}}
+      ]
+
+      expectResults(expected, done)
+      p.write('X0016Y0158G85X01795Y-0108\n')
+      p.write('X0123Y-0001\n')
+      p.write('X0200Y0010G85Y-0010\n')
+      p.write('Y0309G85Y0329\n')
+    })
+  })
 })
