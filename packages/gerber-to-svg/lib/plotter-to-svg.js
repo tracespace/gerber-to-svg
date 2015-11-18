@@ -1,9 +1,11 @@
 // transform stream to take plotter objects and convert them to an SVG string
 'use strict'
 
-var stream = require('readable-stream')
+var Transform = require('readable-stream').Transform
+var inherits = require('inherits')
 
 var reduceShapeArray = require('./_reduce-shape')
+var flashPad = require('./_flash-pad')
 
 var startSvg = function(id, className, color) {
   return [
@@ -20,36 +22,38 @@ var startSvg = function(id, className, color) {
 
 var SVG_END = '</svg>'
 
-var _transform = function(chunk, encoding, done) {
-  if (chunk.type === 'shape') {
-    this.defs += reduceShapeArray(this._prefix, chunk.tool, chunk.shape)
+var PlotterToSvg = function(id, className, color) {
+  Transform.call(this, {writableObjectMode: true})
+
+  this.defs = ''
+  this.layer = ''
+
+  this._prefix = id
+  this._result = startSvg(id, className, color)
+  this._color = 'currentColor'
+}
+
+inherits(PlotterToSvg, Transform)
+
+PlotterToSvg.prototype._transform = function(chunk, encoding, done) {
+  switch (chunk.type) {
+    case 'shape':
+      this.defs += reduceShapeArray(this._prefix, chunk.tool, chunk.shape)
+      break
+
+    case 'pad':
+      this.layer += flashPad(this._prefix, chunk.tool, chunk.x, chunk.y)
+      break
   }
+
   done()
 }
 
-var _flush = function(done) {
+PlotterToSvg.prototype._flush = function(done) {
   this._result += 'width="0" height="0" viewBox="0 0 0 0">' + SVG_END
 
   this.push(this._result)
   done()
 }
 
-var plotterToSvg = function(id, className, color) {
-  var svgStream = new stream.Transform({
-    writableObjectMode: true,
-    transform: _transform,
-    flush: _flush
-  })
-
-  svgStream._prefix = id
-
-  svgStream.defs = ''
-  svgStream.layer = ''
-
-  svgStream._result = startSvg(id, className, color)
-  svgStream._color = 'currentColor'
-
-  return svgStream
-}
-
-module.exports = plotterToSvg
+module.exports = PlotterToSvg
