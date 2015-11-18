@@ -5,6 +5,7 @@ var reduce = require('lodash.reduce')
 var transform = require('lodash.transform')
 var mapValues = require('lodash.mapvalues')
 var isFunction = require('lodash.isfunction')
+var clone = require('lodash.clone')
 
 var boundingBox = require('./_box')
 
@@ -240,7 +241,8 @@ var runMacro = function(mods, blocks) {
     if ((block.exp != null) && (block.exp !== exposure)) {
       result.shape.push({
         type: 'layer',
-        polarity: (block.exp === 1) ? 'dark' : 'clear'
+        polarity: (block.exp === 1) ? 'dark' : 'clear',
+        box: clone(result.box)
       })
       exposure = block.exp
     }
@@ -302,8 +304,11 @@ var runMacro = function(mods, blocks) {
         return true
     }
 
-    result.shape = result.shape.concat(shapeAndBox.shape),
-    result.box = boundingBox.add(result.box, shapeAndBox.box)
+    result.shape = result.shape.concat(shapeAndBox.shape)
+    // only change the box if the exposure is creating an image
+    if (exposure === 1) {
+      result.box = boundingBox.add(result.box, shapeAndBox.box)
+    }
   }, emptyMacro)
 }
 
@@ -349,7 +354,7 @@ var padShape = function(tool, macros) {
       circle(tool.hole[0]).shape :
       rect(tool.hole[0], tool.hole[1]).shape
 
-    shape.push({type: 'layer', polarity: 'clear'}, holeShape)
+    shape.push({type: 'layer', polarity: 'clear', box: box}, holeShape)
   }
 
   return {shape: shape, box: box}

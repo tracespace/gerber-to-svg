@@ -256,14 +256,14 @@ describe('gerber plotter', function() {
         p.write({cmd: 'tool', key: '11', val: circle1})
         expect(p._tool.pad).to.eql([
           {type: 'circle', cx: 0, cy: 0, r: 1},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-1, -1, 1, 1]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
         p.write({cmd: 'tool', key: '12', val: circle2})
         expect(p._tool.pad).to.eql([
           {type: 'circle', cx: 0, cy: 0, r: 1.5},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-1.5, -1.5, 1.5, 1.5]},
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 1}
         ])
       })
@@ -281,14 +281,14 @@ describe('gerber plotter', function() {
         p.write({cmd: 'tool', key: '11', val: rect1})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 3, height: 4},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-1.5, -2, 1.5, 2]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
         p.write({cmd: 'tool', key: '12', val: rect2})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 5, height: 6},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-2.5, -3, 2.5, 3]},
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 1}
         ])
       })
@@ -306,14 +306,14 @@ describe('gerber plotter', function() {
         p.write({cmd: 'tool', key: '11', val: obround1})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 1.5, width: 4, height: 3},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-2, -1.5, 2, 1.5]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
         p.write({cmd: 'tool', key: '12', val: obround2})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 2.5, width: 5, height: 6},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-2.5, -3, 2.5, 3]},
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 1}
         ])
       })
@@ -334,6 +334,8 @@ describe('gerber plotter', function() {
 
         p.write({cmd: 'tool', key: '11', val: poly1})
         var poly = p._tool.pad[0]
+        var box = [-0.96592583, -0.96592583, 0.96592583, 0.96592583]
+
         expect(p._tool.pad).to.have.length(3)
         expect(poly).to.have.all.keys(['type', 'points'])
         expect(poly.type).to.equal('poly')
@@ -344,14 +346,16 @@ describe('gerber plotter', function() {
           [-0.70710678, -0.70710678],
           [0.25881905, -0.96592583],
           [0.96592583, -0.25881905]
-        ], 10)
+        ])
         expect(p._tool.pad.slice(1)).to.eql([
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: box},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
         p.write({cmd: 'tool', key: '12', val: poly2})
         poly = p._tool.pad[0]
+        box = [-0.98480775, -0.98480775, 0.98480775, 0.98480775]
+
         expect(p._tool.pad).to.have.length(3)
         expect(poly).to.have.all.keys(['type', 'points'])
         expect(poly.type).to.equal('poly')
@@ -370,7 +374,7 @@ describe('gerber plotter', function() {
           [-0.34202014, 0.93969262]
         ])
         expect(p._tool.pad.slice(1)).to.eql([
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: box},
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 1}
         ])
       })
@@ -877,10 +881,10 @@ describe('gerber plotter', function() {
         p.write(tool)
         expect(p._tool.pad).to.eql([
           {type: 'circle', cx: -2, cy: 0, r: 2},
-          {type: 'layer', polarity: 'clear'},
+          {type: 'layer', polarity: 'clear', box: [-4, -2, 0, 2]},
           {type: 'rect', width: 1, height: 1, cx: -1, cy: 0, r: 0},
           {type: 'rect', width: 1, height: 1, cx: 1, cy: 0, r: 0},
-          {type: 'layer', polarity: 'dark'},
+          {type: 'layer', polarity: 'dark', box: [-4, -2, 0, 2]},
           {type: 'circle', cx: 2, cy: 0, r: 2}
         ])
         expect(p._tool.box).to.eql([-4, -2, 4, 2])

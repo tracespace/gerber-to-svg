@@ -134,10 +134,10 @@ A special nested structure that takes an array `shape` of rectangles or polygons
 
 **layer polarity change**
 
-A modifier that changes the subsequent shape polarities to `clear` or `dark`. By default, all shapes are `dark`. A dark shape creates an image, while a clear shape erases any shape that lies below it. Used for macro-defined tools and standard tools with holes:
+A modifier that changes the subsequent shape polarities to `clear` or `dark`. By default, all shapes are `dark`. A dark shape creates an image, while a clear shape erases any shape that lies below it. Used for macro-defined tools and standard tools with holes. The polarity object also includes the current size of the image.
 
 ``` javascript
-{type: 'layer', polarity: 'clear' OR 'dark'}
+{type: 'layer', polarity: POLARITY, box: [X_MIN, Y_MIN, X_MAX, Y_MAX]}
 ```
 
 ### pad object
