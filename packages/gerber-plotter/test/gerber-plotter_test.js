@@ -13,6 +13,10 @@ describe('gerber plotter', function() {
     p = plotter()
   })
 
+  it('should be an object stream', function() {
+    expect(function() {p.write({})}).to.not.throw()
+  })
+
   describe('factory and options', function() {
     it('should allow user to set units', function() {
       p = plotter({units: 'mm'})
@@ -896,7 +900,7 @@ describe('gerber plotter', function() {
     beforeEach(function() {
       var tool = {shape: 'circle', val: [2], hole: []}
       p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
-      p.write({cmd: 'set', key: 'backupUnits', val: 'in'})
+      p.write({cmd: 'set', key: 'units', val: 'in'})
       p.write({cmd: 'set', key: 'nota', val: 'A'})
       p.write({cmd: 'set', key: 'mode', val: 'i'})
       p.write({cmd: 'tool', key: '10', val: tool})
@@ -913,7 +917,7 @@ describe('gerber plotter', function() {
 
     it('should move the plotter with incremental notation', function() {
       p.nota = 'I'
-      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3}})
+      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3, i: 1, j: 4}})
       expect(p._pos).to.eql([4, -3])
       p.write({cmd: 'op', key: 'move', val: {y: 1}})
       expect(p._pos).to.eql([4, -2])
@@ -935,7 +939,7 @@ describe('gerber plotter', function() {
         p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
       })
 
-      it('should emit a pad', function(done) {
+      it('should emit pad objects after the shape object', function(done) {
         p.once('data', function(result) {
           expect(result.type).to.equal('shape')
           p.once('data', function(result) {
@@ -944,6 +948,22 @@ describe('gerber plotter', function() {
           })
         })
         p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+      })
+
+      it('should not emit the pad shape more than once', function(done) {
+        var results = 0
+        var expected = ['shape', 'pad', 'pad']
+        var handleData = function(data) {
+          expect(data.type).to.eql(expected[results])
+          if (++results >= expected.length) {
+            p.removeListener('data', handleData)
+            return done()
+          }
+        }
+
+        p.on('data', handleData)
+        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'flash', val: {x: 5, y: 5}})
       })
 
       it('should update the bounding box', function() {
@@ -1129,6 +1149,32 @@ describe('gerber plotter', function() {
           p.write({cmd: 'set', key: 'arc', val: 's'})
           p.write({cmd: 'set', key: 'mode', val: 'ccw'})
           p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1, i: 1}, line: 12})
+        })
+
+        it('should warn and not add to path if tool is not circular', function(done) {
+          p.once('warning', function(w) {
+            expect(w.message).to.match(/arc.*circular/)
+            setTimeout(function() {
+              expect(p._path.length).to.equal(0)
+              done()
+            }, 5)
+          })
+
+          var rectTool = {shape: 'rect', val: [2, 1], hole: []}
+          p.write({cmd: 'tool', key: '11', val: rectTool})
+          p.write({cmd: 'set', key: 'arc', val: 's'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+        })
+
+        it('should allow non-circular tools if in region mode', function() {
+          var rectTool = {shape: 'rect', val: [2, 1], hole: []}
+          p.write({cmd: 'tool', key: '11', val: rectTool})
+          p.write({cmd: 'set', key: 'arc', val: 's'})
+          p.write({cmd: 'set', key: 'mode', val: 'cw'})
+          p.write({cmd: 'set', key: 'region', val: true})
+          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+          expect(p._path.length).to.equal(1)
         })
 
         describe('bounding box', function() {
@@ -1339,6 +1385,110 @@ describe('gerber plotter', function() {
         }, 10)
       })
     })
+
+    it('should allow but warn about modal operation codes', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/modal operation/)
+        setTimeout(function() {
+          expect(p._path.length).to.equal(2)
+          done()
+        }, 5)
+      })
+
+      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+      p.write({cmd: 'op', key: 'last', val: {x: 2, y: 2}})
+    })
+  })
+
+  describe('operation warnings', function() {
+    beforeEach(function() {
+      var tool = {shape: 'circle', val: [2], hole: []}
+      p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
+      p.write({cmd: 'tool', key: '10', val: tool})
+    })
+
+    it('should warn and use backup units if the units are not set', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/backup units/)
+        done()
+      })
+
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'set', key: 'mode', val: 'i'})
+      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+    })
+
+    it('should warn and use backup notation if the notation is not set', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/backup notation/)
+        done()
+      })
+
+      p.write({cmd: 'set', key: 'units', val: 'in'})
+      p.write({cmd: 'set', key: 'mode', val: 'i'})
+      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+    })
+
+    it('should warn if a tool is flashed in region mode', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/flash in region/)
+        done()
+      })
+
+      p.write({cmd: 'set', key: 'units', val: 'in'})
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'set', key: 'region', val: 'true'})
+      p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+    })
+
+    it('should warn and ignore interpolates with unstrokable tools', function(done) {
+      var tool = {shape: 'circle', val: [2], hole: [1]}
+
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/not strokable/)
+
+        setTimeout(function() {
+          expect(p._path.length).to.equal(0)
+          done()
+        }, 5)
+      })
+
+      p.write({cmd: 'tool', key: '11', val: tool})
+      p.write({cmd: 'set', key: 'units', val: 'in'})
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'set', key: 'mode', val: 'i'})
+      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+    })
+
+    it('should warn and assume linear interpolation mode if unspecified', function(done) {
+      p.once('warning', function(w) {
+        expect(w.message).to.match(/no interpolation.*linear/)
+        setTimeout(function() {
+          expect(p._path.length).to.equal(1)
+          done()
+        }, 5)
+      })
+
+      p.write({cmd: 'set', key: 'units', val: 'in'})
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+    })
+
+    it('should warn and assume single-quadrant mode if unspecified', function(done) {
+      p.on('warning', function(w) {
+        expect(w.message).to.match(/assuming single quadrant/)
+        setTimeout(function() {
+          expect(p._arc).to.equal('s')
+          expect(p._path.length).to.equal(1)
+          done()
+        }, 5)
+      })
+
+      p.write({cmd: 'set', key: 'units', val: 'in'})
+      p.write({cmd: 'set', key: 'nota', val: 'A'})
+      p.write({cmd: 'set', key: 'mode', val: 'cw'})
+      p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+    })
   })
 
   describe('emitting strokes and regions', function() {
@@ -1355,15 +1505,6 @@ describe('gerber plotter', function() {
       p.write({cmd: 'tool', key: '11', val: tool1})
       p.write({cmd: 'tool', key: '10', val: tool0})
       forEach(path, p._path.add, p._path)
-    })
-
-    it('should end the path and emit on a flash', function(done) {
-      p.once('data', function() {
-        expect(p._path.length).to.equal(0)
-        done()
-      })
-
-      p.write({cmd: 'op', key: 'flash', val: {x: 2, y: 2}})
     })
 
     it('should end the path on a tool change', function(done) {
@@ -1413,6 +1554,15 @@ describe('gerber plotter', function() {
       p.write({cmd: 'layer', key: 'stepRep', val:	{x: 5, y: 5, i: 2, j: 2}})
     })
 
+    it('should end the path on stream end', function(done) {
+      p.once('data', function() {
+        expect(p._path.length).to.equal(0)
+        done()
+      })
+
+      p.end()
+    })
+
     it('should emit a stroke if region mode it off', function(done) {
       var expected = {
         type: 'stroke',
@@ -1442,296 +1592,56 @@ describe('gerber plotter', function() {
       p._finishPath()
     })
   })
-})
 
-//   describe 'operating', ->
-//     beforeEach ->
-//       p.units = 'in'
-//       p.notation = 'A'
-//       p.mode = 'i'
-//       p.epsilon = 0.1
-//       p.write {tool: {D11: {width: 2, height: 1}}}
-//       p.write {tool: {D10: {dia: 2}}}
-//
-//     describe 'making sure format is set', ->
-//       it 'should warn and use the backup units if units were not set', (done) ->
-//         p.units = null
-//         p.backupUnits = 'in'
-//
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /line 43.*units.*deprecated/
-//           expect(p.units).to.eql 'in'
-//           done()
-//
-//         p.write {op: {do: 'int', x: 1, y: 1}, line: 43}
-//
-//       it 'should assume inches if units and backup units are not set', (done) ->
-//         p.units = null
-//
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /line 42.*no units set.*in/
-//           expect(p.units).to.eql 'in'
-//           done()
-//
-//         p.write {op: {do: 'int', x: 1, y: 1}, line: 42}
-//
-//       it 'should warn and assume absolute notation throw if not set', (done) ->
-//         p.notation = null
-//
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /line 20.*notation.*absolute/
-//           expect(p.notation).to.eql 'A'
-//           done()
-//
-//         p.write {op: {do: 'int', x: 1, y: 1}, line: 20}
-//
-//     describe 'flashing pads', ->
-//
-//       it 'should emit an error if in region mode', (done) ->
-//         p.once 'error', (e) ->
-//           expect(e.message).to.match /line 8 .*cannot flash.*region mode/
-//           done()
-//
-//         p.region = true
-//         p.write {op: {do: 'flash', x: 2, y: 2}, line: 8}
-//
-//     describe 'paths', ->
-//       it 'should error for unstrokable tool outside region mode', (done) ->
-//         p.once 'error', (e) ->
-//           expect(e.message).to.match /line 50 .*D13.*strokable tool/
-//           done()
-//
-//         p.write {tool: {D13: {dia: 5, vertices: 5}}}
-//         p.write {op: {do: 'int'}, line: 50}
-//
-//       it 'should warn and assume linear interpolation if unspecified', (done) ->
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /line 42 .*interpolation.*linear/
-//           expect(p.mode).to.eql 'i'
-//           done()
-//
-//         p.mode = null
-//         p.write {op: {do: 'int', x: 5, y: 5}, line: 42}
-//
-//       describe 'adding an arc to the path', ->
-//         it 'should emit an error if the tool is not circular', (done) ->
-//           p.once 'error', (e) ->
-//             expect(e.message).to.match /line 34 .*arc with non-circular/
-//             done()
-//
-//           p.write {set: {currentTool: 'D11', mode: 'cw', quad: 's'}}
-//           p.write {op: {do: 'int', x: 1, y: 1, i: 1}, line: 34}
-//
-//         it 'should not error if non-circular tool in region mode', (done) ->
-//           p.once 'error', ->
-//             throw new Error 'should not have emitted an error'
-//
-//           p.write {set:
-//             {currentTool: 'D11', mode: 'cw', region: true, quad: 's'}
-//           }
-//           p.write {op: {do: 'int', x: 1, y: 1, i: 1}}
-//
-//           setTimeout done, 10
-//
-//         it 'should error if quadrant mode has not been specified', (done) ->
-//           p.once 'error', (e) ->
-//             expect(e.message).to.match /line 23 .*quadrant mode/
-//             done()
-//
-//           p.write {set: {mode: 'cw'}}
-//           p.write {op: {do: 'int', x: 1, y: 1, i: 1}, line: 23}
-//
-//       describe 'region mode on', ->
-//         it 'should allow any tool to create a region', (done) ->
-//           p.once 'error', ->
-//             throw new Error 'should not have emitted an error'
-//
-//           p.write {tool: {D13: {dia: 5, vertices: 5}}}
-//           p.write {set: {region: true}}
-//           p.write {op: {do: 'int', x: 5, y: 5}}
-//
-//           setTimeout done, 10
-//
-//     describe 'modal operation codes', ->
-//       it 'should throw a warning if operation codes are used modally', (done) ->
-//         p.once 'warning', (w) ->
-//           expect(w).to.be.an.instanceOf Warning
-//           expect(w.message).to.match /modal operation/
-//           done()
-//
-//         p.write {op: {do: 'int', x: 1, y: 1}}
-//         p.write {op: {do: 'last', x: 2, y: 2}}
-//
-//       it 'should continue a stroke if last operation was a stroke', ->
-//         p.write {op: {do: 'int', x: 1, y: 1}}
-//         p.write {op: {do: 'last', x: 2, y: 2}}
-//         expect(p.path).to.eql ['M', 0, 0, 'L', 1, 1, 'L', 2, 2]
-//
-//       it 'should move if last operation was a move', ->
-//         p.write {op: {do: 'move', x: 1, y: 1}}
-//         p.write {op: {do: 'last', x: 2, y: 2}}
-//         expect(p.x).to.equal 2
-//         expect(p.y).to.equal 2
-//
-//       it 'should flash if last operation was a flash', ->
-//         p.write {op: {do: 'flash', x: 1, y: 1}}
-//         p.write {op: {do: 'last', x: 2, y: 2}}
-//         expect(p.current).to.have.length 2
-//         expect(p.current[0].use).to.contain {x: 1, y: 1}
-//         expect(p.current[1].use).to.contain {x: 2, y: 2}
-//
-//   describe 'finish layer method', ->
-//     beforeEach -> p.current = ['item0', 'item1', 'item2']
-//
-//     it 'should add current items to the group if only one dark layer', ->
-//       p.finishLayer()
-//       expect(p.group).to.eql {g: {_: ['item0', 'item1', 'item2']}}
-//       expect(p.current).to.be.empty
-//
-//     it 'should finish an in-progress path', ->
-//       p.write {set: {region: true}}
-//       p.path = ['M', 0, 0, 'L', 1, 1]
-//       p.finishLayer()
-//       expect(p.path).to.be.empty
-//
-//     it 'should not do anything unless there are items in current', ->
-//       p.current = []
-//       p.finishLayer()
-//       expect(p.group.g._).to.be.empty
-//       expect(p.defs).to.be.empty
-//
-//     describe 'multiple layers', ->
-//       it 'if clear layer, should mask the group with them', ->
-//         p.polarity = 'C'
-//         p.bbox = {xMin: 0, yMin: 0, xMax: 2, yMax: 2}
-//         p.finishLayer()
-//         mask = p.defs[0].mask
-//         expect(mask.color).to.eql '#000'
-//         expect(mask._).to.eql [
-//           {rect: {x: 0, y: 0, width: 2, height: 2, fill: '#fff'}}
-//           'item0'
-//           'item1'
-//           'item2'
-//         ]
-//         id = p.defs[0].mask.id
-//         expect(p.group).to.eql {g: {mask: "url(##{id})", _: []}}
-//         expect(p.current).to.be.empty
-//
-//       it 'if dark layer after clear layer, it should wrap the group', ->
-//         p.group = {g: {mask: 'url(#mask-id)', _: ['gItem1', 'gItem2']}}
-//         p.finishLayer()
-//         expect(p.group).to.eql {
-//           g: {
-//             _: [
-//               {g: {mask: 'url(#mask-id)', _: ['gItem1', 'gItem2']}}
-//               'item0'
-//               'item1'
-//               'item2'
-//             ]
-//           }
-//         }
-//
-//     describe 'step repeat', ->
-//       beforeEach ->
-//         p.layerBbox = {xMin: 0, yMin: 0, xMax: 2, yMax: 2}
-//         p.stepRepeat = {x: 2, y: 2, i: 3, j: 3}
-//
-//       describe 'with a dark layer', ->
-//         it 'should wrap current in a group, copy it, add it to @group', ->
-//           p.finishLayer()
-//           id = p.group.g._[0].g.id
-//           expect(p.group.g._).to.deep.contain.members [
-//             {g: {id: id, _: ['item0', 'item1', 'item2']}}
-//             {use: {y: 3, 'xlink:href': "##{id}"}}
-//             {use: {x: 3, 'xlink:href': "##{id}"}}
-//             {use: {x:3, y: 3, 'xlink:href': "##{id}"}}
-//           ]
-//           expect(p.current).to.be.empty
-//
-//         it 'leave existing (pre-stepRepeat) items alone', ->
-//           p.group.g._ = ['existing1', 'existing2']
-//           p.finishLayer()
-//           expect(p.group.g._).to.have.length 6
-//           id = p.group.g._[2].g.id
-//           expect(p.group.g._).to.deep.contain.members [
-//             'existing1'
-//             'existing2'
-//             {g: {id: id, _: ['item0', 'item1', 'item2']}}
-//             {use: {y: 3, 'xlink:href': "##{id}"}}
-//             {use: {x: 3, 'xlink:href': "##{id}"}}
-//             {use: {x:3, y: 3, 'xlink:href': "##{id}"}}
-//           ]
-//           expect(p.current).to.be.empty
-//
-//       describe 'with a clear layer', ->
-//         it 'should wrap the current items and repeat them in the mask', ->
-//           p.polarity = 'C'
-//           p.finishLayer()
-//           maskId = p.defs[0].mask.id
-//           groupId = p.defs[0].mask._[1].g.id
-//           expect(p.defs[0].mask._).to.deep.contain.members [
-//             {rect: {x: 0, y: 0, width: 5, height: 5, fill: '#fff'}}
-//             {g: {id: groupId, _: ['item0', 'item1', 'item2']}}
-//             {use: {y: 3, 'xlink:href': "##{groupId}"}}
-//             {use: {x: 3, 'xlink:href': "##{groupId}"}}
-//             {use: {x:3, y: 3, 'xlink:href': "##{groupId}"}}
-//           ]
-//           expect(p.group.g.mask).to.eql "url(##{maskId})"
-//           expect(p.current).to.be.empty
-//
-//       describe 'overlapping clear layers', ->
-//         beforeEach ->
-//           p.layerBbox = {xMin: 0, yMin: 0, xMax: 4, yMax: 4}
-//           p.finishLayer()
-//           p.current = ['item3', 'item4']
-//           p.layerBbox = {xMin: 0, yMin: 0, xMax: 6, yMax: 6}
-//           p.polarity = 'C'
-//           p.finishLayer()
-//
-//         it 'should push the ids of sr layers to the overlap array', ->
-//           expect(p.srOverCurrent[0].D).to.match /gerber-sr/
-//           expect(p.srOverCurrent[0]).to.not.have.key 'C'
-//           expect(p.srOverCurrent[1].C).to.match /gerber-sr/
-//           expect(p.srOverCurrent[1]).to.not.have.key 'D'
-//
-//         it 'should push dark layers to the group normally', ->
-//           expect(p.group.g._[0]).to.have.key 'g'
-//           expect(p.group.g._[1]).to.have.key 'use'
-//           expect(p.group.g._[2]).to.have.key 'use'
-//           expect(p.group.g._[3]).to.have.key 'use'
-//
-//         it 'should set the clear overlap flag and not mask immediately', ->
-//           expect(p.srOverClear).to.be.true
-//
-//         it 'should create the mask when the sr changes', ->
-//           id = []
-//           for layer in p.srOverCurrent
-//             id.push "##{val}" for key, val of layer
-//           p.write {new: {sr: {x: 1, y: 1}}}
-//           expect(p.srOverCurrent.length).to.equal 0
-//           expect(p.srOverClear).to.be.false
-//           expect(p.defs[0].g._).to.eql ['item3', 'item4']
-//           expect(p.defs[1].mask.color).to.eql '#000'
-//           maskId = p.defs[1].mask.id
-//           expect(p.group.g.mask).to.eql "url(##{maskId})"
-//           expect(p.defs[1].mask._).to.eql [
-//             {rect: {fill: '#fff', x: 0, y: 0, width: 9, height: 9}}
-//             {use: {fill: '#fff', 'xlink:href': id[0]}}
-//             {use: {'xlink:href': id[1]}}
-//             {use: {y: 3, fill: '#fff', 'xlink:href': id[0]}}
-//             {use: {y: 3, 'xlink:href': id[1]}}
-//             {use: {x: 3, fill: '#fff', 'xlink:href': id[0]}}
-//             {use: {x: 3, 'xlink:href': id[1]}}
-//             {use: {x: 3, y: 3, fill: '#fff', 'xlink:href': id[0]}}
-//             {use: {x: 3, y: 3, 'xlink:href': id[1]}}
-//          ]
-//
-//         it 'should also finish the SR at the end of file', ->
-//           p.finish()
-//           expect(p.srOverCurrent.length).to.equal 0
-//           expect(p.srOverClear).to.be.false
-//
+  describe('emitting new layers', function() {
+    it('should push a polarity change with the current bounding box', function(done) {
+      var results = 0
+      var expected = [
+        {type: 'polarity', polarity: 'clear', box: [0, 0, 10, 10]},
+        {type: 'polarity', polarity: 'dark', box: [0, 0, 10, 10]}
+      ]
+
+      var handleData = function(data) {
+        expect(data).to.eql(expected[results])
+        if (++results >= expected.length) {
+          p.removeListener('data', handleData)
+          return done()
+        }
+      }
+
+      p.on('data', handleData)
+      p._box = [0, 0, 10, 10]
+      p.write({cmd: 'layer', key: 'polarity', val: 'C'})
+      p.write({cmd: 'layer', key: 'polarity', val: 'D'})
+    })
+
+    it('should push a step repeat with the current bounding box', function(done) {
+      p.on('readable', function() {
+        var result = p.read()
+        expect(result).to.eql({
+          type: 'repeat',
+          offsets: [[3.3, 0], [0, 2.2], [3.3, 2.2], [0, 4.4], [3.3, 4.4]],
+          box: [0, 0, 10, 10]
+        })
+        done()
+      })
+
+      p._box = [0, 0, 10, 10]
+      p.write({cmd: 'layer', key: 'stepRep', val: {x: 3.3, y: 2.2, i: 2, j: 3}})
+    })
+  })
+
+  describe('ending the stream', function() {
+    it('should push a size object after the stream ends', function(done) {
+      p.once('readable', function() {
+        var result = p.read()
+        expect(result).to.eql({type: 'size', box: [1, 2, 3, 4], units: 'in'})
+        done()
+      })
+
+      p._box = [1, 2, 3, 4]
+      p.format.units = 'in'
+      p.end()
+    })
+  })
+})

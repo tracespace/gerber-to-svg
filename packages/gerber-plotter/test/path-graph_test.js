@@ -88,12 +88,12 @@ describe('path graphs', function() {
     })
     p.add({
       type: 'arc',
-      start: [2, 1, Math.PI],
-      end: [3, 2, HALF_PI],
+      start: [3, 2, HALF_PI],
+      end: [2, 1, Math.PI],
       center: [3, 1],
       sweep: HALF_PI,
       radius: 1,
-      dir: 'cw'
+      dir: 'ccw'
     })
 
     expect(p.traverse()).to.eql([
