@@ -86,7 +86,12 @@ var findCenterAndAngles = function(start, end, mode, arc, centers) {
   }
 }
 
-var arcBox = function(startPoint, endPoint, center, r, region, tool, dir) {
+var arcBox = function(cenAndAngles, r, region, tool, dir) {
+  var startPoint = cenAndAngles.start
+  var endPoint = cenAndAngles.end
+  var center = cenAndAngles.center
+  var sweep = cenAndAngles.sweep
+
   var start
   var end
 
@@ -104,22 +109,22 @@ var arcBox = function(startPoint, endPoint, center, r, region, tool, dir) {
   var points = [startPoint, endPoint]
 
   // check for sweep past 0 degeres
-  if (start > end) {
+  if ((start > end) || (sweep === TWO_PI)) {
     points.push([center[0] + r, center[1]])
   }
 
   // check for sweep past 90 degrees
-  if (start < HALF_PI && end > HALF_PI) {
+  if (((start < HALF_PI) && (end > HALF_PI)) || (sweep === TWO_PI)) {
     points.push([center[0], center[1] + r])
   }
 
   // check for sweep past 180 degrees
-  if (start < PI && end > PI) {
+  if (((start < PI) && (end > PI)) || (sweep === TWO_PI)) {
     points.push([center[0] - r, center[1]])
   }
 
   // check for sweep past 270 degrees
-  if (start < THREE_HALF_PI && end > THREE_HALF_PI) {
+  if (((start < THREE_HALF_PI) && (end > THREE_HALF_PI)) || (sweep === TWO_PI)) {
     points.push([center[0], center[1] - r])
   }
 
@@ -139,7 +144,7 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
 
   // potential candidates for the arc center
   // in single quadrant mode, all offset signs are implicit, so we need to check a few
-  var centerCandidates = []
+  var candidates = []
   var xCandidates = []
   var yCandidates = []
 
@@ -159,12 +164,12 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
 
   for (var i = 0; i < xCandidates.length; i++) {
     for (var j = 0; j < yCandidates.length; j++) {
-      centerCandidates.push([xCandidates[i], yCandidates[j]])
+      candidates.push([xCandidates[i], yCandidates[j]])
     }
   }
 
   // find valid centers by comparing the distance to start and end for equality with the radius
-  var validCenters = filter(centerCandidates, function(c) {
+  var validCenters = (arc === 'm') ? candidates : filter(candidates, function(c) {
     var startDist = Math.sqrt(Math.pow(c[0] - start[0], 2) + Math.pow(c[1] - start[1], 2))
     var endDist = Math.sqrt(Math.pow(c[0] - end[0], 2) + Math.pow(c[1] - end[1], 2))
 
@@ -175,7 +180,7 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
 
   // edge case: matching start and end in multi quadrant mode is a full circle
   if ((arc === 'm') && (start[0] === end[0]) && (start[1] === end[1])) {
-    cenAndAngles.sweep = 2 * Math.PI
+    cenAndAngles.sweep = TWO_PI
   }
 
   var box = boundingBox.new()
@@ -190,7 +195,7 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
       dir: mode
     })
 
-    box = arcBox(cenAndAngles.start, cenAndAngles.end, cenAndAngles.center, r,  region, tool, mode)
+    box = arcBox(cenAndAngles, r, region, tool, mode)
   }
   else {
     plotter._warn('skipping impossible arc')

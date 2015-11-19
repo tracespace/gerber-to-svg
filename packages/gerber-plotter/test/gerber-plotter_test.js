@@ -1247,6 +1247,18 @@ describe('gerber plotter', function() {
             p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[3]).to.be.closeTo(1, 0.00001)
           })
+
+          it('should set the box properly for a full circle', function() {
+            p.write({cmd: 'set', key: 'mode', val: 'cw'})
+            p.write({cmd: 'set', key: 'arc', val: 'm'})
+            p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: -1, j: 0}})
+            expect(p._box).to.eql([-3, -2, 1, 2])
+
+            p._box = boundingBox.new()
+            p.write({cmd: 'set', key: 'region', val: true})
+            p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: 0, j: 1}})
+            expect(p._box).to.eql([-1, 0, 1, 2])
+          })
         })
       })
     })
