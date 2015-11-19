@@ -21,8 +21,8 @@ var reCOMMENT = /^G0*4/
 var reTOOL = /^(?:G54)?D0*([1-9]\d+)/
 
 // operations
-var reCOORD = /((?:[XYIJ][+-]?\d+){1,4})/
 var reOP = /D0*([123])$/
+var reCOORD = /^(?:G0*[123])?((?:[XYIJ][+-]?\d+){1,4})(?:D0*[123])?$/
 
 // parameter code matchers
 var reUNITS = /^%MO(IN|MM)/
@@ -201,13 +201,13 @@ var parse = function(parser, block) {
 
   // finally, look for mode commands and operations
   // they may appear in the same block
-  var coordMatch = block.match(reCOORD)
-  var opMatch = block.match(reOP)
-  var modeMatch = block.match(reMODE)
+  if (reOP.test(block) || reMODE.test(block) || reCOORD.test(block)) {
+    var opMatch = block.match(reOP)
+    var modeMatch = block.match(reMODE)
+    var coordMatch = block.match(reCOORD)
+    var mode
 
-  if (opMatch || coordMatch || modeMatch) {
     if (modeMatch) {
-      var mode
       if (modeMatch[1] === '1') {
         mode = 'i'
       }
@@ -217,6 +217,7 @@ var parse = function(parser, block) {
       else {
         mode = 'ccw'
       }
+
       parser._push(commands.set('mode', mode))
     }
 

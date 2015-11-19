@@ -759,5 +759,16 @@ describe('gerber parser with gerber files', function() {
       p.write('G02X01Y01D01*\n')
       p.write('G03X01Y01D01*\n')
     })
+
+    it('should be strict about what counts as a operation', function(done) {
+      p.once('readable', function() {
+        throw new Error('should not have operated')
+      })
+
+      p.write('somestuffX01Y01*\n')
+      p.write('X01Y01somestuff*\n')
+      p.write('%TF.GerberVersion,J1*%\n')
+      setTimeout(done, 10)
+    })
   })
 })
