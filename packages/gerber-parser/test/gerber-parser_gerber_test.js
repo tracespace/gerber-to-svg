@@ -393,6 +393,18 @@ describe('gerber parser with gerber files', function() {
       p.write('%ADD10CIRC,1X0.5*%\n')
       p.write('%ADD11RECT*%\n')
     })
+
+    it('should handle tool defs with leading zeros', function(done) {
+      var expectedTools = [
+        {shape: 'circle', val: [1], hole: []}
+      ]
+      var expected = [
+        {cmd: 'tool', line: 0, key: '10', val: expectedTools[0]}
+      ]
+
+      expectResults(expected, done)
+      p.write('%ADD0010C,1*%\n')
+    })
   })
 
   describe('aperture macros', function() {
