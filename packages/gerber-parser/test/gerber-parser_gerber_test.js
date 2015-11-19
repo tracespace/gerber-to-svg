@@ -531,7 +531,7 @@ describe('gerber parser with gerber files', function() {
         var expectedShapes = [
           {
             type: 'moire',
-            exp: exp,
+            exp: 1,
             cx: 1, cy: 2, dia: 3,
             ringThx: 4, ringGap: 5, maxRings: 6,
             crossThx: 7, crossLen: 8,
@@ -544,12 +544,12 @@ describe('gerber parser with gerber files', function() {
 
         expectResults(expected, done)
         p.write('%AMMOIRE1*\n')
-        p.write('6,1,1,2,3,4,5,6,7,8,9*%\n')
+        p.write('6,1,2,3,4,5,6,7,8,9*%\n')
       })
 
       it('should parse a thermal primitive', function(done) {
         var expectedShapes = [
-          {type: 'thermal', exp: exp, cx: 1, cy: 2, outerDia: 3, innerDia: 4, gap: 5, rot: 6}
+          {type: 'thermal', exp: 1, cx: 1, cy: 2, outerDia: 3, innerDia: 4, gap: 5, rot: 6}
         ]
         var expected = [
           {cmd: 'macro', line: 1, key: 'THERMAL1', val: expectedShapes}
@@ -557,7 +557,7 @@ describe('gerber parser with gerber files', function() {
 
         expectResults(expected, done)
         p.write('%AMTHERMAL1*\n')
-        p.write('7,1,1,2,3,4,5,6*%\n')
+        p.write('7,1,2,3,4,5,6*%\n')
       })
 
       it('should warn if the primitive is unrecognized', function(done) {

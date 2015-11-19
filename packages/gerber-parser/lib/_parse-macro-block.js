@@ -124,31 +124,33 @@ var parseMacroBlock = function(block) {
   }
 
   if (code === 6) {
+    // moire primitive always has exposure on
     return {
       type: 'moire',
-      exp: exp,
-      cx: mods[2],
-      cy: mods[3],
-      dia: mods[4],
-      ringThx: mods[5],
-      ringGap: mods[6],
-      maxRings: mods[7],
-      crossThx: mods[8],
-      crossLen: mods[9],
-      rot: mods[10]
+      exp: 1,
+      cx: mods[1],
+      cy: mods[2],
+      dia: mods[3],
+      ringThx: mods[4],
+      ringGap: mods[5],
+      maxRings: mods[6],
+      crossThx: mods[7],
+      crossLen: mods[8],
+      rot: mods[9]
     }
   }
 
   if (code === 7) {
+    // thermal primitive always had exposure on
     return {
       type: 'thermal',
-      exp: exp,
-      cx: mods[2],
-      cy: mods[3],
-      outerDia: mods[4],
-      innerDia: mods[5],
-      gap: mods[6],
-      rot: mods[7]
+      exp: 1,
+      cx: mods[1],
+      cy: mods[2],
+      outerDia: mods[3],
+      innerDia: mods[4],
+      gap: mods[5],
+      rot: mods[6]
     }
   }
 
