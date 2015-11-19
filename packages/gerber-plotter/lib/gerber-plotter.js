@@ -185,7 +185,7 @@ var _transform = function(chunk, encoding, done) {
   }
 
   // else layer command
-  else if (cmd === 'layer') {
+  else if (cmd === 'level') {
     this._finishPath()
 
     if (key === 'polarity') {

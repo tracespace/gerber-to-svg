@@ -1542,7 +1542,7 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'layer', key: 'polarity', val: 'C'})
+      p.write({cmd: 'level', key: 'polarity', val: 'C'})
     })
 
     it('should end the path on a step repeat', function(done) {
@@ -1551,7 +1551,7 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'layer', key: 'stepRep', val:	{x: 5, y: 5, i: 2, j: 2}})
+      p.write({cmd: 'level', key: 'stepRep', val:	{x: 5, y: 5, i: 2, j: 2}})
     })
 
     it('should end the path on stream end', function(done) {
@@ -1611,8 +1611,8 @@ describe('gerber plotter', function() {
 
       p.on('data', handleData)
       p._box = [0, 0, 10, 10]
-      p.write({cmd: 'layer', key: 'polarity', val: 'C'})
-      p.write({cmd: 'layer', key: 'polarity', val: 'D'})
+      p.write({cmd: 'level', key: 'polarity', val: 'C'})
+      p.write({cmd: 'level', key: 'polarity', val: 'D'})
     })
 
     it('should push a step repeat with the current bounding box', function(done) {
@@ -1627,7 +1627,7 @@ describe('gerber plotter', function() {
       })
 
       p._box = [0, 0, 10, 10]
-      p.write({cmd: 'layer', key: 'stepRep', val: {x: 3.3, y: 2.2, i: 2, j: 3}})
+      p.write({cmd: 'level', key: 'stepRep', val: {x: 3.3, y: 2.2, i: 2, j: 3}})
     })
   })
 
