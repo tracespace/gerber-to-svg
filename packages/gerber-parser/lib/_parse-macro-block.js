@@ -8,7 +8,7 @@ var bind = require('lodash.bind')
 
 var parseMacroExpr = require('./_parse-macro-expression')
 
-var reEXPR = /[\$+\-\/xX]/
+var reNUM = /^-?[\d.]+$/
 var reVAR_DEF = /^(\$[\d+])=(.+)/
 
 // CAUTION: assumes parser will be bound to this
@@ -35,10 +35,10 @@ var parseMacroBlock = function(block) {
 
   // map a primitive param to a number or, if an expression, a function
   var modVal = function(m) {
-    if (reEXPR.test(m)){
-      return parseExpr(m)
+    if (reNUM.test(m)) {
+      return Number(m)
     }
-    return Number(m)
+    return parseExpr(m)
   }
 
   var mods = map(block.split(','), modVal)

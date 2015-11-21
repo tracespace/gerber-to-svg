@@ -582,6 +582,19 @@ describe('gerber parser with gerber files', function() {
         p.write('%AMNOTAREALPRIMITIVE*\n')
         p.write('8,1,2,3,4,5,6,7*%\n')
       })
+
+      it('should parse primitives with negative parameters', function(done) {
+        var expectedBlocks = [
+          {type: 'circle', exp: exp, dia: 5, cx: -1, cy: -2.5, rot: 0}
+        ]
+        var expected = [
+          {cmd: 'macro', line: 1, key: 'CIRC1', val: expectedBlocks}
+        ]
+
+        expectResults(expected, done)
+        p.write('%AMCIRC1*\n')
+        p.write('1,1,5,-1,-2.5*%\n')
+      })
     })
 
     describe('variable set blocks', function() {
