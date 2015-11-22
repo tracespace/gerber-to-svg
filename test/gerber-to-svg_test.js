@@ -3,7 +3,13 @@
 
 var events = require('events')
 var stream = require('readable-stream')
-var expect = require('chai').expect
+// var sinon = require('sinon')
+var chai = require('chai')
+// var sinonChai = require('sinon-chai')
+// var proxyquire = require('proxyquire')
+
+var expect = chai.expect
+// chai.use(sinonChai)
 
 var gerberToSvg = require('../lib/gerber-to-svg')
 
@@ -15,6 +21,7 @@ var EMPTY_SVG = [
   'stroke-linecap="round" ',
   'stroke-linejoin="round" ',
   'stroke-width="0" ',
+  'fill-rule="evenodd" ',
   'width="0" ',
   'height="0" ',
   'viewBox="0 0 0 0">',
@@ -100,7 +107,7 @@ describe('gerber to svg', function() {
     })
   })
 
-  it.skip('should pass the id to plotter-to-svg when it is a string', function(done) {
+  it('should pass the id to plotter-to-svg when it is a string', function(done) {
     gerberToSvg('', 'foo', function(error, result) {
       expect(error).to.be.null
       expect(result).to.match(/id="foo"/)
@@ -108,7 +115,7 @@ describe('gerber to svg', function() {
     })
   })
 
-  it.skip('should pass the id in an object', function(done) {
+  it('should pass the id in an object', function(done) {
     gerberToSvg('', {id: 'bar'}, function(error, result) {
       expect(error).to.be.null
       expect(result).to.match(/id="bar"/)
@@ -116,11 +123,11 @@ describe('gerber to svg', function() {
     })
   })
 
-  it.skip('should throw an error if id is missing', function() {
+  it('should throw an error if id is missing', function() {
     expect(function() {gerberToSvg('', {})}).to.throw(/id required/)
   })
 
-  it.skip('should pass the class option', function(done) {
+  it('should pass the class option', function(done) {
     gerberToSvg('', {id: 'foo', class: 'bar'}, function(error, result) {
       expect(error).to.be.null
       expect(result).to.match(/class="bar"/)
@@ -128,11 +135,53 @@ describe('gerber to svg', function() {
     })
   })
 
-  it.skip('should pass the color option', function(done) {
+  it('should pass the color option', function(done) {
     gerberToSvg('', {id: 'foo', color: 'red'}, function(error, result) {
       expect(error).to.be.null
       expect(result).to.match(/color="red"/)
       done()
+    })
+  })
+
+  describe('passing along warnings', function() {
+    it('should emit warnings from the parser in streaming mode', function(done) {
+      var converter = gerberToSvg('foobar*\n', 'foobar')
+
+      converter.once('warning', function(w) {
+        expect(w.line).to.equal(0)
+        expect(w.message).to.exist
+        done()
+      })
+    })
+
+    it('should emit warnings from the parser in callback mode', function(done) {
+      var converter = gerberToSvg('foobar*\n', 'foobar', function() {})
+
+      converter.once('warning', function(w) {
+        expect(w.line).to.equal(0)
+        expect(w.message).to.exist
+        done()
+      })
+    })
+
+    it('should emit warnings from the plotter in streaming mode', function(done) {
+      var converter = gerberToSvg('%FSLAX23Y23*%\nD10*\n', 'foobar', function() {})
+
+      converter.once('warning', function(w) {
+        expect(w.line).to.equal(1)
+        expect(w.message).to.exist
+        done()
+      })
+    })
+
+    it('should emit warnings from the plotter in callback mode', function(done) {
+      var converter = gerberToSvg('%FSLAX23Y23*%\nD10*\n', 'foobar', function() {})
+
+      converter.once('warning', function(w) {
+        expect(w.line).to.equal(1)
+        expect(w.message).to.exist
+        done()
+      })
     })
   })
 })

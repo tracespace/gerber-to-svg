@@ -5,6 +5,7 @@ var expect = require('chai').expect
 
 var PlotterToSvg = require('../lib/plotter-to-svg')
 
+var HALF_PI = Math.PI / 2
 var EMPTY_SVG = [
   '<svg id="id" ',
   'xmlns="http://www.w3.org/2000/svg" ',
@@ -13,6 +14,7 @@ var EMPTY_SVG = [
   'stroke-linecap="round" ',
   'stroke-linejoin="round" ',
   'stroke-width="0" ',
+  'fill-rule="evenodd" ',
   'width="0" ',
   'height="0" ',
   'viewBox="0 0 0 0">',
@@ -28,6 +30,9 @@ describe('plotter to svg transform stream', function() {
   it('should emit an empty svg if it gets a zero size plot', function(done) {
     p.once('data', function(result) {
       expect(result).to.equal(EMPTY_SVG)
+      expect(p.viewBox).to.eql([0, 0, 0, 0])
+      expect(p.width).to.equal('0')
+      expect(p.height).to.equal('0')
       done()
     })
 
@@ -97,7 +102,8 @@ describe('plotter to svg transform stream', function() {
 
     it('should handle a ring primitives', function() {
       var toolShape = [{type: 'ring', r: 0.02, width: 0.005, cx: 0.05, cy: -0.03}]
-      var expected = '<circle id="id_pad-11" cx="50" cy="-30" r="20" stroke-width="5"/>'
+      var expected = '<circle id="id_pad-11" cx="50" cy="-30" r="20" '
+      expected += 'stroke-width="5" fill="none"/>'
 
       p.write({type: 'shape', tool: '11', shape: toolShape})
       expect(p.defs).to.equal(expected)
@@ -114,8 +120,8 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
 
       var expected = [
-        '<mask id="id_pad-15_mask" fill="none" stroke="#fff">',
-        '<circle cx="0" cy="0" r="4" stroke-width="2"/>',
+        '<mask id="id_pad-15_mask" stroke="#fff">',
+        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>',
         '</mask>',
         '<g id="id_pad-15" mask="url(#id_pad-15_mask)">',
         '<rect x="1" y="1" width="4" height="4"/>',
@@ -145,8 +151,8 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
 
       var expected = [
-        '<mask id="id_pad-15_mask" fill="none" stroke="#fff">',
-        '<circle cx="0" cy="0" r="4" stroke-width="2"/>',
+        '<mask id="id_pad-15_mask" stroke="#fff">',
+        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>',
         '</mask>',
         '<g id="id_pad-15" mask="url(#id_pad-15_mask)">',
         '<polygon points="1,1 5,1 5,5 1,5"/>',
@@ -195,11 +201,11 @@ describe('plotter to svg transform stream', function() {
       ]
 
       var expected = [
-        '<mask id="id_pad-11_1" fill="#000">',
+        '<mask id="id_pad-11_1" fill="#000" stroke="#000">',
         '<rect x="-3" y="1" width="6" height="8" fill="#fff"/>',
         '<rect x="-2" y="3" width="4" height="4"/>',
         '</mask>',
-        '<mask id="id_pad-11_3" fill="#000">',
+        '<mask id="id_pad-11_3" fill="#000" stroke="#000">',
         '<rect x="-4" y="-9" width="8" height="13" fill="#fff"/>',
         '<rect x="-2" y="-7" width="4" height="4"/>',
         '<circle cx="0" cy="0" r="2"/>',
@@ -227,4 +233,246 @@ describe('plotter to svg transform stream', function() {
     p.write(pad)
     expect(p.layer).to.equal(expected)
   })
+
+  describe('fills and strokes', function() {
+    it('should add a path to the layer for a fill', function() {
+      var fill = {type: 'fill', path: []}
+      var expected = '<path d=""/>'
+
+      p.write(fill)
+      expect(p.layer).to.equal(expected)
+    })
+
+    it('should add a path with width and no fill for a stroke', function() {
+      var stroke = {type: 'stroke', path: [], width: 0.006}
+      var expected = '<path d="" fill="none" stroke-width="6"/>'
+
+      p.write(stroke)
+      expect(p.layer).to.equal(expected)
+    })
+
+    it('should know how to add line segments', function() {
+      var path = [
+        {type: 'line', start: [0, 0], end: [0.1, 0]},
+        {type: 'line', start: [0.1, 0], end: [0.1, 0.1]},
+        {type: 'line', start: [0.1, 0.1], end: [0, 0.1]},
+        {type: 'line', start: [0, 0.1], end: [0, 0]}
+      ]
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 0 0 100 0 100 100 0 100 0 0"'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+
+    it('should know when to add movetos', function() {
+      var path = [
+        {type: 'line', start: [0, 0], end: [0.1, 0.1]},
+        {type: 'line', start: [0.2, 0.2], end: [0.3, 0.3]},
+        {type: 'line', start: [0.4, 0.4], end: [0.5, 0.5]}
+      ]
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 0 0 100 100 M 200 200 300 300 M 400 400 500 500"'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+
+    it('should know how to add arcs', function() {
+      var path = [
+        {
+          type: 'arc',
+          start: [0.1, 0, 0], end: [0, 0.1, HALF_PI], center: [0, 0],
+          sweep: HALF_PI, radius: 0.1, dir: 'ccw'
+        },
+        {
+          type: 'arc',
+          start: [0, 0.1, HALF_PI], end: [0.1, 0, 0], center: [0, 0],
+          sweep: 3 * HALF_PI, radius: 0.1, dir: 'ccw'
+        },
+        {
+          type: 'arc',
+          start: [1.1, 0, 0], end: [1, 0.1, HALF_PI], center: [1, 0],
+          sweep: 3 * HALF_PI, radius: 0.1, dir: 'cw'
+        },
+        {
+          type: 'arc',
+          start: [1, 0.1, HALF_PI], end: [1.1, 0, 0], center: [1, 0],
+          sweep: HALF_PI, radius: 0.1, dir: 'cw'
+        }
+      ]
+
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 100 0 A 100 100 0 0 1 0 100 100 100 0 1 1 100 0 '
+      expectedData += 'M 1100 0 A 100 100 0 1 0 1000 100 100 100 0 0 0 1100 0'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+
+    it('should add zero-length arcs as linetos', function() {
+      var path = [{
+        type: 'arc',
+        start: [0, 0, 0], end: [0, 0, 0], center: [-1, 0],
+        sweep: 0, radius: 1, dir: 'ccw'
+      }]
+
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 0 0 0 0"'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+
+    it('should add full circle arcs as two arcs', function() {
+      var path = [{
+        type: 'arc',
+        start: [0, 0, 0], end: [0, 0, 0], center: [-0.1, 0],
+        sweep: 2 * Math.PI, radius: 0.1, dir: 'ccw'
+      }]
+
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 0 0 A 100 100 0 0 1 -200 0 100 100 0 0 1 0 0"'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+
+    it('should only add explicit linetos as needed', function() {
+      var path = [
+        {
+          type: 'arc',
+          start: [0.1, 0, 0], end: [-0.1, 0, Math.PI], center: [0, 0],
+          sweep: Math.PI, radius: 0.1, dir: 'ccw'
+        },
+        {type: 'line', start: [-0.1, 0], end: [0, 0]}
+      ]
+
+      var stroke = {type: 'stroke', width: 0.006, path: path}
+      var expectedData = 'd="M 100 0 A 100 100 0 0 1 -100 0 L 0 0"'
+
+      p.write(stroke)
+      expect(p.layer).to.include(expectedData)
+    })
+  })
+
+  describe('polarity changes', function() {
+    it('should wrap the layer in a masked group when polarity becomes clear', function() {
+      p.layer = '<path d="M 0 0 1 0 1 1 0 1 0 0"/>'
+      var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
+      var expected = '<g mask="url(#id_layer-1)"><path d="M 0 0 1 0 1 1 0 1 0 0"/></g>'
+
+      p.write(polarity)
+      expect(p.layer).to.equal(expected)
+    })
+
+    it('should start a mask when polarity becomes clear', function() {
+      var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
+      var expected = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      expected += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>'
+
+      p.write(polarity)
+      expect(p._mask).to.equal(expected)
+    })
+
+    it('should write new shapes to the mask when polarity is clear', function() {
+      var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
+      var pad = {type: 'pad', tool: '10', x: 0.005, y: 0.005}
+      var expected = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      expected += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>'
+      expected += '<use xlink:href="#id_pad-10" x="5" y="5"/>'
+
+      p.write(polarity)
+      p.write(pad)
+      expect(p.layer).to.equal('<g mask="url(#id_layer-1)"></g>')
+      expect(p._mask).to.equal(expected)
+    })
+
+    it('should finish the mask and add to defs when polarity switches back', function() {
+      var clear = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
+      var dark = {type: 'polarity', polarity: 'dark', box: [0, 0, 1, 1]}
+      var pad = {type: 'pad', tool: '10', x: 0.005, y: 0.005}
+      var expectedDefs = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      expectedDefs += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/></mask>'
+      var expectedLayer = '<g mask="url(#id_layer-1)"></g>'
+      expectedLayer += '<use xlink:href="#id_pad-10" x="5" y="5"/>'
+
+      p.write(clear)
+      p.write(dark)
+      p.write(pad)
+      expect(p._mask).to.equal('')
+      expect(p.defs).to.equal(expectedDefs)
+      expect(p.layer).to.equal(expectedLayer)
+    })
+
+    it('should not do anything with dark polarity if there is no mask', function() {
+      var dark = {type: 'polarity', polarity: 'dark', box: [0, 0, 1, 1]}
+
+      p.write(dark)
+      expect(p._mask).to.equal('')
+      expect(p.defs).to.equal('')
+      expect(p.layer).to.equal('')
+    })
+  })
+
+  describe.skip('layer repeats', function() {
+
+  })
+
+  describe('end of stream', function() {
+    it('should create a viewbox from a size object', function() {
+      var size = {type: 'size', box: [-1, -1, 1, 2], units: 'mm'}
+
+      p.write(size)
+      expect(p.viewBox).to.eql([-1000, -1000, 2000, 3000])
+      expect(p.width).to.equal('2mm')
+      expect(p.height).to.equal('3mm')
+      expect(p.units).to.equal('mm')
+    })
+
+    it('should contruct an svg from the layer and defs', function(done) {
+      var size = {type: 'size', box: [-1, -1, 1, 2], units: 'mm'}
+      var expected = [
+        '<svg id="id" xmlns="http://www.w3.org/2000/svg" version="1.1" ',
+        'xmlns:xlink="http://www.w3.org/1999/xlink" ',
+        'stroke-linecap="round" stroke-linejoin="round" stroke-width="0" ',
+        'fill-rule="evenodd" ',
+        'width="2mm" height="3mm" viewBox="-1000 -1000 2000 3000">',
+        '<defs>THESE_ARE_THE_DEFS</defs>',
+        '<g transform="translate(0,1000) scale(1,-1)" ',
+        'fill="currentColor" stroke="currentColor">THIS_IS_THE_LAYER</g>',
+        '</svg>'
+      ].join('')
+
+      p.on('data', function(result) {
+        expect(result).to.equal(expected)
+        done()
+      })
+
+      p.defs = 'THESE_ARE_THE_DEFS'
+      p.layer = 'THIS_IS_THE_LAYER'
+      p.write(size)
+      p.end()
+    })
+
+    it('should finish any in-progress mask', function() {
+      p._mask = '<mask id="id_layer-1">'
+      p.end()
+
+      expect(p._mask).to.equal('')
+      expect(p.defs).to.equal('<mask id="id_layer-1"></mask>')
+    })
+  })
+
+  it('should have a warn method', function(done) {
+    p.once('warning', function(w) {
+      expect(w.line).to.equal(7)
+      expect(w.message).to.equal('a warning message')
+      done()
+    })
+
+    p.warn({line: 7, message: 'a warning message'})
+  })
+
+
 })
