@@ -6,6 +6,8 @@ var reduce = require('lodash.reduce')
 var util = require('./_util')
 var shift = util.shift
 var attr = util.attr
+var startMask = util.startMask
+var maskLayer = util.maskLayer
 
 var circle = function(id, cx, cy, r, width) {
   var idAttr = (id) ? (attr('id', id) + ' ') : ''
@@ -13,6 +15,7 @@ var circle = function(id, cx, cy, r, width) {
   var cyAttr = attr('cy', shift(cy)) + ' '
   var rAttr = attr('r', shift(r))
   var widthAttr = (width) ? (' ' + attr('stroke-width', shift(width))) : ''
+  widthAttr += (width) ? (' ' + attr('fill', 'none')) : ''
 
   return '<circle ' + idAttr + cxAttr + cyAttr + rAttr + widthAttr + '/>'
 }
@@ -43,7 +46,7 @@ var poly = function(id, points) {
 
 var clip = function(id, shapes, ring) {
   var maskId = id + '_mask'
-  var mask = '<mask ' + attr('id', maskId) + ' fill="none" stroke="#fff">'
+  var mask = '<mask ' + attr('id', maskId) + ' ' + attr('stroke', '#fff') + '>'
   mask += circle(null, ring.cx, ring.cy, ring.r, ring.width) + '</mask>'
 
 
@@ -57,24 +60,6 @@ var clip = function(id, shapes, ring) {
   }, svg)
 
   return mask + svg + '</g>'
-}
-
-var maskStart = function(id, box) {
-  var result = '<mask ' + attr('id', id) + ' ' + attr('fill', '#000') + '>'
-
-  var x = shift(box[0])
-  var y = shift(box[1])
-  var width = shift(box[2]) - x
-  var height = shift(box[3]) - y
-  result += '<rect ' + attr('x', x) + ' ' + attr('y', y) + ' '
-  result += attr('width', width) + ' ' + attr('height', height) + ' '
-  result += attr('fill', '#fff') + '/>'
-
-  return result
-}
-
-var layerStart = function(maskId) {
-  return '<g ' + attr('mask', 'url(#' + maskId + ')') + '>'
 }
 
 var reduceShapeArray = function(prefix, code, shapeArray) {
@@ -119,8 +104,8 @@ var reduceShapeArray = function(prefix, code, shapeArray) {
         // if the polarity is clear, wrap the group and start a mask
         if (shape.polarity === 'clear') {
           var nextMaskId = maskIdPrefix + result.count
-          result.masks += maskStart(nextMaskId, shape.box)
-          result.layers = layerStart(nextMaskId) + result.layers + '</g>'
+          result.masks += startMask(nextMaskId, shape.box)
+          result.layers = maskLayer(nextMaskId, result.layers)
         }
         else {
           result.masks += '</mask>'

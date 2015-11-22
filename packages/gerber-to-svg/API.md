@@ -182,9 +182,13 @@ backupNota  | Backup notation only to be used if the notation cannot be parsed
 The returned object also contains several public properties. Any properties not listed here should be considered private.
 
 property | type
----------|--------
+---------|---------------
 defs     | String
 layer    | String
+viewBox  | Array
+width    | String
+height   | String
+units    | String
 
 ### defs
 
@@ -193,3 +197,17 @@ The interior (innerText) of the `defs` node of the SVG. This is where pad shapes
 ### layer
 
 The interior of the top-level `g` node of the SVG. This is where regions, strokes, and flashes of dark layers will be. If there are clear layers, there may be nested `g` nodes with `mask` attributes inside `layer`.
+
+### viewBox
+
+The viewBox of the SVG as an array of numbers. This property can be used to align several layers from the same board. (`viewBox[0]`, `viewBox[1]`) is the location of the bottom left of the SVG in board coordinates.
+
+The viewBox units will be 1000 times the actual units.
+
+### width and height
+
+The real-world size of the SVG as a string including units; e.g. `"1.25in"`
+
+### units
+
+Units of the process file. Either `in` or `mm`. If `units` is an empty string, then no image was processed from the file.

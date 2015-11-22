@@ -15,7 +15,7 @@ See [the API documentation](./API.md)
 ### command line
 
 1. `$ npm install -g gerber-to-svg`
-2. `$ gerber2svg [options] path/to/gerbers/and/drills`
+2. `$ gerber2svg [options]  -- gerber_files`
 
 #### options
 
@@ -24,19 +24,19 @@ switch             | type    | how it rolls
 `-o, --out`        | string  | specify an output directory
 `-q, --quiet`      | boolean | do not print warnings and messages
 `-c, --color`      | color   | use this color instead of "currentColor" for fills and strokes
-`-p, --places`     | array   | override coordinate format with '[n_int,n_dec]'
+`-p, --places`     | array   | override coordinate format with '[INT,DEC]'
 `-z, --zero`       | string  | override zero suppression with 'L' or 'T'
-`-u, --units`      | string  | override (without converting) units with 'mm' or 'in'
-`-n, --notation`   | string  | override absolute/incremental system with 'A' or 'I'
-`-a, --append-ext` | boolean | append .svg without replacing the file extension
+`-u, --units`      | string  | set backup units with 'mm' or 'in'
+`-n, --notation`   | string  | set backup absolute/incremental notation with 'A' or 'I'
+`-a, --append-ext` | boolean | append .svg without replacing the existing extension
 `-v, --version`    | boolean | display version information
 `-h, --help`       | boolean | display help text
 
 #### examples:
 
-* `$ gerber2svg path/to/gerber.gbr` will write the SVG to stdout
-* `$ gerber2svg -o some/dir -- path/to/gerber.gbr` will create some/dir/gerber.svg
-* `$ gerber2svg -a -o out -- gerb/*` will process all files in the `gerb` directory and output them to `out` with `.svg` appended to their existing extensions
+* `$ gerber2svg gerber.gbr` - convert gerber.gbr and output to stdout
+* `$ gerber2svg -o out gerber.gbr` - convert and output to out/gerber.svg
+* `$ gerber2svg -o out -a gerber.gbr` - output to out/gerber.gbr.svg
 
 ## what you get
 
