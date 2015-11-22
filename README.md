@@ -1,6 +1,8 @@
 # gerber-to-svg
 
-[![Build Status](http://img.shields.io/travis/mcous/gerber-to-svg.svg?style=flat-square)](https://travis-ci.org/mcous/gerber-to-svg) [![Coverage](http://img.shields.io/coveralls/mcous/gerber-to-svg.svg?style=flat-square)](https://coveralls.io/r/mcous/gerber-to-svg) [![Version](http://img.shields.io/npm/v/gerber-to-svg.svg?style=flat-square)](https://www.npmjs.org/package/gerber-to-svg) [![Dependencies](http://img.shields.io/david/mcous/gerber-to-svg.svg?style=flat-square)](https://david-dm.org/mcous/gerber-to-svg)
+[![Version](http://img.shields.io/npm/v/gerber-to-svg.svg?style=flat-square)](https://www.npmjs.org/package/gerber-to-svg)
+[![Build Status](http://img.shields.io/travis/mcous/gerber-to-svg.svg?style=flat-square)](https://travis-ci.org/mcous/gerber-to-svg) [![Coverage](http://img.shields.io/coveralls/mcous/gerber-to-svg.svg?style=flat-square)](https://coveralls.io/r/mcous/gerber-to-svg)  [![Dependencies](http://img.shields.io/david/mcous/gerber-to-svg.svg?style=flat-square)](https://david-dm.org/mcous/gerber-to-svg)
+[![DevDependencies](http://img.shields.io/david/dev/mcous/gerber-to-svg.svg?style=flat-square)](https://david-dm.org/mcous/gerber-to-svg#info=devDependencies)
 
 [![Sauce Test Status](https://saucelabs.com/browser-matrix/gerber-to-svg.svg)](https://saucelabs.com/u/gerber-to-svg)
 
@@ -52,6 +54,25 @@ Excellon / NC drill files do not have a completely clearly defined spec, so dril
 
 ## developing and contributing
 
-This module uses mocha and chai for unit testing. To run the tests once, run `$ npm test`. To run the tests automatically when source or tests change, run `$ npm run test-watch`.
+Clone and then `$ npm install`. Please accompany all PRs with applicable tests (unit and/or visual). Please test your code in browsers, as Travis CI cannot run browser tests for PRs.
 
-There's also a visual test suite. Run `$ npm run visual` and point your browser to http://localhost.com:4242 to take a look.
+### testing
+
+This module uses [Mocha](http://mochajs.org/) and [Chai](http://chaijs.com/) for unit testing, [Istanbul](https://github.com/gotwarlost/istanbul) for coverage, and [ESLint](http://eslint.org/) for linting.
+
+* `$ npm test` - run the tests, calculate coverage, and lint
+* `$ npm run test-watch` - run the tests on code changes (does not lint nor cover)
+* `$ npm run lint` - lint the code (will be run as a pre-commit script)
+
+### browser testing
+
+Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and  [Sauce Labs](https://saucelabs.com/opensauce/).
+
+* `$ npm run browser` - run the unit tests in a local browser
+* `$ npm run browser-sauce` - run the units tests in several browsers using Open Sauce (Sauce Labs account and local [.zuulrc](https://github.com/defunctzombie/zuul/wiki/Zuulrc) required)
+
+### visual testing
+
+The visual test suite made up of sample Gerber files and expected (looks-like) results. Expected SVGs are output from [gerbv](http://gerbv.geda-project.org/) or hand-coded if the gerbv render is incorrect. Sample gerbers live in [test-visual/gerber](./test-visual/gerber) and expected results live in [test-visual/expected](./test-visual/expected).
+
+To run the visual tests, run `$ npm run visual` and point your browser to [localhost:4242](http://localhost.com:4242). Refreshing the page will re-render the files.
