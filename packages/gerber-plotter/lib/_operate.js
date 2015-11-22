@@ -108,23 +108,29 @@ var arcBox = function(cenAndAngles, r, region, tool, dir) {
   // get bounding box definition points
   var points = [startPoint, endPoint]
 
-  // check for sweep past 0 degeres
+  // check for sweep past 0 degrees
   if ((start > end) || (sweep === TWO_PI)) {
     points.push([center[0] + r, center[1]])
   }
 
-  // check for sweep past 90 degrees
-  if (((start < HALF_PI) && (end > HALF_PI)) || (sweep === TWO_PI)) {
+  // rotate to check for sweep past 90 degrees
+  start = (start >= HALF_PI) ? (start - HALF_PI) : (start + THREE_HALF_PI)
+  end = (end >= HALF_PI) ? (end - HALF_PI) : (end + THREE_HALF_PI)
+  if ((start > end) || (sweep === TWO_PI)) {
     points.push([center[0], center[1] + r])
   }
 
-  // check for sweep past 180 degrees
-  if (((start < PI) && (end > PI)) || (sweep === TWO_PI)) {
+  // rotate again to check for sweep past 180 degrees
+  start = (start >= HALF_PI) ? (start - HALF_PI) : (start + THREE_HALF_PI)
+  end = (end >= HALF_PI) ? (end - HALF_PI) : (end + THREE_HALF_PI)
+  if ((start > end) || (sweep === TWO_PI)) {
     points.push([center[0] - r, center[1]])
   }
 
-  // check for sweep past 270 degrees
-  if (((start < THREE_HALF_PI) && (end > THREE_HALF_PI)) || (sweep === TWO_PI)) {
+  // rotate again to check for sweep past 270 degrees
+  start = (start >= HALF_PI) ? (start - HALF_PI) : (start + THREE_HALF_PI)
+  end = (end >= HALF_PI) ? (end - HALF_PI) : (end + THREE_HALF_PI)
+  if ((start > end) || (sweep === TWO_PI)) {
     points.push([center[0], center[1] - r])
   }
 
