@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
-    "test": "istanbul cover --include-all-sources _mocha",
+    "test": "istanbul cover -x 'test-visual/*' --include-all-sources _mocha",
     "posttest": "npm run lint",
     "test-watch": "mocha --reporter dot --watch",
     "test-visual": "node test-visual/server.js",
@@ -31,7 +31,12 @@
     "excellon",
     "drill",
     "pcb",
-    "circuit"
+    "circuit",
+    "board",
+    "hardware",
+    "electronics",
+    "electrical",
+    "maker"
   ],
   "author": "Mike Cousins <mike@cousins.io> (http://cousins.io)",
   "license": "MIT",
@@ -44,7 +49,6 @@
     "chai": "^3.4.1",
     "coveralls": "^2.11.4",
     "eslint": "^1.9.0",
-    "glob": "^5.0.15",
     "hapi": "^11.1.1",
     "inert": "^3.2.0",
     "istanbul": "^0.4.0",
