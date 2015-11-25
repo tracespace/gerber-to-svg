@@ -196,14 +196,23 @@ var _transform = function(chunk, encoding, done) {
       })
     }
     else {
-      var offsets = []
-      for (var j = 0; j < val.j; j++) {
-        for (var i = 0; i < val.i; i++) {
-          offsets.push([i * val.x, j * val.y])
-        }
+      // update the box for any existing SR if necessary
+      if (this._stepRep.length) {
+        var srLimit = this._stepRep[this._stepRep.length - 1]
+        var srBoxLimit = boundingBox.translate(this._box, srLimit)
+        this._box = boundingBox.add(this._box, srBoxLimit)
       }
 
-      this.push({type: 'repeat', offsets: offsets.slice(1), box: clone(this._box)})
+      // calcualte new offsets
+      var offsets = []
+      for (var x = 0; x < val.x; x++) {
+        for (var y = 0; y < val.y; y++) {
+          offsets.push([x * val.i, y * val.j])
+        }
+      }
+      this._stepRep = offsets.slice(1)
+
+      this.push({type: 'repeat', offsets: clone(this._stepRep), box: clone(this._box)})
     }
   }
 
@@ -260,6 +269,7 @@ var plotter = function(options) {
   stream._path = new PathGraph()
   stream._epsilon = null
   stream._lastOp = null
+  stream._stepRep = []
 
   applyOptions(options, stream.format, stream._formatLock)
   return stream

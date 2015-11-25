@@ -193,11 +193,11 @@ A layer polarity object changes the polarity of subsequent image objects until t
 {type: 'polarity', polarity: POLARITY, box: [X_MIN, Y_MIN, X_MAX, Y_MAX]}
 ```
 
-### layer repeat objects
+### block repeat objects
 
-A layer repeat object means all following objects will be repeated at `offsets`. For example, if a circle pad is flashed at (0, 0) and `offsets = [[1, 0], [0, 1], [1, 1]]`, that circle pad should appear at (0, 0), (1, 0), (0, 1), and (1, 1). Like the layer polarity object, the layer repeat object includes the current image's bounding box. The repeat is in effect until another repeat object is pushed. A repeat object with a zero-length `offsets` array means repeating has been turned off.
+A block repeat object means all following objects will be gathered in a block, and that block will be repeated at `offsets`. The block is repeated upon receipt of a new repeat object or the end of the file. For example, if a repeat command with `offsets = [[0, 1], [1, 0], [1, 1]]` is received, then a circle pad is flashed at (0, 0), and then the file ends, the image will have a circle at (0, 0), (0, 1), (1, 0), and (1, 1). Like the layer polarity object, the block repeat object includes the current image's bounding box. A repeat object with a zero-length `offsets` array means repeating has been turned off.
 
-Note that, according to the Gerber specification, if a clearing image appears in a repeated block and overlaps a previous block, it will clear the image in both blocks.
+Note that a block may contain multiple polarities, and according to the Gerber specification, if a clearing image appears in a repeated block and overlaps a previous block, it will clear the image in both blocks.
 
 ``` javascript
 {type: 'repeat', offsets: [OFFSET_LOCATIONS...], box: [X_MIN, Y_MIN, X_MAX, Y_MAX]}

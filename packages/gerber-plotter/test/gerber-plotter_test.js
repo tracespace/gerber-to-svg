@@ -1632,14 +1632,21 @@ describe('gerber plotter', function() {
         var result = p.read()
         expect(result).to.eql({
           type: 'repeat',
-          offsets: [[3.3, 0], [0, 2.2], [3.3, 2.2], [0, 4.4], [3.3, 4.4]],
+          offsets: [[0, 2.2], [0, 4.4], [3.3, 0], [3.3, 2.2], [3.3, 4.4]],
           box: [0, 0, 10, 10]
         })
         done()
       })
 
       p._box = [0, 0, 10, 10]
-      p.write({cmd: 'level', key: 'stepRep', val: {x: 3.3, y: 2.2, i: 2, j: 3}})
+      p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 3, i: 3.3, j: 2.2}})
+    })
+
+    it('should update the box with a step repeat', function() {
+      p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 2, i: 3.5, j: -3}})
+      p._box = [0, 0, 10, 10]
+      p.write({cmd: 'level', key: 'stepRep', val: {x: 1, y: 1, i: 0, j: 0}})
+      expect(p._box).to.eql([0, -3, 13.5, 10])
     })
   })
 
