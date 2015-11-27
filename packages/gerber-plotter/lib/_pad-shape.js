@@ -5,6 +5,7 @@ var reduce = require('lodash.reduce')
 var transform = require('lodash.transform')
 var mapValues = require('lodash.mapvalues')
 var isFunction = require('lodash.isfunction')
+var isFinite = require('lodash.isfinite')
 var clone = require('lodash.clone')
 
 var boundingBox = require('./_box')
@@ -68,7 +69,7 @@ var vect = function(x1, y1, x2, y2, width, rot) {
   var hWidth = width / 2
   var sin = hWidth
   var cos = hWidth
-  if (m !== Infinity) {
+  if (isFinite(m)) {
     sin *= m / Math.sqrt(1 + Math.pow(m, 2))
     cos *= 1 / Math.sqrt(1 + Math.pow(m, 2))
   }
