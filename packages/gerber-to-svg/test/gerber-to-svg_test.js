@@ -7,27 +7,9 @@ var chai = require('chai')
 var sinonChai = require('sinon-chai')
 var proxyquire = require('proxyquire')
 var assign = require('lodash.assign')
-var values = require('lodash.values')
 
 var expect = chai.expect
 chai.use(sinonChai)
-
-var fakeParser = new events.EventEmitter()
-assign(fakeParser, {
-  pipe: sinon.stub().returnsArg(0),
-  write: sinon.spy(),
-  end: sinon.spy()
-})
-var fakePlotter = new events.EventEmitter()
-assign(fakePlotter, {
-  pipe: sinon.stub().returnsArg(0),
-  write: sinon.spy()
-})
-var fakeConverter = new events.EventEmitter()
-assign(fakeConverter, {
-  pipe: sinon.stub().returnsArg(0),
-  write: sinon.spy()
-})
 
 var parserStub = sinon.stub()
 var plotterStub = sinon.stub()
@@ -39,35 +21,31 @@ var gerberToSvg = proxyquire('../lib/gerber-to-svg', {
 })
 
 describe('gerber to svg', function() {
+  var fakeParser
+  var fakePlotter
+  var fakeConverter
+
   beforeEach(function() {
     parserStub.reset()
     plotterStub.reset()
     converterStub.reset()
 
-    // console.log(fakeParser)
-    values(fakeParser)
-      .filter(function(spy) {
-        return ((spy != null) && (spy.reset != null))
-      })
-      .forEach(function(spy) {
-        spy.reset()
-      })
-
-    values(fakePlotter)
-      .filter(function(spy) {
-        return ((spy != null) && (spy.reset != null))
-      })
-      .forEach(function(spy) {
-        spy.reset()
-      })
-
-    values(fakeConverter)
-      .filter(function(spy) {
-        return ((spy != null) && (spy.reset != null))
-      })
-      .forEach(function(spy) {
-        spy.reset()
-      })
+    fakeParser = new events.EventEmitter()
+    assign(fakeParser, {
+      pipe: sinon.stub().returnsArg(0),
+      write: sinon.spy(),
+      end: sinon.spy()
+    })
+    fakePlotter = new events.EventEmitter()
+    assign(fakePlotter, {
+      pipe: sinon.stub().returnsArg(0),
+      write: sinon.spy()
+    })
+    fakeConverter = new events.EventEmitter()
+    assign(fakeConverter, {
+      pipe: sinon.stub().returnsArg(0),
+      write: sinon.spy()
+    })
 
     parserStub.returns(fakeParser)
     plotterStub.returns(fakePlotter)
