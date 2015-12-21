@@ -64,6 +64,7 @@ describe('plotter to svg transform stream', function() {
 
   it('should be able to add a color', function(done) {
     p = new PlotterToSvg('foo', 'bar', 'baz')
+    p.setEncoding('utf8')
     p.once('data', function(result) {
       expect(result).to.match(/color="baz"/)
       done()
@@ -360,7 +361,7 @@ describe('plotter to svg transform stream', function() {
     it('should wrap the layer in a masked group when polarity becomes clear', function() {
       p.layer = '<path d="M 0 0 1 0 1 1 0 1 0 0"/>'
       var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
-      var expected = '<g mask="url(#id_layer-1)"><path d="M 0 0 1 0 1 1 0 1 0 0"/></g>'
+      var expected = '<g mask="url(#id_clear-1)"><path d="M 0 0 1 0 1 1 0 1 0 0"/></g>'
 
       p.write(polarity)
       expect(p.layer).to.equal(expected)
@@ -368,7 +369,7 @@ describe('plotter to svg transform stream', function() {
 
     it('should start a mask when polarity becomes clear', function() {
       var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
-      var expected = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      var expected = '<mask id="id_clear-1" fill="#000" stroke="#000">'
       expected += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>'
 
       p.write(polarity)
@@ -378,13 +379,13 @@ describe('plotter to svg transform stream', function() {
     it('should write new shapes to the mask when polarity is clear', function() {
       var polarity = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
       var pad = {type: 'pad', tool: '10', x: 0.005, y: 0.005}
-      var expected = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      var expected = '<mask id="id_clear-1" fill="#000" stroke="#000">'
       expected += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>'
       expected += '<use xlink:href="#id_pad-10" x="5" y="5"/>'
 
       p.write(polarity)
       p.write(pad)
-      expect(p.layer).to.equal('<g mask="url(#id_layer-1)"></g>')
+      expect(p.layer).to.equal('<g mask="url(#id_clear-1)"></g>')
       expect(p._mask).to.equal(expected)
     })
 
@@ -392,9 +393,9 @@ describe('plotter to svg transform stream', function() {
       var clear = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
       var dark = {type: 'polarity', polarity: 'dark', box: [0, 0, 1, 1]}
       var pad = {type: 'pad', tool: '10', x: 0.005, y: 0.005}
-      var expectedDefs = '<mask id="id_layer-1" fill="#000" stroke="#000">'
+      var expectedDefs = '<mask id="id_clear-1" fill="#000" stroke="#000">'
       expectedDefs += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/></mask>'
-      var expectedLayer = '<g mask="url(#id_layer-1)"></g>'
+      var expectedLayer = '<g mask="url(#id_clear-1)"></g>'
       expectedLayer += '<use xlink:href="#id_pad-10" x="5" y="5"/>'
 
       p.write(clear)
@@ -415,8 +416,128 @@ describe('plotter to svg transform stream', function() {
     })
   })
 
-  describe.skip('layer repeats', function() {
+  describe('block repeats', function() {
+    it('if only one layer, it should wrap the current layer and repeat it', function() {
+      var offsets = [[0, 0], [0, 1], [1, 0], [1, 1]]
+      p.write({type: 'repeat', offsets: offsets, box: [0, 0, 0.5, 0.5]})
+      p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
+      p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
 
+      expect(p.defs).to.equal(
+        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>')
+      expect(p.layer).to.equal([
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="1000"/>',
+        '<use xlink:href="#id_block-1-1" x="1000" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="1000" y="1000"/>'
+      ].join(''))
+    })
+
+    it('should allow several layers in a block', function() {
+      var offsets = [[0, 0], [0, 5], [5, 0], [5, 5]]
+      p.write({type: 'repeat', offsets: offsets, box: [0, 0, 0.5, 0.5]})
+      p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
+      p.write({type: 'polarity', polarity: 'clear', box: [0, 0, 0.5, 0.5]})
+      p.write({type: 'pad', tool: '11', x: 0.5, y: 0.5})
+      p.write({type: 'polarity', polarity: 'dark', box: [0, 0, 0.75, 0.75]})
+      p.write({type: 'pad', tool: '12', x: 0.75, y: 0.75})
+      p.write({type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]})
+      p.write({type: 'pad', tool: '13', x: 1, y: 1})
+      p.write({type: 'polarity', polarity: 'dark', box: [0, 0, 1.25, 1.25]})
+      p.write({type: 'pad', tool: '14', x: 1.25, y: 1.25})
+      p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
+
+      expect(p.defs).to.equal([
+        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
+        '<g id="id_block-1-2"><use xlink:href="#id_pad-11" x="500" y="500"/></g>',
+        '<g id="id_block-1-3"><use xlink:href="#id_pad-12" x="750" y="750"/></g>',
+        '<g id="id_block-1-4"><use xlink:href="#id_pad-13" x="1000" y="1000"/></g>',
+        '<g id="id_block-1-5"><use xlink:href="#id_pad-14" x="1250" y="1250"/></g>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
+        '<rect x="0" y="0" width="500" height="500" fill="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-2" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-3" x="0" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-4" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-5" x="0" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="5000" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-2" x="0" y="5000"/>',
+        '<use xlink:href="#id_block-1-3" x="0" y="5000" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-4" x="0" y="5000"/>',
+        '<use xlink:href="#id_block-1-5" x="0" y="5000" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="5000" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-2" x="5000" y="0"/>',
+        '<use xlink:href="#id_block-1-3" x="5000" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-4" x="5000" y="0"/>',
+        '<use xlink:href="#id_block-1-5" x="5000" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-2" x="5000" y="5000"/>',
+        '<use xlink:href="#id_block-1-3" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-4" x="5000" y="5000"/>',
+        '<use xlink:href="#id_block-1-5" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
+        '</mask>'
+      ].join(''))
+      expect(p.layer).to.equal([
+        '<g mask="url(#id_block-1-clear)">',
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-3" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-5" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="5000"/>',
+        '<use xlink:href="#id_block-1-3" x="0" y="5000"/>',
+        '<use xlink:href="#id_block-1-5" x="0" y="5000"/>',
+        '<use xlink:href="#id_block-1-1" x="5000" y="0"/>',
+        '<use xlink:href="#id_block-1-3" x="5000" y="0"/>',
+        '<use xlink:href="#id_block-1-5" x="5000" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="5000" y="5000"/>',
+        '<use xlink:href="#id_block-1-3" x="5000" y="5000"/>',
+        '<use xlink:href="#id_block-1-5" x="5000" y="5000"/>',
+        '</g>'
+      ].join(''))
+    })
+
+    it('should handle step repeats that start with clear', function() {
+      var offsets = [[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]
+      p.layer = 'SOME_EXISTING_STUFF'
+      p.write({type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]})
+      p._mask += 'SOME_EXISTING_CLEAR_STUFF'
+
+      p.write({type: 'repeat', offsets: offsets, box: [0, 0, 1, 1]})
+      p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
+      p.write({type: 'polarity', polarity: 'dark', box: [0, 0, 1, 1]})
+      p.write({type: 'pad', tool: '11', x: 0.25, y: 0.25})
+      p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
+
+      expect(p.defs).to.equal([
+        '<mask id="id_clear-1" fill="#000" stroke="#000">',
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
+        'SOME_EXISTING_CLEAR_STUFF',
+        '</mask>',
+        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
+        '<g id="id_block-1-2"><use xlink:href="#id_pad-11" x="250" y="250"/></g>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-2" x="0" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="500"/>',
+        '<use xlink:href="#id_block-1-2" x="0" y="500" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="500" y="0"/>',
+        '<use xlink:href="#id_block-1-2" x="500" y="0" fill="#fff" stroke="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="500" y="500"/>',
+        '<use xlink:href="#id_block-1-2" x="500" y="500" fill="#fff" stroke="#fff"/>',
+        '</mask>'
+      ].join(''))
+      expect(p.layer).to.equal([
+        '<g mask="url(#id_block-1-clear)">',
+        '<g mask="url(#id_clear-1)">',
+        'SOME_EXISTING_STUFF',
+        '</g>',
+        '<use xlink:href="#id_block-1-2" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-2" x="0" y="500"/>',
+        '<use xlink:href="#id_block-1-2" x="500" y="0"/>',
+        '<use xlink:href="#id_block-1-2" x="500" y="500"/>',
+        '</g>'
+      ].join(''))
+    })
   })
 
   describe('end of stream', function() {
@@ -440,7 +561,7 @@ describe('plotter to svg transform stream', function() {
         'width="2mm" height="3mm" viewBox="-1000 -1000 2000 3000">',
         '<defs>THESE_ARE_THE_DEFS</defs>',
         '<g transform="translate(0,1000) scale(1,-1)" ',
-        'fill="currentColor" stroke="currentColor">THIS_IS_THE_LAYER</g>',
+        'fill="currentColor" stroke="currentColor">THIS_IS_THE_clear</g>',
         '</svg>'
       ].join('')
 
@@ -450,29 +571,32 @@ describe('plotter to svg transform stream', function() {
       })
 
       p.defs = 'THESE_ARE_THE_DEFS'
-      p.layer = 'THIS_IS_THE_LAYER'
+      p.layer = 'THIS_IS_THE_clear'
       p.write(size)
       p.end()
     })
 
     it('should finish any in-progress mask', function() {
-      p._mask = '<mask id="id_layer-1">'
+      p._mask = '<mask id="id_clear-1">'
       p.end()
 
       expect(p._mask).to.equal('')
-      expect(p.defs).to.equal('<mask id="id_layer-1"></mask>')
-    })
-  })
-
-  it('should have a warn method', function(done) {
-    p.once('warning', function(w) {
-      expect(w.line).to.equal(7)
-      expect(w.message).to.equal('a warning message')
-      done()
+      expect(p.defs).to.equal('<mask id="id_clear-1"></mask>')
     })
 
-    p.warn({line: 7, message: 'a warning message'})
+    it('should finish any in-progress repeat', function() {
+      var offsets = [[0, 0], [0, 1], [1, 0], [1, 1]]
+      p.write({type: 'repeat', offsets: offsets, box: [0, 0, 0.5, 0.5]})
+      p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
+      p.end()
+
+      expect(p._block).to.equal('')
+      expect(p.layer).to.equal([
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="1000"/>',
+        '<use xlink:href="#id_block-1-1" x="1000" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="1000" y="1000"/>'
+      ].join(''))
+    })
   })
-
-
 })

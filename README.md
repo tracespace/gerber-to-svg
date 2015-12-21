@@ -75,4 +75,4 @@ Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and  [S
 
 The visual test suite made up of sample Gerber files and expected (looks-like) results. Expected SVGs are output from [gerbv](http://gerbv.geda-project.org/) or hand-coded if the gerbv render is incorrect. Sample files live in [test-visual/gerber](./test-visual/gerber) and expected results live in [test-visual/expected](./test-visual/expected).
 
-To run the visual tests, run `$ npm run visual` and point your browser to [localhost:4242](http://localhost.com:4242). Refreshing the page will re-render the files.
+To run the visual tests, run `$ npm run test-visual` and point your browser to [localhost:4242](http://localhost.com:4242). Refreshing the page will re-render the files.
