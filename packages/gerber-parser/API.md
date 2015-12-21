@@ -6,7 +6,17 @@ API documentation for gerber-parser. An understanding of the [Gerber file format
 
 ``` javascript
 var gerberParser = require('gerber-parser')
+
 var parser = gerberParser(OPTIONS)
+var gerberStream = getReadableStreamSomehow()
+
+gerberStream.pipe(parser)
+  .on('warning', function(warning) {
+    // handle warning
+  })
+  .on('error', function(error) {
+    // handle error
+  })
 ```
 
 ### usage
@@ -68,12 +78,23 @@ A `warning` event is emitted if the parser encounters a recoverable problem whil
 
 ``` javascript
 // warning object
-var exampleWarning = {message: 'warning message', line: LINE_NO_IN_GERBER}
-
-parser.on('warning', function(w) {
-  console.warn(`warning at line ${w.line}: ${w.message}`)
-})
+{message: WARNING_MESSAGE, line: LINE_NO_IN_GERBER}
 ```
+
+The parser will emit warnings when:
+
+* It encounters a block it does not recognize (usually caused by deprecated and harmless commands)
+* Missing coordinate format (will assume `[2, 4]`)
+* Trailing zero suppression is used in a Gerber file (it has been deprecated by the Gerber spec)
+* No zero suppression was specified (will assume leading suppression for Gerber and trailing suppression for drill)
+* Deprecated or unrecognized macro primitives are used
+* `X` is used instead of `x` for multiplication in a macro
+
+### error event
+
+An `error` event will be emitted with an `Error` object if the parser encounters an unrecoverable problem (in addition to the Node Transorm stream errors). Because of the way EventEmitters work, unless the `error` event has a listener attached, an emitted `error` will throw.
+
+The only custom error event that the parser will throw is if it is unable to determine the filetype (Gerber or drill) of the input stream.
 
 ## transform stream objects
 
