@@ -5,31 +5,20 @@ var Transform = require('readable-stream').Transform
 var inherits = require('inherits')
 var every = require('lodash.every')
 var isFinite = require('lodash.isfinite')
+var map = require('lodash.map')
 
 var reduceShapeArray = require('./_reduce-shape')
 var flashPad = require('./_flash-pad')
 var createPath = require('./_create-path')
 var util = require('./_util')
-var attr = util.attr
 var shift = util.shift
+var xmlNode = util.xmlNode
 var maskLayer = util.maskLayer
 var startMask = util.startMask
 
-var startSvg = function(id, className, color) {
-  return [
-    ('<svg id="' + id + '" '),
-    ((className) ? ('class="' + className + '" ') : ''),
-    ((color) ? ('color="' + color + '" ') : ''),
-    'xmlns="http://www.w3.org/2000/svg" ',
-    'version="1.1" ',
-    'xmlns:xlink="http://www.w3.org/1999/xlink" ',
-    'stroke-linecap="round" ',
-    'stroke-linejoin="round" ',
-    'stroke-width="0" ',
-    'fill-rule="evenodd" '].join('')
-}
-
-var SVG_END = '</svg>'
+var BLOCK_MODE_OFF = 0
+var BLOCK_MODE_DARK = 1
+var BLOCK_MODE_CLEAR = 2
 
 var PlotterToSvg = function(id, className, color) {
   Transform.call(this, {writableObjectMode: true})
@@ -41,27 +30,30 @@ var PlotterToSvg = function(id, className, color) {
   this.height = '0'
 
   this._mask = ''
-  this._layerCount = 0
+  this._blockMode = false
+  this._blockBox = []
+  this._block = ''
+  this._blockCount = 0
+  this._blockLayerCount = 0
+  this._offsets = []
+  this._clearCount = 0
   this._lastLayer = 0
-  this._prefix = id
-  this._result = startSvg(id, className, color)
-  this._color = 'currentColor'
+  this._blockCount = 0
+  this._id = id
+  this._className = className
+  this._color = color
 }
 
 inherits(PlotterToSvg, Transform)
 
-PlotterToSvg.prototype.warn = function(warning) {
-  this.emit('warning', warning)
-}
-
 PlotterToSvg.prototype._transform = function(chunk, encoding, done) {
   switch (chunk.type) {
     case 'shape':
-      this.defs += reduceShapeArray(this._prefix, chunk.tool, chunk.shape)
+      this.defs += reduceShapeArray(this._id, chunk.tool, chunk.shape)
       break
 
     case 'pad':
-      this._draw(flashPad(this._prefix, chunk.tool, chunk.x, chunk.y))
+      this._draw(flashPad(this._id, chunk.tool, chunk.x, chunk.y))
       break
 
     case 'fill':
@@ -76,6 +68,10 @@ PlotterToSvg.prototype._transform = function(chunk, encoding, done) {
       this._handleNewPolarity(chunk.polarity, chunk.box)
       break
 
+    case 'repeat':
+      this._handleNewRepeat(chunk.offsets, chunk.box)
+      break
+
     case 'size':
       this._handleSize(chunk.box, chunk.units)
   }
@@ -84,44 +80,148 @@ PlotterToSvg.prototype._transform = function(chunk, encoding, done) {
 }
 
 PlotterToSvg.prototype._flush = function(done) {
-  this._result += attr('width', this.width) + ' ' + attr('height', this.height) + ' '
-  this._result += attr('viewBox', this.viewBox.join(' ')) + '>'
+  var result = xmlNode('svg', false, {
+    id: this._id,
+    class: this._className,
+    xmlns: 'http://www.w3.org/2000/svg',
+    version: 1.1,
+    'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'stroke-width': 0,
+    'fill-rule': 'evenodd',
+    color: this._color,
+    width: this.width,
+    height: this.height,
+    viewBox: this.viewBox.join(' ')
+  })
 
-  // finish any in-progress mask
-  if (this._mask) {
-    this._handleNewPolarity('dark')
-  }
+  // shut off step repeat finish any in-progress clear layer and/or repeat
+  this._handleNewRepeat([])
 
   // add the defs
   if (this.defs) {
-    this._result += '<defs>' + this.defs + '</defs>'
+    result += '<defs>' + this.defs + '</defs>'
   }
 
   // add the layer
   if (this.layer) {
     var yTranslate = this.viewBox[3] + 2 * this.viewBox[1]
     var transform = 'translate(0,' + yTranslate + ') scale(1,-1)'
-    var transformAttr = attr('transform', transform) + ' '
-    var strokeAndFill = attr('fill', this._color) + ' ' + attr('stroke', this._color)
-    this._result += '<g ' + transformAttr + strokeAndFill + '>' + this.layer + '</g>'
+
+    result += xmlNode('g', false, {
+      transform: transform,
+      fill: 'currentColor',
+      stroke: 'currentColor'
+    })
+    result += this.layer + '</g>'
   }
 
-  this._result += SVG_END
-  this.push(this._result)
+  result += '</svg>'
+  this.push(result)
   done()
 }
 
+PlotterToSvg.prototype._finishBlockLayer = function() {
+  // if there's a block, wrap it up, give it an id, and repeat it
+  if (this._block) {
+    this._blockLayerCount++
+
+    var blockLayerId = this._id + '_block-' + this._blockCount + '-' + this._blockLayerCount
+    this.defs += xmlNode('g', false, {id: blockLayerId}) + this._block + '</g>'
+
+    this._block = ''
+  }
+}
+
+PlotterToSvg.prototype._finishClearLayer = function() {
+  if (this._mask) {
+    this.defs += this._mask + '</mask>'
+    this._mask = ''
+    return true
+  }
+
+  return false
+}
+
 PlotterToSvg.prototype._handleNewPolarity = function(polarity, box) {
+  if (this._blockMode) {
+    return this._finishBlockLayer()
+  }
+
+  this._clearCount = (polarity === 'clear') ? this._clearCount + 1 : this._clearCount
+  var maskId = this._id + '_clear-' + this._clearCount
+
   // if clear polarity, wrap the layer and start a mask
   if (polarity === 'clear') {
-    var maskId = this._prefix + '_layer-' + (++this._layerCount)
     this.layer = maskLayer(maskId, this.layer)
     this._mask = startMask(maskId, box)
   }
   // else, finish the mask and add it to the defs
-  else if (this._mask) {
-    this.defs += this._mask + '</mask>'
-    this._mask = ''
+  else {
+    this._finishClearLayer(box)
+  }
+}
+
+PlotterToSvg.prototype._handleNewRepeat = function(offsets, box) {
+  var endOfBlock = (offsets.length === 0)
+
+  // finish any in progress clear layer and block layer
+  var wasClear = this._finishClearLayer()
+  this._finishBlockLayer()
+
+  var blockMode = this._blockMode
+  var blockLayers = this._blockLayerCount
+  var blockIdStart = this._id + '_block-' + this._blockCount + '-'
+
+  // add dark layers to layer
+  this.layer += map(this._offsets, function(offset) {
+    var result = ''
+    for (var i = blockMode; i <= blockLayers; i += 2) {
+      result += xmlNode('use', true, {
+        'xlink:href': '#' + blockIdStart + i,
+        x: shift(offset[0]),
+        y: shift(offset[1])
+      })
+    }
+
+    return result
+  }).join('')
+
+  // if there are clear layers in the block, mask the layer with them
+  if (blockLayers > 1) {
+    var maskId = blockIdStart + 'clear'
+    this.layer = maskLayer(maskId, this.layer)
+    this._mask = startMask(maskId, this._blockBox)
+    this._mask += map(this._offsets, function(offset) {
+      var result = ''
+      var isDark
+      for (var i = 1; i <= blockLayers; i++) {
+        isDark = (blockMode === BLOCK_MODE_DARK) ? ((i % 2) === 1) : ((i % 2) === 0)
+        result += xmlNode('use', true, {
+          'xlink:href': '#' + blockIdStart + i,
+          x: shift(offset[0]),
+          y: shift(offset[1]),
+          fill: isDark ? '#fff' : null,
+          stroke: isDark ? '#fff' : null
+        })
+      }
+
+      return result
+    }).join('')
+    wasClear = this._finishClearLayer()
+  }
+
+  // save the offsets
+  this._offsets = offsets
+  if (!endOfBlock) {
+    this._blockMode = (!wasClear) ? BLOCK_MODE_DARK : BLOCK_MODE_CLEAR
+    this._blockCount++
+    this._blockLayerCount = 0
+    this._blockBox = every(box, isFinite) ? box : [0, 0, 0, 0]
+  }
+  else {
+    this._blockMode = BLOCK_MODE_OFF
   }
 }
 
@@ -140,11 +240,16 @@ PlotterToSvg.prototype._handleSize = function(box, units) {
 }
 
 PlotterToSvg.prototype._draw = function(object) {
-  if (!this._mask) {
-    this.layer += object
+  if (!this._blockMode) {
+    if (!this._mask) {
+      this.layer += object
+    }
+    else {
+      this._mask += object
+    }
   }
   else {
-    this._mask += object
+    this._block += object
   }
 }
 

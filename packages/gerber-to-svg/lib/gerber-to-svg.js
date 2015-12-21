@@ -1,7 +1,6 @@
 // gerber to svg transform stream
 'use strict'
 
-var events = require('events')
 var isString = require('lodash.isstring')
 var gerberParser = require('gerber-parser')
 var gerberPlotter = require('gerber-plotter')
@@ -31,16 +30,28 @@ var parseOptions = function(options) {
 
 var gerberToSvg = function(gerber, options, done) {
   var opts = parseOptions(options)
+  var callbackMode = (done != null)
 
   var parser = gerberParser()
   var plotter = gerberPlotter()
-  var svgStream = new PlotterToSvg(opts.id, opts.class, opts.color)
+  var converter = new PlotterToSvg(opts.id, opts.class, opts.color)
 
   parser.on('warning', function handleParserWarning(w) {
-    svgStream.warn(w)
+    converter.emit('warning', w)
   })
   plotter.on('warning', function handlePlotterWarning(w) {
-    svgStream.warn(w)
+    converter.emit('warning', w)
+  })
+  parser.once('error', function handleParserError(e) {
+    converter.emit('error', e)
+  })
+  plotter.once('error', function handlePlotterError(e) {
+    converter.emit('error', e)
+  })
+
+  // expose the filetype property of the parser for convenience
+  parser.once('end', function() {
+    converter.filetype = parser.format.filetype
   })
 
   if (gerber.pipe) {
@@ -52,34 +63,27 @@ var gerberToSvg = function(gerber, options, done) {
     process.nextTick(function writeStringToParser() {
       parser.write(gerber)
       parser.end()
-    }, 0)
+    })
   }
 
-  parser.pipe(plotter).pipe(svgStream)
+  parser.pipe(plotter).pipe(converter)
 
-  if (done == null) {
-    return svgStream
+  // collect result in callback mode
+  if (callbackMode) {
+    var result = ''
+
+    converter.on('readable', function collectStreamData() {
+      var data
+      do {
+        data = converter.read() || ''
+        result += data
+      } while (data)
+    })
+
+    converter.once('end', function callConversionDone() {
+      done(null, result)
+    })
   }
-
-  // return a simple event emitter instead of a stream if in callback mode
-  var converter = new events.EventEmitter()
-  svgStream.on('warning', function passAlongStreamWarning(w) {
-    converter.emit('warning', w)
-  })
-
-  var result = ''
-
-  svgStream.on('readable', function collectStreamData() {
-    var data
-    do {
-      data = svgStream.read() || ''
-      result += data
-    } while (data)
-  })
-
-  svgStream.on('end', function callConversionDone() {
-    done(null, result)
-  })
 
   return converter
 }

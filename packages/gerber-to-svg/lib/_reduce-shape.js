@@ -5,32 +5,36 @@ var reduce = require('lodash.reduce')
 
 var util = require('./_util')
 var shift = util.shift
-var attr = util.attr
+var xmlNode = util.xmlNode
 var startMask = util.startMask
 var maskLayer = util.maskLayer
 
 var circle = function(id, cx, cy, r, width) {
-  var idAttr = (id) ? (attr('id', id) + ' ') : ''
-  var cxAttr = attr('cx', shift(cx)) + ' '
-  var cyAttr = attr('cy', shift(cy)) + ' '
-  var rAttr = attr('r', shift(r))
-  var widthAttr = (width) ? (' ' + attr('stroke-width', shift(width))) : ''
-  widthAttr += (width) ? (' ' + attr('fill', 'none')) : ''
+  width = (width != null) ? shift(width) : null
+  var fill = (width != null) ? 'none' : null
 
-  return '<circle ' + idAttr + cxAttr + cyAttr + rAttr + widthAttr + '/>'
+  return xmlNode('circle', true, {
+    id: id,
+    cx: shift(cx),
+    cy: shift(cy),
+    r: shift(r),
+    'stroke-width': width,
+    fill: fill
+  })
 }
 
 var rect = function(id, cx, cy, r, width, height) {
-  var idAttr = (id) ? (attr('id', id) + ' ') : ''
-  var xAttr = attr('x', shift(cx - width / 2)) + ' '
-  var yAttr = attr('y', shift(cy - height / 2)) + ' '
-  var widthAttr = attr('width', shift(width)) + ' '
-  var heightAttr = attr('height', shift(height))
+  r = (r) ? shift(r) : null
 
-  r = shift(r)
-  var rAttr =  (r) ? (attr('rx', r) + ' ' + attr('ry', r) + ' ') : ''
-
-  return '<rect ' + idAttr + xAttr + yAttr + rAttr + widthAttr + heightAttr + '/>'
+  return xmlNode('rect', true, {
+    id: id,
+    x: shift(cx - width / 2),
+    y: shift(cy - height / 2),
+    rx: r,
+    ry: r,
+    width: shift(width),
+    height: shift(height)
+  })
 }
 
 var polyPoints = function(result, point, i, points) {
@@ -39,27 +43,24 @@ var polyPoints = function(result, point, i, points) {
 }
 
 var poly = function(id, points) {
-  var idAttr = (id) ? (attr('id', id) + ' ') : ''
-  var pointsAttr = attr('points', reduce(points, polyPoints, ''))
-  return '<polygon ' + idAttr + pointsAttr + '/>'
+  return xmlNode('polygon', true, {id: id, points: reduce(points, polyPoints, '')})
 }
 
 var clip = function(id, shapes, ring) {
   var maskId = id + '_mask'
-  var mask = '<mask ' + attr('id', maskId) + ' ' + attr('stroke', '#fff') + '>'
+  var maskUrl = 'url(#' + maskId + ')'
+  var mask = xmlNode('mask', false, {id: maskId, stroke: '#fff'})
   mask += circle(null, ring.cx, ring.cy, ring.r, ring.width) + '</mask>'
 
-
-  var svg = '<g ' + attr('id', id) + ' ' + attr('mask', 'url(#' + maskId + ')') + '>'
-  svg = reduce(shapes, function(result, shape) {
+  var group = reduce(shapes, function(result, shape) {
     if (shape.type === 'rect') {
       return (result + rect(null, shape.cx, shape.cy, shape.r, shape.width, shape.height))
     }
 
     return (result + poly(null, shape.points))
-  }, svg)
+  }, xmlNode('g', false, {id: id, mask: maskUrl}))
 
-  return mask + svg + '</g>'
+  return mask + group + '</g>'
 }
 
 var reduceShapeArray = function(prefix, code, shapeArray) {
@@ -69,7 +70,7 @@ var reduceShapeArray = function(prefix, code, shapeArray) {
   var end = ''
 
   if (shapeArray.length > 1) {
-    start = '<g ' + attr('id', id) + '>'
+    start = xmlNode('g', false, {id: id})
     end = '</g>'
     id = null
   }

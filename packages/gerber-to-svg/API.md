@@ -42,7 +42,7 @@ streamConverter.pipe(process.stdout)
 
 ## callback API
 
-Alternatively, if you don't like streams, you may pass in a callback function to be called when the conversion is complete. It is passed any error that occurred, and the result of the conversion if no error.
+Alternatively, if you don't like streams, you may pass in a callback function to be called when the conversion is complete. It is passed any error that occurred, and the result of the conversion if no error. The function will still return a readable-stream.
 
 ``` javascript
 var gerberToSvg = require('gerber-to-svg')
@@ -65,9 +65,9 @@ fs.readFile('/path/to/file.gbr', {encoding: 'utf8'}, function(fsError, gerberStr
 
 ## events
 
-The stream events of `data`, `readable`, `end`, `close`, and `error` are present if used in streaming mode. If passed a callback, those events will not be emitted.
+The stream events of `data`, `readable`, `end`, `close`, and `error` are present as described in the [readable-stream documentation](https://nodejs.org/api/stream.html#stream_class_stream_readable)
 
-Regardless of whether the module is used in streaming or callback mode, the returned object can emit `warning` events. The warning objects passed to the event handler are of the format:
+The returned object can also emit `warning` events. The warning object passed to the event handler is of the format:
 
 ``` javascript
 {
@@ -86,7 +86,7 @@ converter.on('warning', function(w) {
 
 ## output
 
-Regardless of whether the streaming API or the callback API is used, the output will be a string of an SVG node with the following format:
+The output will be a string of an SVG node with the following format:
 
 ``` xml
 <svg
@@ -132,7 +132,7 @@ The function must be passed an options object or string. If passed a string, it 
 key    | value     | default        
 -------|-----------|----------------
 id     | String    | N/A (required)
-class  | String    | N/A
+class  | String    | undefined
 color  | CSS color | 'currentColor'
 
 **parsing and plotting options**
@@ -157,7 +157,7 @@ The `class` option adds a class to the SVG node. Any periods (`.`) in the classn
 
 ### color option
 
-The `color` option is a CSS color that will be used as the fill and stroke color. The default value of "currentColor" means you can style the SVG using an external CSS stylesheet by defining the `color` property.
+The `color` option is a CSS color that will be used as the `fill` and `stroke` value of the image. The default value of 'currentColor' means the color will be defined by the CSS `color` property of the SVG.
 
 ### pretty option
 

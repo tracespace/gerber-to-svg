@@ -5,7 +5,7 @@ var reduce = require('lodash.reduce')
 
 var util = require('./_util')
 var shift = util.shift
-var attr = util.attr
+var xmlNode = util.xmlNode
 
 var pointsEqual = function(point, target) {
   return ((point[0] === target[0]) && (point[1] === target[1]))
@@ -78,12 +78,11 @@ var reduceSegments = function(result, segment) {
 }
 
 var createPath = function(segments, width) {
-  var path = reduce(segments, reduceSegments, {last: [], data: ''})
-  var dataAttr = attr('d', path.data)
-  var fillAttr = (width) ? (' ' + attr('fill', 'none')) : ''
-  var widthAttr = (width) ? (' ' + attr('stroke-width', shift(width))) : ''
+  var pathData = reduce(segments, reduceSegments, {last: [], data: ''}).data
+  var fill = (width != null) ? 'none' : null
+  width = (width != null) ? shift(width) : null
 
-  return '<path ' + dataAttr + fillAttr + widthAttr + '/>'
+  return xmlNode('path', true, {d: pathData, fill: fill, 'stroke-width': width})
 }
 
 module.exports = createPath
