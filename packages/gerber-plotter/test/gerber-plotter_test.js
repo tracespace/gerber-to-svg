@@ -1628,11 +1628,11 @@ describe('gerber plotter', function() {
     })
 
     it('should push a step repeat with the current bounding box', function(done) {
-      p.on('readable', function() {
+      p.once('readable', function() {
         var result = p.read()
         expect(result).to.eql({
           type: 'repeat',
-          offsets: [[0, 2.2], [0, 4.4], [3.3, 0], [3.3, 2.2], [3.3, 4.4]],
+          offsets: [[0, 0], [0, 2.2], [0, 4.4], [3.3, 0], [3.3, 2.2], [3.3, 4.4]],
           box: [0, 0, 10, 10]
         })
         done()
@@ -1642,11 +1642,12 @@ describe('gerber plotter', function() {
       p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 3, i: 3.3, j: 2.2}})
     })
 
-    it('should update the box with a step repeat', function() {
+    it('should update the box during a step repeat', function() {
+      var tool = {shape: 'circle', val: [2], hole: []}
+      p.write({cmd: 'tool', key: '10', val: tool})
       p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 2, i: 3.5, j: -3}})
-      p._box = [0, 0, 10, 10]
-      p.write({cmd: 'level', key: 'stepRep', val: {x: 1, y: 1, i: 0, j: 0}})
-      expect(p._box).to.eql([0, -3, 13.5, 10])
+      p.write({cmd: 'op', key: 'flash', val: {x: -3, y: 4}})
+      expect(p._box).to.eql([-4, 0, 1.5, 5])
     })
   })
 

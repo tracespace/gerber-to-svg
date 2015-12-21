@@ -27,6 +27,7 @@ var addPoint = function(box, point) {
   ]
 }
 
+// add a circle at (cx, cy) with radius r to box
 var addCircle = function(box, r, cx, cy) {
   return [
     Math.min(box[0], cx - r),
@@ -36,10 +37,11 @@ var addCircle = function(box, r, cx, cy) {
   ]
 }
 
+// translate a box by a delta [x, y]
 var translate = function(box, delta) {
   var dx = delta[0]
   var dy = delta[1]
-  
+
   return [
     box[0] + dx,
     box[1] + dy,
@@ -48,10 +50,16 @@ var translate = function(box, delta) {
   ]
 }
 
+// get the overall box if box is repeated at [x, y]
+var repeat = function(box, repeat) {
+  return add(box, translate(box, repeat))
+}
+
 module.exports = {
   new: newBox,
   add: add,
   addPoint: addPoint,
   addCircle: addCircle,
-  translate: translate
+  translate: translate,
+  repeat: repeat
 }

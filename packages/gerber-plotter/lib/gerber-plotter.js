@@ -51,6 +51,17 @@ var _checkFormat = function() {
   }
 }
 
+var _updateBox = function(box) {
+  var stepRepLen = this._stepRep.length
+  if (!stepRepLen) {
+    this._box = boundingBox.add(this._box, box)
+  }
+  else {
+    var repeatBox = boundingBox.repeat(box, this._stepRep[stepRepLen - 1])
+    this._box = boundingBox.add(this._box, repeatBox)
+  }
+}
+
 var _transform = function(chunk, encoding, done) {
   var cmd = chunk.cmd
   var key = chunk.key
@@ -112,7 +123,7 @@ var _transform = function(chunk, encoding, done) {
 
     this._lastOp = key
     this._pos = result.pos
-    this._box = boundingBox.add(this._box, result.box)
+    this._updateBox(result.box)
   }
 
   else if (cmd === 'set') {
@@ -196,21 +207,14 @@ var _transform = function(chunk, encoding, done) {
       })
     }
     else {
-      // update the box for any existing SR if necessary
-      if (this._stepRep.length) {
-        var srLimit = this._stepRep[this._stepRep.length - 1]
-        var srBoxLimit = boundingBox.translate(this._box, srLimit)
-        this._box = boundingBox.add(this._box, srBoxLimit)
-      }
-
-      // calcualte new offsets
+      // calculate new offsets
       var offsets = []
       for (var x = 0; x < val.x; x++) {
         for (var y = 0; y < val.y; y++) {
           offsets.push([x * val.i, y * val.j])
         }
       }
-      this._stepRep = offsets.slice(1)
+      this._stepRep = offsets
 
       this.push({type: 'repeat', offsets: clone(this._stepRep), box: clone(this._box)})
     }
@@ -226,6 +230,7 @@ var _transform = function(chunk, encoding, done) {
 
 var _flush = function(done) {
   this._finishPath()
+
   this.push({type: 'size', box: this._box, units: this.format.units})
   done()
 }
@@ -238,6 +243,7 @@ var plotter = function(options) {
     flush: _flush
   })
 
+  stream._updateBox = _updateBox
   stream._finishPath = _finishPath
   stream._warn = _warn
   stream._checkFormat = _checkFormat
