@@ -8,6 +8,7 @@ var parseArgs = require('minimist')
 var chalk = require('chalk')
 var forEach = require('lodash.foreach')
 var reduce = require('lodash.reduce')
+var xmlovely = require('xmlovely')
 
 var gerberToSvg = require('../lib/gerber-to-svg')
 
@@ -31,6 +32,7 @@ var BANNER = [
 var OPTIONS = [
   ['o', 'out', '        specify an output directory'],
   ['q', 'quiet', '      do not print warnings and messages'],
+  ['p', 'pretty', '     indent output with this length tabs (2 if unspecified)'],
   ['c', 'color', '      use this color instead of "currentColor" for fills and strokes'],
   ['f', 'format', "     override coordinate format with '[INT,DEC]'"],
   ['z', 'zero', "       override zero suppression with 'L' or 'T'"],
@@ -70,7 +72,8 @@ var printHelp = function() {
 var argv = parseArgs(process.argv.slice(2), {
   alias: ALIAS_OPTS,
   string: STRING_OPTS,
-  boolean: BOOLEAN_OPTS
+  boolean: BOOLEAN_OPTS,
+  stopEarly: true
 })
 
 if (argv.version) {
@@ -137,6 +140,13 @@ var convert = function(err) {
       out.on('finish', function() {
         info(gerberFile + ' converterted to ' + outFile)
       })
+    }
+
+    if (argv.pretty) {
+      var indent = (argv.pretty === true) ? 2 : argv.pretty
+      var originalOut = out
+      out = xmlovely(indent)
+      out.pipe(originalOut)
     }
 
     var gerberStream = fs.createReadStream(gerberFile)
