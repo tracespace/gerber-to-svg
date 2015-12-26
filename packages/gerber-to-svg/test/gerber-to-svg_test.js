@@ -44,6 +44,7 @@ describe('gerber to svg', function() {
     fakeConverter = new events.EventEmitter()
     assign(fakeConverter, {
       pipe: sinon.stub().returnsArg(0),
+      read: sinon.stub(),
       write: sinon.spy()
     })
 
@@ -66,6 +67,25 @@ describe('gerber to svg', function() {
 
     expect(converterStub).to.have.been.always.calledWithNew
     expect(converterStub).to.have.been.calledTwice
+  })
+
+  it('should gather readable data from the converter in callback mode', function(done) {
+    gerberToSvg('foobar*\n', 'quz', function(error, result) {
+      expect(error).to.not.exist
+      expect(result).to.equal('<svg><foo/><bar/></svg>')
+      done()
+    })
+
+    fakeConverter.read.onCall(0).returns('<svg>')
+    fakeConverter.read.onCall(1).returns('<foo/>')
+    fakeConverter.read.onCall(2).returns(null)
+    fakeConverter.emit('readable')
+    fakeConverter.read.onCall(3).returns('<bar/>')
+    fakeConverter.read.onCall(4).returns('</svg>')
+    fakeConverter.read.onCall(5).returns(null)
+    fakeConverter.emit('readable')
+
+    fakeConverter.emit('end')
   })
 
   it('should pipe a stream input into the parser', function() {
@@ -103,6 +123,11 @@ describe('gerber to svg', function() {
     expect(function() {gerberToSvg('', {})}).to.throw(/id required/)
   })
 
+  it('should replace dots in the id with dashed', function() {
+    gerberToSvg('', 'hello.world')
+    expect(converterStub).to.have.been.calledWith('hello-world')
+  })
+
   it('should pass the class option', function() {
     gerberToSvg('', {id: 'foo', class: 'bar'})
     expect(converterStub).to.have.been.calledWith('foo', 'bar')
@@ -110,7 +135,7 @@ describe('gerber to svg', function() {
 
   it('should pass the color option', function() {
     gerberToSvg('', {id: 'foo', color: 'red'})
-    expect(converterStub).to.have.been.calledWith('foo', '', 'red')
+    expect(converterStub).to.have.been.calledWith('foo', undefined, 'red')
   })
 
   describe('passing along warnings', function() {
@@ -159,6 +184,26 @@ describe('gerber to svg', function() {
       })
       fakePlotter.emit('error', error)
     })
+
+    it('should return errors from the parser in callback mode', function(done) {
+      var expectedError = {}
+      gerberToSvg('foobar*\n', 'foobar', function(error) {
+        expect(error).to.equal(expectedError)
+        done()
+      })
+
+      fakeParser.emit('error', expectedError)
+    })
+
+    it('should return errors from the plotter in callback mode', function(done) {
+      var expectedError = {}
+      gerberToSvg('foobar*\n', 'foobar', function(error) {
+        expect(error).to.equal(expectedError)
+        done()
+      })
+
+      fakePlotter.emit('error', expectedError)
+    })
   })
 
   it('should take the filetype format from the parser', function() {
@@ -171,5 +216,41 @@ describe('gerber to svg', function() {
 
     parser.emit('end')
     expect(converter.filetype).to.equal('foobar')
+  })
+
+  describe('parser and plottter options', function() {
+    it('should pass parser options to the parser', function() {
+      var options = {
+        id: 'bar',
+        places: [2, 3],
+        zero: 'T',
+        filetype: 'drill'
+      }
+      gerberToSvg('foo*\n', options)
+
+      expect(parserStub).to.have.been.calledWith({
+        places: [2, 3],
+        zero: 'T',
+        filetype: 'drill'
+      })
+    })
+
+    it('should pass plotter options to the plotter', function() {
+      var options = {
+        id: 'bar',
+        units: 'in',
+        backupUnits: 'mm',
+        nota: 'A',
+        backupNota: 'I'
+      }
+      gerberToSvg('foo*\n', options)
+
+      expect(plotterStub).to.have.been.calledWith({
+        units: 'in',
+        backupUnits: 'mm',
+        nota: 'A',
+        backupNota: 'I'
+      })
+    })
   })
 })

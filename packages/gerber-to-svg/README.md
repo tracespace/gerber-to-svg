@@ -12,7 +12,14 @@ Gerber and NC drill file to SVG converter for Node and the browser.
 
 ### api
 
-See [the API documentation](./API.md)
+`$ npm install --save gerber-to-svg`
+
+``` javascript
+var gerberToSvg = require('gerber-to-svg')
+var converter = gerberToSvg(input, options, [callback])
+```
+
+See [the API documentation](./API.md) for full details.
 
 ### command line
 
@@ -25,8 +32,9 @@ switch             | type    | how it rolls
 -------------------|---------|-------------------------
 `-o, --out`        | string  | specify an output directory
 `-q, --quiet`      | boolean | do not print warnings and messages
+`-p, --pretty`     | int     | indent output with this length tabs (2 if unspecified)
 `-c, --color`      | color   | use this color instead of "currentColor" for fills and strokes
-`-p, --places`     | array   | override coordinate format with '[INT,DEC]'
+`-f, --format`     | array   | override coordinate format with '[INT,DEC]'
 `-z, --zero`       | string  | override zero suppression with 'L' or 'T'
 `-u, --units`      | string  | set backup units with 'mm' or 'in'
 `-n, --notation`   | string  | set backup absolute/incremental notation with 'A' or 'I'
@@ -61,15 +69,15 @@ Clone and then `$ npm install`. Please accompany all PRs with applicable tests (
 This module uses [Mocha](http://mochajs.org/) and [Chai](http://chaijs.com/) for unit testing, [Istanbul](https://github.com/gotwarlost/istanbul) for coverage, and [ESLint](http://eslint.org/) for linting.
 
 * `$ npm test` - run the tests, calculate coverage, and lint
-* `$ npm run test-watch` - run the tests on code changes (does not lint nor cover)
+* `$ npm run test:watch` - run the tests on code changes (does not lint nor cover)
 * `$ npm run lint` - lint the code (will be run as a pre-commit script)
 
 ### browser testing
 
-Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and  [Sauce Labs](https://saucelabs.com/opensauce/).
+Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and [Sauce Labs](https://saucelabs.com/opensauce/).
 
-* `$ npm run browser` - run the unit tests in a local browser
-* `$ npm run browser-sauce` - run the units tests in several browsers using Open Sauce (Sauce Labs account and local [.zuulrc](https://github.com/defunctzombie/zuul/wiki/Zuulrc) required)
+* `$ npm run test:browser` - run the unit tests in a local browser
+* `$ npm run test:sauce` - run the units tests in several browsers using Open Sauce (Sauce Labs account and local [.zuulrc](https://github.com/defunctzombie/zuul/wiki/Zuulrc) required)
 
 ### visual testing
 
