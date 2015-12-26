@@ -3,7 +3,7 @@
 Create a gerber-to-svg converter like:
 
 ``` javascript
-var gerberToSvg = require('gerberToSvg')
+var gerberToSvg = require('gerber-to-svg')
 var converter = gerberToSvg(input, options, [callback])
 ```
 
@@ -133,7 +133,7 @@ key    | value     | default
 -------|-----------|----------------
 id     | String    | N/A (required)
 class  | String    | undefined
-color  | CSS color | 'currentColor'
+color  | CSS color | undefined
 
 **parsing and plotting options**
 
