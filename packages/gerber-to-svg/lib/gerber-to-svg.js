@@ -8,33 +8,48 @@ var gerberPlotter = require('gerber-plotter')
 var PlotterToSvg = require('./plotter-to-svg')
 
 var parseOptions = function(options) {
-  if (isString(options)) {
-    return {id: options}
-  }
-
-  var id = options.id
-  var className = options.class || ''
-  var color = options.color || ''
-  // var pretty
-
-  if (id == null) {
+  var optionsIsString = isString(options)
+  if (options == null || (!optionsIsString && (options.id == null))) {
     throw new Error('id required for gerber-to-svg')
   }
 
-  return {
-    id: id,
-    class: className,
-    color: color
+  if (optionsIsString) {
+    return {svg: {id: options.replace('.', '-')}}
   }
+
+  var id = options.id.replace('.', '-')
+  var className = options.class
+  var color = options.color
+
+  var opts = {
+    svg: {
+      id: id,
+      class: className,
+      color: color
+    },
+    parser: {
+      places: options.places,
+      zero: options.zero,
+      filetype: options.filetype
+    },
+    plotter: {
+      units: options.units,
+      backupUnits: options.backupUnits,
+      nota: options.nota,
+      backupNota: options.backupNota
+    }
+  }
+
+  return opts
 }
 
 var gerberToSvg = function(gerber, options, done) {
   var opts = parseOptions(options)
   var callbackMode = (done != null)
 
-  var parser = gerberParser()
-  var plotter = gerberPlotter()
-  var converter = new PlotterToSvg(opts.id, opts.class, opts.color)
+  var parser = gerberParser(opts.parser)
+  var plotter = gerberPlotter(opts.plotter)
+  var converter = new PlotterToSvg(opts.svg.id, opts.svg.class, opts.svg.color)
 
   parser.on('warning', function handleParserWarning(w) {
     converter.emit('warning', w)
@@ -72,6 +87,10 @@ var gerberToSvg = function(gerber, options, done) {
   if (callbackMode) {
     var result = ''
 
+    var finishConversion = function() {
+      return done(null, result)
+    }
+
     converter.on('readable', function collectStreamData() {
       var data
       do {
@@ -80,8 +99,11 @@ var gerberToSvg = function(gerber, options, done) {
       } while (data)
     })
 
-    converter.once('end', function callConversionDone() {
-      done(null, result)
+    converter.once('end', finishConversion)
+
+    converter.once('error', function(error) {
+      converter.removeListener('end', finishConversion)
+      return done(error)
     })
   }
 

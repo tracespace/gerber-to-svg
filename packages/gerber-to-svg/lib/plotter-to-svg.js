@@ -146,6 +146,9 @@ PlotterToSvg.prototype._finishClearLayer = function() {
 
 PlotterToSvg.prototype._handleNewPolarity = function(polarity, box) {
   if (this._blockMode) {
+    if ((this._blockLayerCount === 0) && (this._block === '')) {
+      this._blockMode = (polarity === 'dark') ? BLOCK_MODE_DARK : BLOCK_MODE_CLEAR
+    }
     return this._finishBlockLayer()
   }
 
@@ -189,7 +192,7 @@ PlotterToSvg.prototype._handleNewRepeat = function(offsets, box) {
   }).join('')
 
   // if there are clear layers in the block, mask the layer with them
-  if (blockLayers > 1) {
+  if (blockLayers > (2 - blockMode)) {
     var maskId = blockIdStart + 'clear'
     this.layer = maskLayer(maskId, this.layer)
     this._mask = startMask(maskId, this._blockBox)

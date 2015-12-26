@@ -538,6 +538,31 @@ describe('plotter to svg transform stream', function() {
         '</g>'
       ].join(''))
     })
+
+    it('should handle step repeats that start with dark then change to clear', function() {
+      var offsets = [[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]
+      p.layer = 'SOME_EXISTING_STUFF'
+      p.write({type: 'repeat', offsets: offsets, box: [0, 0, 1, 1]})
+      p.write({type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]})
+      p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
+      p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
+
+      expect(p.defs).to.equal([
+        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="0" y="500"/>',
+        '<use xlink:href="#id_block-1-1" x="500" y="0"/>',
+        '<use xlink:href="#id_block-1-1" x="500" y="500"/>',
+        '</mask>'
+      ].join(''))
+      expect(p.layer).to.equal([
+        '<g mask="url(#id_block-1-clear)">',
+        'SOME_EXISTING_STUFF',
+        '</g>'
+      ].join(''))
+    })
   })
 
   describe('end of stream', function() {
