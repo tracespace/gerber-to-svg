@@ -33,6 +33,10 @@ var verifyMap = {
 }
 
 var pickOptions = function(value, key) {
+  if (value == null) {
+    return false
+  }
+
   var verification = verifyMap[key]
   if (!verification) {
     throw new Error(key + ' is an invalid options key')

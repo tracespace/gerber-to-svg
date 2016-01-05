@@ -63,8 +63,23 @@ describe('gerber plotter', function() {
       expect(p.format.backupNota).to.equal('A')
     })
 
-    it('should throw if a options key is invalid', function() {
+    it('should throw if an options key is invalid', function() {
       expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
+    })
+
+    it('should not throw with null/undefined options', function() {
+      var p
+      expect(function() {p = plotter({units: null})}).to.not.throw()
+      expect(p.format.units).to.be.null
+
+      expect(function() {p = plotter({backupUnits: undefined})}).to.not.throw()
+      expect(p.format.backupUnits).to.equal('in')
+
+      expect(function() {p = plotter({nota: undefined})}).to.not.throw()
+      expect(p.format.nota).to.be.null
+
+      expect(function() {p = plotter({backupNota: null})}).to.not.throw()
+      expect(p.format.backupNota).to.equal('A')
     })
   })
 
