@@ -51,6 +51,18 @@ describe('gerber parser', function() {
       expect(function() {p = parser(badOpts)}).to.throw(/type/)
       void p
     })
+
+    it('should not throw with null/undefined options', function() {
+      var p
+      expect(function() {p = parser({places: null})}).to.not.throw()
+      expect(p.format.places).to.eql([])
+
+      expect(function() {p = parser({filetype: undefined})}).to.not.throw()
+      expect(p.format.filetype).to.be.null
+
+      expect(function() {p = parser({zero: null})}).to.not.throw()
+      expect(p.format.zero).to.be.null
+    })
   })
 
   describe('reading files', function() {

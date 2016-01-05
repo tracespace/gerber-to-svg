@@ -28,6 +28,10 @@ var verifyMap = {
 }
 
 var pickOptions = function(value, key) {
+  if (value == null) {
+    return false
+  }
+
   var verification = verifyMap[key]
   var result = verification.check(value)
   if (!result) {
