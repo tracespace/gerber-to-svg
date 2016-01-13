@@ -45,11 +45,12 @@ Code is deployed on tags via [TravisCI](https://travis-ci.org/) and code coverag
 
 * `$ npm run lint` - lints code
 * `$ npm run test` - runs Node unit tests
-* `$ npm run test-watch` - runs unit tests and re-runs on changes
-* `$ npm run browser` - runs tests in a local browser
-* `$ npm run browser-phantom` - runs tests in PhantomJS
-* `$ npm run browser-sauce` - runs tests in Sauce Labs on multiple browsers
+* `$ npm run test:watch` - runs unit tests and re-runs on changes
+* `$ npm run test:browser` - runs tests in a local browser
+* `$ npm run test:sauce` - runs tests in Sauce Labs on multiple browsers
   * Sauce Labs account required
+  * Local [.zuulrc](https://github.com/defunctzombie/zuul/wiki/Zuulrc) required
 * `$ npm run ci` - Script for CI server to run
   * Runs `npm test` and sends coverage report to Coveralls
-  * If you want to run this locally, you'll need to set some environment variables
+  * If not a PR, runs browser tests in Sauce
+  * Not designed to (and won't) run locally

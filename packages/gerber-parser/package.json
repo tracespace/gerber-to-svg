@@ -2,17 +2,16 @@
   "name": "gerber-parser",
   "version": "0.1.7",
   "description": "A PCB Gerber/drill-file parser implemented as a Node transform-stream",
-  "main": "lib/gerber-parser.js",
+  "main": "lib/index.js",
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
     "test": "istanbul cover --include-all-sources _mocha",
     "posttest": "npm run lint",
-    "test-watch": "mocha --reporter dot --watch",
-    "browser": "zuul --local -- ./test/*_test.js",
-    "browser-phantom": "zuul --phantom -- ./test/*_test.js",
-    "browser-sauce": "zuul -- ./test/*_test.js",
-    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci-browser; fi",
-    "ci-browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run browser-sauce; fi",
+    "test:watch": "mocha --reporter dot --timeout 500ms --watch",
+    "test:browser": "zuul --local -- ./test/*_test.js",
+    "test:sauce": "zuul -- ./test/*_test.js",
+    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci:browser; fi",
+    "ci:browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run test:sauce; fi",
     "postci": "coveralls < ./coverage/lcov.info"
   },
   "precommit": [
@@ -40,6 +39,7 @@
   },
   "homepage": "https://github.com/mcous/gerber-parser#readme",
   "dependencies": {
+    "inherits": "^2.0.1",
     "lodash.assign": "^3.2.0",
     "lodash.bind": "^3.1.0",
     "lodash.clone": "^3.0.3",
@@ -60,7 +60,6 @@
     "istanbul": "^0.4.1",
     "lodash.repeat": "^3.0.1",
     "mocha": "^2.3.0",
-    "phantomjs": "^1.9.18",
     "pre-commit": "^1.1.1",
     "zuul": "^3.8.0"
   }

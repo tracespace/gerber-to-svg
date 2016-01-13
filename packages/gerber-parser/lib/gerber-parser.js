@@ -1,9 +1,9 @@
 // generic file parser for gerber and drill files
 'use strict'
 
+var inherits = require('inherits')
 var Transform = require('readable-stream').Transform
 
-var applyOptions = require('./_apply-options')
 var determineFiletype = require('./_determine-filetype')
 var getNext = require('./get-next-block')
 var parseGerber = require('./_parse-gerber')
@@ -12,7 +12,19 @@ var warning = require('./_warning')
 
 var LIMIT = 65535
 
-var _transform = function(chunk, encoding, done) {
+var Parser = function(places, zero, filetype) {
+  Transform.call(this, {decodeStrings: false, readableObjectMode: true})
+
+  // parser properties
+  this._stash = ''
+  this._index = 0
+  this.line = 0
+  this.format = {places: places, zero: zero, filetype: filetype}
+}
+
+inherits(Parser, Transform)
+
+Parser.prototype._transform = function(chunk, encoding, done) {
   var filetype = this.format.filetype
 
   // determine filetype within 65535 characters
@@ -56,36 +68,13 @@ var _transform = function(chunk, encoding, done) {
   done()
 }
 
-var _push = function(data) {
+Parser.prototype._push = function(data) {
   data.line = this.line
   this.push(data)
 }
 
-var _warn = function(message) {
+Parser.prototype._warn = function(message) {
   this.emit('warning', warning(message, this.line))
 }
 
-var parser = function(opts) {
-  // create a transform stream
-  var stream = new Transform({
-    decodeStrings: false,
-    readableObjectMode: true
-  })
-
-  // parser methods
-  stream._transform = _transform
-  stream._push = _push
-  stream._warn = _warn
-
-  // parser properties
-  stream._stash = ''
-  stream._index = 0
-  stream.line = 0
-  stream.format = {places: [], zero: null, filetype: null}
-
-  // apply options and return
-  applyOptions(opts, stream.format)
-  return stream
-}
-
-module.exports = parser
+module.exports = Parser
