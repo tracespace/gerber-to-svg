@@ -8,7 +8,9 @@ var commands = require('./_commands')
 var normalize = require('./normalize-coord')
 var parseCoord = require('./parse-coord')
 
+var reALTIUM_HINT = /;FILE_FORMAT=(\d):(\d)/
 var reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
+
 
 var reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
 var reTOOL_DEF = /T0*(\d+)C([\d.]+)/
@@ -69,6 +71,12 @@ var parse = function(parser, block) {
       }
     }
 
+    // check for altium format hints
+    else if (reALTIUM_HINT.test(block)) {
+      var altiumMatch = block.match(reALTIUM_HINT)
+
+      parser.format.places = [Number(altiumMatch[1]), Number(altiumMatch[2])]
+    }
     return
   }
 

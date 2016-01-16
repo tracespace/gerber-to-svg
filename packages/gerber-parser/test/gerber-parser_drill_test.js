@@ -54,39 +54,48 @@ describe('gerber parser with gerber files', function() {
       setTimeout(done, 1)
     })
 
-    describe('kicad format hints', function() {
-      it('should set format and suppresion if included', function() {
-        p.write(';FORMAT={3:3/ absolute / metric / suppress trailing zeros}\n')
-        expect(p.format.zero).to.equal('T')
-        expect(p.format.places).to.eql([3, 3])
+    describe('format hints', function() {
+      describe('kicad', function() {
+        it('should set format and suppresion if included', function() {
+          p.write(';FORMAT={3:3/ absolute / metric / suppress trailing zeros}\n')
+          expect(p.format.zero).to.equal('T')
+          expect(p.format.places).to.eql([3, 3])
 
-        p = pFactory()
-        p.write(';FORMAT={2:4/ absolute / inch / suppress leading zeros}\n')
-        expect(p.format.zero).to.equal('L')
-        expect(p.format.places).to.eql([2, 4])
+          p = pFactory()
+          p.write(';FORMAT={2:4/ absolute / inch / suppress leading zeros}\n')
+          expect(p.format.zero).to.equal('L')
+          expect(p.format.places).to.eql([2, 4])
 
-        p = pFactory()
-        p.write(';FORMAT={-:-/ absolute / inch / decimal}\n')
-        expect(p.format.zero).to.equal('D')
-        expect(p.format.places).to.eql([])
+          p = pFactory()
+          p.write(';FORMAT={-:-/ absolute / inch / decimal}\n')
+          expect(p.format.zero).to.equal('D')
+          expect(p.format.places).to.eql([])
 
-        p = pFactory()
-        p.write(';FORMAT={3:3/ absolute / metric / keep zeros}\n')
-        expect(p.format.zero).to.equal('L')
-        expect(p.format.places).to.eql([3, 3])
+          p = pFactory()
+          p.write(';FORMAT={3:3/ absolute / metric / keep zeros}\n')
+          expect(p.format.zero).to.equal('L')
+          expect(p.format.places).to.eql([3, 3])
+        })
+
+        it('should set backupUnits and backupNota', function(done) {
+          var expected = [
+            {type: 'set', line: 1, prop: 'backupNota', value: 'A'},
+            {type: 'set', line: 1, prop: 'backupUnits', value: 'mm'},
+            {type: 'set', line: 2, prop: 'backupNota', value: 'I'},
+            {type: 'set', line: 2, prop: 'backupUnits', value: 'in'}
+          ]
+
+          expectResults(expected, done)
+          p.write(';FORMAT={3:3/ absolute / metric / suppress trailing zeros}\n')
+          p.write(';FORMAT={2:4/ incremental / inch / suppress leading zeros}\n')
+        })
       })
 
-      it('should set backupUnits and backupNota', function(done) {
-        var expected = [
-          {type: 'set', line: 1, prop: 'backupNota', value: 'A'},
-          {type: 'set', line: 1, prop: 'backupUnits', value: 'mm'},
-          {type: 'set', line: 2, prop: 'backupNota', value: 'I'},
-          {type: 'set', line: 2, prop: 'backupUnits', value: 'in'}
-        ]
-
-        expectResults(expected, done)
-        p.write(';FORMAT={3:3/ absolute / metric / suppress trailing zeros}\n')
-        p.write(';FORMAT={2:4/ incremental / inch / suppress leading zeros}\n')
+      describe('altium', function() {
+        it('should set format', function() {
+          p.write(';FILE_FORMAT=4:4\n')
+          expect(p.format.places).to.eql([4, 4])
+        })
       })
     })
   })
