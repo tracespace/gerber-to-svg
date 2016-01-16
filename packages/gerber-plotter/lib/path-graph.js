@@ -4,6 +4,7 @@
 var forEachRight = require('lodash.foreachright')
 var fill = require('lodash.fill')
 var find = require('lodash.find')
+var map = require('lodash.map')
 
 var pointsEqual = function(point, target) {
   return ((point[0] === target[0]) && (point[1] === target[1]))
@@ -22,21 +23,27 @@ var reverseSegment = function(segment) {
   return reversed
 }
 
-var PathGraph = function() {
+var PathGraph = function(optimize) {
   this._points = []
   this._edges = []
+  this._optimize = (optimize != null) ? optimize : true
 
   this.length = 0
 }
 
 PathGraph.prototype.add = function(newSeg) {
-  var start = find(this._points, function(point) {
-    return pointsEqual(point.position, newSeg.start)
-  })
+  var start
+  var end
 
-  var end = find(this._points, function(point) {
-    return pointsEqual(point.position, newSeg.end)
-  })
+  if (this._optimize) {
+    start = find(this._points, function(point) {
+      return pointsEqual(point.position, newSeg.start)
+    })
+
+    end = find(this._points, function(point) {
+      return pointsEqual(point.position, newSeg.end)
+    })
+  }
 
   if (!start) {
     start = {position: newSeg.start, edges: []}
@@ -58,6 +65,10 @@ PathGraph.prototype.add = function(newSeg) {
 }
 
 PathGraph.prototype.traverse = function() {
+  if (!this._optimize) {
+    return map(this._edges, 'segment')
+  }
+
   var walked = fill(Array(this._edges.length), false)
   var discovered = []
   var result = []

@@ -7,17 +7,13 @@
     "lint": "eslint lib/*.js test/*.js",
     "test": "istanbul cover --include-all-sources _mocha",
     "posttest": "npm run lint",
-    "test-watch": "mocha --reporter dot --watch",
-    "browser": "zuul --local -- ./test/*_test.js",
-    "browser-phantom": "zuul --phantom -- ./test/*_test.js",
-    "browser-sauce": "zuul -- ./test/*_test.js",
-    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci-browser; fi",
-    "ci-browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run browser-sauce; fi",
+    "test:watch": "mocha --reporter dot --watch",
+    "test:browser": "zuul --local -- ./test/*_test.js",
+    "test:sauce": "zuul -- ./test/*_test.js",
+    "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci:browser; fi",
+    "ci:browser": "if [ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ]; then npm run test:sauce; fi",
     "postci": "coveralls < ./coverage/lcov.info"
   },
-  "pre-commit": [
-    "lint"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mcous/gerber-plotter.git"
@@ -45,8 +41,6 @@
     "eslint": "^1.3.1",
     "istanbul": "^0.4.0",
     "mocha": "^2.3.1",
-    "phantomjs": "^1.9.18",
-    "pre-commit": "^1.1.1",
     "zuul": "^3.4.0"
   },
   "peerDependencies": {
@@ -63,7 +57,9 @@
     "lodash.has": "^3.2.1",
     "lodash.isfinite": "^3.2.0",
     "lodash.isfunction": "^3.0.6",
+    "lodash.map": "^3.1.4",
     "lodash.mapvalues": "^3.0.1",
+    "lodash.omit": "^3.1.0",
     "lodash.pick": "^3.1.0",
     "lodash.reduce": "^3.1.2",
     "lodash.transform": "^3.0.4",

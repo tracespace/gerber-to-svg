@@ -5,6 +5,7 @@ var TransformStream = require('readable-stream').Transform
 var has = require('lodash.has')
 var mapValues = require('lodash.mapvalues')
 var clone = require('lodash.clone')
+var omit = require('lodash.omit')
 
 var PathGraph = require('./path-graph')
 var applyOptions = require('./_apply-options')
@@ -24,10 +25,17 @@ var isFormatKey = function(key) {
 var _finishPath = function() {
   if (this._path.length) {
     var path = this._path.traverse()
-    this._path = new PathGraph()
+    this._path = new PathGraph(this._optimizePaths)
 
-    if (!this._region && (this._tool.trace.length === 1)) {
-      this.push({type: 'stroke', width: this._tool.trace[0], path: path})
+    // check for outline tool
+    var tool = this._tool
+    if (this._plotAsOutline) {
+      this._outTool = this._outTool || tool
+      tool = this._outTool
+    }
+
+    if (!this._region && (tool.trace.length === 1)) {
+      this.push({type: 'stroke', width: tool.trace[0], path: path})
     }
     else {
       this.push({type: 'fill', path: path})
@@ -116,7 +124,7 @@ var _transform = function(chunk, encoding, done) {
       this._tool,
       this._mode,
       this._arc,
-      this._region,
+      (this._region || this._plotAsOutline),
       this._path,
       this._epsilon,
       this)
@@ -243,6 +251,11 @@ var plotter = function(options) {
     flush: _flush
   })
 
+  options = options || {}
+  var optimizePaths = options.optimizePaths
+  var plotAsOutline = options.plotAsOutline
+  options = omit(options, ['optimizePaths', 'plotAsOutline'])
+
   stream._updateBox = _updateBox
   stream._finishPath = _finishPath
   stream._warn = _warn
@@ -262,9 +275,22 @@ var plotter = function(options) {
     backupNota: false
   }
 
+  // plotting options
+  stream._plotAsOutline = (plotAsOutline != null)
+    ? plotAsOutline
+    : false
+
+  stream._optimizePaths = (optimizePaths != null)
+    ? (optimizePaths || stream._plotAsOutline)
+    : true
+
+  // format options
+  applyOptions(options, stream.format, stream._formatLock)
+
   stream._line = 0
   stream._done = false
   stream._tool = null
+  stream._outTool = null
   stream._tools = {}
   stream._macros = {}
   stream._pos = [0, 0]
@@ -272,12 +298,11 @@ var plotter = function(options) {
   stream._mode = null
   stream._arc = null
   stream._region = false
-  stream._path = new PathGraph()
+  stream._path = new PathGraph(stream._optimizePaths)
   stream._epsilon = null
   stream._lastOp = null
   stream._stepRep = []
 
-  applyOptions(options, stream.format, stream._formatLock)
   return stream
 }
 

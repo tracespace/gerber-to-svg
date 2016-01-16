@@ -17,7 +17,7 @@ describe('gerber plotter', function() {
     expect(function() {p.write({})}).to.not.throw()
   })
 
-  describe('factory and options', function() {
+  describe('format options', function() {
     it('should allow user to set units', function() {
       p = plotter({units: 'mm'})
       expect(p.format.units).to.equal('mm')
@@ -80,6 +80,28 @@ describe('gerber plotter', function() {
 
       expect(function() {p = plotter({backupNota: null})}).to.not.throw()
       expect(p.format.backupNota).to.equal('A')
+    })
+  })
+
+  describe('plotting options', function() {
+    it('should have an optimize paths option that defaults to true', function() {
+      expect(p._optimizePaths).to.be.true
+
+      p = plotter({optimizePaths: false})
+      expect(p._optimizePaths).to.be.false
+    })
+
+    it('should have an outline mode option that defaults to false', function() {
+      expect(p._plotAsOutline).to.be.false
+
+      p = plotter({plotAsOutline: true})
+      expect(p._plotAsOutline).to.be.true
+    })
+
+    it('should force optimize paths to true if plot as outline is true', function() {
+      p = plotter({plotAsOutline: true, optimizePaths: false})
+      expect(p._plotAsOutline).to.be.true
+      expect(p._optimizePaths).to.be.true
     })
   })
 
@@ -1000,7 +1022,7 @@ describe('gerber plotter', function() {
         ])
       })
 
-      it('should handle moves in between strokes', function() {
+      it('should handle moves in between strokes when optimizing paths', function() {
         p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
         p.write({cmd: 'op', key: 'move', val: {x: 1, y: 3}})
         p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
@@ -1011,6 +1033,29 @@ describe('gerber plotter', function() {
           {type: 'line', start: [0, 0], end: [1, 1]},
           {type: 'line', start: [1, 1], end: [1, 3]},
           {type: 'line', start: [1, 3], end: [3, 3]}
+        ])
+      })
+
+      it('should handle moves in between strokes when not optimizing paths', function() {
+        var tool = {shape: 'circle', val: [2], hole: []}
+        p = plotter({optimizePaths: false})
+
+        p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
+        p.write({cmd: 'set', key: 'units', val: 'in'})
+        p.write({cmd: 'set', key: 'nota', val: 'A'})
+        p.write({cmd: 'set', key: 'mode', val: 'i'})
+        p.write({cmd: 'tool', key: '10', val: tool})
+
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'move', val: {x: 1, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+        p.write({cmd: 'op', key: 'move', val: {x: 3, y: 3}})
+        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+
+        expect(p._path.traverse()).to.eql([
+          {type: 'line', start: [0, 0], end: [1, 1]},
+          {type: 'line', start: [1, 3], end: [1, 1]},
+          {type: 'line', start: [3, 3], end: [1, 3]}
         ])
       })
 
@@ -1677,6 +1722,50 @@ describe('gerber plotter', function() {
       p._box = [1, 2, 3, 4]
       p.format.units = 'in'
       p.end()
+    })
+  })
+
+  describe('outline mode', function() {
+    var outPlotter
+    beforeEach(function() {
+      var tool = {shape: 'circle', val: [2], hole: []}
+
+      outPlotter = plotter({plotAsOutline: true})
+      outPlotter.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
+      outPlotter.write({cmd: 'set', key: 'units', val: 'in'})
+      outPlotter.write({cmd: 'set', key: 'nota', val: 'A'})
+      outPlotter.write({cmd: 'set', key: 'mode', val: 'i'})
+      outPlotter.write({cmd: 'tool', key: '10', val: tool})
+    })
+
+    it('should update the bounding box in as if it was region mode', function() {
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+
+      expect(outPlotter._box).to.eql([0, 0, 3, 3])
+    })
+
+    it('should set the first tool used for a stroke to the outline tool', function(done) {
+      var newTool = {shape: 'circle', val: [4], hole: []}
+
+      outPlotter.once('data', function(result) {
+        expect(result.width).to.equal(2)
+        outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+        outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+        outPlotter.write({cmd: 'set', key: 'tool', val: '10'})
+
+        outPlotter.once('data', function(result) {
+          expect(result.width).to.equal(2)
+          done()
+        })
+      })
+
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+      outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+      outPlotter.write({cmd: 'tool', key: '11', val: newTool})
     })
   })
 })
