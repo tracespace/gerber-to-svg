@@ -102,20 +102,19 @@ Given a gerber or drill file stream, the parser will emit a stream of plotter co
 
 ``` javascript
 {
-  cmd: CMD,
+  type: COMMAND_TYPE,
   line: GERBER_LINE_NO,
-  key: KEY,
-  val: VAL
+  params...
 }
 ```
 
 ### done objects
 
-Special objects that indicate the end of a Gerber file.
+Objects that indicate the end of a Gerber file. This corresponds to the Gerber "end" command, not the end of the text stream. If the end of the text stream happens without receiving this command, the file has likely been accidentally truncated.
 
 ``` javascript
 {
-  cmd: 'done',
+  type: 'done',
   line: GERBER_LINE_NO
 }
 ```
@@ -126,14 +125,14 @@ Commands used to set the state of the plotter.
 
 ``` javascript
 {
-  cmd: 'set',
+  type: 'set',
   line: GERBER_LINE_NO,
-  key: KEY,
-  val: VAL
+  prop: PROPERTY,
+  value: VAL
 }
 ```
 
-key           | val                 | description
+property      | value               | description
 --------------|---------------------|----------------------------------------
 `mode`        | `i`, `cw`, or `ccw` | linear, CW-arc, or CCW-arc draw mode
 `arc`         | `s` or `m`          | single or multi-quadrant arc mode
@@ -151,10 +150,10 @@ Commands used to move the plotter location and create image objects
 
 ``` javascript
 {
-  cmd: 'op',
+  type: 'op',
   line: GERBER_LINE_NO,
-  key: OP_TYPE,
-  val: COORDINATE
+  operation: OP_TYPE,
+  location: COORDINATE
 }
 ```
 
@@ -173,10 +172,10 @@ Commands used to create new polarity or step-repeat image levels.
 
 ``` javascript
 {
-  cmd: 'level',
+  type: 'level',
   line: GERBER_LINE_NO,
-  key: LEVEL_TYPE,
-  val: VAL
+  level: LEVEL_TYPE,
+  value: VAL
 }
 ```
 
@@ -191,10 +190,10 @@ Commands used to create new tools.
 
 ``` javascript
 {
-  cmd: 'tool',
+  type: 'tool',
   line: GERBER_LINE_NO,
-  key: TOOL_CODE,
-  val: TOOL_OBJECT
+  code: TOOL_CODE,
+  tool: TOOL_OBJECT
 }
 ```
 
@@ -203,7 +202,7 @@ where `TOOL_CODE` is the unique tool identifier in string format and `TOOL_OBJEC
 ``` javascript
 {
   shape: SHAPE,
-  val: SHAPE_PARAMS_ARRAY,
+  params: SHAPE_PARAMS_ARRAY,
   hole: HOLE_PARAMS_ARRAY
 }
 ```
@@ -236,10 +235,10 @@ Commands used to create new tool macros.
 
 ``` javascript
 {
-  cmd: 'macro',
+  type: 'macro',
   line: GERBER_LINE_NO,
-  key: MACRO_NAME,
-  val: MACRO_BLOCKS_ARRAY
+  name: MACRO_NAME,
+  blocks: MACRO_BLOCKS_ARRAY
 }
 ```
 

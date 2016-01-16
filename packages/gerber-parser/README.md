@@ -25,7 +25,7 @@ parser.on('warning', function(w) {
 fs.createReadStream('/path/to/gerber/file.gbr', {encoding: 'utf8'})
   .pipe(parser)
   .on('data', function(obj) {
-    console.log(obj)
+    console.log(JSON.stringify(obj))
   })
 ```
 
@@ -37,7 +37,7 @@ See [API.md](./API.md)
 
 ## developing and contributing
 
-Tests are written in [Mocha](http://mochajs.org/) and run in Node, [PhantomJS](http://phantomjs.org/), and a variety of browsers with [Zuul](https://github.com/defunctzombie/zuul) and [Open Sauce](https://saucelabs.com/opensauce/). All PRs should be accompanied by unit tests, with ideally one feature / bugfix per PR. Code linting happens with [ESLint](http://eslint.org/) automatically post-test and pre-commit.
+Tests are written in [Mocha](http://mochajs.org/) and run in Node, [PhantomJS](http://phantomjs.org/), and a variety of browsers with [Zuul](https://github.com/defunctzombie/zuul) and [Open Sauce](https://saucelabs.com/opensauce/). All PRs should be accompanied by unit tests, with ideally one feature / bugfix per PR. Code linting happens with [ESLint](http://eslint.org/) automatically post-test.
 
 Code is deployed on tags via [TravisCI](https://travis-ci.org/) and code coverage is tracked with [Coveralls](https://coveralls.io/).
 

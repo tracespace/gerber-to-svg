@@ -76,7 +76,7 @@ var parse = function(parser, block) {
     var toolMatch = block.match(reTOOL_DEF)
     var toolCode = toolMatch[1]
     var toolDia = normalize(toolMatch[2])
-    var toolDef = {shape: 'circle', val: [toolDia], hole: []}
+    var toolDef = {shape: 'circle', params: [toolDia], hole: []}
 
     return parser._push(commands.tool(toolCode, toolDef))
   }

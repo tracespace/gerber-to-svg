@@ -3,7 +3,7 @@
 
 var isFinite = require('lodash.isfinite')
 
-var Parser = require('./gerber-parser')
+var Parser = require('./parser')
 
 var verifyPlaces = function(p) {
   if (
