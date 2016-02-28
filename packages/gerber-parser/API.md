@@ -232,7 +232,7 @@ key | description
 `y` | y coordiate
 `i` | (Optional) x-offset of arc center
 `j` | (Optional) y-offset of arc center
-`a` | (Optional) arc raÂdius (mutually exclusive with i and j)
+`a` | (Optional) arc radius (mutually exclusive with i and j)
 
 ### level objects
 
