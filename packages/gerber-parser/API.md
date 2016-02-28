@@ -6,6 +6,8 @@ API documentation for gerber-parser. An understanding of the [Gerber file format
 
 - [create a gerber parser](#create-a-gerber-parser)
 	- [usage](#usage)
+		- [streaming](#streaming)
+		- [synchronous](#synchronous)
 	- [options](#options)
 - [public properties](#public-properties)
 	- [format](#format)
@@ -41,14 +43,41 @@ gerberStream.pipe(parser)
   .on('warning', function(warning) {
     // handle warning
   })
-  .on('error', function(error) {
+  .once('error', function(error) {
     // handle error
   })
 ```
 
 ### usage
 
-Use the gerber parser like you would any other [Node stream](https://github.com/substack/stream-handbook).
+``` javascript
+var gerberParser = require('gerber-parser')
+var parser = gerberParser(OPTIONS)
+```
+
+The parser is stateful, so be sure to use one parser per file. The parser has both a streaming and a synchronous interface.
+
+#### streaming
+
+The object returned by `gerberParser` is a Node [Transform Stream](https://nodejs.org/api/stream.html#stream_class_stream_transform). When you write a Gerber or Drill file contents into the stream, it will emit command objects to be consumed by an image generator (or plotter).
+
+``` javascript
+var parser = gerberParser()
+var gerberStream = getReadableStreamSomehow()
+
+gerberStream.pipe(parser)
+```
+
+#### synchronous
+
+The transform may also be performed synchronously on a string. This will block, but will most likely run faster.
+
+``` javascript
+var parser = gerberParser()
+var gerberFile = fs.readFileSync('path/to/file.gbr')
+
+var arrayOfCommands = parser.parseSync(gerberFile)
+```
 
 ### options
 

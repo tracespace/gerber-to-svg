@@ -20,11 +20,30 @@ var Parser = function(places, zero, filetype) {
   this._stash = ''
   this._index = 0
   this._drillMode = drillMode.DRILL
+  this._syncResult = null
   this.line = 0
   this.format = {places: places, zero: zero, filetype: filetype}
 }
 
 inherits(Parser, Transform)
+
+Parser.prototype._process = function(chunk, filetype) {
+  while (this._index < chunk.length) {
+    var next = getNext(filetype, chunk, this._index)
+    this._index += next.read
+    this.line += next.lines
+    this._stash += next.rem
+
+    if (next.block) {
+      if (filetype === 'gerber') {
+        parseGerber(this, next.block)
+      }
+      else {
+        parseDrill(this, next.block)
+      }
+    }
+  }
+}
 
 Parser.prototype._transform = function(chunk, encoding, done) {
   var filetype = this.format.filetype
@@ -47,24 +66,10 @@ Parser.prototype._transform = function(chunk, encoding, done) {
     }
   }
 
-  var toProcess = this._stash + chunk
+  chunk = this._stash + chunk
   this._stash = ''
 
-  while (this._index < toProcess.length) {
-    var next = getNext(filetype, toProcess, this._index)
-    this._index += next.read
-    this.line += next.lines
-    this._stash += next.rem
-
-    if (next.block) {
-      if (filetype === 'gerber') {
-        parseGerber(this, next.block)
-      }
-      else {
-        parseDrill(this, next.block)
-      }
-    }
-  }
+  this._process(chunk, filetype)
 
   this._index = 0
   done()
@@ -72,11 +77,22 @@ Parser.prototype._transform = function(chunk, encoding, done) {
 
 Parser.prototype._push = function(data) {
   data.line = this.line
-  this.push(data)
+
+  var pushTarget = (!this._syncResult) ? this : this._syncResult
+  pushTarget.push(data)
 }
 
 Parser.prototype._warn = function(message) {
   this.emit('warning', warning(message, this.line))
+}
+
+Parser.prototype.parseSync = function(file) {
+  var filetype = determineFiletype(file, this._index, 100 * LIMIT)
+  this.format.filetype = filetype
+  this._syncResult = []
+  this._process(file, filetype)
+
+  return this._syncResult
 }
 
 module.exports = Parser
