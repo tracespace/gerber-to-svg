@@ -391,4 +391,115 @@ describe('gerber parser with gerber files', function() {
       p.write('Y0309G85Y0329\n')
     })
   })
+
+  describe('drill file routing', function() {
+    beforeEach(function() {
+      p.format.places = [1, 2]
+      p.format.zero = 'T'
+    })
+
+    it('should handle turning route mode on', function(done) {
+      var expected = [
+        {type: 'op', line: 1, operation: 'move', location: {x: 0.12, y: 3.45}},
+        {type: 'op', line: 2, operation: 'move', location: {x: 0.67, y: 8.90}}
+      ]
+
+      expectResults(expected, done)
+      p.write('G00X012Y345\n')
+      p.write('G00X067Y890\n')
+    })
+
+    it('should handle linear routing', function(done) {
+      var expected = [
+        {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+        {type: 'set', line: 2, prop: 'mode', value: 'i'},
+        {type: 'op', line: 2, operation: 'int', location: {x: 2, y: 2}},
+        {type: 'set', line: 3, prop: 'mode', value: 'i'},
+        {type: 'op', line: 3, operation: 'int', location: {x: 3, y: 3}}
+      ]
+
+      expectResults(expected, done)
+      p.write('G00X100Y100\n')
+      p.write('G01X200Y200\n')
+      p.write('X300Y300\n')
+    })
+
+    describe('arc routing', function() {
+      it('should handle cw arc routing with offsets', function(done) {
+        var coords = [
+          {x: 2, y: 2, i: 0.5, j: 0.5},
+          {x: 3, y: 3, i: 0.5, j: 0.5}
+        ]
+        var expected = [
+          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'set', line: 2, prop: 'mode', value: 'cw'},
+          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'set', line: 3, prop: 'mode', value: 'cw'},
+          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+        ]
+
+        expectResults(expected, done)
+        p.write('G00X100Y100\n')
+        p.write('G02X200Y200I050J050\n')
+        p.write('X300Y300I050J050\n')
+      })
+
+      it('should handle ccw arc routing with offsets', function(done) {
+        var coords = [
+          {x: 2, y: 2, i: 0.5, j: 0.5},
+          {x: 3, y: 3, i: 0.5, j: 0.5}
+        ]
+        var expected = [
+          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'set', line: 2, prop: 'mode', value: 'ccw'},
+          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'set', line: 3, prop: 'mode', value: 'ccw'},
+          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+        ]
+
+        expectResults(expected, done)
+        p.write('G00X100Y100\n')
+        p.write('G03X200Y200I050J050\n')
+        p.write('X300Y300I050J050\n')
+      })
+
+      it('should handle cw arc routing with radius', function(done) {
+        var coords = [
+          {x: 2, y: 2, a: 1},
+          {x: 3, y: 3, a: 1}
+        ]
+        var expected = [
+          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'set', line: 2, prop: 'mode', value: 'cw'},
+          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'set', line: 3, prop: 'mode', value: 'cw'},
+          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+        ]
+
+        expectResults(expected, done)
+        p.write('G00X100Y100\n')
+        p.write('G02X200Y200A100\n')
+        p.write('X300Y300A100\n')
+      })
+
+      it('should handle ccw arc routing with radius', function(done) {
+        var coords = [
+          {x: 2, y: 2, a: 1},
+          {x: 3, y: 3, a: 1}
+        ]
+        var expected = [
+          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'set', line: 2, prop: 'mode', value: 'ccw'},
+          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'set', line: 3, prop: 'mode', value: 'ccw'},
+          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+        ]
+
+        expectResults(expected, done)
+        p.write('G00X100Y100\n')
+        p.write('G03X200Y200A100\n')
+        p.write('X300Y300A100\n')
+      })
+    })
+  })
 })

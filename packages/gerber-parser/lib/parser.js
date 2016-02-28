@@ -9,6 +9,7 @@ var getNext = require('./get-next-block')
 var parseGerber = require('./_parse-gerber')
 var parseDrill = require('./_parse-drill')
 var warning = require('./_warning')
+var drillMode = require('./_drill-mode')
 
 var LIMIT = 65535
 
@@ -18,6 +19,7 @@ var Parser = function(places, zero, filetype) {
   // parser properties
   this._stash = ''
   this._index = 0
+  this._drillMode = drillMode.DRILL
   this.line = 0
   this.format = {places: places, zero: zero, filetype: filetype}
 }

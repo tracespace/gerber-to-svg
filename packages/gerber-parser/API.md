@@ -2,6 +2,33 @@
 
 API documentation for gerber-parser. An understanding of the [Gerber file format specification](http://www.ucamco.com/en/guest/downloads) and the [Excellon NC drill format](http://www.excellon.com/manuals/program.htm) (as poorly defined as it is) will help with understanding the parser API.
 
+<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [create a gerber parser](#create-a-gerber-parser)
+	- [usage](#usage)
+	- [options](#options)
+- [public properties](#public-properties)
+	- [format](#format)
+	- [line](#line)
+- [events](#events)
+	- [warning event](#warning-event)
+	- [error event](#error-event)
+- [transform stream objects](#transform-stream-objects)
+	- [done objects](#done-objects)
+	- [set objects](#set-objects)
+	- [operation objects](#operation-objects)
+		- [coordinate objects](#coordinate-objects)
+	- [level objects](#level-objects)
+	- [tool objects](#tool-objects)
+		- [shapes and parameters](#shapes-and-parameters)
+		- [holes](#holes)
+	- [macro objects](#macro-objects)
+		- [macro blocks](#macro-blocks)
+			- [variable set block](#variable-set-block)
+			- [primitive blocks](#primitive-blocks)
+
+<!-- /TOC -->
+
 ## create a gerber parser
 
 ``` javascript
@@ -157,7 +184,7 @@ Commands used to move the plotter location and create image objects
 }
 ```
 
-where `COORDINATE` is an object of format `{x: _, y: _, i: _, j: _}` and OP_TYPE is the type of operation:
+where `COORDINATE` is a coordinate object and OP_TYPE is the type of operation:
 
 operation | description
 ----------|-------------------------------------------------------------------
@@ -165,6 +192,18 @@ operation | description
 `move`    | move to `COORDINATE` without affecting the image
 `flash`   | add image of current tool to the layer image at `COORDINATE`
 `last`    | do whatever the last operation was (deprectated)
+
+#### coordinate objects
+
+A coordinate object is an object with the keys:
+
+key | description
+----|---------------------------------------------------------
+`x` | x coordinate
+`y` | y coordiate
+`i` | (Optional) x-offset of arc center
+`j` | (Optional) y-offset of arc center
+`a` | (Optional) arc raÂdius (mutually exclusive with i and j)
 
 ### level objects
 

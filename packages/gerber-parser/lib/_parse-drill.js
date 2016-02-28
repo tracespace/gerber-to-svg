@@ -5,17 +5,18 @@
 var numIsFinite = require('lodash.isfinite')
 
 var commands = require('./_commands')
+var drillMode = require('./_drill-mode')
 var normalize = require('./normalize-coord')
 var parseCoord = require('./parse-coord')
 
 var reALTIUM_HINT = /;FILE_FORMAT=(\d):(\d)/
 var reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
 
-
 var reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
 var reTOOL_DEF = /T0*(\d+)C([\d.]+)/
 var reTOOL_SET = /T0*(\d+)(?!C)/
-var reCOORD = /((?:[XY][+-]?[\d.]+){1,2})(?:G85((?:[XY][+-]?[\d.]+){1,2}))?/
+var reCOORD = /((?:[XYIJA][+-]?[\d.]+){1,4})(?:G85((?:[XY][+-]?[\d.]+){1,2}))?/
+var reROUTE = /^G0([01235])/
 
 var setUnits = function(parser, units) {
   var format = (units === 'in') ? [2, 4] : [3, 3]
@@ -26,9 +27,8 @@ var setUnits = function(parser, units) {
 }
 
 var parse = function(parser, block) {
-  // ignore comments
+  // parse comments for formatting hints and ignore the rest
   if (block[0] === ';') {
-
     // check for kicad format hints
     if (reKI_HINT.test(block)) {
       var kicadMatch = block.match(reKI_HINT)
@@ -77,6 +77,7 @@ var parse = function(parser, block) {
 
       parser.format.places = [Number(altiumMatch[1]), Number(altiumMatch[2])]
     }
+
     return
   }
 
@@ -98,7 +99,6 @@ var parse = function(parser, block) {
     parser._push(commands.set('tool', toolSet))
   }
 
-  // operations
   if (reCOORD.test(block)) {
     // ensure format is set properly
     if (!parser.format.zero) {
@@ -114,17 +114,39 @@ var parse = function(parser, block) {
     var coordMatch = block.match(reCOORD)
     var coord = parseCoord(coordMatch[1], parser.format)
 
+    // if there's another match, then it was a slot
     if (coordMatch[2]) {
       parser._push(commands.op('move', coord))
-
       parser._push(commands.set('mode', 'i'))
-
       coord = parseCoord(coordMatch[2], parser.format)
 
       return parser._push(commands.op('int', coord))
     }
 
-    return parser._push(commands.op('flash', coord))
+    // get the drill mode if a route command is present
+    if (reROUTE.test(block)) {
+      parser._drillMode = block.match(reROUTE)[1]
+    }
+
+    switch (parser._drillMode) {
+      case drillMode.DRILL:
+        return parser._push(commands.op('flash', coord))
+
+      case drillMode.MOVE:
+        return parser._push(commands.op('move', coord))
+
+      case drillMode.LINEAR:
+        parser._push(commands.set('mode', 'i'))
+        return parser._push(commands.op('int', coord))
+
+      case drillMode.CW_ARC:
+        parser._push(commands.set('mode', 'cw'))
+        return parser._push(commands.op('int', coord))
+
+      case drillMode.CCW_ARC:
+        parser._push(commands.set('mode', 'ccw'))
+        return parser._push(commands.op('int', coord))
+    }
   }
 
   if ((block === 'M00') || (block === 'M30')) {
