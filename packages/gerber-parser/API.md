@@ -208,8 +208,8 @@ Commands used to move the plotter location and create image objects
 {
   type: 'op',
   line: GERBER_LINE_NO,
-  operation: OP_TYPE,
-  location: COORDINATE
+  op: OP_TYPE,
+  coord: COORDINATE
 }
 ```
 

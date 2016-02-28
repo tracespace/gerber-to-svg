@@ -18,7 +18,7 @@ var tool = function(code, tool) {
 }
 
 var op = function(operation, location) {
-  return {type: 'op', line: -1, operation: operation, location: location}
+  return {type: 'op', line: -1, op: operation, coord: location}
 }
 
 var macro = function(name, blocks) {

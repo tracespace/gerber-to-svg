@@ -717,11 +717,11 @@ describe('gerber parser with gerber files', function() {
 
     it('should parse an interpolation command', function(done) {
       var expected = [
-        {type: 'op', line: 0, operation: 'int', location: {x: 0.1, y: 0.2, i: 0.3, j: 0.4}},
-        {type: 'op', line: 1, operation: 'int', location: {x: 0.11, y: 0}},
-        {type: 'op', line: 2, operation: 'int', location: {x: 0.22}},
-        {type: 'op', line: 3, operation: 'int', location: {y: 0.33}},
-        {type: 'op', line: 4, operation: 'int', location: {}}
+        {type: 'op', line: 0, op: 'int', coord: {x: 0.1, y: 0.2, i: 0.3, j: 0.4}},
+        {type: 'op', line: 1, op: 'int', coord: {x: 0.11, y: 0}},
+        {type: 'op', line: 2, op: 'int', coord: {x: 0.22}},
+        {type: 'op', line: 3, op: 'int', coord: {y: 0.33}},
+        {type: 'op', line: 4, op: 'int', coord: {}}
       ]
 
       expectResults(expected, done)
@@ -734,9 +734,9 @@ describe('gerber parser with gerber files', function() {
 
     it('should parse a move command', function(done) {
       var expected = [
-        {type: 'op', line: 0, operation: 'move', location: {x: 0.3, y: 0.001}},
-        {type: 'op', line: 1, operation: 'move', location: {x: -0.1}},
-        {type: 'op', line: 2, operation: 'move', location: {}}
+        {type: 'op', line: 0, op: 'move', coord: {x: 0.3, y: 0.001}},
+        {type: 'op', line: 1, op: 'move', coord: {x: -0.1}},
+        {type: 'op', line: 2, op: 'move', coord: {}}
       ]
 
       expectResults(expected, done)
@@ -747,9 +747,9 @@ describe('gerber parser with gerber files', function() {
 
     it('should parse a flash command', function(done) {
       var expected = [
-        {type: 'op', line: 0, operation: 'flash', location: {x: 0.3, y: 0.001}},
-        {type: 'op', line: 1, operation: 'flash', location: {x: -0.1}},
-        {type: 'op', line: 2, operation: 'flash', location: {}}
+        {type: 'op', line: 0, op: 'flash', coord: {x: 0.3, y: 0.001}},
+        {type: 'op', line: 1, op: 'flash', coord: {x: -0.1}},
+        {type: 'op', line: 2, op: 'flash', coord: {}}
       ]
 
       expectResults(expected, done)
@@ -760,8 +760,8 @@ describe('gerber parser with gerber files', function() {
 
     it('should send "last" operation if op code is missing', function(done) {
       var expected = [
-        {type: 'op', line: 0, operation: 'last', location: {x: 0.3, y: 0.001}},
-        {type: 'op', line: 1, operation: 'last', location: {x: -0.1}}
+        {type: 'op', line: 0, op: 'last', coord: {x: 0.3, y: 0.001}},
+        {type: 'op', line: 1, op: 'last', coord: {x: -0.1}}
       ]
 
       expectResults(expected, done)
@@ -772,11 +772,11 @@ describe('gerber parser with gerber files', function() {
     it('should interpolate with inline mode set', function(done) {
       var expected = [
         {type: 'set', line: 0, prop: 'mode', value: 'i'},
-        {type: 'op', line: 0, operation: 'int', location: {x: 0.001, y: 0.001}},
+        {type: 'op', line: 0, op: 'int', coord: {x: 0.001, y: 0.001}},
         {type: 'set', line: 1, prop: 'mode', value: 'cw'},
-        {type: 'op', line: 1, operation: 'int', location: {x: 0.001, y: 0.001}},
+        {type: 'op', line: 1, op: 'int', coord: {x: 0.001, y: 0.001}},
         {type: 'set', line: 2, prop: 'mode', value: 'ccw'},
-        {type: 'op', line: 2, operation: 'int', location: {x: 0.001, y: 0.001}}
+        {type: 'op', line: 2, op: 'int', coord: {x: 0.001, y: 0.001}}
       ]
 
       expectResults(expected, done)

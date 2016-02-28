@@ -267,8 +267,8 @@ describe('gerber parser with gerber files', function() {
       p.format.zero = 'T'
 
       var expected = [
-        {type: 'op', line: 1, operation: 'flash', location: {x: 0.16, y: 1.58}},
-        {type: 'op', line: 2, operation: 'flash', location: {x: -1.795, y: 1.08}}
+        {type: 'op', line: 1, op: 'flash', coord: {x: 0.16, y: 1.58}},
+        {type: 'op', line: 2, op: 'flash', coord: {x: -1.795, y: 1.08}}
       ]
 
       expectResults(expected, done)
@@ -281,8 +281,8 @@ describe('gerber parser with gerber files', function() {
       p.format.zero = 'L'
 
       var expected = [
-        {type: 'op', line: 1, operation: 'flash', location: {x: 0.005, y: 1.55}},
-        {type: 'op', line: 2, operation: 'flash', location: {x: 1.685, y: -0.33}}
+        {type: 'op', line: 1, op: 'flash', coord: {x: 0.005, y: 1.55}},
+        {type: 'op', line: 2, op: 'flash', coord: {x: 1.685, y: -0.33}}
       ]
 
       expectResults(expected, done)
@@ -292,10 +292,10 @@ describe('gerber parser with gerber files', function() {
 
     it('should parse with the places format', function(done) {
       var expected = [
-        {type: 'op', line: 1, operation: 'flash', location: {x: .755, y: 1.4}},
-        {type: 'op', line: 2, operation: 'flash', location: {x: 7.55, y: 0.014}},
-        {type: 'op', line: 3, operation: 'flash', location: {x: 8, y: 1.24}},
-        {type: 'op', line: 4, operation: 'flash', location: {x: 80, y: 12.4}}
+        {type: 'op', line: 1, op: 'flash', coord: {x: .755, y: 1.4}},
+        {type: 'op', line: 2, op: 'flash', coord: {x: 7.55, y: 0.014}},
+        {type: 'op', line: 3, op: 'flash', coord: {x: 8, y: 1.24}},
+        {type: 'op', line: 4, op: 'flash', coord: {x: 80, y: 12.4}}
       ]
 
       expectResults(expected, done)
@@ -320,7 +320,7 @@ describe('gerber parser with gerber files', function() {
       p.format.places = [2,4]
 
       var expected = [
-        {type: 'op', line: 1, operation: 'flash', location: {x: 0.755, y: 1.4}}
+        {type: 'op', line: 1, op: 'flash', coord: {x: 0.755, y: 1.4}}
       ]
 
       expectResults(expected, done)
@@ -333,9 +333,9 @@ describe('gerber parser with gerber files', function() {
 
       var expected = [
         {type: 'set', line: 1, prop: 'tool', value: '1'},
-        {type: 'op', line: 1, operation: 'flash', location: {x: 1, y: 1}},
+        {type: 'op', line: 1, op: 'flash', coord: {x: 1, y: 1}},
         {type: 'set', line: 2, prop: 'tool', value: '1'},
-        {type: 'op', line: 2, operation: 'flash', location: {x: 1, y: 1}}
+        {type: 'op', line: 2, op: 'flash', coord: {x: 1, y: 1}}
       ]
 
       expectResults(expected, done)
@@ -372,16 +372,16 @@ describe('gerber parser with gerber files', function() {
       p.format.zero = 'T'
 
       var expected = [
-        {type: 'op', line: 1, operation: 'move', location: {x: 0.16, y: 1.58}},
+        {type: 'op', line: 1, op: 'move', coord: {x: 0.16, y: 1.58}},
         {type: 'set', line: 1, prop: 'mode', value: 'i'},
-        {type: 'op', line: 1, operation: 'int', location: {x: 1.795, y: -1.08}},
-        {type: 'op', line: 2, operation: 'flash', location: {x: 1.23, y: -0.01}},
-        {type: 'op', line: 3, operation: 'move', location: {x: 2.0, y: 0.1}},
+        {type: 'op', line: 1, op: 'int', coord: {x: 1.795, y: -1.08}},
+        {type: 'op', line: 2, op: 'flash', coord: {x: 1.23, y: -0.01}},
+        {type: 'op', line: 3, op: 'move', coord: {x: 2.0, y: 0.1}},
         {type: 'set', line: 3, prop: 'mode', value: 'i'},
-        {type: 'op', line: 3, operation: 'int', location: {y: -0.1}},
-        {type: 'op', line: 4, operation: 'move', location: {y: 3.09}},
+        {type: 'op', line: 3, op: 'int', coord: {y: -0.1}},
+        {type: 'op', line: 4, op: 'move', coord: {y: 3.09}},
         {type: 'set', line: 4, prop: 'mode', value: 'i'},
-        {type: 'op', line: 4, operation: 'int', location: {y: 3.29}}
+        {type: 'op', line: 4, op: 'int', coord: {y: 3.29}}
       ]
 
       expectResults(expected, done)
@@ -400,8 +400,8 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle turning route mode on', function(done) {
       var expected = [
-        {type: 'op', line: 1, operation: 'move', location: {x: 0.12, y: 3.45}},
-        {type: 'op', line: 2, operation: 'move', location: {x: 0.67, y: 8.90}}
+        {type: 'op', line: 1, op: 'move', coord: {x: 0.12, y: 3.45}},
+        {type: 'op', line: 2, op: 'move', coord: {x: 0.67, y: 8.90}}
       ]
 
       expectResults(expected, done)
@@ -411,11 +411,11 @@ describe('gerber parser with gerber files', function() {
 
     it('should handle linear routing', function(done) {
       var expected = [
-        {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+        {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
         {type: 'set', line: 2, prop: 'mode', value: 'i'},
-        {type: 'op', line: 2, operation: 'int', location: {x: 2, y: 2}},
+        {type: 'op', line: 2, op: 'int', coord: {x: 2, y: 2}},
         {type: 'set', line: 3, prop: 'mode', value: 'i'},
-        {type: 'op', line: 3, operation: 'int', location: {x: 3, y: 3}}
+        {type: 'op', line: 3, op: 'int', coord: {x: 3, y: 3}}
       ]
 
       expectResults(expected, done)
@@ -431,11 +431,11 @@ describe('gerber parser with gerber files', function() {
           {x: 3, y: 3, i: 0.5, j: 0.5}
         ]
         var expected = [
-          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
           {type: 'set', line: 2, prop: 'mode', value: 'cw'},
-          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'op', line: 2, op: 'int', coord: coords[0]},
           {type: 'set', line: 3, prop: 'mode', value: 'cw'},
-          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+          {type: 'op', line: 3, op: 'int', coord: coords[1]}
         ]
 
         expectResults(expected, done)
@@ -450,11 +450,11 @@ describe('gerber parser with gerber files', function() {
           {x: 3, y: 3, i: 0.5, j: 0.5}
         ]
         var expected = [
-          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
           {type: 'set', line: 2, prop: 'mode', value: 'ccw'},
-          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'op', line: 2, op: 'int', coord: coords[0]},
           {type: 'set', line: 3, prop: 'mode', value: 'ccw'},
-          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+          {type: 'op', line: 3, op: 'int', coord: coords[1]}
         ]
 
         expectResults(expected, done)
@@ -469,11 +469,11 @@ describe('gerber parser with gerber files', function() {
           {x: 3, y: 3, a: 1}
         ]
         var expected = [
-          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
           {type: 'set', line: 2, prop: 'mode', value: 'cw'},
-          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'op', line: 2, op: 'int', coord: coords[0]},
           {type: 'set', line: 3, prop: 'mode', value: 'cw'},
-          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+          {type: 'op', line: 3, op: 'int', coord: coords[1]}
         ]
 
         expectResults(expected, done)
@@ -488,11 +488,11 @@ describe('gerber parser with gerber files', function() {
           {x: 3, y: 3, a: 1}
         ]
         var expected = [
-          {type: 'op', line: 1, operation: 'move', location: {x: 1, y: 1}},
+          {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
           {type: 'set', line: 2, prop: 'mode', value: 'ccw'},
-          {type: 'op', line: 2, operation: 'int', location: coords[0]},
+          {type: 'op', line: 2, op: 'int', coord: coords[0]},
           {type: 'set', line: 3, prop: 'mode', value: 'ccw'},
-          {type: 'op', line: 3, operation: 'int', location: coords[1]}
+          {type: 'op', line: 3, op: 'int', coord: coords[1]}
         ]
 
         expectResults(expected, done)
