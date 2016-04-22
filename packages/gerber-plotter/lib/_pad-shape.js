@@ -317,7 +317,7 @@ var padShape = function(tool, macros) {
   var shape = []
   var box = boundingBox.new()
   var toolShape = tool.shape
-  var params = tool.val
+  var params = tool.params
   var holeShape
   var shapeAndBox
 

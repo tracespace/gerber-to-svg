@@ -2,7 +2,7 @@
 'use strict'
 
 var assign = require('lodash.assign')
-var pick = require('lodash.pick')
+var pickBy = require('lodash.pickby')
 var forEach  = require('lodash.foreach')
 
 var verifyUnits = function(units) {
@@ -49,7 +49,7 @@ var pickOptions = function(value, key) {
 }
 
 var apply = function(opts, target, lock) {
-  var verifiedOpts = pick(opts, pickOptions)
+  var verifiedOpts = pickBy(opts, pickOptions)
 
   forEach(Object.keys(verifiedOpts), function(key) {
     lock[key] = true

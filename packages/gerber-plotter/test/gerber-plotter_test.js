@@ -108,51 +108,51 @@ describe('gerber plotter', function() {
   describe('handling set commands', function() {
     describe('format', function() {
       it('should set units', function() {
-        p.write({cmd: 'set', key: 'units', val: 'mm'})
+        p.write({type: 'set', prop: 'units', value: 'mm'})
         expect(p.format.units).to.equal('mm')
 
         p = plotter()
-        p.write({cmd: 'set', key: 'units', val: 'in'})
+        p.write({type: 'set', prop: 'units', value: 'in'})
         expect(p.format.units).to.equal('in')
       })
 
       it('should not redefine units', function() {
         p = plotter({units: 'in'})
-        p.write({cmd: 'set', key: 'units', val: 'mm'})
+        p.write({type: 'set', prop: 'units', value: 'mm'})
         expect(p.format.units).to.equal('in')
       })
 
       it('should set the notation', function() {
-        p.write({cmd: 'set', key: 'nota', val: 'A'})
+        p.write({type: 'set', prop: 'nota', value: 'A'})
         expect(p.format.nota).to.equal('A')
 
         p = plotter()
-        p.write({cmd: 'set', key: 'nota', val: 'I'})
+        p.write({type: 'set', prop: 'nota', value: 'I'})
         expect(p.format.nota).to.equal('I')
       })
 
       it('should not redefine notation', function() {
         p = plotter({nota: 'A'})
-        p.write({cmd: 'set', key: 'nota', val: 'I'})
+        p.write({type: 'set', prop: 'nota', value: 'I'})
         expect(p.format.nota).to.equal('A')
       })
 
       it('should set the backup units', function() {
-        p.write({cmd: 'set', key: 'backupUnits', val: 'mm'})
+        p.write({type: 'set', prop: 'backupUnits', value: 'mm'})
         expect(p.format.backupUnits).to.equal('mm')
-        p.write({cmd: 'set', key: 'backupUnits', val: 'in'})
+        p.write({type: 'set', prop: 'backupUnits', value: 'in'})
         expect(p.format.backupUnits).to.equal('in')
       })
 
       it('should not redefine the backupUnits set by user', function() {
         p = plotter({backupUnits: 'in'})
-        p.write({cmd: 'set', key: 'backupUnits', val: 'mm'})
+        p.write({type: 'set', prop: 'backupUnits', value: 'mm'})
         expect(p.format.backupUnits).to.equal('in')
       })
 
       it('should not redefine the backupNotation set by user', function() {
         p = plotter({backupNota: 'A'})
-        p.write({cmd: 'set', key: 'backupNota', val: 'I'})
+        p.write({type: 'set', prop: 'backupNota', value: 'I'})
         expect(p.format.backupNota).to.equal('A')
       })
     })
@@ -162,11 +162,11 @@ describe('gerber plotter', function() {
         var tool = {}
         p._tools['10'] = tool
 
-        p.write({cmd: 'set', key: 'tool', val: '10'})
+        p.write({type: 'set', prop: 'tool', value: '10'})
         expect(p._tool).to.equal(tool)
       })
 
-      it('should warn if the tool doesnt exist', function(done) {
+      it('should warn if the tool does not exist', function(done) {
         p.once('warning', function(w) {
           expect(w.line).to.equal(10)
           expect(w.message).to.match(/tool 10/)
@@ -174,13 +174,13 @@ describe('gerber plotter', function() {
           done()
         })
 
-        p.write({cmd: 'set', line: 10, key: 'tool', val: '10'})
+        p.write({type: 'set', line: 10, prop: 'tool', value: '10'})
       })
 
       it('should set the region mode', function() {
-        p.write({cmd: 'set', line: 10, key: 'region', val: true})
+        p.write({type: 'set', line: 10, prop: 'region', value: true})
         expect(p._region).to.be.true
-        p.write({cmd: 'set', line: 10, key: 'region', val: false})
+        p.write({type: 'set', line: 10, prop: 'region', value: false})
         expect(p._region).to.be.false
       })
 
@@ -193,23 +193,23 @@ describe('gerber plotter', function() {
         })
 
         p._tools['10'] = {}
-        p.write({cmd: 'set', line: 10, key: 'region', val: true})
-        p.write({cmd: 'set', line: 11, key: 'tool', val: '10'})
+        p.write({type: 'set', line: 10, prop: 'region', value: true})
+        p.write({type: 'set', line: 11, prop: 'tool', value: '10'})
       })
 
       it('should set the interpolation mode', function() {
-        p.write({cmd: 'set', key: 'mode', val: 'i'})
+        p.write({type: 'set', prop: 'mode', value: 'i'})
         expect(p._mode).to.equal('i')
-        p.write({cmd: 'set', key: 'mode', val: 'cw'})
+        p.write({type: 'set', prop: 'mode', value: 'cw'})
         expect(p._mode).to.equal('cw')
-        p.write({cmd: 'set', key: 'mode', val: 'ccw'})
+        p.write({type: 'set', prop: 'mode', value: 'ccw'})
         expect(p._mode).to.equal('ccw')
       })
 
       it('should set the arc quadrant mode', function() {
-        p.write({cmd: 'set', key: 'quad', val: 's'})
+        p.write({type: 'set', prop: 'quad', value: 's'})
         expect(p._quad).to.equal('s')
-        p.write({cmd: 'set', key: 'quad', val: 'm'})
+        p.write({type: 'set', prop: 'quad', value: 'm'})
         expect(p._quad).to.equal('m')
       })
     })
@@ -217,7 +217,7 @@ describe('gerber plotter', function() {
 
   describe('handling done command', function() {
     it('should set the done flag', function() {
-      p.write({cmd: 'done'})
+      p.write({type: 'done'})
       expect(p._done).to.be.true
     })
 
@@ -227,34 +227,34 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'done'})
-      p.write({cmd: 'set', key: 'mode', val: 'i'})
+      p.write({type: 'done'})
+      p.write({type: 'set', prop: 'mode', value: 'i'})
     })
   })
 
   describe('handling new tool commands', function() {
     it('should set current tool to newly defined tool', function() {
-      var circle = {shape: 'circle', val: [4], hole: []}
-      p.write({cmd: 'tool', key: '10', val: circle})
+      var circle = {shape: 'circle', params: [4], hole: []}
+      p.write({type: 'tool', code: '10', tool: circle})
       expect(p._tools['10']).to.equal(p._tool)
-      p.write({cmd: 'tool', key: '15', val: circle})
+      p.write({type: 'tool', code: '15', tool: circle})
       expect(p._tools['15']).to.equal(p._tool)
     })
 
     it('should set trace width for circle and rectangle tools', function() {
-      var circle = {shape: 'circle', val: [4], hole: []}
-      var rect = {shape: 'rect', val: [2, 3], hole: []}
+      var circle = {shape: 'circle', params: [4], hole: []}
+      var rect = {shape: 'rect', params: [2, 3], hole: []}
 
-      p.write({cmd: 'tool', key: '10', val: circle})
+      p.write({type: 'tool', code: '10', tool: circle})
       expect(p._tool.trace).to.eql([4])
 
-      p.write({cmd: 'tool', key: '11', val: rect})
+      p.write({type: 'tool', code: '11', tool: rect})
       expect(p._tool.trace).to.eql([2, 3])
     })
 
     it('should warn and ignore if the tool has already been set', function(done) {
-      var circle = {shape: 'circle', val: [4], hole: []}
-      var rect = {shape: 'rect', val: [2, 3], hole: []}
+      var circle = {shape: 'circle', params: [4], hole: []}
+      var rect = {shape: 'rect', params: [2, 3], hole: []}
 
       p.once('warning', function(w) {
         expect(w.message).to.match(/already defined/)
@@ -263,45 +263,45 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'tool', key: '10', val: circle, line: 8})
-      p.write({cmd: 'tool', key: '10', val: rect, line: 9})
+      p.write({type: 'tool', code: '10', tool: circle, line: 8})
+      p.write({type: 'tool', code: '10', tool: rect, line: 9})
     })
 
     it('should not set trace for untraceable tools', function() {
-      var circle = {shape: 'circle', val: [4], hole: [1, 1]}
-      var rect = {shape: 'rect', val: [2, 3], hole: [1]}
-      var obround = {shape: 'obround', val: [2, 3], hole: []}
-      var poly = {shape: 'poly', val: [2, 3, 4], hole: []}
-      var macro = {shape: 'SOME_MACRO', val: [], hole: []}
-      p.write({cmd: 'tool', key: '10', val: circle})
+      var circle = {shape: 'circle', params: [4], hole: [1, 1]}
+      var rect = {shape: 'rect', params: [2, 3], hole: [1]}
+      var obround = {shape: 'obround', params: [2, 3], hole: []}
+      var poly = {shape: 'poly', params: [2, 3, 4], hole: []}
+      var macro = {shape: 'SOME_MACRO', params: [], hole: []}
+      p.write({type: 'tool', code: '10', tool: circle})
       expect(p._tool.trace).to.eql([])
-      p.write({cmd: 'tool', key: '11', val: rect})
+      p.write({type: 'tool', code: '11', tool: rect})
       expect(p._tool.trace).to.eql([])
-      p.write({cmd: 'tool', key: '12', val: obround})
+      p.write({type: 'tool', code: '12', tool: obround})
       expect(p._tool.trace).to.eql([])
-      p.write({cmd: 'tool', key: '13', val: poly})
+      p.write({type: 'tool', code: '13', tool: poly})
       expect(p._tool.trace).to.eql([])
-      p.write({cmd: 'tool', key: '14', val: macro})
+      p.write({type: 'tool', code: '14', tool: macro})
       expect(p._tool.trace).to.eql([])
     })
 
     describe('standard tool pad shapes', function() {
       it('should create pad shapes for standard circles', function() {
-        var circle0 = {shape: 'circle', val: [1], hole: []}
-        var circle1 = {shape: 'circle', val: [2], hole: [1]}
-        var circle2 = {shape: 'circle', val: [3], hole: [1, 1]}
+        var circle0 = {shape: 'circle', params: [1], hole: []}
+        var circle1 = {shape: 'circle', params: [2], hole: [1]}
+        var circle2 = {shape: 'circle', params: [3], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: circle0})
+        p.write({type: 'tool', code: '10', tool: circle0})
         expect(p._tool.pad).to.eql([{type: 'circle', cx: 0, cy: 0, r: 0.5}])
 
-        p.write({cmd: 'tool', key: '11', val: circle1})
+        p.write({type: 'tool', code: '11', tool: circle1})
         expect(p._tool.pad).to.eql([
           {type: 'circle', cx: 0, cy: 0, r: 1},
           {type: 'layer', polarity: 'clear', box: [-1, -1, 1, 1]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
-        p.write({cmd: 'tool', key: '12', val: circle2})
+        p.write({type: 'tool', code: '12', tool: circle2})
         expect(p._tool.pad).to.eql([
           {type: 'circle', cx: 0, cy: 0, r: 1.5},
           {type: 'layer', polarity: 'clear', box: [-1.5, -1.5, 1.5, 1.5]},
@@ -310,23 +310,23 @@ describe('gerber plotter', function() {
       })
 
       it('should create pad shapes for standard rectangles', function() {
-        var rect0 = {shape: 'rect', val: [1, 2], hole: []}
-        var rect1 = {shape: 'rect', val: [3, 4], hole: [1]}
-        var rect2 = {shape: 'rect', val: [5, 6], hole: [1, 1]}
+        var rect0 = {shape: 'rect', params: [1, 2], hole: []}
+        var rect1 = {shape: 'rect', params: [3, 4], hole: [1]}
+        var rect2 = {shape: 'rect', params: [5, 6], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: rect0})
+        p.write({type: 'tool', code: '10', tool: rect0})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 1, height: 2}
         ])
 
-        p.write({cmd: 'tool', key: '11', val: rect1})
+        p.write({type: 'tool', code: '11', tool: rect1})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 3, height: 4},
           {type: 'layer', polarity: 'clear', box: [-1.5, -2, 1.5, 2]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
-        p.write({cmd: 'tool', key: '12', val: rect2})
+        p.write({type: 'tool', code: '12', tool: rect2})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0, width: 5, height: 6},
           {type: 'layer', polarity: 'clear', box: [-2.5, -3, 2.5, 3]},
@@ -335,23 +335,23 @@ describe('gerber plotter', function() {
       })
 
       it('should create pad shapes for standard obrounds', function() {
-        var obround0 = {shape: 'obround', val: [1, 2], hole: []}
-        var obround1 = {shape: 'obround', val: [4, 3], hole: [1]}
-        var obround2 = {shape: 'obround', val: [5, 6], hole: [1, 1]}
+        var obround0 = {shape: 'obround', params: [1, 2], hole: []}
+        var obround1 = {shape: 'obround', params: [4, 3], hole: [1]}
+        var obround2 = {shape: 'obround', params: [5, 6], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: obround0})
+        p.write({type: 'tool', code: '10', tool: obround0})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 0.5, width: 1, height: 2}
         ])
 
-        p.write({cmd: 'tool', key: '11', val: obround1})
+        p.write({type: 'tool', code: '11', tool: obround1})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 1.5, width: 4, height: 3},
           {type: 'layer', polarity: 'clear', box: [-2, -1.5, 2, 1.5]},
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
-        p.write({cmd: 'tool', key: '12', val: obround2})
+        p.write({type: 'tool', code: '12', tool: obround2})
         expect(p._tool.pad).to.eql([
           {type: 'rect', cx: 0, cy: 0, r: 2.5, width: 5, height: 6},
           {type: 'layer', polarity: 'clear', box: [-2.5, -3, 2.5, 3]},
@@ -360,11 +360,11 @@ describe('gerber plotter', function() {
       })
 
       it('should create pad shapes for standard polygons', function() {
-        var poly0 = {shape: 'poly', val: [2, 3, 0], hole: []}
-        var poly1 = {shape: 'poly', val: [2, 6, 45], hole: [1]}
-        var poly2 = {shape: 'poly', val: [2, 12, 140], hole: [1, 1]}
+        var poly0 = {shape: 'poly', params: [2, 3, 0], hole: []}
+        var poly1 = {shape: 'poly', params: [2, 6, 45], hole: [1]}
+        var poly2 = {shape: 'poly', params: [2, 12, 140], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: poly0})
+        p.write({type: 'tool', code: '10', tool: poly0})
         expect(p._tool.pad).to.eql([
           {type: 'poly', points: [
             [1, 0],
@@ -373,7 +373,7 @@ describe('gerber plotter', function() {
           ]}
         ])
 
-        p.write({cmd: 'tool', key: '11', val: poly1})
+        p.write({type: 'tool', code: '11', tool: poly1})
         var poly = p._tool.pad[0]
         var box = [-0.96592583, -0.96592583, 0.96592583, 0.96592583]
 
@@ -393,7 +393,7 @@ describe('gerber plotter', function() {
           {type: 'circle', cx: 0, cy: 0, r: 0.5}
         ])
 
-        p.write({cmd: 'tool', key: '12', val: poly2})
+        p.write({type: 'tool', code: '12', tool: poly2})
         poly = p._tool.pad[0]
         box = [-0.98480775, -0.98480775, 0.98480775, 0.98480775]
 
@@ -423,44 +423,44 @@ describe('gerber plotter', function() {
 
     describe('standard tool bounding boxes', function() {
       it('should calculate a bounding box for a circle', function() {
-        var circle0 = {shape: 'circle', val: [1], hole: []}
-        var circle1 = {shape: 'circle', val: [7], hole: [1]}
-        var circle2 = {shape: 'circle', val: [4], hole: [1, 1]}
+        var circle0 = {shape: 'circle', params: [1], hole: []}
+        var circle1 = {shape: 'circle', params: [7], hole: [1]}
+        var circle2 = {shape: 'circle', params: [4], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: circle0})
+        p.write({type: 'tool', code: '10', tool: circle0})
         expect(p._tool.box).to.eql([-0.5, -0.5, 0.5, 0.5])
-        p.write({cmd: 'tool', key: '11', val: circle1})
+        p.write({type: 'tool', code: '11', tool: circle1})
         expect(p._tool.box).to.eql([-3.5, -3.5, 3.5, 3.5])
-        p.write({cmd: 'tool', key: '12', val: circle2})
+        p.write({type: 'tool', code: '12', tool: circle2})
         expect(p._tool.box).to.eql([-2, -2, 2, 2])
       })
 
       it('should calculate a bounding box for a rects and obrounds', function() {
-        var rect0 = {shape: 'rect', val: [1, 2], hole: []}
-        var rect1 = {shape: 'rect', val: [7, 4], hole: [1]}
-        var obround0 = {shape: 'obround', val: [9, 8], hole: [1, 1]}
-        var obround1 = {shape: 'obround', val: [4, 1], hole: []}
+        var rect0 = {shape: 'rect', params: [1, 2], hole: []}
+        var rect1 = {shape: 'rect', params: [7, 4], hole: [1]}
+        var obround0 = {shape: 'obround', params: [9, 8], hole: [1, 1]}
+        var obround1 = {shape: 'obround', params: [4, 1], hole: []}
 
-        p.write({cmd: 'tool', key: '10', val: rect0})
+        p.write({type: 'tool', code: '10', tool: rect0})
         expect(p._tool.box).to.eql([-0.5, -1, 0.5, 1])
-        p.write({cmd: 'tool', key: '11', val: rect1})
+        p.write({type: 'tool', code: '11', tool: rect1})
         expect(p._tool.box).to.eql([-3.5, -2, 3.5, 2])
-        p.write({cmd: 'tool', key: '12', val: obround0})
+        p.write({type: 'tool', code: '12', tool: obround0})
         expect(p._tool.box).to.eql([-4.5, -4, 4.5, 4])
-        p.write({cmd: 'tool', key: '13', val: obround1})
+        p.write({type: 'tool', code: '13', tool: obround1})
         expect(p._tool.box).to.eql([-2, -0.5, 2, 0.5])
       })
 
       it('should calculate a bounding box for a standard polygon', function() {
-        var poly0 = {shape: 'poly', val: [5, 4, 0], hole: []}
-        var poly1 = {shape: 'poly', val: [6, 8, 0], hole: [1]}
-        var poly2 = {shape: 'poly', val: [4 * Math.sqrt(2), 4, 45], hole: [1, 1]}
+        var poly0 = {shape: 'poly', params: [5, 4, 0], hole: []}
+        var poly1 = {shape: 'poly', params: [6, 8, 0], hole: [1]}
+        var poly2 = {shape: 'poly', params: [4 * Math.sqrt(2), 4, 45], hole: [1, 1]}
 
-        p.write({cmd: 'tool', key: '10', val: poly0})
+        p.write({type: 'tool', code: '10', tool: poly0})
         expect(p._tool.box).to.eql([-2.5, -2.5, 2.5, 2.5])
-        p.write({cmd: 'tool', key: '11', val: poly1})
+        p.write({type: 'tool', code: '11', tool: poly1})
         expect(p._tool.box).to.eql([-3, -3, 3, 3])
-        p.write({cmd: 'tool', key: '12', val: poly2})
+        p.write({type: 'tool', code: '12', tool: poly2})
         expect(p._tool.box).to.eql([-2, -2, 2, 2], 10)
       })
     })
@@ -468,8 +468,12 @@ describe('gerber plotter', function() {
     describe('macro tool pads', function() {
       describe('primitives without rotation', function() {
         it('should ignore comment primitives', function() {
-          var macro = {cmd: 'macro', key: 'EMPTY', val: [{type: 'comment'}]}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'EMPTY', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'EMPTY', blocks: [{type: 'comment'}]}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'EMPTY', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -479,8 +483,12 @@ describe('gerber plotter', function() {
 
         it('should be able to handle shape and box for circle primitives', function() {
           var blocks = [{type: 'circle', exp: 1, dia: 4, cx: 3, cy: 4, rot: 0}]
-          var macro = {cmd: 'macro', key: 'CIRC', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'CIRC', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'CIRC', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'CIRC', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -493,8 +501,12 @@ describe('gerber plotter', function() {
             {type: 'vect', exp: 1, width: 2, x1: 0, y1: 0, x2: 5, y2: 0, rot: 0},
             {type: 'vect', exp: 1, width: 1, x1: 0, y1: 0, x2: 0, y2: 5, rot: 0}
           ]
-          var macro = {cmd: 'macro', key: 'VECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'VECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'VECT', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'VECT', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -511,8 +523,12 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'rect', exp: 1, width: 4, height: 2, cx: 3, cy: 4, rot: 0}
           ]
-          var macro = {cmd: 'macro', key: 'RECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'RECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'RECT', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'RECT', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -526,8 +542,12 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'rectLL', exp: 1, width: 4, height: 2, x: 1, y: 3, rot: 0}
           ]
-          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'LRECT', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'LRECT', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -541,8 +561,12 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'outline', exp: 1, points: [0, 0, 1, 0, 1, 1, 0, 0], rot: 0}
           ]
-          var macro = {cmd: 'macro', key: 'OPOLY', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'OPOLY', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'OPOLY', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'OPOLY', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -556,8 +580,12 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'poly', exp: 1, vertices: 4, cx: 3, cy: 2, dia: 2, rot: 0}
           ]
-          var macro = {cmd: 'macro', key: 'POLY', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'POLY', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'POLY', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'POLY', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -582,8 +610,12 @@ describe('gerber plotter', function() {
             crossLen: 5,
             rot: 0
           }]
-          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'TARG', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'TARG', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -610,8 +642,12 @@ describe('gerber plotter', function() {
             crossLen: 2.5,
             rot: 0
           }]
-          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'TARG', blocks: blocks}
+          var tool = {
+            type: 'tool',
+            code: '10',
+            tool: {shape: 'TARG', params: [], hole: []}
+          }
 
           p.write(macro)
           p.write(tool)
@@ -635,8 +671,8 @@ describe('gerber plotter', function() {
             gap: 1,
             rot: 0
           }]
-          var macro = {cmd: 'macro', key: 'THRM', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'THRM', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'THRM', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'THRM', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -659,8 +695,8 @@ describe('gerber plotter', function() {
       describe('rotated primitives', function() {
         it('should handle rotated circles', function() {
           var blocks = [{type: 'circle', exp: 1, dia: 4, cx: 0, cy: 4, rot: 90}]
-          var macro = {cmd: 'macro', key: 'RCIRC', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'RCIRC', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'RCIRC', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'RCIRC', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -672,8 +708,8 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'vect', exp: 1, width: 1, x1: 1, y1: 1, x2: 5, y2: 5, rot: 45}
           ]
-          var macro = {cmd: 'macro', key: 'RVECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'RVECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'RVECT', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'RVECT', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -696,8 +732,8 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'rect', exp: 1, width: 4, height: 2, cx: 3, cy: 4, rot: -30}
           ]
-          var macro = {cmd: 'macro', key: 'RRECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'RRECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'RRECT', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'RRECT', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -720,8 +756,8 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'rectLL', exp: 1, width: 4, height: 2, x: 1, y: 3, rot: -30}
           ]
-          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'LRECT', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'LRECT', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -744,8 +780,8 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'outline', exp: 1, points: [0, 0, 1, 0, 1, 1, 0, 0], rot: 150}
           ]
-          var macro = {cmd: 'macro', key: 'LRECT', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'LRECT', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'LRECT', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'LRECT', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -761,8 +797,8 @@ describe('gerber plotter', function() {
           var blocks = [
             {type: 'poly', exp: 1, vertices: 4, cx: 0, cy: 0, dia: dia, rot: 45}
           ]
-          var macro = {cmd: 'macro', key: 'POLY', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'POLY', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'POLY', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'POLY', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -787,8 +823,8 @@ describe('gerber plotter', function() {
             crossLen: 5,
             rot: -150
           }]
-          var macro = {cmd: 'macro', key: 'TARG', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'TARG', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'TARG', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'TARG', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -823,8 +859,8 @@ describe('gerber plotter', function() {
             gap: 0.2,
             rot: 45
           }]
-          var macro = {cmd: 'macro', key: 'THRM', val: blocks}
-          var tool = {cmd: 'tool', key: '10', val: {shape: 'THRM', val: [], hole: []}}
+          var macro = {type: 'macro', name: 'THRM', blocks: blocks}
+          var tool = {type: 'tool', code: '10', tool: {shape: 'THRM', params: [], hole: []}}
 
           p.write(macro)
           p.write(tool)
@@ -874,8 +910,12 @@ describe('gerber plotter', function() {
           rot: function(mods) {return mods.$4}
         }]
         var mods = [4, 3, 2, 0]
-        var macro = {cmd: 'macro', key: 'CIRC', val: blocks}
-        var tool = {cmd: 'tool', key: '10', val: {shape: 'CIRC', val: mods, hole: []}}
+        var macro = {type: 'macro', name: 'CIRC', blocks: blocks}
+        var tool = {
+          type: 'tool',
+          code: '10',
+          tool: {shape: 'CIRC', params: mods, hole: []}
+        }
 
         p.write(macro)
         p.write(tool)
@@ -900,8 +940,12 @@ describe('gerber plotter', function() {
           }
         ]
         var mods = [4, 3]
-        var macro = {cmd: 'macro', key: 'CIRC', val: blocks}
-        var tool = {cmd: 'tool', key: '10', val: {shape: 'CIRC', val: mods, hole: []}}
+        var macro = {type: 'macro', name: 'CIRC', blocks: blocks}
+        var tool = {
+          type: 'tool',
+          code: '10',
+          tool: {shape: 'CIRC', params: mods, hole: []}
+        }
 
         p.write(macro)
         p.write(tool)
@@ -915,8 +959,12 @@ describe('gerber plotter', function() {
           {type: 'rect', exp: 0, width: 1, height: 1, cx: 1, cy: 0, rot: 0},
           {type: 'circle', exp: 1, dia: 4, cx: 2, cy: 0, rot: 0}
         ]
-        var macro = {cmd: 'macro', key: 'MAC', val: blocks}
-        var tool = {cmd: 'tool', key: '10', val: {shape: 'MAC', val: [], hole: []}}
+        var macro = {type: 'macro', name: 'MAC', blocks: blocks}
+        var tool = {
+          type: 'tool',
+          code: '10',
+          tool: {shape: 'MAC', params: [], hole: []}
+        }
 
         p.write(macro)
         p.write(tool)
@@ -935,30 +983,30 @@ describe('gerber plotter', function() {
 
   describe('handling operation commands', function() {
     beforeEach(function() {
-      var tool = {shape: 'circle', val: [2], hole: []}
-      p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'set', key: 'mode', val: 'i'})
-      p.write({cmd: 'tool', key: '10', val: tool})
+      var tool = {shape: 'circle', params: [2], hole: []}
+      p.write({type: 'set', prop: 'epsilon', value: 0.00000001})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'set', prop: 'mode', value: 'i'})
+      p.write({type: 'tool', code: '10', tool: tool})
     })
 
     it('should move the plotter', function() {
-      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3}})
+      p.write({type: 'op', op: 'int', coord: {x: 4, y: -3}})
       expect(p._pos).to.eql([4, -3])
-      p.write({cmd: 'op', key: 'move', val: {y: 0}})
+      p.write({type: 'op', op: 'move', coord: {y: 0}})
       expect(p._pos).to.eql([4, 0])
-      p.write({cmd: 'op', key: 'flash', val: {x: -7}})
+      p.write({type: 'op', op: 'flash', coord: {x: -7}})
       expect(p._pos).to.eql([-7, 0])
     })
 
     it('should move the plotter with incremental notation', function() {
       p.nota = 'I'
-      p.write({cmd: 'op', key: 'int', val: {x: 4, y: -3, i: 1, j: 4}})
+      p.write({type: 'op', op: 'int', coord: {x: 4, y: -3, i: 1, j: 4}})
       expect(p._pos).to.eql([4, -3])
-      p.write({cmd: 'op', key: 'move', val: {y: 1}})
+      p.write({type: 'op', op: 'move', coord: {y: 1}})
       expect(p._pos).to.eql([4, -2])
-      p.write({cmd: 'op', key: 'flash', val: {x: -7}})
+      p.write({type: 'op', op: 'flash', coord: {x: -7}})
       expect(p._pos).to.eql([-3, -2])
     })
 
@@ -973,7 +1021,7 @@ describe('gerber plotter', function() {
           })
           done()
         })
-        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'flash', coord: {x: 1, y: 1}})
       })
 
       it('should emit pad objects after the shape object', function(done) {
@@ -984,7 +1032,7 @@ describe('gerber plotter', function() {
             done()
           })
         })
-        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'flash', coord: {x: 1, y: 1}})
       })
 
       it('should not emit the pad shape more than once', function(done) {
@@ -999,21 +1047,21 @@ describe('gerber plotter', function() {
         }
 
         p.on('data', handleData)
-        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'flash', val: {x: 5, y: 5}})
+        p.write({type: 'op', op: 'flash', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'flash', coord: {x: 5, y: 5}})
       })
 
       it('should update the bounding box', function() {
-        p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'flash', coord: {x: 1, y: 1}})
         expect(p._box).to.eql([0, 0, 2, 2])
       })
     })
 
     describe('interpolating to create strokes', function() {
       it('should create a path graph with linear strokes', function() {
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
 
         expect(p._path.traverse()).to.eql([
           {type: 'line', start: [0, 0], end: [1, 1]},
@@ -1023,11 +1071,11 @@ describe('gerber plotter', function() {
       })
 
       it('should handle moves in between strokes when optimizing paths', function() {
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'move', val: {x: 1, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'move', val: {x: 3, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'move', coord: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'move', coord: {x: 3, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
 
         expect(p._path.traverse()).to.eql([
           {type: 'line', start: [0, 0], end: [1, 1]},
@@ -1037,20 +1085,20 @@ describe('gerber plotter', function() {
       })
 
       it('should handle moves in between strokes when not optimizing paths', function() {
-        var tool = {shape: 'circle', val: [2], hole: []}
+        var tool = {shape: 'circle', params: [2], hole: []}
         p = plotter({optimizePaths: false})
 
-        p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
-        p.write({cmd: 'set', key: 'units', val: 'in'})
-        p.write({cmd: 'set', key: 'nota', val: 'A'})
-        p.write({cmd: 'set', key: 'mode', val: 'i'})
-        p.write({cmd: 'tool', key: '10', val: tool})
+        p.write({type: 'set', prop: 'epsilon', value: 0.00000001})
+        p.write({type: 'set', prop: 'units', value: 'in'})
+        p.write({type: 'set', prop: 'nota', value: 'A'})
+        p.write({type: 'set', prop: 'mode', value: 'i'})
+        p.write({type: 'tool', code: '10', tool: tool})
 
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'move', val: {x: 1, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-        p.write({cmd: 'op', key: 'move', val: {x: 3, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'move', coord: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+        p.write({type: 'op', op: 'move', coord: {x: 3, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
 
         expect(p._path.traverse()).to.eql([
           {type: 'line', start: [0, 0], end: [1, 1]},
@@ -1060,33 +1108,33 @@ describe('gerber plotter', function() {
       })
 
       it('should update the box in non-region mode', function() {
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
 
         expect(p._box).to.eql([-1, -1, 4, 4])
       })
 
       it('should update the bounding box in region mode', function() {
-        p.write({cmd: 'set', key: 'region', val: true})
-        p.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
-        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+        p.write({type: 'set', prop: 'region', value: true})
+        p.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
+        p.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
 
         expect(p._box).to.eql([0, 0, 3, 3])
       })
 
       describe('arc strokes', function() {
         it('should determine the center and radius in single quadrant mode', function() {
-          p.write({cmd: 'set', key: 'arc', val: 's'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
-          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1, j: 1.5}})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 4, y: -2, i: 1.5, j: 1}})
-          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1.5, j: 1}})
+          p.write({type: 'set', prop: 'arc', value: 's'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 2, y: 0, i: 1, j: 1.5}})
+          p.write({type: 'set', prop: 'mode', value: 'ccw'})
+          p.write({type: 'op', op: 'int', coord: {x: 4, y: 0, i: 1, j: 1.5}})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 4, y: -2, i: 1.5, j: 1}})
+          p.write({type: 'set', prop: 'mode', value: 'ccw'})
+          p.write({type: 'op', op: 'int', coord: {x: 4, y: 0, i: 1.5, j: 1}})
 
           var R = Math.sqrt(Math.pow(1.5, 2) + 1)
           expect(p._path.traverse()).to.eql([
@@ -1130,11 +1178,11 @@ describe('gerber plotter', function() {
         })
 
         it('should use the actual offsets to get the center in multi-quadrant mode', function() {
-          p.write({cmd: 'set', key: 'arc', val: 'm'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: -1.5}})
-          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 4, y: 0, i: 1, j: 1.5}})
+          p.write({type: 'set', prop: 'arc', value: 'm'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 2, y: 0, i: 1, j: -1.5}})
+          p.write({type: 'set', prop: 'mode', value: 'ccw'})
+          p.write({type: 'op', op: 'int', coord: {x: 4, y: 0, i: 1, j: 1.5}})
 
           var R = Math.sqrt(Math.pow(1.5, 2) + 1)
           expect(p._path.traverse()).to.eql([
@@ -1160,9 +1208,9 @@ describe('gerber plotter', function() {
         })
 
         it('should set the sweep to zero for matching start and end in single mode', function() {
-          p.write({cmd: 'set', key: 'arc', val: 's'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: 1}})
+          p.write({type: 'set', prop: 'arc', value: 's'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 0, y: 0, i: 1}})
 
           expect(p._path.traverse()).to.eql([
             {
@@ -1178,9 +1226,9 @@ describe('gerber plotter', function() {
         })
 
         it('should set the sweep to a full circle in multi mode', function() {
-          p.write({cmd: 'set', key: 'arc', val: 'm'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: -1}})
+          p.write({type: 'set', prop: 'arc', value: 'm'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 0, y: 0, i: -1}})
 
           expect(p._path.traverse()).to.eql([
             {
@@ -1206,9 +1254,9 @@ describe('gerber plotter', function() {
             }, 5)
           })
 
-          p.write({cmd: 'set', key: 'arc', val: 's'})
-          p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1, i: 1}, line: 12})
+          p.write({type: 'set', prop: 'arc', value: 's'})
+          p.write({type: 'set', prop: 'mode', value: 'ccw'})
+          p.write({type: 'op', op: 'int', coord: {x: 1, y: 1, i: 1}, line: 12})
         })
 
         it('should warn and not add to path if tool is not circular', function(done) {
@@ -1220,103 +1268,103 @@ describe('gerber plotter', function() {
             }, 5)
           })
 
-          var rectTool = {shape: 'rect', val: [2, 1], hole: []}
-          p.write({cmd: 'tool', key: '11', val: rectTool})
-          p.write({cmd: 'set', key: 'arc', val: 's'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+          var rectTool = {shape: 'rect', params: [2, 1], hole: []}
+          p.write({type: 'tool', code: '11', tool: rectTool})
+          p.write({type: 'set', prop: 'arc', value: 's'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 2, y: 0, i: 1, j: 1.5}})
         })
 
         it('should allow non-circular tools if in region mode', function() {
-          var rectTool = {shape: 'rect', val: [2, 1], hole: []}
-          p.write({cmd: 'tool', key: '11', val: rectTool})
-          p.write({cmd: 'set', key: 'arc', val: 's'})
-          p.write({cmd: 'set', key: 'mode', val: 'cw'})
-          p.write({cmd: 'set', key: 'region', val: true})
-          p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+          var rectTool = {shape: 'rect', params: [2, 1], hole: []}
+          p.write({type: 'tool', code: '11', tool: rectTool})
+          p.write({type: 'set', prop: 'arc', value: 's'})
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'set', prop: 'region', value: true})
+          p.write({type: 'op', op: 'int', coord: {x: 2, y: 0, i: 1, j: 1.5}})
           expect(p._path.length).to.equal(1)
         })
 
         describe('bounding box', function() {
           it('should usually use the arc end points', function() {
-            p.write({cmd: 'op', key: 'move', val: {x: 0.5, y: 0.866}})
-            p.write({cmd: 'set', key: 'mode', val: 'cw'})
-            p.write({cmd: 'set', key: 'arc', val: 's'})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
+            p.write({type: 'op', op: 'move', coord: {x: 0.5, y: 0.866}})
+            p.write({type: 'set', prop: 'mode', value: 'cw'})
+            p.write({type: 'set', prop: 'arc', value: 's'})
+            p.write({type: 'op', op: 'int', coord: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
             expect(p._box).to.eql([-0.5, -0.5, 1.8660, 1.8660])
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'move', val: {x: 0.5, y: 0.866}})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'move', coord: {x: 0.5, y: 0.866}})
+            p.write({type: 'op', op: 'int', coord: {x: 0.866, y: 0.5, i: 0.5, j: 0.866}})
             expect(p._box).to.eql([0.5, 0.5, 0.8660, 0.8660])
           })
 
           it('should should set the min x when arc sweeps past 180 deg', function() {
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
-            p.write({cmd: 'set', key: 'mode', val: 'cw'})
-            p.write({cmd: 'set', key: 'arc', val: 's'})
-            p.write({cmd: 'op', key: 'int', val: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: -0.7071}})
+            p.write({type: 'set', prop: 'mode', value: 'cw'})
+            p.write({type: 'set', prop: 'arc', value: 's'})
+            p.write({type: 'op', op: 'int', coord: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[0]).to.be.closeTo(-2, 0.00001)
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
-            p.write({cmd: 'op', key: 'int', val: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: -0.7071}})
+            p.write({type: 'op', op: 'int', coord: {x: -0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[0]).to.be.closeTo(-1, 0.00001)
           })
 
           it('should should set the min y when arc sweeps past 270 deg', function() {
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
-            p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-            p.write({cmd: 'set', key: 'arc', val: 's'})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: -0.7071}})
+            p.write({type: 'set', prop: 'mode', value: 'ccw'})
+            p.write({type: 'set', prop: 'arc', value: 's'})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[1]).to.be.closeTo(-2, 0.00001)
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: -0.7071}})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: -0.7071}})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: -0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[1]).to.be.closeTo(-1, 0.00001)
           })
 
           it('should should set the max x when arc sweeps past 0 deg', function() {
-            p.write({cmd: 'op', key: 'move', val: {x: 0.7071, y: -0.7071}})
-            p.write({cmd: 'set', key: 'mode', val: 'ccw'})
-            p.write({cmd: 'set', key: 'arc', val: 's'})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'op', op: 'move', coord: {x: 0.7071, y: -0.7071}})
+            p.write({type: 'set', prop: 'mode', value: 'ccw'})
+            p.write({type: 'set', prop: 'arc', value: 's'})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[2]).to.be.closeTo(2, 0.00001)
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'move', val: {x: 0.7071, y: -0.7071}})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'move', coord: {x: 0.7071, y: -0.7071}})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[2]).to.be.closeTo(1, 0.00001)
           })
 
           it('should should set the max y when arc sweeps past 90 deg', function() {
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: 0.7071}})
-            p.write({cmd: 'set', key: 'mode', val: 'cw'})
-            p.write({cmd: 'set', key: 'arc', val: 's'})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: 0.7071}})
+            p.write({type: 'set', prop: 'mode', value: 'cw'})
+            p.write({type: 'set', prop: 'arc', value: 's'})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[3]).to.be.closeTo(2, 0.00001)
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'move', val: {x: -0.7071, y: 0.7071}})
-            p.write({cmd: 'op', key: 'int', val: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'move', coord: {x: -0.7071, y: 0.7071}})
+            p.write({type: 'op', op: 'int', coord: {x: 0.7071, y: 0.7071, i: 0.7071, j: 0.7071}})
             expect(p._box[3]).to.be.closeTo(1, 0.00001)
           })
 
           it('should set the box properly for a full circle', function() {
-            p.write({cmd: 'set', key: 'mode', val: 'cw'})
-            p.write({cmd: 'set', key: 'arc', val: 'm'})
-            p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: -1, j: 0}})
+            p.write({type: 'set', prop: 'mode', value: 'cw'})
+            p.write({type: 'set', prop: 'arc', value: 'm'})
+            p.write({type: 'op', op: 'int', coord: {x: 0, y: 0, i: -1, j: 0}})
             expect(p._box).to.eql([-3, -2, 1, 2])
 
             p._box = boundingBox.new()
-            p.write({cmd: 'set', key: 'region', val: true})
-            p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0, i: 0, j: 1}})
+            p.write({type: 'set', prop: 'region', value: true})
+            p.write({type: 'op', op: 'int', coord: {x: 0, y: 0, i: 0, j: 1}})
             expect(p._box).to.eql([-1, 0, 1, 2])
           })
         })
@@ -1325,8 +1373,8 @@ describe('gerber plotter', function() {
 
     describe('interpolating with rectangular tools', function() {
       beforeEach(function() {
-        var rectTool = {shape: 'rect', val: [2, 1], hole: []}
-        p.write({cmd: 'tool', key: '11', val: rectTool})
+        var rectTool = {shape: 'rect', params: [2, 1], hole: []}
+        p.write({type: 'tool', code: '11', tool: rectTool})
       })
 
       it('should directly emit fills without adding to the path for rect tools', function(done) {
@@ -1348,7 +1396,7 @@ describe('gerber plotter', function() {
           }, 1)
         })
 
-        p.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+        p.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
       })
 
       it('should handle a first quadrant move', function(done) {
@@ -1372,7 +1420,7 @@ describe('gerber plotter', function() {
           }, 1)
         })
 
-        p.write({cmd: 'op', key: 'int', val: {x: 5, y: 5}})
+        p.write({type: 'op', op: 'int', coord: {x: 5, y: 5}})
       })
 
       it('should handle a second quadrant move', function(done) {
@@ -1396,7 +1444,7 @@ describe('gerber plotter', function() {
           }, 1)
         })
 
-        p.write({cmd: 'op', key: 'int', val: {x: -5, y: 5}})
+        p.write({type: 'op', op: 'int', coord: {x: -5, y: 5}})
       })
 
       it('should handle a third quadrant move', function(done) {
@@ -1420,7 +1468,7 @@ describe('gerber plotter', function() {
           }, 1)
         })
 
-        p.write({cmd: 'op', key: 'int', val: {x: -5, y: -5}})
+        p.write({type: 'op', op: 'int', coord: {x: -5, y: -5}})
       })
 
       it('should handle a fourth quadrant move', function(done) {
@@ -1444,12 +1492,12 @@ describe('gerber plotter', function() {
           }, 1)
         })
 
-        p.write({cmd: 'op', key: 'int', val: {x: 5, y: -5}})
+        p.write({type: 'op', op: 'int', coord: {x: 5, y: -5}})
       })
 
       it('should do a normal stroke if region mode is on', function(done) {
         p._region = true
-        p.write({cmd: 'op', key: 'int', val: {x: 5, y: 5}})
+        p.write({type: 'op', op: 'int', coord: {x: 5, y: 5}})
 
         setTimeout(function() {
           expect(p._path.traverse()).to.eql([{type: 'line', start: [0, 0], end: [5, 5]}])
@@ -1467,16 +1515,16 @@ describe('gerber plotter', function() {
         }, 5)
       })
 
-      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
-      p.write({cmd: 'op', key: 'last', val: {x: 2, y: 2}})
+      p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
+      p.write({type: 'op', op: 'last', coord: {x: 2, y: 2}})
     })
   })
 
   describe('operation warnings', function() {
     beforeEach(function() {
-      var tool = {shape: 'circle', val: [2], hole: []}
-      p.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
-      p.write({cmd: 'tool', key: '10', val: tool})
+      var tool = {shape: 'circle', params: [2], hole: []}
+      p.write({type: 'set', prop: 'epsilon', value: 0.00000001})
+      p.write({type: 'tool', code: '10', tool: tool})
     })
 
     it('should warn and use backup units if the units are not set', function(done) {
@@ -1485,9 +1533,9 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'set', key: 'mode', val: 'i'})
-      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'set', prop: 'mode', value: 'i'})
+      p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
     })
 
     it('should warn and use backup notation if the notation is not set', function(done) {
@@ -1496,9 +1544,9 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'mode', val: 'i'})
-      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'mode', value: 'i'})
+      p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
     })
 
     it('should warn if a tool is flashed in region mode', function(done) {
@@ -1507,14 +1555,14 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'set', key: 'region', val: 'true'})
-      p.write({cmd: 'op', key: 'flash', val: {x: 1, y: 1}})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'set', prop: 'region', value: 'true'})
+      p.write({type: 'op', op: 'flash', coord: {x: 1, y: 1}})
     })
 
     it('should warn and ignore interpolates with unstrokable tools', function(done) {
-      var tool = {shape: 'circle', val: [2], hole: [1]}
+      var tool = {shape: 'circle', params: [2], hole: [1]}
 
       p.once('warning', function(w) {
         expect(w.message).to.match(/not strokable/)
@@ -1525,11 +1573,11 @@ describe('gerber plotter', function() {
         }, 5)
       })
 
-      p.write({cmd: 'tool', key: '11', val: tool})
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'set', key: 'mode', val: 'i'})
-      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+      p.write({type: 'tool', code: '11', tool: tool})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'set', prop: 'mode', value: 'i'})
+      p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
     })
 
     it('should warn and assume linear interpolation mode if unspecified', function(done) {
@@ -1541,9 +1589,9 @@ describe('gerber plotter', function() {
         }, 5)
       })
 
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'op', key: 'int', val: {x: 1, y: 1}})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
     })
 
     it('should warn and assume single-quadrant mode if unspecified', function(done) {
@@ -1556,10 +1604,10 @@ describe('gerber plotter', function() {
         }, 5)
       })
 
-      p.write({cmd: 'set', key: 'units', val: 'in'})
-      p.write({cmd: 'set', key: 'nota', val: 'A'})
-      p.write({cmd: 'set', key: 'mode', val: 'cw'})
-      p.write({cmd: 'op', key: 'int', val: {x: 2, y: 0, i: 1, j: 1.5}})
+      p.write({type: 'set', prop: 'units', value: 'in'})
+      p.write({type: 'set', prop: 'nota', value: 'A'})
+      p.write({type: 'set', prop: 'mode', value: 'cw'})
+      p.write({type: 'op', op: 'int', coord: {x: 2, y: 0, i: 1, j: 1.5}})
     })
   })
 
@@ -1572,11 +1620,14 @@ describe('gerber plotter', function() {
     ]
 
     beforeEach(function() {
-      var tool0 = {shape: 'circle', val: [0.2], hole: []}
-      var tool1 = {shape: 'circle', val: [0.4], hole: []}
-      p.write({cmd: 'tool', key: '11', val: tool1})
-      p.write({cmd: 'tool', key: '10', val: tool0})
-      forEach(path, p._path.add, p._path)
+      var tool0 = {shape: 'circle', params: [0.2], hole: []}
+      var tool1 = {shape: 'circle', params: [0.4], hole: []}
+      p.write({type: 'tool', code: '11', tool: tool1})
+      p.write({type: 'tool', code: '10', tool: tool0})
+
+      forEach(path, function(path) {
+        p._path.add(path)
+      })
     })
 
     it('should end the path on a tool change', function(done) {
@@ -1585,18 +1636,18 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'set', key: 'tool', val: '10'})
+      p.write({type: 'set', prop: 'tool', value: '10'})
     })
 
     it('should end the path on a tool definition', function(done) {
-      var tool = {shape: 'circle', val: [0.1], hole: []}
+      var tool = {shape: 'circle', params: [0.1], hole: []}
 
       p.once('data', function() {
         expect(p._path.length).to.equal(0)
         done()
       })
 
-      p.write({cmd: 'tool', key: '12', val: tool})
+      p.write({type: 'tool', code: '12', tool: tool})
     })
 
     it('should end the path on a region change', function(done) {
@@ -1605,7 +1656,7 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'set', key: 'region', val: true})
+      p.write({type: 'set', prop: 'region', value: true})
     })
 
     it('should end the path on a polarity change', function(done) {
@@ -1614,7 +1665,7 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'level', key: 'polarity', val: 'C'})
+      p.write({type: 'level', level: 'polarity', value: 'C'})
     })
 
     it('should end the path on a step repeat', function(done) {
@@ -1623,7 +1674,7 @@ describe('gerber plotter', function() {
         done()
       })
 
-      p.write({cmd: 'level', key: 'stepRep', val:	{x: 5, y: 5, i: 2, j: 2}})
+      p.write({type: 'level', level: 'stepRep', value: {x: 5, y: 5, i: 2, j: 2}})
     })
 
     it('should end the path on stream end', function(done) {
@@ -1683,8 +1734,8 @@ describe('gerber plotter', function() {
 
       p.on('data', handleData)
       p._box = [0, 0, 10, 10]
-      p.write({cmd: 'level', key: 'polarity', val: 'C'})
-      p.write({cmd: 'level', key: 'polarity', val: 'D'})
+      p.write({type: 'level', level: 'polarity', value: 'C'})
+      p.write({type: 'level', level: 'polarity', value: 'D'})
     })
 
     it('should push a step repeat with the current bounding box', function(done) {
@@ -1699,14 +1750,14 @@ describe('gerber plotter', function() {
       })
 
       p._box = [0, 0, 10, 10]
-      p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 3, i: 3.3, j: 2.2}})
+      p.write({type: 'level', level: 'stepRep', value: {x: 2, y: 3, i: 3.3, j: 2.2}})
     })
 
     it('should update the box during a step repeat', function() {
-      var tool = {shape: 'circle', val: [2], hole: []}
-      p.write({cmd: 'tool', key: '10', val: tool})
-      p.write({cmd: 'level', key: 'stepRep', val: {x: 2, y: 2, i: 3.5, j: -3}})
-      p.write({cmd: 'op', key: 'flash', val: {x: -3, y: 4}})
+      var tool = {shape: 'circle', params: [2], hole: []}
+      p.write({type: 'tool', code: '10', tool: tool})
+      p.write({type: 'level', level: 'stepRep', value: {x: 2, y: 2, i: 3.5, j: -3}})
+      p.write({type: 'op', op: 'flash', coord: {x: -3, y: 4}})
       expect(p._box).to.eql([-4, 0, 1.5, 5])
     })
   })
@@ -1728,33 +1779,33 @@ describe('gerber plotter', function() {
   describe('outline mode', function() {
     var outPlotter
     beforeEach(function() {
-      var tool = {shape: 'circle', val: [2], hole: []}
+      var tool = {shape: 'circle', params: [2], hole: []}
 
       outPlotter = plotter({plotAsOutline: true})
-      outPlotter.write({cmd: 'set', key: 'epsilon', val: 0.00000001})
-      outPlotter.write({cmd: 'set', key: 'units', val: 'in'})
-      outPlotter.write({cmd: 'set', key: 'nota', val: 'A'})
-      outPlotter.write({cmd: 'set', key: 'mode', val: 'i'})
-      outPlotter.write({cmd: 'tool', key: '10', val: tool})
+      outPlotter.write({type: 'set', prop: 'epsilon', value: 0.00000001})
+      outPlotter.write({type: 'set', prop: 'units', value: 'in'})
+      outPlotter.write({type: 'set', prop: 'nota', value: 'A'})
+      outPlotter.write({type: 'set', prop: 'mode', value: 'i'})
+      outPlotter.write({type: 'tool', code: '10', tool: tool})
     })
 
     it('should update the bounding box in as if it was region mode', function() {
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
 
       expect(outPlotter._box).to.eql([0, 0, 3, 3])
     })
 
     it('should set the first tool used for a stroke to the outline tool', function(done) {
-      var newTool = {shape: 'circle', val: [4], hole: []}
+      var newTool = {shape: 'circle', params: [4], hole: []}
 
       outPlotter.once('data', function(result) {
         expect(result.width).to.equal(2)
-        outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-        outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
-        outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
-        outPlotter.write({cmd: 'set', key: 'tool', val: '10'})
+        outPlotter.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+        outPlotter.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
+        outPlotter.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
+        outPlotter.write({type: 'set', prop: 'tool', value: '10'})
 
         outPlotter.once('data', function(result) {
           expect(result.width).to.equal(2)
@@ -1762,10 +1813,10 @@ describe('gerber plotter', function() {
         })
       })
 
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 1, y: 3}})
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 3, y: 3}})
-      outPlotter.write({cmd: 'op', key: 'int', val: {x: 0, y: 0}})
-      outPlotter.write({cmd: 'tool', key: '11', val: newTool})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 3, y: 3}})
+      outPlotter.write({type: 'op', op: 'int', coord: {x: 0, y: 0}})
+      outPlotter.write({type: 'tool', code: '11', tool: newTool})
     })
   })
 })

@@ -71,10 +71,7 @@ var _updateBox = function(box) {
 }
 
 var _transform = function(chunk, encoding, done) {
-  var cmd = chunk.cmd
-  var key = chunk.key
-  var val = chunk.val
-
+  var type = chunk.type
   this._line = chunk.line
 
   if (this._done) {
@@ -84,28 +81,33 @@ var _transform = function(chunk, encoding, done) {
   }
 
   // check for an operation
-  if (cmd === 'op') {
+  if (type === 'op') {
     this._checkFormat()
 
+    var op = chunk.op
+    var coord = chunk.coord
+
     if (this.nota === 'I') {
-      val = mapValues(val, function(value, key) {
+      var _this = this
+
+      coord = mapValues(coord, function(value, key) {
         if (key === 'x') {
-          return (this._pos[0] + value)
+          return (_this._pos[0] + value)
         }
         if (key === 'y') {
-          return (this._pos[1] + value)
+          return (_this._pos[1] + value)
         }
 
         return value
-      }, this)
+      })
     }
 
-    if (key === 'last') {
+    if (op === 'last') {
       this._warn('modal operation commands are deprecated')
-      key = this._lastOp
+      op = this._lastOp
     }
 
-    if (key === 'int') {
+    if (op === 'int') {
       if (this._mode == null) {
         this._warn('no interpolation mode specified; assuming linear')
         this._mode = 'i'
@@ -118,8 +120,8 @@ var _transform = function(chunk, encoding, done) {
     }
 
     var result = operate(
-      key,
-      val,
+      op,
+      coord,
       this._pos,
       this._tool,
       this._mode,
@@ -129,97 +131,105 @@ var _transform = function(chunk, encoding, done) {
       this._epsilon,
       this)
 
-    this._lastOp = key
+    this._lastOp = op
     this._pos = result.pos
     this._updateBox(result.box)
   }
 
-  else if (cmd === 'set') {
+  else if (type === 'set') {
+    var prop = chunk.prop
+    var value = chunk.value
+
     // if region change, finish the path
-    if (key === 'region') {
+    if (prop === 'region') {
       this._finishPath()
-      this._region = val
+      this._region = value
     }
 
     // else we might need to set the format
-    else if (isFormatKey(key) && !this._formatLock[key]) {
-      this.format[key] = val
-      if (key === 'units' || key === 'nota') {
-        this._formatLock[key] = true
+    else if (isFormatKey(prop) && !this._formatLock[prop]) {
+      this.format[prop] = value
+      if (prop === 'units' || prop === 'nota') {
+        this._formatLock[prop] = true
       }
     }
 
     // else if we're dealing with a tool change, finish the path and change
-    else if (key === 'tool') {
+    else if (prop === 'tool') {
       if (this._region) {
         this._warn('cannot change tool while region mode is on')
       }
-      else if (!has(this._tools, val)) {
-        this._warn('tool ' + val + ' is not defined')
+      else if (!has(this._tools, value)) {
+        this._warn('tool ' + value + ' is not defined')
       }
       else {
         this._finishPath()
-        this._tool = this._tools[val]
+        this._tool = this._tools[value]
       }
     }
 
     // else set interpolation or arc mode
     else {
-      this['_' + key] = val
+      this['_' + prop] = value
     }
   }
 
   // else tool commands
-  else if (cmd === 'tool') {
-    if (this._tools[key]) {
-      this._warn('tool ' + key + ' is already defined; ignoring new definition')
+  else if (type === 'tool') {
+    var code = chunk.code
+    var toolDef = chunk.tool
+
+    if (this._tools[code]) {
+      this._warn('tool ' + code + ' is already defined; ignoring new definition')
 
       return done()
     }
 
-    var shapeAndBox = padShape(val, this._macros)
+    var shapeAndBox = padShape(toolDef, this._macros)
     var tool = {
-      code: key,
+      code: code,
       trace: [],
       pad: shapeAndBox.shape,
       flashed: false,
       box: shapeAndBox.box
     }
 
-    if (val.shape === 'circle' || val.shape === 'rect') {
-      if (val.hole.length === 0) {
-        tool.trace = val.val
+    if (toolDef.shape === 'circle' || toolDef.shape === 'rect') {
+      if (toolDef.hole.length === 0) {
+        tool.trace = toolDef.params
       }
     }
 
     this._finishPath()
-    this._tools[key] = tool
+    this._tools[code] = tool
     this._tool = tool
   }
 
   // else macro command
-  else if (cmd === 'macro') {
-    // save the macro
-    this._macros[key] = val
+  else if (type === 'macro') {
+    this._macros[chunk.name] = chunk.blocks
   }
 
   // else layer command
-  else if (cmd === 'level') {
+  else if (type === 'level') {
+    var level = chunk.level
+    var levelValue = chunk.value
+
     this._finishPath()
 
-    if (key === 'polarity') {
+    if (level === 'polarity') {
       this.push({
         type: 'polarity',
-        polarity: (val === 'C') ? 'clear' : 'dark',
+        polarity: (levelValue === 'C') ? 'clear' : 'dark',
         box: clone(this._box)
       })
     }
     else {
       // calculate new offsets
       var offsets = []
-      for (var x = 0; x < val.x; x++) {
-        for (var y = 0; y < val.y; y++) {
-          offsets.push([x * val.i, y * val.j])
+      for (var x = 0; x < levelValue.x; x++) {
+        for (var y = 0; y < levelValue.y; y++) {
+          offsets.push([x * levelValue.i, y * levelValue.j])
         }
       }
       this._stepRep = offsets
@@ -229,7 +239,7 @@ var _transform = function(chunk, encoding, done) {
   }
 
   // else done command
-  else if (cmd === 'done') {
+  else if (type === 'done') {
     this._done = true
   }
 

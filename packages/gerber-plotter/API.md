@@ -55,7 +55,6 @@ This option is off by default. When `plotAsOutline` is true, the plotter will ta
 
   * The `optimizePaths` option will be forced to true
   * All stroke tools will be merged into one tool (the first tool in the file used for a stroke)
-  * A zero size tool will be given a minimal width of 0.001 (in whatever units the file is in)
   * The bounding box of the file will be calculated as if all strokes are done in region mode
 
 This option exists to take an image representing an outline layer and optimize it to get at the board information the layer represents. Often, outline layers will (accidentally) use different tools for the same line. Additionally, the size of the board is determined by the center of the edge line, rather than the outside of the line, hence switching the size calculation of the path to region mode.
