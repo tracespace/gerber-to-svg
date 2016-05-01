@@ -43,7 +43,7 @@ Coordinates in a Gerber / drill file will either be absolute (common and recomme
 
 #### optimize paths option
 
-This option is off by default. When `optimizePaths` is true, the plotter will reorganize segments in any given stroke or region for efficiency at the expense of plotting speed. It does this by gathering all points and segments and then re-playing them in adjacency order. This results in smaller stroke and fill objects by removing unnecessary plotter moves.
+This option is off by default. When `optimizePaths` is true, the plotter will reorganize segments in any given stroke or region for file-size efficiency at the expense of plotting speed. It does this by gathering all points and segments and then re-playing them in adjacency order. This results in smaller stroke and fill objects by removing unnecessary plotter moves.
 
 For example, with `optimizePaths` on, if the Gerber file says `MOVE TO (1, 1); LINE TO (2, 1); MOVE TO (2, 2); LINE TO (2, 1)`, the plotter will convert that to `LINE FROM (1, 1) TO (2, 1); LINE FROM (2, 1) TO (2, 2)`
 

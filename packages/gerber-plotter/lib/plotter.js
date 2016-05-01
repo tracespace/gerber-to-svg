@@ -162,7 +162,11 @@ Plotter.prototype._transform = function(chunk, encoding, done) {
         this._mode = 'i'
       }
 
-      if ((this._arc == null) && (this._mode.slice(-2) === 'cw')) {
+      if (
+        (this._arc == null) &&
+        (this._mode.slice(-2) === 'cw') &&
+        !coord.a) {
+
         this._warn('quadrant mode unspecified; assuming single quadrant')
         this._arc = 's'
       }
