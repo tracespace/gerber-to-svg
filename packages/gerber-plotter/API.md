@@ -30,12 +30,12 @@ key             | value        | default | description
 `backupUnits`   | `mm` or `in` | `in`    | Backup units in case units are missing
 `nota`          | `A` or `I`   | N/A     | Absolute or incremental coordinate notation
 `backupNota`    | `A` or `I`   | `A`     | Backup notation in case notation is missing
-`optimizePaths` | Boolean      | `false`  | Optimize order of paths in strokes and regions
+`optimizePaths` | Boolean      | `false` | Optimize order of paths in strokes and regions
 `plotAsOutline` | Boolean      | `false` | Treat layer as an outline by combining all tools for paths
 
 #### units and backup units options
 
-Setting `units` will set the plot units of the file regardless of any units that are specified in the file itself. Setting `backupUnits` specifies a fallback that will only be used if there are no units commands in the file.
+Setting `units` will set the plot units of the file regardless of any units that are specified in the file itself. Setting `backupUnits` specifies a fallback that will only be used if there are no units specified in the file.
 
 #### notation and backup notation options
 

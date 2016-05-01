@@ -5,9 +5,9 @@
   "main": "lib/index.js",
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
-    "test": "istanbul cover --include-all-sources _mocha",
+    "test": "istanbul cover --include-all-sources _mocha -- -t 500",
     "posttest": "npm run lint",
-    "test:watch": "mocha --reporter dot --watch",
+    "test:watch": "mocha -t 500 --reporter dot --watch",
     "test:browser": "zuul --local -- ./test/*_test.js",
     "test:sauce": "zuul -- ./test/*_test.js",
     "ci": "npm test && if [ \"${TEST_BROWSERS}\" = \"true\" ]; then npm run ci:browser; fi",

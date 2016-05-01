@@ -148,8 +148,8 @@ var roundToZero = function(number, epsilon) {
   return (number >= epsilon) ? number : 0
 }
 
-// this is a special case where we get an arc radius instead of offsets
-// at this point we assume the arc is <= 180 degress
+// find the center of an arc given its endpoints and its radius
+// assume the arc is <= 180 degress
 // thank you this guy: http://math.stackexchange.com/a/87912
 var arcCenterFromRadius = function(start, end, mode, epsilon, radius) {
   var sign = (mode === 'ccw') ? 1 : -1
