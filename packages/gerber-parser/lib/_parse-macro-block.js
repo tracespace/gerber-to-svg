@@ -4,16 +4,15 @@
 var map = require('lodash.map')
 var clone = require('lodash.clone')
 var set = require('lodash.set')
-var bind = require('lodash.bind')
+var partial = require('lodash.partial')
 
 var parseMacroExpr = require('./_parse-macro-expression')
 
 var reNUM = /^-?[\d.]+$/
 var reVAR_DEF = /^(\$[\d+])=(.+)/
 
-// CAUTION: assumes parser will be bound to this
-var parseMacroBlock = function(block) {
-  var parseExpr = bind(parseMacroExpr, this)
+var parseMacroBlock = function(parser, block) {
+  var parseExpr = partial(parseMacroExpr, parser)
 
   // check first for a comment
   if (block[0] === '0') {
@@ -60,7 +59,7 @@ var parseMacroBlock = function(block) {
 
   // vector primitive
   if (code === 2) {
-    this._warn('macro apeture vector primitives with code 2 are deprecated')
+    parser._warn('macro aperture vector primitives with code 2 are deprecated')
   }
 
   if (code === 2 || code === 20) {
@@ -90,7 +89,7 @@ var parseMacroBlock = function(block) {
   }
 
   if (code === 22) {
-    this._warn('macro apeture lower-left rectangle primitives are deprecated')
+    parser._warn('macro aperture lower-left rectangle primitives are deprecated')
     return {
       type: 'rectLL',
       exp: exp,
@@ -155,7 +154,7 @@ var parseMacroBlock = function(block) {
   }
 
   else {
-    this._warn(code + ' is an unrecognized primitive for a macro apeture')
+    parser._warn(code + ' is an unrecognized primitive for a macro aperture')
   }
 }
 

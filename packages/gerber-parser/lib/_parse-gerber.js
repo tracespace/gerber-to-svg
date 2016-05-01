@@ -3,6 +3,7 @@
 'use strict'
 
 var map = require('lodash.map')
+var partial = require('lodash.partial')
 
 var commands = require('./_commands')
 var normalize = require('./normalize-coord')
@@ -91,7 +92,7 @@ var parseToolDef = function(parser, block) {
   else if (toolArgs[maxArgs - 2]) {
     hole = [normalize(toolArgs[maxArgs - 2], format)]
   }
-  var toolDef = {shape: shape, val: val, hole: hole}
+  var toolDef = {shape: shape, params: val, hole: hole}
   return parser._push(commands.tool(tool, toolDef))
 }
 
@@ -99,7 +100,7 @@ var parseMacroDef = function(parser, block) {
   var macroMatch = block.match(reMACRO)
   var name = macroMatch[1]
   var blockMatch = (macroMatch[2].length) ? macroMatch[2].split('*') : []
-  var blocks = map(blockMatch, parseMacroBlock, parser)
+  var blocks = map(blockMatch, partial(parseMacroBlock, parser))
 
   return parser._push(commands.macro(name, blocks))
 }

@@ -1,13 +1,11 @@
 sudo: false
 language: node_js
 
-# test node latest as last two stables
 node_js:
-- 0.10
-- 0.12
-- node
+  - "0.10"
+  - "4"
+  - node
 
-# test browsers on node stable test
 matrix:
   include:
     - node_js: node

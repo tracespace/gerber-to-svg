@@ -7,10 +7,7 @@ var reOP = /[+\-\/xX()]/
 var reNUMBER = /[$\d.]+/
 var reTOKEN = new RegExp([reOP.source, reNUMBER.source].join('|'), 'g')
 
-// expects this to be bound to the parser
-var parseMacroExpression = function(expr) {
-  // parser
-  var parser = this
+var parseMacroExpression = function(parser, expr) {
   // tokenize the expression
   var tokens = expr.match(reTOKEN)
 
