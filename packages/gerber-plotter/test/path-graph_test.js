@@ -7,7 +7,7 @@ var PathGraph = require('../lib/path-graph')
 describe('path graphs', function() {
   var p
   beforeEach(function() {
-    p = new PathGraph()
+    p = new PathGraph(true)
   })
 
   it('should be able to traverse', function() {
@@ -125,5 +125,29 @@ describe('path graphs', function() {
     p.add({type: 'line', start: [0, 0], end: [-1, 0]})
     p.add({type: 'line', start: [0, 1], end: [1, 1]})
     expect(p.length).to.equal(3)
+  })
+
+  it('should not optimize the path if passed a false during construction', function() {
+    p = new PathGraph(false)
+
+    p.add({type: 'line', start: [0, 0], end: [1, 0]})
+    p.add({type: 'line', start: [0, 0], end: [-1, 0]})
+    p.add({type: 'line', start: [0, 1], end: [1, 1]})
+    p.add({type: 'line', start: [-1, -1], end: [0, -1]})
+    p.add({type: 'line', start: [0, 0], end: [0, 1]})
+    p.add({type: 'line', start: [0, 0], end: [0, -1]})
+    p.add({type: 'line', start: [1, 0], end: [1, 1]})
+    p.add({type: 'line', start: [-1, 0], end: [-1, -1]})
+
+    expect(p.traverse()).to.eql([
+      {type: 'line', start: [0, 0], end: [1, 0]},
+      {type: 'line', start: [0, 0], end: [-1, 0]},
+      {type: 'line', start: [0, 1], end: [1, 1]},
+      {type: 'line', start: [-1, -1], end: [0, -1]},
+      {type: 'line', start: [0, 0], end: [0, 1]},
+      {type: 'line', start: [0, 0], end: [0, -1]},
+      {type: 'line', start: [1, 0], end: [1, 1]},
+      {type: 'line', start: [-1, 0], end: [-1, -1]}
+    ])
   })
 })

@@ -144,9 +144,45 @@ var arcBox = function(cenAndAngles, r, region, tool, dir) {
   }, boundingBox.new())
 }
 
-var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
+var roundToZero = function(number, epsilon) {
+  return (number >= epsilon) ? number : 0
+}
+
+// find the center of an arc given its endpoints and its radius
+// assume the arc is <= 180 degress
+// thank you this guy: http://math.stackexchange.com/a/87912
+var arcCenterFromRadius = function(start, end, mode, epsilon, radius) {
+  var sign = (mode === 'ccw') ? 1 : -1
+  var xAve = (start[0] + end[0]) / 2
+  var yAve = (start[1] + end[1]) / 2
+  var deltaX = end[0] - start[1]
+  var deltaY = end[1] - start[1]
+  var distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2))
+  var halfDistance = distance / 2
+  var squareDifference = Math.sqrt(Math.pow(radius, 2) - Math.pow(halfDistance, 2))
+  var xOffset = -sign * deltaY * squareDifference / distance
+  var yOffset = sign * deltaX * squareDifference / distance
+
+  return [[
+    roundToZero(xAve + xOffset, epsilon),
+    roundToZero(yAve + yOffset, epsilon)
+  ]]
+}
+
+var drawArc = function(
+  start,
+  end,
+  offset,
+  tool,
+  mode,
+  arc,
+  region,
+  epsilon,
+  pathGraph,
+  plotter) {
+
   // get the radius of the arc from the offsets
-  var r = Math.sqrt(Math.pow(offset[0], 2) + Math.pow(offset[1], 2))
+  var r = offset[2] || Math.sqrt(Math.pow(offset[0], 2) + Math.pow(offset[1], 2))
 
   // potential candidates for the arc center
   // in single quadrant mode, all offset signs are implicit, so we need to check a few
@@ -175,12 +211,22 @@ var drawArc = function(start, end, offset, tool, mode, arc, region, epsilon, pat
   }
 
   // find valid centers by comparing the distance to start and end for equality with the radius
-  var validCenters = (arc === 'm') ? candidates : filter(candidates, function(c) {
-    var startDist = Math.sqrt(Math.pow(c[0] - start[0], 2) + Math.pow(c[1] - start[1], 2))
-    var endDist = Math.sqrt(Math.pow(c[0] - end[0], 2) + Math.pow(c[1] - end[1], 2))
+  var validCenters
+  if (offset[2]) {
+    arc = 'm'
+    validCenters = arcCenterFromRadius(start, end, mode, epsilon, offset[2])
+  }
+  else if (arc === 's') {
+    validCenters = filter(candidates, function(c) {
+      var startDist = Math.sqrt(Math.pow(c[0] - start[0], 2) + Math.pow(c[1] - start[1], 2))
+      var endDist = Math.sqrt(Math.pow(c[0] - end[0], 2) + Math.pow(c[1] - end[1], 2))
 
-    return ((Math.abs(startDist - r) <= epsilon) && (Math.abs(endDist - r) <= epsilon))
-  })
+      return ((Math.abs(startDist - r) <= epsilon) && (Math.abs(endDist - r) <= epsilon))
+    })
+  }
+  else {
+    validCenters = candidates
+  }
 
   var cenAndAngles = findCenterAndAngles(start, end, mode, arc, validCenters)
 
@@ -307,14 +353,14 @@ var interpolateRect = function(start, end, tool, pathGraph, plotter) {
 var interpolate = function(
   start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
 
-  if ((region === false) && (tool.trace.length === 0)) {
+  if (!region && (tool.trace.length === 0)) {
     plotter._warn('tool ' + tool.code + ' is not strokable; ignoring interpolate')
     return boundingBox.new()
   }
 
   if (mode === 'i') {
     // add a line to the path normally if region mode is on or the tool is a circle
-    if ((region === true) || (tool.trace.length === 1)) {
+    if (region || (tool.trace.length === 1)) {
       return drawLine(start, end, tool, region, pathGraph)
     }
 
@@ -323,7 +369,7 @@ var interpolate = function(
   }
 
   // else, make sure we're allowed to be drawing an arc, then draw an arc
-  if ((tool.trace.length !== 1) && (region === false)) {
+  if ((tool.trace.length !== 1) && !region) {
     plotter._warn('cannot draw an arc with a non-circular tool')
     return boundingBox.new()
   }
@@ -343,7 +389,8 @@ var operate = function(
 
   var offset = [
     ((coord.i != null) ? coord.i : 0),
-    ((coord.j != null) ? coord.j : 0)
+    ((coord.j != null) ? coord.j : 0),
+    coord.a
   ]
 
   var box
