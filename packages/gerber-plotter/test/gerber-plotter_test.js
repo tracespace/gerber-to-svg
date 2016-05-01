@@ -1212,6 +1212,34 @@ describe('gerber plotter', function() {
           ])
         })
 
+        it('should select the correct arc with an "a" coordinate', function() {
+          p.write({type: 'set', prop: 'mode', value: 'cw'})
+          p.write({type: 'op', op: 'int', coord: {x: 2, y: 2, a: 2}})
+          p.write({type: 'set', prop: 'mode', value: 'ccw'})
+          p.write({type: 'op', op: 'int', coord: {x: 4, y: 2, a: 1}})
+
+          expect(p._path.traverse()).to.eql([
+            {
+              type: 'arc',
+              start: [0, 0, 3.141592653589793],
+              end: [2, 2, 1.5707963267948966],
+              center: [2, 0],
+              sweep: 1.5707963267948966,
+              radius: 2,
+              dir: 'cw'
+            },
+            {
+              type: 'arc',
+              start: [2, 2, 3.141592653589793],
+              end: [4, 2, 0],
+              center: [3, 2],
+              sweep: 3.141592653589793,
+              radius: 1,
+              dir: 'ccw'
+            }
+          ])
+        })
+
         it('should set the sweep to zero for matching start and end in single mode', function() {
           p.write({type: 'set', prop: 'arc', value: 's'})
           p.write({type: 'set', prop: 'mode', value: 'cw'})
