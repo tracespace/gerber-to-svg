@@ -1,14 +1,13 @@
 // gerber plotter
 'use strict'
 
-var TransformStream = require('readable-stream').Transform
+var Transform = require('readable-stream').Transform
+var inherits = require('inherits')
 var has = require('lodash.has')
 var mapValues = require('lodash.mapvalues')
 var clone = require('lodash.clone')
-var omit = require('lodash.omit')
 
 var PathGraph = require('./path-graph')
-var applyOptions = require('./_apply-options')
 var warning = require('./_warning')
 var padShape = require('./_pad-shape')
 var operate = require('./_operate')
@@ -22,7 +21,57 @@ var isFormatKey = function(key) {
     key === 'backupNota')
 }
 
-var _finishPath = function() {
+var Plotter = function(
+  units,
+  backupUnits,
+  nota,
+  backupNota,
+  optimizePaths,
+  plotAsOutline) {
+
+  Transform.call(this, {
+    readableObjectMode: true,
+    writableObjectMode: true
+  })
+
+  this.format = {
+    units: units,
+    backupUnits: backupUnits || 'in',
+    nota: nota,
+    backupNota: backupNota || 'A'
+  }
+
+  this._formatLock = {
+    units: (units != null),
+    backupUnits: (backupUnits != null),
+    nota:  (nota != null),
+    backupNota:  (backupNota != null)
+  }
+
+  // plotting options
+  this._plotAsOutline = plotAsOutline
+  this._optimizePaths = optimizePaths || plotAsOutline
+
+  this._line = 0
+  this._done = false
+  this._tool = null
+  this._outTool = null
+  this._tools = {}
+  this._macros = {}
+  this._pos = [0, 0]
+  this._box = boundingBox.new()
+  this._mode = null
+  this._arc = null
+  this._region = false
+  this._path = new PathGraph(this._optimizePaths)
+  this._epsilon = null
+  this._lastOp = null
+  this._stepRep = []
+}
+
+inherits(Plotter, Transform)
+
+Plotter.prototype._finishPath = function() {
   if (this._path.length) {
     var path = this._path.traverse()
     this._path = new PathGraph(this._optimizePaths)
@@ -43,11 +92,11 @@ var _finishPath = function() {
   }
 }
 
-var _warn = function(message) {
+Plotter.prototype._warn = function(message) {
   this.emit('warning', warning(message, this._line))
 }
 
-var _checkFormat = function() {
+Plotter.prototype._checkFormat = function() {
   if (!this.format.units) {
     this.format.units = this.format.backupUnits
     this._warn('units not set; using backup units: ' + this.format.units)
@@ -59,7 +108,7 @@ var _checkFormat = function() {
   }
 }
 
-var _updateBox = function(box) {
+Plotter.prototype._updateBox = function(box) {
   var stepRepLen = this._stepRep.length
   if (!stepRepLen) {
     this._box = boundingBox.add(this._box, box)
@@ -70,7 +119,7 @@ var _updateBox = function(box) {
   }
 }
 
-var _transform = function(chunk, encoding, done) {
+Plotter.prototype._transform = function(chunk, encoding, done) {
   var type = chunk.type
   this._line = chunk.line
 
@@ -246,74 +295,11 @@ var _transform = function(chunk, encoding, done) {
   return done()
 }
 
-var _flush = function(done) {
+Plotter.prototype._flush = function(done) {
   this._finishPath()
 
   this.push({type: 'size', box: this._box, units: this.format.units})
   done()
 }
 
-var plotter = function(options) {
-  var stream = new TransformStream({
-    readableObjectMode: true,
-    writableObjectMode: true,
-    transform: _transform,
-    flush: _flush
-  })
-
-  options = options || {}
-  var optimizePaths = options.optimizePaths
-  var plotAsOutline = options.plotAsOutline
-  options = omit(options, ['optimizePaths', 'plotAsOutline'])
-
-  stream._updateBox = _updateBox
-  stream._finishPath = _finishPath
-  stream._warn = _warn
-  stream._checkFormat = _checkFormat
-
-  stream.format = {
-    units: null,
-    backupUnits: 'in',
-    nota: null,
-    backupNota: 'A'
-  }
-
-  stream._formatLock = {
-    units: false,
-    backupUnits: false,
-    nota: false,
-    backupNota: false
-  }
-
-  // plotting options
-  stream._plotAsOutline = (plotAsOutline != null)
-    ? plotAsOutline
-    : false
-
-  stream._optimizePaths = (optimizePaths != null)
-    ? (optimizePaths || stream._plotAsOutline)
-    : true
-
-  // format options
-  applyOptions(options, stream.format, stream._formatLock)
-
-  stream._line = 0
-  stream._done = false
-  stream._tool = null
-  stream._outTool = null
-  stream._tools = {}
-  stream._macros = {}
-  stream._pos = [0, 0]
-  stream._box = boundingBox.new()
-  stream._mode = null
-  stream._arc = null
-  stream._region = false
-  stream._path = new PathGraph(stream._optimizePaths)
-  stream._epsilon = null
-  stream._lastOp = null
-  stream._stepRep = []
-
-  return stream
-}
-
-module.exports = plotter
+module.exports = Plotter

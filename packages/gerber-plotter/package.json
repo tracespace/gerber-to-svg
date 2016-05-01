@@ -2,7 +2,7 @@
   "name": "gerber-plotter",
   "version": "0.1.4",
   "description": "Transform stream that takes objects from gerber-parser and emits PCB image objects",
-  "main": "lib/gerber-plotter.js",
+  "main": "lib/index.js",
   "scripts": {
     "lint": "eslint lib/*.js test/*.js",
     "test": "istanbul cover --include-all-sources _mocha",
@@ -47,7 +47,7 @@
     "gerber-parser": "^0.1.2"
   },
   "dependencies": {
-    "lodash.assign": "^4.0.8",
+    "inherits": "^2.0.1",
     "lodash.clone": "^4.3.2",
     "lodash.fill": "^3.2.2",
     "lodash.filter": "^4.3.0",
@@ -59,8 +59,6 @@
     "lodash.isfunction": "^3.0.6",
     "lodash.map": "^4.3.0",
     "lodash.mapvalues": "^4.3.0",
-    "lodash.omit": "^4.2.1",
-    "lodash.pickby": "^4.3.0",
     "lodash.reduce": "^4.3.0",
     "lodash.transform": "^4.3.0",
     "readable-stream": "^2.0.2"

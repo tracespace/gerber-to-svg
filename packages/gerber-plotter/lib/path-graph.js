@@ -26,7 +26,7 @@ var reverseSegment = function(segment) {
 var PathGraph = function(optimize) {
   this._points = []
   this._edges = []
-  this._optimize = (optimize != null) ? optimize : true
+  this._optimize = optimize
 
   this.length = 0
 }

@@ -30,7 +30,7 @@ key             | value        | default | description
 `backupUnits`   | `mm` or `in` | `in`    | Backup units in case units are missing
 `nota`          | `A` or `I`   | N/A     | Absolute or incremental coordinate notation
 `backupNota`    | `A` or `I`   | `A`     | Backup notation in case notation is missing
-`optimizePaths` | Boolean      | `true`  | Optimize order of paths in strokes and regions
+`optimizePaths` | Boolean      | `false`  | Optimize order of paths in strokes and regions
 `plotAsOutline` | Boolean      | `false` | Treat layer as an outline by combining all tools for paths
 
 #### units and backup units options
@@ -43,7 +43,7 @@ Coordinates in a Gerber / drill file will either be absolute (common and recomme
 
 #### optimize paths option
 
-This option is on by default. When `optimizePaths` is true, the plotter will reorganize segments in any given stroke or region for efficiency at the expense of plotting speed. It does this by gathering all points and segments and then re-playing them in adjacency order. This results in smaller stroke and fill objects by removing unnecessary plotter moves.
+This option is off by default. When `optimizePaths` is true, the plotter will reorganize segments in any given stroke or region for efficiency at the expense of plotting speed. It does this by gathering all points and segments and then re-playing them in adjacency order. This results in smaller stroke and fill objects by removing unnecessary plotter moves.
 
 For example, with `optimizePaths` on, if the Gerber file says `MOVE TO (1, 1); LINE TO (2, 1); MOVE TO (2, 2); LINE TO (2, 1)`, the plotter will convert that to `LINE FROM (1, 1) TO (2, 1); LINE FROM (2, 1) TO (2, 2)`
 

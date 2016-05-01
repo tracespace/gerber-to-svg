@@ -307,14 +307,14 @@ var interpolateRect = function(start, end, tool, pathGraph, plotter) {
 var interpolate = function(
   start, end, offset, tool, mode, arc, region, epsilon, pathGraph, plotter) {
 
-  if ((region === false) && (tool.trace.length === 0)) {
+  if (!region && (tool.trace.length === 0)) {
     plotter._warn('tool ' + tool.code + ' is not strokable; ignoring interpolate')
     return boundingBox.new()
   }
 
   if (mode === 'i') {
     // add a line to the path normally if region mode is on or the tool is a circle
-    if ((region === true) || (tool.trace.length === 1)) {
+    if (region || (tool.trace.length === 1)) {
       return drawLine(start, end, tool, region, pathGraph)
     }
 
@@ -323,7 +323,7 @@ var interpolate = function(
   }
 
   // else, make sure we're allowed to be drawing an arc, then draw an arc
-  if ((tool.trace.length !== 1) && (region === false)) {
+  if ((tool.trace.length !== 1) && !region) {
     plotter._warn('cannot draw an arc with a non-circular tool')
     return boundingBox.new()
   }

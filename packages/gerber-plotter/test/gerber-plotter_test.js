@@ -4,7 +4,7 @@
 var expect = require('chai').expect
 var forEach = require('lodash.foreach')
 
-var plotter = require('../lib/gerber-plotter')
+var plotter = require('../lib')
 var boundingBox = require('../lib/_box')
 
 describe('gerber plotter', function() {
@@ -35,7 +35,7 @@ describe('gerber plotter', function() {
 
       expect(function() {
         p = plotter({backupUnits: 'foo'})
-      }).to.throw(/backup units/)
+      }).to.throw(/units must be/)
     })
 
     it('should allow user to set notation', function() {
@@ -55,16 +55,12 @@ describe('gerber plotter', function() {
 
       expect(function() {
         p = plotter({backupNota: 'foo'})
-      }).to.throw(/backup notation/)
+      }).to.throw(/notation must be/)
     })
 
     it('should default backup units and notation to inches and abs', function() {
       expect(p.format.backupUnits).to.equal('in')
       expect(p.format.backupNota).to.equal('A')
-    })
-
-    it('should throw if an options key is invalid', function() {
-      expect(function() {p = plotter({foo: 'bar'})}).to.throw(/invalid/)
     })
 
     it('should not throw with null/undefined options', function() {
@@ -84,15 +80,15 @@ describe('gerber plotter', function() {
   })
 
   describe('plotting options', function() {
-    it('should have an optimize paths option that defaults to true', function() {
-      expect(p._optimizePaths).to.be.true
+    it('should have an optimize paths option that defaults to falsey', function() {
+      expect(p._optimizePaths).to.be.falsey
 
-      p = plotter({optimizePaths: false})
-      expect(p._optimizePaths).to.be.false
+      p = plotter({optimizePaths: true})
+      expect(p._optimizePaths).to.be.true
     })
 
-    it('should have an outline mode option that defaults to false', function() {
-      expect(p._plotAsOutline).to.be.false
+    it('should have an outline mode option that defaults to falsey', function() {
+      expect(p._plotAsOutline).to.be.falsey
 
       p = plotter({plotAsOutline: true})
       expect(p._plotAsOutline).to.be.true
@@ -1071,6 +1067,15 @@ describe('gerber plotter', function() {
       })
 
       it('should handle moves in between strokes when optimizing paths', function() {
+        var tool = {shape: 'circle', params: [2], hole: []}
+        p = plotter({optimizePaths: true})
+
+        p.write({type: 'set', prop: 'epsilon', value: 0.00000001})
+        p.write({type: 'set', prop: 'units', value: 'in'})
+        p.write({type: 'set', prop: 'nota', value: 'A'})
+        p.write({type: 'set', prop: 'mode', value: 'i'})
+        p.write({type: 'tool', code: '10', tool: tool})
+
         p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})
         p.write({type: 'op', op: 'move', coord: {x: 1, y: 3}})
         p.write({type: 'op', op: 'int', coord: {x: 1, y: 1}})

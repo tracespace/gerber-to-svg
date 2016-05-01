@@ -7,7 +7,7 @@ var PathGraph = require('../lib/path-graph')
 describe('path graphs', function() {
   var p
   beforeEach(function() {
-    p = new PathGraph()
+    p = new PathGraph(true)
   })
 
   it('should be able to traverse', function() {
