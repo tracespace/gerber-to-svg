@@ -2,6 +2,35 @@
 
 API documentation for gerber-parser. An understanding of the [Gerber file format specification](http://www.ucamco.com/en/guest/downloads) and the [Excellon NC drill format](http://www.excellon.com/manuals/program.htm) (as poorly defined as it is) will help with understanding the parser API.
 
+<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [create a gerber parser](#create-a-gerber-parser)
+	- [usage](#usage)
+		- [streaming](#streaming)
+		- [synchronous](#synchronous)
+	- [options](#options)
+- [public properties](#public-properties)
+	- [format](#format)
+	- [line](#line)
+- [events](#events)
+	- [warning event](#warning-event)
+	- [error event](#error-event)
+- [transform stream objects](#transform-stream-objects)
+	- [done objects](#done-objects)
+	- [set objects](#set-objects)
+	- [operation objects](#operation-objects)
+		- [coordinate objects](#coordinate-objects)
+	- [level objects](#level-objects)
+	- [tool objects](#tool-objects)
+		- [shapes and parameters](#shapes-and-parameters)
+		- [holes](#holes)
+	- [macro objects](#macro-objects)
+		- [macro blocks](#macro-blocks)
+			- [variable set block](#variable-set-block)
+			- [primitive blocks](#primitive-blocks)
+
+<!-- /TOC -->
+
 ## create a gerber parser
 
 ``` javascript
@@ -14,14 +43,41 @@ gerberStream.pipe(parser)
   .on('warning', function(warning) {
     // handle warning
   })
-  .on('error', function(error) {
+  .once('error', function(error) {
     // handle error
   })
 ```
 
 ### usage
 
-Use the gerber parser like you would any other [Node stream](https://github.com/substack/stream-handbook).
+``` javascript
+var gerberParser = require('gerber-parser')
+var parser = gerberParser(OPTIONS)
+```
+
+The parser is stateful, so be sure to use one parser per file. The parser has both a streaming and a synchronous interface.
+
+#### streaming
+
+The object returned by `gerberParser` is a Node [Transform Stream](https://nodejs.org/api/stream.html#stream_class_stream_transform). When you write a Gerber or Drill file contents into the stream, it will emit command objects to be consumed by an image generator (or plotter).
+
+``` javascript
+var parser = gerberParser()
+var gerberStream = getReadableStreamSomehow()
+
+gerberStream.pipe(parser)
+```
+
+#### synchronous
+
+The transform may also be performed synchronously on a string. This will block, but will most likely run faster.
+
+``` javascript
+var parser = gerberParser()
+var gerberFile = fs.readFileSync('path/to/file.gbr')
+
+var arrayOfCommands = parser.parseSync(gerberFile)
+```
 
 ### options
 
@@ -102,20 +158,19 @@ Given a gerber or drill file stream, the parser will emit a stream of plotter co
 
 ``` javascript
 {
-  cmd: CMD,
+  type: COMMAND_TYPE,
   line: GERBER_LINE_NO,
-  key: KEY,
-  val: VAL
+  params...
 }
 ```
 
 ### done objects
 
-Special objects that indicate the end of a Gerber file.
+Objects that indicate the end of a Gerber file. This corresponds to the Gerber "end" command, not the end of the text stream. If the end of the text stream happens without receiving this command, the file has likely been accidentally truncated.
 
 ``` javascript
 {
-  cmd: 'done',
+  type: 'done',
   line: GERBER_LINE_NO
 }
 ```
@@ -126,14 +181,14 @@ Commands used to set the state of the plotter.
 
 ``` javascript
 {
-  cmd: 'set',
+  type: 'set',
   line: GERBER_LINE_NO,
-  key: KEY,
-  val: VAL
+  prop: PROPERTY,
+  value: VAL
 }
 ```
 
-key           | val                 | description
+property      | value               | description
 --------------|---------------------|----------------------------------------
 `mode`        | `i`, `cw`, or `ccw` | linear, CW-arc, or CCW-arc draw mode
 `arc`         | `s` or `m`          | single or multi-quadrant arc mode
@@ -151,14 +206,14 @@ Commands used to move the plotter location and create image objects
 
 ``` javascript
 {
-  cmd: 'op',
+  type: 'op',
   line: GERBER_LINE_NO,
-  key: OP_TYPE,
-  val: COORDINATE
+  op: OP_TYPE,
+  coord: COORDINATE
 }
 ```
 
-where `COORDINATE` is an object of format `{x: _, y: _, i: _, j: _}` and OP_TYPE is the type of operation:
+where `COORDINATE` is a coordinate object and OP_TYPE is the type of operation:
 
 operation | description
 ----------|-------------------------------------------------------------------
@@ -167,16 +222,28 @@ operation | description
 `flash`   | add image of current tool to the layer image at `COORDINATE`
 `last`    | do whatever the last operation was (deprectated)
 
+#### coordinate objects
+
+A coordinate object is an object with the keys:
+
+key | description
+----|---------------------------------------------------------
+`x` | x coordinate
+`y` | y coordiate
+`i` | (Optional) x-offset of arc center
+`j` | (Optional) y-offset of arc center
+`a` | (Optional) arc radius (mutually exclusive with i and j)
+
 ### level objects
 
 Commands used to create new polarity or step-repeat image levels.
 
 ``` javascript
 {
-  cmd: 'level',
+  type: 'level',
   line: GERBER_LINE_NO,
-  key: LEVEL_TYPE,
-  val: VAL
+  level: LEVEL_TYPE,
+  value: VAL
 }
 ```
 
@@ -191,10 +258,10 @@ Commands used to create new tools.
 
 ``` javascript
 {
-  cmd: 'tool',
+  type: 'tool',
   line: GERBER_LINE_NO,
-  key: TOOL_CODE,
-  val: TOOL_OBJECT
+  code: TOOL_CODE,
+  tool: TOOL_OBJECT
 }
 ```
 
@@ -203,7 +270,7 @@ where `TOOL_CODE` is the unique tool identifier in string format and `TOOL_OBJEC
 ``` javascript
 {
   shape: SHAPE,
-  val: SHAPE_PARAMS_ARRAY,
+  params: SHAPE_PARAMS_ARRAY,
   hole: HOLE_PARAMS_ARRAY
 }
 ```
@@ -236,10 +303,10 @@ Commands used to create new tool macros.
 
 ``` javascript
 {
-  cmd: 'macro',
+  type: 'macro',
   line: GERBER_LINE_NO,
-  key: MACRO_NAME,
-  val: MACRO_BLOCKS_ARRAY
+  name: MACRO_NAME,
+  blocks: MACRO_BLOCKS_ARRAY
 }
 ```
 

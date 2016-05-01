@@ -5,7 +5,7 @@ var Transform = require('readable-stream').Transform
 var expect = require('chai').expect
 var repeat = require('lodash.repeat')
 
-var parser = require('../lib/gerber-parser')
+var parser = require('../lib')
 
 describe('gerber parser', function() {
   describe('factory and options', function() {
@@ -124,6 +124,49 @@ describe('gerber parser', function() {
     it("should know what line it's on", function() {
       p.write(repeat('*\n', 5))
       expect(p.line).to.equal(5)
+    })
+  })
+
+  describe('synchronous parsing', function() {
+    var p
+    beforeEach(function() {
+      p = parser()
+    })
+
+    it('should determine filetype for gerbers', function() {
+      p.parseSync('*\n')
+      expect(p.format.filetype).to.equal('gerber')
+    })
+
+    it('should determine filetype for drills', function() {
+      p.parseSync('; drill comment\n')
+      expect(p.format.filetype).to.equal('drill')
+    })
+
+    it('should read a whole gerber file', function() {
+      var gerber = [
+        'G04 a comment*',
+        'G04 another comment*',
+        'M02*',
+        ''
+      ].join('\n')
+
+      var result = p.parseSync(gerber)
+      expect(p.line).to.equal(3)
+      expect(result).to.have.lengthOf(1)
+    })
+
+    it('should read a whole drill file', function() {
+      var drill = [
+        '; a comment',
+        '; another comment',
+        'M00',
+        ''
+      ].join('\n')
+
+      var result = p.parseSync(drill)
+      expect(p.line).to.equal(3)
+      expect(result).to.have.lengthOf(1)
     })
   })
 })

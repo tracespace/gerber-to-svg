@@ -12,7 +12,8 @@ var MATCH = {
   x: /X([+-]?[\d\.]+)/,
   y: /Y([+-]?[\d\.]+)/,
   i: /I([+-]?[\d\.]+)/,
-  j: /J([+-]?[\d\.]+)/
+  j: /J([+-]?[\d\.]+)/,
+  a: /A([\d\.]+)/
 }
 
 var parse = function(coord, format) {
