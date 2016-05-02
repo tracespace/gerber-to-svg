@@ -184,13 +184,19 @@ backupNota  | Backup notation only to be used if the notation cannot be parsed
 The returned object also contains several public properties. Any properties not listed here should be considered private.
 
 property | type
----------|---------------
+---------|--------------------------
+parser   | `gerber-parser` parser
+plotter  | `gerber-plotter` plotter
 defs     | String
 layer    | String
 viewBox  | Array
 width    | String
 height   | String
 units    | String
+
+### parser and plotter
+
+The parser and plotter properties are both transform streams used in the conversion process. If you need to hook into these streams, this is the place to do it. See [gerber-parser](https://github.com/mcous/gerber-parser) and [gerber-plotter](https://github.com/mcous/gerber-plotter) for more information and the APIs of these streams.
 
 ### defs
 
