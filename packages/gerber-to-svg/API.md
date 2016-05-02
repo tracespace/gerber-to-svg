@@ -90,29 +90,29 @@ The output will be a string of an SVG node with the following format:
 
 ``` xml
 <svg
-  id="<id>"
+  id="${id}"
   xmlns="http://www.w3.org/2000/svg"
   version="1.1"
   xmlns:xlink="http://www.w3.org/1999/xlink"
-  width="<width><units>"
-  height="<height><units>"
-  viewBox="<min-x * 1000> <min-y * 1000> <width * 1000> <height * 1000>"
+  width="${width}${units}"
+  height="${height}${units}"
+  viewBox="${xMin * 1000} ${yMin * 1000} ${width * 1000} ${height * 1000}"
   stroke-linecap="round"
   stroke-linejoin="round"
   stroke-width="0">
 
   <defs>
     <!-- example pad definition -->
-    <circle cx="0" cy="0" r="200" id="<id>_pad-10"/>
+    <circle cx="0" cy="0" r="200" id="${id}_pad-10"/>
   </defs>
 
   <g
-    transform="translate(0,<1000 * (min-y + max-y)>) scale(1,-1)"
-    fill="<color>"
-    stroke="<color>">
+    transform="translate(0,${1000 * (yMin + yMax)}) scale(1,-1)"
+    fill="${color}"
+    stroke="${color}">
 
     <!-- example pad flash -->
-    <use x="1000" y="1000" xlink:href="#<id>_pad-10"/>
+    <use x="1000" y="1000" xlink:href="#${id}_pad-10"/>
     <!-- example stroke -->
     <path stroke-width="5" fill="none" d="M 400 400 400 200 200 200"/>
     <!-- example region -->
@@ -204,7 +204,7 @@ The interior (innerText) of the `defs` node of the SVG. This is where pad shapes
 
 ### layer
 
-The interior of the top-level `g` node of the SVG. This is where regions, strokes, and flashes of dark layers will be. If there are clear layers, there may be nested `g` nodes with `mask` attributes inside `layer`.
+The interior of the top-level `g` node of the SVG. This is where regions, strokes, and flashes of dark layers will be. If there are clear layers, there may be nested `g` nodes with `mask` attributes inside `layer`. If no image was produces, this property will be falsey.
 
 ### viewBox
 
