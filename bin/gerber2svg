@@ -6,8 +6,6 @@ var path = require('path')
 var mkdir = require('mkdirp')
 var parseArgs = require('minimist')
 var chalk = require('chalk')
-var forEach = require('lodash.foreach')
-var reduce = require('lodash.reduce')
 var xmlovely = require('xmlovely')
 
 var gerberToSvg = require('../lib/gerber-to-svg')
@@ -44,7 +42,7 @@ var OPTIONS = [
 ]
 var STRING_OPTS  = ['out', 'color', 'format', 'zero', 'units', 'notation']
 var BOOLEAN_OPTS = ['quiet', 'append-ext', 'version', 'help']
-var ALIAS_OPTS = reduce(OPTIONS, function(alias, opt) {
+var ALIAS_OPTS = OPTIONS.reduce(function(alias, opt) {
   alias[opt[0]] = opt[1]
   return alias
 }, {})
@@ -58,7 +56,7 @@ var printBanner = function() {
 }
 
 var printOptions = function() {
-  forEach(OPTIONS, function(opt) {
+  OPTIONS.forEach(function(opt) {
     console.log('-' + opt[0] + ', --' + opt[1] + '  ' + opt[2])
   })
 }
@@ -130,7 +128,7 @@ var convert = function(err) {
     return error(err.message)
   }
 
-  forEach(argv._, function processGerber(gerberFile) {
+  argv._.forEach(function processGerber(gerberFile) {
     var out = process.stdout
     var ext = (!argv.a) ? path.extname(gerberFile) : ''
     var base = path.basename(gerberFile, ext)

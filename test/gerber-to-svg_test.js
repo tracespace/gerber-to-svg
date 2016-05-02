@@ -218,7 +218,7 @@ describe('gerber to svg', function() {
     expect(converter.filetype).to.equal('foobar')
   })
 
-  describe('parser and plottter options', function() {
+  describe('parser and plotter options', function() {
     it('should pass parser options to the parser', function() {
       var options = {
         id: 'bar',
@@ -241,7 +241,9 @@ describe('gerber to svg', function() {
         units: 'in',
         backupUnits: 'mm',
         nota: 'A',
-        backupNota: 'I'
+        backupNota: 'I',
+        optimizePaths: true,
+        plotAsOutline: false
       }
       gerberToSvg('foo*\n', options)
 
@@ -249,7 +251,9 @@ describe('gerber to svg', function() {
         units: 'in',
         backupUnits: 'mm',
         nota: 'A',
-        backupNota: 'I'
+        backupNota: 'I',
+        optimizePaths: true,
+        plotAsOutline: false
       })
     })
   })

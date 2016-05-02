@@ -137,15 +137,17 @@ color  | CSS color | undefined
 
 **parsing and plotting options**
 
-key         | value               | default
-------------|---------------------|------------------
-places      | [int, int]          | Parsed from file
-zero        | 'L' or 'T'          | Parsed from file
-filetype    | 'gerber' or 'drill' | Parsed from file
-units       | `mm` or `in`        | Parsed from file
-backupUnits | `mm` or `in`        | Parsed from file
-nota        | `A` or `I`          | Parsed from file
-backupNota  | `A` or `I`          | Parsed from file
+key           | value               | default
+--------------|---------------------|------------------
+places        | [int, int]          | Parsed from file
+zero          | 'L' or 'T'          | Parsed from file
+filetype      | 'gerber' or 'drill' | Parsed from file
+units         | `mm` or `in`        | Parsed from file
+backupUnits   | `mm` or `in`        | 'in'
+nota          | `A` or `I`          | Parsed from file
+backupNota    | `A` or `I`          | 'A'
+optimizePaths | `true` or `false`   | `false`
+plotAsOutline | `true` or `false`   | `false`
 
 ### id option
 
@@ -206,8 +208,8 @@ The viewBox units will be 1000 times the actual units.
 
 ### width and height
 
-The real-world size of the SVG as a string including units; e.g. `"1.25in"`
+The real-world size of the SVG as a number. Will be 1/1000 of the corresponding `viewBox` value.
 
 ### units
 
-Units of the process file. Either `in` or `mm`. If `units` is an empty string, then no image was processed from the file.
+Units of the width and height. Either `in` or `mm`. If `units` is an empty string, then no image was found in the file.
