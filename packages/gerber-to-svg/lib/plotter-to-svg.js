@@ -26,8 +26,9 @@ var PlotterToSvg = function(id, className, color) {
   this.defs = ''
   this.layer = ''
   this.viewBox = [0, 0, 0, 0]
-  this.width = '0'
-  this.height = '0'
+  this.width = 0
+  this.height = 0
+  this.units = ''
 
   this._mask = ''
   this._blockMode = false
@@ -91,8 +92,8 @@ PlotterToSvg.prototype._flush = function(done) {
     'stroke-width': 0,
     'fill-rule': 'evenodd',
     color: this._color,
-    width: this.width,
-    height: this.height,
+    width: this.width + this.units,
+    height: this.height + this.units,
     viewBox: this.viewBox.join(' ')
   })
 
@@ -236,8 +237,8 @@ PlotterToSvg.prototype._handleSize = function(box, units) {
     var height = shift(box[3] - box[1])
 
     this.viewBox = [x, y, width, height]
-    this.width = (width / 1000) + units
-    this.height = (height / 1000) + units
+    this.width = (width / 1000)
+    this.height = (height / 1000)
     this.units = units
   }
 }

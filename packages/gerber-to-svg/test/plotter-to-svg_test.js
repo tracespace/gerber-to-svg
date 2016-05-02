@@ -31,8 +31,9 @@ describe('plotter to svg transform stream', function() {
     p.once('data', function(result) {
       expect(result).to.equal(EMPTY_SVG)
       expect(p.viewBox).to.eql([0, 0, 0, 0])
-      expect(p.width).to.equal('0')
-      expect(p.height).to.equal('0')
+      expect(p.width).to.equal(0)
+      expect(p.height).to.equal(0)
+      expect(p.units).to.equal('')
       done()
     })
 
@@ -571,8 +572,8 @@ describe('plotter to svg transform stream', function() {
 
       p.write(size)
       expect(p.viewBox).to.eql([-1000, -1000, 2000, 3000])
-      expect(p.width).to.equal('2mm')
-      expect(p.height).to.equal('3mm')
+      expect(p.width).to.equal(2)
+      expect(p.height).to.equal(3)
       expect(p.units).to.equal('mm')
     })
 

@@ -3,12 +3,13 @@
 
 var fs = require('fs')
 var path = require('path')
-var walk = require('walk')
+var glob = require('glob')
 var hapi = require('hapi')
 var inert = require('inert')
 var async = require('async')
 var partial = require('lodash.partial')
 var template = require('lodash.template')
+var groupBy = require('lodash.groupby')
 
 var gerberToSvg = require('../lib/gerber-to-svg')
 
@@ -28,46 +29,50 @@ var renderGerber = function(gerberFile, done) {
   gerberToSvg(fs.createReadStream(gerberFile), path.basename(gerberFile), done)
 }
 
-var getExpected = function(gerberFile, done) {
-  var base = path.basename(gerberFile, '.gbr')
-  var dir = path.dirname(gerberFile).replace(GERBER_DIR + '/', EXPECTED_DIR + '/')
-  var expected = path.join(dir, base + '.svg')
+var getExpected = function(dirname, basename, done) {
+  var dir = dirname.replace(GERBER_DIR + '/', EXPECTED_DIR + '/')
+  var expected = path.join(__dirname, dir, basename + '.svg')
 
   fs.readFile(expected, 'utf8', done)
 }
 
 var renderTestFiles = function(done) {
-  var walker = walk.walk(path.join(__dirname, GERBER_DIR))
-  var results = {}
-
-  walker.on('file', function(dir, stats, next) {
-    var category = path.basename(dir).split('-').join(' ')
-    var file = path.join(dir, stats.name)
-
-    // only grab gerbers
-    if (path.extname(file) !== '.gbr') {
-      return next()
+  glob('**/*.@(gbr|drl)', {cwd: __dirname}, function(error, files) {
+    if (error) {
+      return done(error)
     }
 
-    async.parallel({
-      gerber: partial(readGerber, file),
-      render: partial(renderGerber, file),
-      expected: partial(getExpected, file)
-    }, function(error, result) {
+    async.map(files, function(file, next) {
+      var dir = path.dirname(file)
+      var category = path.basename(dir).split('-').join(' ')
+      var ext = path.extname(file)
+      var base = path.basename(file, ext)
+      var name = base.split('-').join(' ')
+
+      file = path.join(__dirname, file)
+
+      async.parallel({
+        gerber: partial(readGerber, file),
+        render: partial(renderGerber, file),
+        expected: partial(getExpected, dir, base)
+      }, function(error, results) {
+        if (error) {
+          console.error('Error with ' + file + ' : ' + error.message)
+          results = {gerber: '', render: '', expected: ''}
+        }
+
+        results.name = name
+        results.category = category
+        next(null, results)
+      })
+    },
+    function(error, results) {
       if (error) {
-        console.error(error.message)
+        return done(error)
       }
 
-      result.name = path.basename(stats.name, '.gbr').split('-').join(' ')
-
-      results[category] = results[category] || []
-      results[category].push(result)
-      next()
+      done(null, groupBy(results, 'category'))
     })
-  })
-
-  walker.once('end', function() {
-    done(null, results)
   })
 }
 
