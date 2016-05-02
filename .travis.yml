@@ -1,22 +1,25 @@
 sudo: false
 language: node_js
 node_js:
-- '0.12'
-- '0.10'
-- iojs
-script: gulp travis
-before_deploy: gulp
+  - "0.10"
+  - "4"
+  - node
+matrix:
+  include:
+  - node_js: node
+    env: TEST_BROWSERS=true
+script: npm run-script ci
 deploy:
   provider: npm
   email: mike@cousins.io
-  api_key:
-    secure: VFkMN1RibccubM2NahCoVEZJCKuWe3WhPFD5hAizbh6vBeeR3WhW+utSjrs0kwiOsw3MgBwdHopnAYN/C2//jYnzCePyCSogoGRz2Vn3hDo+KZqo2T4PKBUpLfR3076Q2P9PIxcoQ1g0WX+Cmln6Qjhu5UcnZux9cnipfHZ6jRw=
   on:
-    node: iojs
+    node: node
     tags: true
+    condition: "$TEST_BROWSERS = true"
     all_branches: true
-after_deploy: gulp browsers
+  api_key:
+    secure: LctFroLGh6ujT86HEbRTWDH0CyFRA03a7G/z8D17hd0n2Lr9cTC2sDqra4hPVnEeUqbMaFhjo1zea1TFLqTaaNbj5fMvByRfCuN3HfGvGjH+YK8T0n/Qo7EE+RixEdYc7K4SpSoYj0U/OpG3Pvpol4yhRGgJpia7HnB8Y+kxCQw=
 env:
   global:
-  - secure: SJVboTQgHqXU1UrY2zNkWzr9Gd75Qe8Uzyj7lCTK8C0P5Y9Jg+vE+bHOBKvehgXLmfrVGLZc93n6EilA52XWW0B6U3X6nPk/Pu9/fZRMK8AiyCLD0bfCgiPCikrNRdpp/1PHgbJyuaaYPlEhYE8SwmADGZk9UHFSPMlJQqDrQco=
-  - secure: U92/0p44DjV4u9FFJno6Bc75hXJ6lMfRpRaCfcxv2LL0aIqwVTKH87Yw1r68YrTDgimdiGFnkuxp4z8yucqRc7kXyagwd8QD5uPU3T6kA+LokJ2yfaXr6OSy2lJhb5KUiRbJ45/ybc0mMI6VYUUxzMDOjwTPgt7Gv2SDMLaq8Rs=
+  - secure: ZwEPdy6zZ+3bG2xcG3oczTiJMfJzl7ktN9EH1Dl0CkJH1Yu0fGkz8yWD9AxSHN21TdzIbnmWB3gZvsMKNp3vZPRXHF2CJNKblXYtdYRSlsd0VVN2De2stGljTGORsrWD93AN8C1Ekw6EvrYsUSeq/Fi0vDuB3SLxpE3CiREajto=
+  - secure: MSVHbDbB0u/GC6elnoHYrL/IdkjN0KMfRvj1rkeT3/lFqBkWX4QQFh2jvJeqLnD/eEArpfIA8yKpjzwGJiwnsBSy8/y+XQRPvjPlvkjNCP0KBduqC7neSQBgEAIGcgV+1B6PxnG8DY8w6mYOoAoAadmMx1PUGmjEGKviKuQ27jA=
