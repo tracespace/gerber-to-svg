@@ -88,14 +88,15 @@ describe('gerber to svg', function() {
     fakeConverter.emit('end')
   })
 
-  it('should pipe a stream input into the parser', function() {
-    var input = {pipe: sinon.spy(), setEncoding: sinon.spy()}
+  it('should pipe a stream input into the parser and listen for errors', function() {
+    var input = {pipe: sinon.spy(), setEncoding: sinon.spy(), once: sinon.spy()}
     gerberToSvg(input, 'test-id')
 
     expect(input.pipe).to.have.been.calledWith(fakeParser)
     expect(fakeParser.pipe).to.have.been.calledWith(fakePlotter)
     expect(fakePlotter.pipe).to.have.been.calledWith(fakeConverter)
     expect(input.setEncoding).to.have.been.calledWith('utf8')
+    expect(input.once).to.have.been.calledWith('error')
   })
 
   it('should write string input into the parser', function(done) {
@@ -255,6 +256,13 @@ describe('gerber to svg', function() {
         optimizePaths: true,
         plotAsOutline: false
       })
+    })
+
+    it('should include the parser and plotter as properties', function() {
+      var result = gerberToSvg('thing', 'id')
+
+      expect(result.parser).to.equal(fakeParser)
+      expect(result.plotter).to.equal(fakePlotter)
     })
   })
 })

@@ -151,7 +151,7 @@ var convert = function(err) {
     var converter = gerberToSvg(gerberStream, getOpts(base))
 
     converter.on('warning', function(w) {
-      warn('warning: ' + w.line + ' - ' + w.message)
+      warn('warning at line ' + w.line + ' - ' + w.message)
     })
 
     converter.pipe(out)
