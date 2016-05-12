@@ -221,7 +221,17 @@ describe('gerber to svg', function() {
   })
 
   it('should expose the render function used by the converter', function() {
-    expect(gerberToSvg.render).to.equal(render)
+    var fakeConverter = {
+      defs: 'the',
+      layer: 'other',
+      viewBox: [0, 1, 2, 3],
+      width: 'I',
+      height: 'must',
+      units: 'have'
+    }
+    var expected = render(fakeConverter)
+
+    expect(gerberToSvg.render(fakeConverter)).to.equal(expected)
   })
 
   it('shoud have a clone method that clones the public properties of a converter', function() {
