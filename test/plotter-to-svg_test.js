@@ -77,37 +77,40 @@ describe('plotter to svg transform stream', function() {
   describe('creating pad shapes', function() {
     it('should handle circle primitives', function() {
       var toolShape = [{type: 'circle', cx: 0.001, cy: 0.002, r: 0.005}]
-      var expected = '<circle id="id_pad-10" cx="1" cy="2" r="5"/>'
+      var expected = ['<circle id="id_pad-10" cx="1" cy="2" r="5"/>']
 
       p.write({type: 'shape', tool: '10', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle rect primitives', function() {
       var toolShape = [
         {type: 'rect', cx: 0.002, cy: 0.004, width: 0.002, height: 0.004, r: 0.002}
       ]
-      var expected = '<rect id="id_pad-10" x="1" y="2" rx="2" ry="2" width="2" height="4"/>'
+      var expected = [
+        '<rect id="id_pad-10" x="1" y="2" rx="2" ry="2" width="2" height="4"/>'
+      ]
 
       p.write({type: 'shape', tool: '10', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle polygon primitives', function() {
       var toolShape = [{type: 'poly', points: [[0, 0], [1, 0], [0, 1]]}]
-      var expected = '<polygon id="id_pad-12" points="0,0 1000,0 0,1000"/>'
+      var expected = ['<polygon id="id_pad-12" points="0,0 1000,0 0,1000"/>']
 
       p.write({type: 'shape', tool: '12', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle a ring primitives', function() {
       var toolShape = [{type: 'ring', r: 0.02, width: 0.005, cx: 0.05, cy: -0.03}]
-      var expected = '<circle id="id_pad-11" cx="50" cy="-30" r="20" '
-      expected += 'stroke-width="5" fill="none"/>'
+      var expected = [
+        '<circle id="id_pad-11" cx="50" cy="-30" r="20" stroke-width="5" fill="none"/>'
+      ]
 
       p.write({type: 'shape', tool: '11', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle a clipped primitive with rects', function() {
@@ -121,19 +124,19 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
 
       var expected = [
-        '<mask id="id_pad-15_mask" stroke="#fff">',
-        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>',
-        '</mask>',
-        '<g id="id_pad-15" mask="url(#id_pad-15_mask)">',
-        '<rect x="1" y="1" width="4" height="4"/>',
-        '<rect x="-5" y="1" width="4" height="4"/>',
-        '<rect x="-5" y="-5" width="4" height="4"/>',
-        '<rect x="1" y="-5" width="4" height="4"/>',
+        '<mask id="id_pad-15_mask" stroke="#fff">' +
+        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>' +
+        '</mask>' +
+        '<g id="id_pad-15" mask="url(#id_pad-15_mask)">' +
+        '<rect x="1" y="1" width="4" height="4"/>' +
+        '<rect x="-5" y="1" width="4" height="4"/>' +
+        '<rect x="-5" y="-5" width="4" height="4"/>' +
+        '<rect x="1" y="-5" width="4" height="4"/>' +
         '</g>'
-      ].join('')
+      ]
 
       p.write({type: 'shape', tool: '15', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle a clipped primitive with polys', function() {
@@ -152,19 +155,19 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
 
       var expected = [
-        '<mask id="id_pad-15_mask" stroke="#fff">',
-        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>',
-        '</mask>',
-        '<g id="id_pad-15" mask="url(#id_pad-15_mask)">',
-        '<polygon points="1,1 5,1 5,5 1,5"/>',
-        '<polygon points="-5,1 -1,1 -1,5 -5,5"/>',
-        '<polygon points="-5,-5 -1,-5 -1,-1 -5,-1"/>',
-        '<polygon points="1,-5 5,-5 5,-1 1,-1"/>',
+        '<mask id="id_pad-15_mask" stroke="#fff">' +
+        '<circle cx="0" cy="0" r="4" stroke-width="2" fill="none"/>' +
+        '</mask>' +
+        '<g id="id_pad-15" mask="url(#id_pad-15_mask)">' +
+        '<polygon points="1,1 5,1 5,5 1,5"/>' +
+        '<polygon points="-5,1 -1,1 -1,5 -5,5"/>' +
+        '<polygon points="-5,-5 -1,-5 -1,-1 -5,-1"/>' +
+        '<polygon points="1,-5 5,-5 5,-1 1,-1"/>' +
         '</g>'
-      ].join('')
+      ]
 
       p.write({type: 'shape', tool: '15', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle multiple primitives', function() {
@@ -176,16 +179,16 @@ describe('plotter to svg transform stream', function() {
       ]
 
       var expected = [
-        '<g id="id_pad-20">',
-        '<rect x="1" y="1" width="4" height="4"/>',
-        '<rect x="-5" y="1" width="4" height="4"/>',
-        '<rect x="-5" y="-5" width="4" height="4"/>',
-        '<rect x="1" y="-5" width="4" height="4"/>',
+        '<g id="id_pad-20">' +
+        '<rect x="1" y="1" width="4" height="4"/>' +
+        '<rect x="-5" y="1" width="4" height="4"/>' +
+        '<rect x="-5" y="-5" width="4" height="4"/>' +
+        '<rect x="1" y="-5" width="4" height="4"/>' +
         '</g>'
-      ].join('')
+      ]
 
       p.write({type: 'shape', tool: '20', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
 
     it('should handle polarity changes', function() {
@@ -202,28 +205,28 @@ describe('plotter to svg transform stream', function() {
       ]
 
       var expected = [
-        '<mask id="id_pad-11_1" fill="#000" stroke="#000">',
-        '<rect x="-3" y="1" width="6" height="8" fill="#fff"/>',
-        '<rect x="-2" y="3" width="4" height="4"/>',
+        '<mask id="id_pad-11_1" fill="#000" stroke="#000">' +
+        '<rect x="-3" y="1" width="6" height="8" fill="#fff"/>' +
+        '<rect x="-2" y="3" width="4" height="4"/>' +
         '</mask>',
-        '<mask id="id_pad-11_3" fill="#000" stroke="#000">',
-        '<rect x="-4" y="-9" width="8" height="13" fill="#fff"/>',
-        '<rect x="-2" y="-7" width="4" height="4"/>',
-        '<circle cx="0" cy="0" r="2"/>',
+        '<mask id="id_pad-11_3" fill="#000" stroke="#000">' +
+        '<rect x="-4" y="-9" width="8" height="13" fill="#fff"/>' +
+        '<rect x="-2" y="-7" width="4" height="4"/>' +
+        '<circle cx="0" cy="0" r="2"/>' +
         '</mask>',
-        '<g id="id_pad-11">',
-        '<g mask="url(#id_pad-11_3)">',
-        '<g mask="url(#id_pad-11_1)">',
-        '<rect x="-3" y="1" width="6" height="8"/>',
-        '</g>',
-        '<rect x="-3" y="-9" width="6" height="8"/>',
-        '<circle cx="0" cy="0" r="4"/>',
-        '</g>',
+        '<g id="id_pad-11">' +
+        '<g mask="url(#id_pad-11_3)">' +
+        '<g mask="url(#id_pad-11_1)">' +
+        '<rect x="-3" y="1" width="6" height="8"/>' +
+        '</g>' +
+        '<rect x="-3" y="-9" width="6" height="8"/>' +
+        '<circle cx="0" cy="0" r="4"/>' +
+        '</g>' +
         '</g>'
-      ].join('')
+      ]
 
       p.write({type: 'shape', tool: '11', shape: toolShape})
-      expect(p.defs).to.equal(expected)
+      expect(p.defs).to.eql(expected)
     })
   })
 
@@ -393,8 +396,12 @@ describe('plotter to svg transform stream', function() {
       var clear = {type: 'polarity', polarity: 'clear', box: [0, 0, 1, 1]}
       var dark = {type: 'polarity', polarity: 'dark', box: [0, 0, 1, 1]}
       var pad = {type: 'pad', tool: '10', x: 0.005, y: 0.005}
-      var expectedDefs = '<mask id="id_clear-1" fill="#000" stroke="#000">'
-      expectedDefs += '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/></mask>'
+      var expectedDefs = [
+        '<mask id="id_clear-1" fill="#000" stroke="#000">' +
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>' +
+        '</mask>'
+      ]
+
       var expectedLayer = '<g mask="url(#id_clear-1)"/>'
       expectedLayer += '<use xlink:href="#id_pad-10" x="5" y="5"/>'
 
@@ -402,7 +409,7 @@ describe('plotter to svg transform stream', function() {
       p.write(dark)
       p.write(pad)
       expect(p._mask).to.eql([])
-      expect(p.defs).to.equal(expectedDefs)
+      expect(p.defs).to.eql(expectedDefs)
       expect(p.layer).to.equal(expectedLayer)
     })
 
@@ -411,7 +418,7 @@ describe('plotter to svg transform stream', function() {
 
       p.write(dark)
       expect(p._mask).to.eql([])
-      expect(p.defs).to.equal('')
+      expect(p.defs).to.eql([])
       expect(p.layer).to.equal('')
     })
   })
@@ -423,8 +430,10 @@ describe('plotter to svg transform stream', function() {
       p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
       p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
 
-      expect(p.defs).to.equal(
-        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>')
+      expect(p.defs).to.eql([
+        '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>'
+      ])
+
       expect(p.layer).to.equal([
         '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
         '<use xlink:href="#id_block-1-1" x="0" y="1000"/>',
@@ -447,36 +456,37 @@ describe('plotter to svg transform stream', function() {
       p.write({type: 'pad', tool: '14', x: 1.25, y: 1.25})
       p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
 
-      expect(p.defs).to.equal([
+      expect(p.defs).to.eql([
         '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
         '<g id="id_block-1-2"><use xlink:href="#id_pad-11" x="500" y="500"/></g>',
         '<g id="id_block-1-3"><use xlink:href="#id_pad-12" x="750" y="750"/></g>',
         '<g id="id_block-1-4"><use xlink:href="#id_pad-13" x="1000" y="1000"/></g>',
         '<g id="id_block-1-5"><use xlink:href="#id_pad-14" x="1250" y="1250"/></g>',
-        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
-        '<rect x="0" y="0" width="500" height="500" fill="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-2" x="0" y="0"/>',
-        '<use xlink:href="#id_block-1-3" x="0" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-4" x="0" y="0"/>',
-        '<use xlink:href="#id_block-1-5" x="0" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="5000" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-2" x="0" y="5000"/>',
-        '<use xlink:href="#id_block-1-3" x="0" y="5000" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-4" x="0" y="5000"/>',
-        '<use xlink:href="#id_block-1-5" x="0" y="5000" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="5000" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-2" x="5000" y="0"/>',
-        '<use xlink:href="#id_block-1-3" x="5000" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-4" x="5000" y="0"/>',
-        '<use xlink:href="#id_block-1-5" x="5000" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-2" x="5000" y="5000"/>',
-        '<use xlink:href="#id_block-1-3" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-4" x="5000" y="5000"/>',
-        '<use xlink:href="#id_block-1-5" x="5000" y="5000" fill="#fff" stroke="#fff"/>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">' +
+        '<rect x="0" y="0" width="500" height="500" fill="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-2" x="0" y="0"/>' +
+        '<use xlink:href="#id_block-1-3" x="0" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-4" x="0" y="0"/>' +
+        '<use xlink:href="#id_block-1-5" x="0" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="5000" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-2" x="0" y="5000"/>' +
+        '<use xlink:href="#id_block-1-3" x="0" y="5000" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-4" x="0" y="5000"/>' +
+        '<use xlink:href="#id_block-1-5" x="0" y="5000" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="5000" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-2" x="5000" y="0"/>' +
+        '<use xlink:href="#id_block-1-3" x="5000" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-4" x="5000" y="0"/>' +
+        '<use xlink:href="#id_block-1-5" x="5000" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="5000" y="5000" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-2" x="5000" y="5000"/>' +
+        '<use xlink:href="#id_block-1-3" x="5000" y="5000" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-4" x="5000" y="5000"/>' +
+        '<use xlink:href="#id_block-1-5" x="5000" y="5000" fill="#fff" stroke="#fff"/>' +
         '</mask>'
-      ].join(''))
+      ])
+
       expect(p.layer).to.equal([
         '<g mask="url(#id_block-1-clear)">',
         '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
@@ -507,25 +517,26 @@ describe('plotter to svg transform stream', function() {
       p.write({type: 'pad', tool: '11', x: 0.25, y: 0.25})
       p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
 
-      expect(p.defs).to.equal([
-        '<mask id="id_clear-1" fill="#000" stroke="#000">',
-        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
-        'SOME_EXISTING_CLEAR_STUFF',
+      expect(p.defs).to.eql([
+        '<mask id="id_clear-1" fill="#000" stroke="#000">' +
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>' +
+        'SOME_EXISTING_CLEAR_STUFF' +
         '</mask>',
         '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
         '<g id="id_block-1-2"><use xlink:href="#id_pad-11" x="250" y="250"/></g>',
-        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
-        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
-        '<use xlink:href="#id_block-1-2" x="0" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="500"/>',
-        '<use xlink:href="#id_block-1-2" x="0" y="500" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="500" y="0"/>',
-        '<use xlink:href="#id_block-1-2" x="500" y="0" fill="#fff" stroke="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="500" y="500"/>',
-        '<use xlink:href="#id_block-1-2" x="500" y="500" fill="#fff" stroke="#fff"/>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">' +
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>' +
+        '<use xlink:href="#id_block-1-2" x="0" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="500"/>' +
+        '<use xlink:href="#id_block-1-2" x="0" y="500" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="500" y="0"/>' +
+        '<use xlink:href="#id_block-1-2" x="500" y="0" fill="#fff" stroke="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="500" y="500"/>' +
+        '<use xlink:href="#id_block-1-2" x="500" y="500" fill="#fff" stroke="#fff"/>' +
         '</mask>'
-      ].join(''))
+      ])
+
       expect(p.layer).to.equal([
         '<g mask="url(#id_block-1-clear)">',
         '<g mask="url(#id_clear-1)">',
@@ -547,16 +558,17 @@ describe('plotter to svg transform stream', function() {
       p.write({type: 'pad', tool: '10', x: 0.25, y: 0.25})
       p.write({type: 'repeat', offsets: [], box: [0, 0, 1.5, 1.5]})
 
-      expect(p.defs).to.equal([
+      expect(p.defs).to.eql([
         '<g id="id_block-1-1"><use xlink:href="#id_pad-10" x="250" y="250"/></g>',
-        '<mask id="id_block-1-clear" fill="#000" stroke="#000">',
-        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="0"/>',
-        '<use xlink:href="#id_block-1-1" x="0" y="500"/>',
-        '<use xlink:href="#id_block-1-1" x="500" y="0"/>',
-        '<use xlink:href="#id_block-1-1" x="500" y="500"/>',
+        '<mask id="id_block-1-clear" fill="#000" stroke="#000">' +
+        '<rect x="0" y="0" width="1000" height="1000" fill="#fff"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="0"/>' +
+        '<use xlink:href="#id_block-1-1" x="0" y="500"/>' +
+        '<use xlink:href="#id_block-1-1" x="500" y="0"/>' +
+        '<use xlink:href="#id_block-1-1" x="500" y="500"/>' +
         '</mask>'
-      ].join(''))
+      ])
+
       expect(p.layer).to.equal([
         '<g mask="url(#id_block-1-clear)">',
         'SOME_EXISTING_STUFF',
@@ -595,7 +607,7 @@ describe('plotter to svg transform stream', function() {
         done()
       })
 
-      p.defs = 'THESE_ARE_THE_DEFS'
+      p.defs = ['THESE_ARE_THE_DEFS']
       p.layer = 'THIS_IS_THE_clear'
       p.write(size)
       p.end()
