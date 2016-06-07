@@ -11,7 +11,7 @@ var assign = require('lodash.assign')
 var expect = chai.expect
 chai.use(sinonChai)
 
-var render = require('../lib/_render')
+var render = require('../lib/render')
 
 var parserStub = sinon.stub()
 var plotterStub = sinon.stub()

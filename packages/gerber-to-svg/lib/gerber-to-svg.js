@@ -7,7 +7,7 @@ var gerberParser = require('gerber-parser')
 var gerberPlotter = require('gerber-plotter')
 
 var PlotterToSvg = require('./plotter-to-svg')
-var render = require('./_render')
+var render = require('./render')
 
 var parseOptions = function(options) {
   var optionsIsString = isString(options)
