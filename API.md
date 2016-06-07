@@ -78,7 +78,7 @@ plotAsOutline | `true` or `false`   | `false`
 
 #### id and attributes option
 
-The `id` and `attributes` options are used to set additional attributes of the top-level SVG node. Either the `id` option or `attributes.id` is required. `id` should be unique to avoid display problems with multiple SVGs on the same page. Any periods (`.`) in the id will be replaced with dashes (`-`).
+The `id` and `attributes` options are used to set additional attributes of the top-level SVG node. Either the `id` option or `attributes.id` is required. `id` should be unique to avoid display problems with multiple SVGs on the same page.
 
 Some good candidates for other attributes to specify are:
 

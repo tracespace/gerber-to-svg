@@ -71,6 +71,7 @@
     "gerber-parser": "^1.0.0",
     "gerber-plotter": "^1.0.0",
     "inherits": "^2.0.1",
+    "lodash.defaults": "^4.0.1",
     "lodash.isfinite": "^3.2.0",
     "lodash.isstring": "^4.0.1",
     "lodash.pick": "^4.2.0",
