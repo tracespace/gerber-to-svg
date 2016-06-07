@@ -270,8 +270,8 @@ property | type
 ---------|--------------------------
 parser   | `gerber-parser` parser
 plotter  | `gerber-plotter` plotter
-defs     | String
-layer    | String
+defs     | Array
+layer    | Array
 viewBox  | Array
 width    | String
 height   | String
@@ -283,11 +283,11 @@ The parser and plotter properties are both transform streams used in the convers
 
 ### defs
 
-The interior (innerText) of the `defs` node of the SVG. This is where pad shapes and clear layers will be defined.
+An array of the interior elements of the `defs` node of the SVG. This is where pad shapes and clear layers will be defined.
 
 ### layer
 
-The interior of the top-level `g` node of the SVG. This is where regions, strokes, and flashes of dark layers will be. If there are clear layers, there may be nested `g` nodes with `mask` attributes inside `layer`. If no image was produces, this property will be falsey.
+An array of the interior elements of the top-level `g` node of the SVG. This is where regions, strokes, and flashes of dark layers will be. If there are clear layers, there may be nested `g` nodes with `mask` attributes inside `layer`. If no image was produces, this array will be empty.
 
 ### viewBox
 
