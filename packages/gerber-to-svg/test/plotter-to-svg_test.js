@@ -147,12 +147,12 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
       var expected = [
         {cx: 0, cy: 0, r: 4, 'stroke-width': 2, fill: 'none'},
-        {id: 'id_pad-15_mask', stroke: '#fff'},
+        {id: 'id_pad-15_mask-0', stroke: '#fff'},
         {x: 1, y: 1, width: 4, height: 4},
         {x: -5, y: 1, width: 4, height: 4},
         {x: -5, y: -5, width: 4, height: 4},
         {x: 1, y: -5, width: 4, height: 4},
-        {id: 'id_pad-15', mask: 'url(#id_pad-15_mask)'}
+        {id: 'id_pad-15', mask: 'url(#id_pad-15_mask-0)'}
       ]
 
       p.write({type: 'shape', tool: '15', shape: toolShape})
@@ -182,12 +182,12 @@ describe('plotter to svg transform stream', function() {
       var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
       var expected = [
         {cx: 0, cy: 0, r: 4, 'stroke-width': 2, fill: 'none'},
-        {id: 'id_pad-15_mask', stroke: '#fff'},
+        {id: 'id_pad-15_mask-0', stroke: '#fff'},
         {points: '1,1 5,1 5,5 1,5'},
         {points: '-5,1 -1,1 -1,5 -5,5'},
         {points: '-5,-5 -1,-5 -1,-1 -5,-1'},
         {points: '1,-5 5,-5 5,-1 1,-1'},
-        {id: 'id_pad-15', mask: 'url(#id_pad-15_mask)'}
+        {id: 'id_pad-15', mask: 'url(#id_pad-15_mask-0)'}
       ]
 
       p.write({type: 'shape', tool: '15', shape: toolShape})
@@ -227,34 +227,64 @@ describe('plotter to svg transform stream', function() {
     })
 
     it('should handle multiple clipped primitives', function() {
-      var clippedShapes = [
+      var clippedShapes1 = [
         {type: 'rect', cx: 0.003, cy: 0.003, width: 0.004, height: 0.004, r: 0},
         {type: 'rect', cx: -0.003, cy: 0.003, width: 0.004, height: 0.004, r: 0},
         {type: 'rect', cx: -0.003, cy: -0.003, width: 0.004, height: 0.004, r: 0},
         {type: 'rect', cx: 0.003, cy: -0.003, width: 0.004, height: 0.004, r: 0}
       ]
 
-      var ring = {type: 'ring', r: 0.004, width: 0.002, cx: 0, cy: 0}
-      var toolShape = [{type: 'clip', shape: clippedShapes, clip: ring}]
+      var clippedShapes2 = [
+        {type: 'rect', cx: 0.003, cy: 0.003, width: 0.002, height: 0.002, r: 0},
+        {type: 'rect', cx: -0.003, cy: 0.003, width: 0.002, height: 0.002, r: 0},
+        {type: 'rect', cx: -0.003, cy: -0.003, width: 0.002, height: 0.002, r: 0},
+        {type: 'rect', cx: 0.003, cy: -0.003, width: 0.002, height: 0.002, r: 0}
+      ]
+
+      var ring1 = {type: 'ring', r: 0.004, width: 0.002, cx: 0, cy: 0}
+      var ring2 = {type: 'ring', r: 0.002, width: 0.001, cx: 0, cy: 0}
+      var toolShape = [
+        {type: 'clip', shape: clippedShapes1, clip: ring1},
+        {type: 'clip', shape: clippedShapes2, clip: ring2}
+      ]
+
+      p.write({type: 'shape', tool: '15', shape: toolShape})
+
+      var values = element.returnValues
       var expected = [
         {cx: 0, cy: 0, r: 4, 'stroke-width': 2, fill: 'none'},
-        {id: 'id_pad-15_mask', stroke: '#fff'},
+        {id: 'id_pad-15_mask-0', stroke: '#fff'},
         {x: 1, y: 1, width: 4, height: 4},
         {x: -5, y: 1, width: 4, height: 4},
         {x: -5, y: -5, width: 4, height: 4},
         {x: 1, y: -5, width: 4, height: 4},
-        {id: 'id_pad-15', mask: 'url(#id_pad-15_mask)'}
+        {mask: 'url(#id_pad-15_mask-0)'},
+        {cx: 0, cy: 0, r: 2, 'stroke-width': 1, fill: 'none'},
+        {id: 'id_pad-15_mask-1', stroke: '#fff'},
+        {x: 2, y: 2, width: 2, height: 2},
+        {x: -4, y: 2, width: 2, height: 2},
+        {x: -4, y: -4, width: 2, height: 2},
+        {x: 2, y: -4, width: 2, height: 2},
+        {mask: 'url(#id_pad-15_mask-1)'},
+        {id: 'id_pad-15'}
       ]
 
-      p.write({type: 'shape', tool: '15', shape: toolShape})
       expect(element).to.be.calledWith('circle', expected[0])
-      expect(element).to.be.calledWith('mask', expected[1], [element.returnValues[0]])
+      expect(element).to.be.calledWith('mask', expected[1], [values[0]])
       expect(element).to.be.calledWith('rect', expected[2])
       expect(element).to.be.calledWith('rect', expected[3])
       expect(element).to.be.calledWith('rect', expected[4])
       expect(element).to.be.calledWith('rect', expected[5])
-      expect(element).to.be.calledWith('g', expected[6], element.returnValues.slice(2, 6))
-      expect(p.defs).to.eql([element.returnValues[1], element.returnValues[6]])
+      expect(element).to.be.calledWith('g', expected[6], values.slice(2, 6))
+      expect(element).to.be.calledWith('circle', expected[7])
+      expect(element).to.be.calledWith('mask', expected[8], [values[7]])
+      expect(element).to.be.calledWith('rect', expected[9])
+      expect(element).to.be.calledWith('rect', expected[10])
+      expect(element).to.be.calledWith('rect', expected[11])
+      expect(element).to.be.calledWith('rect', expected[12])
+      expect(element).to.be.calledWith('g', expected[13], values.slice(9, 13))
+      expect(element).to.be.calledWith('g', expected[14], [values[6], values[13]])
+      expect(p.defs).to.eql([values[1], values[8], values[14]])
     })
 
     it('should handle polarity changes', function() {
