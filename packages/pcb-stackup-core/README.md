@@ -4,8 +4,7 @@
 [![Travis](https://img.shields.io/travis/tracespace/pcb-stackup-core.svg?style=flat-square)](https://travis-ci.org/tracespace/pcb-stackup-core)
 [![Coveralls](https://img.shields.io/coveralls/tracespace/pcb-stackup-core.svg?style=flat-square)](https://coveralls.io/github/tracespace/pcb-stackup-core)
 [![David](https://img.shields.io/david/tracespace/pcb-stackup-core.svg?style=flat-square)](https://david-dm.org/tracespace/pcb-stackup-core)
-[![David](https://img.shields.io/david/dev/tracespace/pcb-stackup-core.svg?style=fl
-at-square)](https://david-dm.org/tracespace/pcb-stackup-core#info=devDependencies)
+[![David](https://img.shields.io/david/dev/tracespace/pcb-stackup-core.svg?style=flat-square)](https://david-dm.org/tracespace/pcb-stackup-core#info=devDependencies)
 
 If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out [pcb-stackup](https://github.com/tracespace/pcb-stackup) first.
 
