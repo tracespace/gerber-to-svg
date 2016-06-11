@@ -5,8 +5,8 @@ var sinon = require('sinon')
 var chai = require('chai')
 var sinonChai = require('sinon-chai')
 var proxyquire = require('proxyquire')
-
 var expect = chai.expect
+
 chai.use(sinonChai)
 
 var sortLayersSpy = sinon.spy(require('../lib/sort-layers'))
@@ -47,10 +47,12 @@ describe('pcb stackup function', function() {
 
   it('should need an id as an option', function() {
     var result1 = pcbStackupCore([], 'foo')
+
     expect(result1.top).to.contain('id="foo_top"')
     expect(result1.bottom).to.contain('id="foo_bottom"')
 
     var result2 = pcbStackupCore([], {id: 'bar'})
+
     expect(result2.top).to.contain('id="bar_top"')
     expect(result2.bottom).to.contain('id="bar_bottom"')
 
@@ -76,9 +78,9 @@ describe('pcb stackup function', function() {
       ].join(' ')
     }
     var svgEnd = '</svg>'
-
     var topStart = svgStart('top')
     var bottomStart = svgStart('bottom')
+
     expect(result.top.slice(0, topStart.length)).to.equal(topStart)
     expect(result.bottom.slice(0, bottomStart.length)).to.equal(bottomStart)
     expect(result.top.slice(-svgEnd.length)).to.equal(svgEnd)
@@ -133,21 +135,23 @@ describe('pcb stackup function', function() {
 
   it('should pass the layers to sort layers', function() {
     var files = [
-      {type: {id: 'tcu'}, converter: converter()},
-      {type: {id: 'tsm'}, converter: converter()},
-      {type: {id: 'tss'}, converter: converter()},
-      {type: {id: 'tsp'}, converter: converter()},
-      {type: {id: 'bcu'}, converter: converter()},
-      {type: {id: 'bsm'}, converter: converter()},
-      {type: {id: 'bss'}, converter: converter()},
-      {type: {id: 'bsp'}, converter: converter()},
-      {type: {id: 'icu'}, converter: converter()},
-      {type: {id: 'out'}, converter: converter()},
-      {type: {id: 'drl'}, converter: converter()}
+      {type: 'tcu', converter: converter()},
+      {type: 'tsm', converter: converter()},
+      {type: 'tss', converter: converter()},
+      {type: 'tsp', converter: converter()},
+      {type: 'bcu', converter: converter()},
+      {type: 'bsm', converter: converter()},
+      {type: 'bss', converter: converter()},
+      {type: 'bsp', converter: converter()},
+      {type: 'icu', converter: converter()},
+      {type: 'out', converter: converter()},
+      {type: 'drl', converter: converter()}
     ]
 
     pcbStackupCore(files, 'this-id')
+
     var sorted = sortLayersSpy.returnValues[0]
+
     expect(sortLayersSpy).to.have.been.calledWith(files)
     expect(stackLayersStub).to.have.been.calledWith(
       'this-id',

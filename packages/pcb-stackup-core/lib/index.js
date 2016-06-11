@@ -2,7 +2,6 @@
 'use strict'
 
 var isString = require('lodash.isstring')
-var reduce = require('lodash.reduce')
 
 var sortLayers = require('./sort-layers')
 var stackLayers = require('./stack-layers')
@@ -13,6 +12,7 @@ var SIDES = ['top', 'bottom']
 var svgNode = function(id, side, box, units) {
   var width = (box[2] / 1000) + units
   var height = (box[3] / 1000) + units
+
   return '<svg ' + [
     'id="' + id + '_' + side + '"',
     'xmlns="http://www.w3.org/2000/svg"',
@@ -61,7 +61,7 @@ module.exports = function pcbStackupCore(layers, opts) {
   var sorted = sortLayers(layers)
   var id = options.id
 
-  return reduce(SIDES, function(result, side) {
+  return SIDES.reduce(function(result, side) {
     var style = boardStyle(options.id + '_', side, options.color, options.maskWithOutline)
     var stack = stackLayers(id, side, sorted[side], sorted.mech, options.maskWithOutline)
 
@@ -71,6 +71,7 @@ module.exports = function pcbStackupCore(layers, opts) {
     var group = groupNode(box, side, stack.group)
 
     result[side] = svg + defs + group + '</svg>'
+
     return result
   }, {})
 }

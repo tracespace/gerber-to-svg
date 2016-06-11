@@ -1,11 +1,6 @@
 // stack layers function (where the magic happens)
 'use strict'
 
-var assign = require('lodash.assign')
-var reduce = require('lodash.reduce')
-var countBy = require('lodash.countby')
-var mapValues = require('lodash.mapvalues')
-
 var wrapLayer = require('./wrap-layer')
 var viewBox = require('./view-box')
 
@@ -13,6 +8,7 @@ var useLayer = function(id, className, mask) {
   var colorAttr = (className) ? ('fill="currentColor" stroke="currentColor" ') : ''
   var classAttr = (className) ? ('class="' + className + '" ') : ''
   var maskAttr = (mask) ? ('mask="url(#' + mask + ')" ') : ''
+
   return '<use ' + classAttr + colorAttr + maskAttr + 'xlink:href="#' + id + '"/>'
 }
 
@@ -26,10 +22,13 @@ var mechMask = function(id, box, mechIds, useOutline) {
     mask += viewBox.rect(box, '', '#fff')
   }
 
-  mask = reduce(mechIds, function(result, id, type) {
+  mask = Object.keys(mechIds).reduce(function(result, type) {
+    var id = mechIds[type]
+
     if (type !== 'out') {
       result += useLayer(id)
     }
+
     return result
   }, mask)
 
@@ -41,10 +40,30 @@ module.exports = function stackLayers(id, side, converters, mechs, useOutlineInM
   var idPrefix = id + '_' + side + '_'
 
   // decide what units we're using
-  var allConverters = assign({}, converters, mechs)
-  var unitsCount = countBy(allConverters, 'units')
-  var units = (Object.keys(allConverters).length !== 0)
-    ? (((unitsCount.in || 0) > (unitsCount.mm || 0)) ? 'in' : 'mm')
+  var converterTypes = Object.keys(converters)
+  var mechTypes = Object.keys(mechs)
+  var allConverters = {}
+  var allConverterTypes = []
+  var collectAllConverters = function(types, convertersByType) {
+    types.forEach(function(type) {
+      allConverters[type] = convertersByType[type]
+      allConverterTypes.push(type)
+    })
+  }
+
+  collectAllConverters(converterTypes, converters)
+  collectAllConverters(mechTypes, mechs)
+
+  var unitsCount = allConverterTypes.reduce(function(result, type) {
+    var units = allConverters[type].units
+
+    result[units] = (result[units] || 0) + 1
+
+    return result
+  }, {in: 0, mm: 0})
+
+  var units = (allConverterTypes.length !== 0)
+    ? (((unitsCount.in) > (unitsCount.mm)) ? 'in' : 'mm')
     : ''
 
   var switchUnitsScale = (units === 'in') ? (1 / 25.4) : 25.4
@@ -54,7 +73,8 @@ module.exports = function stackLayers(id, side, converters, mechs, useOutlineInM
   }
 
   // gather defs and viewboxes from all converters
-  var defsAndBox = reduce(allConverters, function(result, converter, type) {
+  var defsAndBox = allConverterTypes.reduce(function(result, type) {
+    var converter = allConverters[type]
     var scale = getScale(converter)
 
     // only combine viewboxes if there's no outline layer, otherwise use outline
@@ -71,17 +91,23 @@ module.exports = function stackLayers(id, side, converters, mechs, useOutlineInM
   var box = defsAndBox.box
 
   // wrap all layers in groups and add them to defs
-  var mapConverterToWrappedLayer = function(converter, type) {
-    var layerId = idPrefix + type
-    var scale = getScale(converter)
+  var mapConvertersToIds = function(types, convertersByType) {
+    return types.reduce(function(result, type) {
+      var converter = convertersByType[type]
+      var layerId = idPrefix + type
+      var scale = getScale(converter)
 
-    defs += wrapLayer(layerId, converter, scale)
-    return layerId
+      defs += wrapLayer(layerId, converter, scale)
+      result[type] = layerId
+
+      return result
+    }, {})
   }
-  var layerIds = mapValues(converters, mapConverterToWrappedLayer)
-  var mechIds = mapValues(mechs, mapConverterToWrappedLayer)
 
+  var layerIds = mapConvertersToIds(converterTypes, converters)
+  var mechIds = mapConvertersToIds(mechTypes, mechs)
   var mechMaskId = idPrefix + 'mech-mask'
+
   defs += mechMask(mechMaskId, box, mechIds, useOutlineInMask)
 
   // build the group starting with an fr4 rectangle the size of the viewbox
@@ -106,6 +132,7 @@ module.exports = function stackLayers(id, side, converters, mechs, useOutlineInM
   if (layerIds.sm) {
     // solder mask is... a mask, so mask it
     var smMaskId = idPrefix + 'sm-mask'
+
     defs += [
       '<mask id="' + smMaskId + '" fill="#000" stroke="#000">',
       viewBox.rect(box, '', '#fff'),

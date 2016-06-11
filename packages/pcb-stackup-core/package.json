@@ -37,7 +37,7 @@
     "hardware"
   ],
   "contributors": [
-    "Mike Cousins <mike@cousins.io> (http://cousins.io/)",
+    "Mike Cousins <mike@cousins.io> (http://cousins.io/)"
   ],
   "license": "MIT",
   "bugs": {
@@ -73,11 +73,6 @@
     "zuul": "^3.10.1"
   },
   "dependencies": {
-    "lodash.assign": "^4.0.8",
-    "lodash.countby": "^4.3.0",
-    "lodash.defaults": "^4.0.1",
-    "lodash.isstring": "^4.0.1",
-    "lodash.mapvalues": "^4.3.0",
-    "lodash.reduce": "^4.3.0"
+    "lodash.isstring": "^4.0.1"
   }
 }
