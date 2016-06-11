@@ -1,86 +1,38 @@
-# pcb stackup
+# pcb stackup core
 
-[![npm](https://img.shields.io/npm/v/pcb-stackup.svg?style=flat-square)](https://www.npmjs.com/package/pcb-stackup)
-[![Travis](https://img.shields.io/travis/tracespace/pcb-stackup.svg?style=flat-square)](https://travis-ci.org/tracespace/pcb-stackup)
-[![Coveralls](https://img.shields.io/coveralls/tracespace/pcb-stackup.svg?style=flat-square)](https://coveralls.io/github/tracespace/pcb-stackup)
-[![David](https://img.shields.io/david/tracespace/pcb-stackup.svg?style=flat-square)](https://david-dm.org/tracespace/pcb-stackup)
-[![David](https://img.shields.io/david/dev/tracespace/pcb-stackup.svg?style=flat-square)](https://david-dm.org/tracespace/pcb-stackup#info=devDependencies)
+[![npm](https://img.shields.io/npm/v/pcb-stackup-core.svg?style=flat-square)](https://www.npmjs.com/package/pcb-stackup-core)
+[![Travis](https://img.shields.io/travis/tracespace/pcb-stackup-core.svg?style=flat-square)](https://travis-ci.org/tracespace/pcb-stackup-core)
+[![Coveralls](https://img.shields.io/coveralls/tracespace/pcb-stackup-core.svg?style=flat-square)](https://coveralls.io/github/tracespace/pcb-stackup-core)
+[![David](https://img.shields.io/david/tracespace/pcb-stackup-core.svg?style=flat-square)](https://david-dm.org/tracespace/pcb-stackup-core)
+[![David](https://img.shields.io/david/dev/tracespace/pcb-stackup-core.svg?style=fl
+at-square)](https://david-dm.org/tracespace/pcb-stackup-core#info=devDependencies)
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/pcb-stackup.svg)](https://saucelabs.com/u/pcb-stackup)
+If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out [pcb-stackup](https://github.com/tracespace/pcb-stackup) first.
 
-This module takes individual printed circuit board layer converters output by [gerber-to-svg](https://www.npmjs.com/package/gerber-to-svg) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
+This is the low-level module that powers the rendering of `pcb-stackup`.  It take individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
 
 Install with:
 
 ```
-$ npm install --save pcb-stackup
+$ npm install --save pcb-stackup-core
 ```
 
 ## example
 
-``` javascript
-var fs = require('fs')
-var async = require('async')
-var shortId = require('shortid')
-var gerberToSvg = require('gerber-to-svg')
-var whatsThatGerber = require('whats-that-gerber')
-var pcbStackup = require('pcb-stackup')
-
-var gerberPaths = [
-  'path/to/board-F_Cu.gbr',
-  'path/to/board-F_Mask.gbr',
-  'path/to/board-F_SilkS.gbr',
-  'path/to/board-F_Paste.gbr',
-  'path/to/board-B_Cu.gbr',
-  'path/to/board-B_Mask.gbr',
-  'path/to/board-B_SilkS.gbr',
-  'path/to/board-B_Paste.gbr',
-  'path/to/board-Edge_Cuts.gbr',
-  'path/to/board.drl'
-]
-
-// asynchronously map a gerber filename to a layer object expected by pcbStackup
-var mapFilenameToLayerObject = function(filename, done) {
-  var gerber = fs.createReadStream(filename, 'utf-8')
-  var type = whatsThatGerber(filename)
-  var converterOptions = {
-    id: shortId.generate(),
-    plotAsOutline: type.id === 'out'
-  }
-
-  var converter = gerberToSvg(gerber, converterOptions, function(error, result) {
-    if (error) {
-      console.warn(filename + ' failed to convert')
-      return done()
-    }
-
-    done(null, {type: type, converter: converter})
-  })
-}
-
-// pass an array of layer objects to pcbStackup and write the stackup results
-var handleLayers = function(error, layers) {
-  if (error) {
-    return console.error('error mapping gerber file paths to array of converters')
-  }
-
-  var stackup = pcbStackup(layers.filter(Boolean), 'my-board')
-  fs.writeFileSync('path/to/top.svg', stackup.top)
-  fs.writeFileSync('path/to/bottom.svg', stackup.bottom)
-}
-
-// map the gerber files to layer objects, then pass them to pcbStackup
-async.map(gerberPaths, mapFilenameToLayerObject, handleLayers)
 ```
+$ npm run example
+```
+
+[The example script](./example/clockblock.js) builds a render of the [clockblock](https://github.com/wileycousins/clockblock) PCB.
 
 ## usage
 
 This module is designed to work in Node or in the browser with Browserify or Webpack. The  function takes two parameters: an array of layer objects and an options object. It returns an object with a `top` key and a `bottom` key, each of which contain the SVG string for that side of the board.
 
 ``` javascript
-var pcbStackup = require('pcb-stackup')
+var pcbStackupCore = require('pcb-stackup-core')
 var options = {id: 'my-board'}
-var stackup = pcbStackup(layersArray, options)
+var stackup = pcbStackupCore(layersArray, options)
 
 console.log(stackup.top) // logs "<svg id="my-board_top"...</svg>"
 console.log(stackup.bottom) // logs "<svg id="my-board_bottom"...</svg>"
@@ -88,9 +40,9 @@ console.log(stackup.bottom) // logs "<svg id="my-board_bottom"...</svg>"
 
 ### layers array
 
-The first parameter to the function is an array of layer objects. A layer object is an object with a `type` key and a `converter` key, where `type` is a Gerber filetype as output by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and `converter` is the converter object returned by gerber-to-svg for that Gerber file.
+The first parameter to the function is an array of layer objects. A layer object is an object with a `type` key and a `converter` key, where `type` is a Gerber filetype as output by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and `converter` is the converter object returned by gerber-to-svg for that Gerber file (note: this is the actual return value of gerber-to-svg, not the value that is emitted by the stream or passed to the callback).
 
-It is expected that the converters will have already finished before being passed to `pcbStackup`. This can be done by listening for the converter's `end` event or by using `gerber-to-svg` in callback mode, as shown in the example above.
+It is expected that the converters will have already finished before being passed to `pcbStackupCore`. This can be done by listening for the converter's `end` event or by using `gerber-to-svg` in callback mode, as shown in the example above.
 
 ``` javascript
 var topCopperLayer = {
@@ -101,12 +53,12 @@ var topCopperLayer = {
 
 ### options
 
-The second parameter of the pcbStackup function is an options object. The only required option is the `id` options. For ease, if no other options are being specified, the id string may be passed as the second parameter directly.
+The second parameter of the pcbStackupCore function is an options object. The only required option is the `id` options. For ease, if no other options are being specified, the id string may be passed as the second parameter directly.
 
 ``` javascript
 // stackup 1 and 2 are equivalent
-var stackup1 = pcbStackup(layers, 'my-unique-board-id')
-var stackup2 = pcbStackup(layers, {id: 'my-unique-board-id'})
+var stackup1 = pcbStackupCore(layers, 'my-unique-board-id')
+var stackup2 = pcbStackupCore(layers, {id: 'my-unique-board-id'})
 ```
 
 key             | default   | description

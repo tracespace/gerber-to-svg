@@ -12,7 +12,7 @@ chai.use(sinonChai)
 var sortLayersSpy = sinon.spy(require('../lib/sort-layers'))
 var stackLayersStub = sinon.stub()
 
-var pcbStackup = proxyquire('../lib', {
+var pcbStackupCore = proxyquire('../lib', {
   './sort-layers': sortLayersSpy,
   './stack-layers': stackLayersStub
 })
@@ -46,19 +46,19 @@ describe('pcb stackup function', function() {
   })
 
   it('should need an id as an option', function() {
-    var result1 = pcbStackup([], 'foo')
+    var result1 = pcbStackupCore([], 'foo')
     expect(result1.top).to.contain('id="foo_top"')
     expect(result1.bottom).to.contain('id="foo_bottom"')
 
-    var result2 = pcbStackup([], {id: 'bar'})
+    var result2 = pcbStackupCore([], {id: 'bar'})
     expect(result2.top).to.contain('id="bar_top"')
     expect(result2.bottom).to.contain('id="bar_bottom"')
 
-    expect(function() {pcbStackup([])}).to.throw(/unique board ID/)
+    expect(function() {pcbStackupCore([])}).to.throw(/unique board ID/)
   })
 
   it('should have the proper SVG start and end', function() {
-    var result = pcbStackup([], 'foobar')
+    var result = pcbStackupCore([], 'foobar')
     var svgStart = function(side) {
       return [
         '<svg',
@@ -86,7 +86,7 @@ describe('pcb stackup function', function() {
   })
 
   it('should have a default color style', function() {
-    var result = pcbStackup([], 'foobar')
+    var result = pcbStackupCore([], 'foobar')
 
     expect(result.top).to.contain(EXPECTED_DEFAULT_STYLE)
     expect(result.bottom).to.contain(EXPECTED_DEFAULT_STYLE)
@@ -97,7 +97,7 @@ describe('pcb stackup function', function() {
       id: 'foobar',
       color: {cu: '#123', cf: '#456', sp: '#789'}
     }
-    var result = pcbStackup([], options)
+    var result = pcbStackupCore([], options)
     var expectedStyle = '<style>/* <![CDATA[ */' + [
       '.foobar_fr4 {color: #666;}',
       '.foobar_cu {color: #123;}',
@@ -113,7 +113,7 @@ describe('pcb stackup function', function() {
   })
 
   it('should override the outline fill and stroke if used as a mask', function() {
-    var result = pcbStackup([], {id: 'foobar', maskWithOutline: true})
+    var result = pcbStackupCore([], {id: 'foobar', maskWithOutline: true})
     var expectedStyle = function(side) {
       return '<style>/* <![CDATA[ */' + [
         '.foobar_fr4 {color: #666;}',
@@ -146,7 +146,7 @@ describe('pcb stackup function', function() {
       {type: {id: 'drl'}, converter: converter()}
     ]
 
-    pcbStackup(files, 'this-id')
+    pcbStackupCore(files, 'this-id')
     var sorted = sortLayersSpy.returnValues[0]
     expect(sortLayersSpy).to.have.been.calledWith(files)
     expect(stackLayersStub).to.have.been.calledWith(
@@ -175,7 +175,7 @@ describe('pcb stackup function', function() {
       defs: '<bottom-defs/>'
     })
 
-    var result = pcbStackup([], 'foobar')
+    var result = pcbStackupCore([], 'foobar')
 
     expect(result.top).to.contain('width="1mm"')
     expect(result.top).to.contain('height="1mm"')

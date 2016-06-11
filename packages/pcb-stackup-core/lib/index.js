@@ -56,7 +56,7 @@ var parseOptions = function(options) {
   return options
 }
 
-module.exports = function pcbStackup(layers, opts) {
+module.exports = function pcbStackupCore(layers, opts) {
   var options = parseOptions(opts)
   var sorted = sortLayers(layers)
   var id = options.id
