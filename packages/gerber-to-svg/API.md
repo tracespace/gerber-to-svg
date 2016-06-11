@@ -11,8 +11,8 @@ var converter = gerberToSvg(input, options, [callback])
 
 - [input](#input)
 	- [options](#options)
-		- [attributes option](#attributes-option)
-		- [create element and include namespace options](#create-element-and-include-namespace-options)
+		- [id and attributes options](#id-and-attributes-options)
+		- [element options](#element-options)
 		- [parsing and plotting options](#parsing-and-plotting-options)
 - [streaming API](#streaming-api)
 - [callback API](#callback-api)
@@ -77,7 +77,7 @@ backupNota    | `A` or `I`          | 'A'
 optimizePaths | `true` or `false`   | `false`
 plotAsOutline | `true` or `false`   | `false`
 
-#### id and attributes option
+#### id and attributes options
 
 The `id` and `attributes` options are used to set additional attributes of the top-level SVG node. Either the `id` option or `attributes.id` is required. `id` should be unique to avoid display problems with multiple SVGs on the same page.
 
@@ -87,7 +87,7 @@ Some good candidates for other attributes to specify are:
 * `width` and `height` - By default, the width and height will be the real world dimensions of the layer, but you may want to set them to `100%` for display purposes
 * `class` or `className` (depending on your `createElement` function) - self explanatory
 
-#### create element, include namespace, and object mode options
+#### element options
 
 `createElement`, `includeNamespace` and `objectMode` allow you to generate renders in a different format than the default XML string. `createElement` is a [hyperscript-style](https://github.com/dominictarr/hyperscript) function that takes a tagName, attributes map, and children array:
 
@@ -107,15 +107,17 @@ These options are available in case you have an older or poorly formatted file t
 
 For more information, please reference the API documentation of [gerber-parser](https://github.com/mcous/gerber-parser/blob/master/API.md) and [gerber-plotter](https://github.com/mcous/gerber-plotter/blob/master/API.md), as these options are passed directly to these modules.
 
-key         | description
-------------|-----------------------------------------------------------------------------
-places      | The number of places before and after the decimal used in coordinates
-zero        | Leading or trailing zero suppression used in coordinates
-filetype    | Whether to parse the file as a Gerber file or as a NC drill (Excellon) file
-units       | Units of the file
-backupUnits | Backup units only to be used if units cannot be parsed from the file
-nota        | Absolute or incremental coordinate notation
-backupNota  | Backup notation only to be used if the notation cannot be parsed
+key           | description
+--------------|-----------------------------------------------------------------------------
+places        | The number of places before and after the decimal used in coordinates
+zero          | Leading or trailing zero suppression used in coordinates
+filetype      | Whether to parse the file as a Gerber file or as a NC drill (Excellon) file
+units         | Units of the file
+backupUnits   | Backup units only to be used if units cannot be parsed from the file
+nota          | Absolute or incremental coordinate notation
+backupNota    | Backup notation only to be used if the notation cannot be parsed
+optimizePaths | Optimize trace paths by rearranging to occur in physical order
+plotAsOutline | Optimize and correct paths to better render the layer as a board outline
 
 ## streaming API
 
@@ -182,15 +184,17 @@ var converter = gerberToSvg(input, options, function(error, result) {
 
 Returns the SVG from a completed converter or a clone of a completed `converter`.
 
-`gerberToSvg.render(converter, idOrAttributes, [createElement])`
+`gerberToSvg.render(converter, idOrAttributes, [createElement, includeNamespace])`
 
 * `converter` is the original gerber-to-svg converter or a clone of it
 * `idOrAttributes` is a string element id or an object of attributes
   * If it is an object, an `id` field is required
 * `createElement` is an optional function to use to create elements
+	* Default: [`xml-element-string`]('./lib/xml-element-string.js')
   * If used, must be the same `createElement` used in the original conversion
 	* The API of `createElement` is [hyperscript style](https://github.com/dominictarr/hyperscript): (tag, attributes, children) => element
 	* Can be used to create a VDOM element rather than an SVG string
+* `includeNamespace` is an optional flag that determines whether the xmlns attribute is passed to `createElement` (defaults to `true`)
 
 ``` javascript
 var gerberToSvg = require('gerber-to-svg')
