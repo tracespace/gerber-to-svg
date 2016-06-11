@@ -59,7 +59,7 @@ key              | value    | default
 -----------------|----------|--------------------------------------------------
 id               | String   | See below
 attributes       | Object   | See below
-createElement    | Function | [`xmlElementString`]('./lib/xml-element-string')
+createElement    | Function | [`xmlElementString`]('lib/xml-element-string')
 includeNamespace | Boolean  | `true`
 objectMode       | Boolean  | false
 
@@ -190,7 +190,7 @@ Returns the SVG from a completed converter or a clone of a completed `converter`
 * `idOrAttributes` is a string element id or an object of attributes
   * If it is an object, an `id` field is required
 * `createElement` is an optional function to use to create elements
-	* Default: [`xml-element-string`]('./lib/xml-element-string.js')
+	* Default: [`xml-element-string`](./lib/xml-element-string.js)
   * If used, must be the same `createElement` used in the original conversion
 	* The API of `createElement` is [hyperscript style](https://github.com/dominictarr/hyperscript): (tag, attributes, children) => element
 	* Can be used to create a VDOM element rather than an SVG string
