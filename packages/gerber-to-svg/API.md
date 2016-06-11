@@ -51,7 +51,7 @@ fs.readFile('/path/to/file.gbr', function(error, gerberString) {
 
 ### options
 
-The function must be passed an options object or string. If passed a string, it will be used as the `options.attribute.id` value. You may also use `options.id` in place of `options.attribute.id` (if attribute is a string) or `attribute.id` key (if attribute is an object) is required. The following options are available:
+The function must be passed an options object or string. If passed a string, it will be used as the `options.attribute.id` value. You may also use `options.id` in place of `options.attributes.id`. An `id` must be defined. The following options are available:
 
 **svg options**
 
@@ -59,7 +59,7 @@ key              | value    | default
 -----------------|----------|--------------------------------------------------
 id               | String   | See below
 attributes       | Object   | See below
-createElement    | Function | [`xmlElementString`]('lib/xml-element-string')
+createElement    | Function | [`xmlElementString`](./lib/xml-element-string)
 includeNamespace | Boolean  | `true`
 objectMode       | Boolean  | false
 
@@ -92,14 +92,17 @@ Some good candidates for other attributes to specify are:
 `createElement`, `includeNamespace` and `objectMode` allow you to generate renders in a different format than the default XML string. `createElement` is a [hyperscript-style](https://github.com/dominictarr/hyperscript) function that takes a tagName, attributes map, and children array:
 
 ``` javascript
-var createElement = function(tagName, attributes, children) {
+var defaultCreateElement = require('gerber-to-svg/lib/xml-elements-string')
+
+var customCreateElement = function(tagName, attributes, children) {
 	// create an element somehow
+	return 🍩
 }
 ```
 
 The `includeNamespace` attribute is complementary to the `createElement` function, and determines whether the `xmlns: 'http://www.w3.org/2000/svg'` attribute will be included in or omitted from the `attributes` parameter of `createElement`. In certain virtual-dom implementations, you will need to set `includeNamespace` to `false` to avoid problems with `document.createElementNS`.
 
-`objectMode` needs to be set according to whether `createElement` returns a string `objectMode: false` or anything else `objectMode: true`. If `objectMode` is set to true, the converter stream will be in [object mode](https://nodejs.org/api/stream.html#stream_object_mode) and emit objects instead of buffers.
+`objectMode` needs to be set according to whether `createElement` returns a string (`objectMode: false`) or anything else (`objectMode: true`). If `objectMode` is set to true, the converter stream will be in [object mode](https://nodejs.org/api/stream.html#stream_object_mode) and emit objects instead of buffers.
 
 #### parsing and plotting options
 
