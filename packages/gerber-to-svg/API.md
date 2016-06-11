@@ -61,6 +61,7 @@ id               | String   | See below
 attributes       | Object   | See below
 createElement    | Function | [`xmlElementString`]('./lib/xml-element-string')
 includeNamespace | Boolean  | `true`
+objectMode       | Boolean  | false
 
 **parsing and plotting options**
 
@@ -86,9 +87,9 @@ Some good candidates for other attributes to specify are:
 * `width` and `height` - By default, the width and height will be the real world dimensions of the layer, but you may want to set them to `100%` for display purposes
 * `class` or `className` (depending on your `createElement` function) - self explanatory
 
-#### create element and include namespace options
+#### create element, include namespace, and object mode options
 
-`createElement` and `includeNamespace` allow you to generate renders in a different format than the default XML string. `createElement` is a [hyperscript-style](https://github.com/dominictarr/hyperscript) function that takes a tagName, attributes map, and children array:
+`createElement`, `includeNamespace` and `objectMode` allow you to generate renders in a different format than the default XML string. `createElement` is a [hyperscript-style](https://github.com/dominictarr/hyperscript) function that takes a tagName, attributes map, and children array:
 
 ``` javascript
 var createElement = function(tagName, attributes, children) {
@@ -97,6 +98,8 @@ var createElement = function(tagName, attributes, children) {
 ```
 
 The `includeNamespace` attribute is complementary to the `createElement` function, and determines whether the `xmlns: 'http://www.w3.org/2000/svg'` attribute will be included in or omitted from the `attributes` parameter of `createElement`. In certain virtual-dom implementations, you will need to set `includeNamespace` to `false` to avoid problems with `document.createElementNS`.
+
+`objectMode` needs to be set according to whether `createElement` returns a string `objectMode: false` or anything else `objectMode: true`. If `objectMode` is set to true, the converter stream will be in [object mode](https://nodejs.org/api/stream.html#stream_object_mode) and emit objects instead of buffers.
 
 #### parsing and plotting options
 

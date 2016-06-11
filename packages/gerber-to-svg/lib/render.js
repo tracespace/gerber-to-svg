@@ -13,11 +13,11 @@ module.exports = function(converter, attr, createElement, includeNamespace) {
 
   var attributes = defaults({}, attr, {
     xmlns: namespace,
-    version: 1.1,
+    version: '1.1',
     'xmlns:xlink': 'http://www.w3.org/1999/xlink',
     'stroke-linecap': 'round',
     'stroke-linejoin': 'round',
-    'stroke-width': 0,
+    'stroke-width': '0',
     'fill-rule': 'evenodd',
     width: converter.width + converter.units,
     height: converter.height + converter.units,

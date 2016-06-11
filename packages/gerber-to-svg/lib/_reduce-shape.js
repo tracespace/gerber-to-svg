@@ -1,99 +1,107 @@
 // reduce a shape array into a string to place is defs
 'use strict'
 
-var element = require('./xml-element-string')
 var util = require('./_util')
 var shift = util.shift
 var createMask = util.createMask
 var maskLayer = util.maskLayer
 
-var circle = function(id, cx, cy, r, width) {
-  width = (width != null) ? shift(width) : null
-  var fill = (width != null) ? 'none' : null
+var element = function(tag, attr) {
+  return {tag: tag, attr: attr}
+}
 
-  return element('circle', {
-    id: id,
+var circle = function(cx, cy, r, width) {
+  var attr = {
     cx: shift(cx),
     cy: shift(cy),
-    r: shift(r),
-    'stroke-width': width,
-    fill: fill
-  })
+    r: shift(r)
+  }
+
+  if (width != null) {
+    attr['stroke-width'] = shift(width)
+    attr.fill = 'none'
+  }
+
+  return element('circle', attr)
 }
 
-var rect = function(id, cx, cy, r, width, height) {
-  r = (r) ? shift(r) : null
-
-  return element('rect', {
-    id: id,
+var rect = function(cx, cy, r, width, height) {
+  var attr = {
     x: shift(cx - width / 2),
     y: shift(cy - height / 2),
-    rx: r,
-    ry: r,
     width: shift(width),
     height: shift(height)
-  })
+  }
+
+  if (r) {
+    attr.rx = shift(r)
+    attr.ry = shift(r)
+  }
+
+  return element('rect', attr)
 }
 
-var polyPoints = function(result, point, i, points) {
-  var pointString = shift(point[0]) + ',' + shift(point[1])
-  return (result + pointString + ((i < (points.length - 1)) ? ' ' : ''))
+var poly = function(points) {
+  var pointsAttr = points.map(function(point) {
+    return point.map(shift).join(',')
+  }).join(' ')
+
+  return element('polygon', {points: pointsAttr})
 }
 
-var poly = function(id, points) {
-  return element('polygon', {
-    id: id,
-    points: points.reduce(polyPoints, '')
-  })
-}
-
-var clip = function(id, shapes, ring) {
+var clip = function(id, shapes, ring, createElement) {
   var maskId = id + '_mask'
   var maskUrl = 'url(#' + maskId + ')'
 
-  var mask = element(
+  var circleNode = circle(ring.cx, ring.cy, ring.r, ring.width)
+
+  var mask = createElement(
     'mask',
     {id: maskId, stroke: '#fff'},
-    circle(null, ring.cx, ring.cy, ring.r, ring.width))
+    [createElement(circleNode.tag, circleNode.attr)])
 
   var groupChildren = shapes.map(function(shape) {
-    return (shape.type === 'rect')
-      ? rect(null, shape.cx, shape.cy, shape.r, shape.width, shape.height)
-      : poly(null, shape.points)
+    var node = (shape.type === 'rect')
+      ? rect(shape.cx, shape.cy, shape.r, shape.width, shape.height)
+      : poly(shape.points)
+
+    return createElement(node.tag, node.attr)
   })
 
-  var group = element('g', {id: id, mask: maskUrl}, groupChildren)
+  var layer = createElement('g', {id: id, mask: maskUrl}, groupChildren)
 
-  return mask + group
+  return {mask: mask, layer: layer}
 }
 
-var reduceShapeArray = function(prefix, code, shapeArray) {
-  var padId = prefix + '_pad-' + code
-  var maskIdPrefix = padId + '_'
+module.exports = function reduceShapeArray(prefix, code, shapeArray, createElement) {
+  var id = prefix + '_pad-' + code
+  var maskIdPrefix = id + '_'
 
   var image = shapeArray.reduce(function(result, shape) {
     var svg
-    var id = (shapeArray.length === 1) ? padId : null
 
     switch (shape.type) {
       case 'circle':
-        svg = circle(id, shape.cx, shape.cy, shape.r)
+        svg = circle(shape.cx, shape.cy, shape.r)
         break
 
       case 'ring':
-        svg = circle(id, shape.cx, shape.cy, shape.r, shape.width)
+        svg = circle(shape.cx, shape.cy, shape.r, shape.width)
         break
 
       case 'rect':
-        svg = rect(id, shape.cx, shape.cy, shape.r, shape.width, shape.height)
+        svg = rect(shape.cx, shape.cy, shape.r, shape.width, shape.height)
         break
 
       case 'poly':
-        svg = poly(id, shape.points)
+        svg = poly(shape.points)
         break
 
       case 'clip':
-        svg = clip(id, shape.shape, shape.clip)
+        var clipNodes = clip(id, shape.shape, shape.clip, createElement)
+
+        result.layers.push(clipNodes.layer)
+        result.masks.push(clipNodes.mask)
         break
 
       case 'layer':
@@ -103,16 +111,18 @@ var reduceShapeArray = function(prefix, code, shapeArray) {
         // if the polarity is clear, wrap the group and start a mask
         if (shape.polarity === 'clear') {
           var nextMaskId = maskIdPrefix + result.count
+
           result.maskId = nextMaskId
           result.maskBox = shape.box.slice(0)
           result.maskChildren = []
-          result.layers = [maskLayer(nextMaskId, result.layers)]
+          result.layers = [maskLayer(nextMaskId, result.layers, createElement)]
         }
         else {
           var mask = createMask(
             result.maskId,
             result.maskBox,
-            result.maskChildren)
+            result.maskChildren,
+            createElement)
 
           result.masks.push(mask)
         }
@@ -120,11 +130,17 @@ var reduceShapeArray = function(prefix, code, shapeArray) {
     }
 
     if (svg) {
+      if (shapeArray.length === 1) {
+        svg.attr.id = id
+      }
+
+      var svgElement = createElement(svg.tag, svg.attr)
+
       if (result.last === 'dark') {
-        result.layers.push(svg)
+        result.layers.push(svgElement)
       }
       else {
-        result.maskChildren.push(svg)
+        result.maskChildren.push(svgElement)
       }
     }
 
@@ -142,14 +158,13 @@ var reduceShapeArray = function(prefix, code, shapeArray) {
     image.masks.push(createMask(
       image.maskId,
       image.maskBox,
-      image.maskChildren))
+      image.maskChildren,
+      createElement))
   }
 
   if (shapeArray.length > 1) {
-    image.layers = element('g', {id: padId}, image.layers)
+    image.layers = createElement('g', {id: id}, image.layers)
   }
 
   return image.masks.concat(image.layers)
 }
-
-module.exports = reduceShapeArray
