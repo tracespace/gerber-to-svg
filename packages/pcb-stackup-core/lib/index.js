@@ -10,39 +10,47 @@ var boardStyle = require('./_board-style')
 
 var SIDES = ['top', 'bottom']
 
-var svgNode = function(id, side, box, units) {
+var svgAttributes = function(id, side, box, units, includeNamespace) {
   var width = (box[2] / 1000) + units
   var height = (box[3] / 1000) + units
 
-  return '<svg ' + [
-    'id="' + id + '_' + side + '"',
-    'xmlns="http://www.w3.org/2000/svg"',
-    'version="1.1"',
-    'xmlns:xlink="http://www.w3.org/1999/xlink"',
-    'stroke-linecap="round"',
-    'stroke-linejoin="round"',
-    'stroke-width="0"',
-    'fill-rule="evenodd"',
-    'viewBox="' + box.join(' ') + '"',
-    'width="' + width + '"',
-    'height="' + height + '"'
-  ].join(' ') + '>'
+  var attr = {
+    id: id + '_' + side,
+    version: '1.1',
+    'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'stroke-width': 0,
+    'fill-rule': 'evenodd',
+    viewBox: box.join(' '),
+    width: width,
+    height: height
+  }
+
+  if (includeNamespace || includeNamespace == null) {
+    attr.xmlns = 'http://www.w3.org/2000/svg'
+  }
+
+  return attr
 }
 
-var defsNode = function(style, defs) {
-  return '<defs>' + style + defs + '</defs>'
+var groupAttributes = function(box, side, mechMaskId) {
+  var attr = {mask: 'url(#' + mechMaskId + ')'}
+
+  // flip the bottom render in the x
+  if (side === 'bottom') {
+    var xTranslate = box[2] + 2 * box[0]
+
+    attr.transform = 'translate(' + xTranslate + ',0) scale(-1,1)'
+  }
+
+  return attr
 }
 
-var groupNode = function(box, side, group) {
-  var xTranslate = (side === 'top') ? 0 : (box[2] + 2 * box[0])
-  var yTranslate = (box[3] + 2 * box[1])
-  var xScale = (side === 'top') ? 1 : -1
-  var yScale = -1
-  var translate = 'translate(' + xTranslate + ',' + yTranslate + ')'
-  var scale = 'scale(' + xScale + ',' + yScale + ')'
-  var transform = 'transform="' + translate + ' ' + scale + '"'
+var layerAttributes = function(box) {
+  var yTranslate = box[3] + 2 * box[1]
 
-  return '<g ' + transform + '>' + group + '</g>'
+  return {transform: 'translate(0,' + yTranslate + ') scale(1,-1)'}
 }
 
 var parseOptions = function(options) {
@@ -64,17 +72,31 @@ module.exports = function pcbStackupCore(layers, opts) {
   var color = options.color
   var maskWithOutline = options.maskWithOutline
   var element = options.createElement || xmlElementString
+  var includeNamespace = options.includeNamespace
 
   return SIDES.reduce(function(result, side) {
-    var style = boardStyle(id + '_', side, color, maskWithOutline, element)
-    var stack = stackLayers(id, side, sorted[side], sorted.mech, maskWithOutline, element)
+    var style = boardStyle(element, id + '_', side, color, maskWithOutline)
+    var stack = stackLayers(element, id, side, sorted[side], sorted.mech, maskWithOutline)
 
+    var units = stack.units
+    var mechMaskId = stack.mechMaskId
     var box = (stack.box.length === 4) ? stack.box : [0, 0, 0, 0]
-    var svg = svgNode(id, side, box, stack.units)
-    var defs = defsNode(style, stack.defs)
-    var group = groupNode(box, side, stack.group)
+    var defs = [style].concat(stack.defs)
+    var layer = [element('g', groupAttributes(box, side, mechMaskId), stack.layer)]
 
-    result[side] = svg + defs + group + '</svg>'
+    var defsNode = element('defs', {}, defs)
+    var layerNode = element('g', layerAttributes(box), layer)
+    var svgAttr = svgAttributes(id, side, box, units, includeNamespace)
+
+    result[side] = {
+      svg: element('svg', svgAttr, [defsNode, layerNode]),
+      defs: defs,
+      layer: layer,
+      viewBox: box,
+      width: box[2] / 1000,
+      height: box[3] / 1000,
+      units: units
+    }
 
     return result
   }, {})

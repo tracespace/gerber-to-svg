@@ -16,6 +16,7 @@ var pcbStackupCore = require('../lib/index')
 var PORT = 8001
 
 var server = new hapi.Server()
+
 server.connection({port: PORT})
 server.register(inert, function() {})
 
@@ -27,7 +28,7 @@ var mapGerberToLayerObject = function(layer, done) {
   var id = layer.id
   var converterOptions = {
     id: id,
-    plotAsOutline: (type.id === 'out')
+    plotAsOutline: (type === 'out')
   }
 
   console.log('converting: ' + id)
@@ -37,6 +38,7 @@ var mapGerberToLayerObject = function(layer, done) {
 
     if (error) {
       console.warn(filename + ' failed to convert')
+
       return done()
     }
 
@@ -46,6 +48,7 @@ var mapGerberToLayerObject = function(layer, done) {
   converter.on('warning', function(warning) {
     var msg = warning.message
     var line = warning.line
+
     console.warn('warning from ' + id + ' at ' + line + ': ' + msg)
   })
 }

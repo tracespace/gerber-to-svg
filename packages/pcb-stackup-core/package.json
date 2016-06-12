@@ -1,6 +1,6 @@
 {
   "name": "pcb-stackup-core",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Creates PCB stackup (top and bottom view) SVG renders from gerber-to-svg converters",
   "main": "lib/index.js",
   "directories": {
@@ -56,7 +56,7 @@
     "domify": "^1.4.0",
     "eslint": "^2.9.0",
     "gerber-to-svg": "^2.0.0",
-    "hapi": "^13.3.0",
+    "hapi": "^13.4.1",
     "inert": "^3.2.0",
     "istanbul": "^0.4.3",
     "lodash.omit": "^4.2.1",

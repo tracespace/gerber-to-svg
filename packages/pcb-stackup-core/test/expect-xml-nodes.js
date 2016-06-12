@@ -1,24 +1,11 @@
 // helper to expect an chain of element calls
 'use strict'
 
-var expect = require('chai').expect
+var chai = require('chai')
+var sinonChai = require('sinon-chai')
+var expect = chai.expect
 
-var findCall = function(element, tag, attr, children) {
-  var i
-  var call
-  var called
-
-  for (i = 0; i < element.callCount; i++) {
-    call = element.getCall(i)
-    called = (!children)
-      ? call.calledWith(tag, attr)
-      : call.calledWith(tag, attr, children)
-
-    if (called) {
-      return call
-    }
-  }
-}
+chai.use(sinonChai)
 
 // element is a sinon spy, expectations is an array of expectations of {tag, attr, children}
 // children is an array of indices of return values from expectations
@@ -32,15 +19,26 @@ module.exports = function expectXmlNodes(element, expectations) {
 
     if (children) {
       children = children.map(function(index) {
-        return returnValues[index]
+        if (typeof index === 'number') {
+          return returnValues[index]
+        }
+
+        return index
       })
     }
 
-    var call = findCall(element, tag, attr, children)
-    var msg = tag + ' with attr ' + JSON.stringify(attr) + ' and children ' + children
+    var spy
 
-    expect(call, msg).to.exist
-    returnValues.push(call.returnValue)
+    if (!children) {
+      spy = element.withArgs(tag, attr)
+      expect(element).to.be.calledWith(tag, attr)
+    }
+    else {
+      spy = element.withArgs(tag, attr, children)
+      expect(element).to.be.calledWith(tag, attr, children)
+    }
+
+    returnValues.push(spy.returnValues[0])
   })
 
   return returnValues

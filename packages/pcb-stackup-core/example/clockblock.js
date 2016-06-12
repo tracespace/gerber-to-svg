@@ -45,8 +45,8 @@ var buildStackup = function(layers) {
   var stackup = pcbStackupCore(layers, stackupOptions)
 
   // in a real application, try not to do synchronous stuff like this
-  fs.writeFileSync(path.join(__dirname, './clockblock-top.svg'), stackup.top)
-  fs.writeFileSync(path.join(__dirname, './clockblock-bottom.svg'), stackup.bottom)
+  fs.writeFileSync(path.join(__dirname, './clockblock-top.svg'), stackup.top.svg)
+  fs.writeFileSync(path.join(__dirname, './clockblock-bottom.svg'), stackup.bottom.svg)
 }
 
 // turn the gerber file paths into the layer objects pcb-stackup-core needs

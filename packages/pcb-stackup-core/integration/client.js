@@ -38,7 +38,7 @@ var BOARDS = [
   },
   {
     name: 'mchck',
-    maskWithOutline: false,
+    maskWithOutline: true,
     layers: [
       {id: 'mchck-tcu', path: 'boards/mchck/mchck-F_Cu.pho'},
       {id: 'mchck-tsm', path: 'boards/mchck/mchck-F_Mask.pho'},
@@ -52,7 +52,7 @@ var BOARDS = [
   },
   {
     name: 'freeduino',
-    maskWithOutline: false,
+    maskWithOutline: true,
     layers: [
       {id: 'freeduino-tcu', path: 'boards/freeduino/freeduino.cmp'},
       {id: 'freeduino-tsm', path: 'boards/freeduino/freeduino.stc'},
@@ -117,8 +117,8 @@ BOARDS.forEach(function(board) {
       console.error('Recived status code: ' + response.statusCode)
     }
     else {
-      top =  body.top
-      bottom = body.bottom
+      top =  body.top.svg
+      bottom = body.bottom.svg
     }
 
     topContainer.innerHTML = top

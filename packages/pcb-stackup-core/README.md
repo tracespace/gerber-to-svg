@@ -139,9 +139,16 @@ out   | id + `_out` | `.my-board_out {color: #000;}`
 
 #### mask board shape with outline
 
-When constructing the stackup, a "mechanical mask" is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will also add the board outline to this mechanical mask, effectively (but not literally) using the outline layer as a [clipping path](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) for the final image.
+When constructing the stackup, a "mechanical mask" is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will also add the board outline to this mechanical mask, effectively (but not literally) using the outline layer as a [clipping path](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) and removing areas outside the outline from the final image.
 
-`maskWithOutline` works best if the outline layer is one or more fully-enclosed loops. If your board outline is not working, please open an issue to see if we can improve the masking process.
+setting           | result
+------------------|-------------------------------------------------
+`false` (default) | Board shape is a rectangle that fits all layers
+`true`            | Board shape is the shape of the outline layer
+
+`maskWithOutline` works by taking the `<path>`s of the outline layer and setting their `fill` attributes. To work, the outline layer must be one or more fully-enclosed loops. If it isn't, setting `maskWithOutline` to true will likely result in the final image being incorrect (or non-existent), because the `<path>`s won't fill in properly.
+
+To improve your chances of a board outline layer working for `maskWithOutline`, make sure you set the `plotAsOutline` [option of gerber-to-svg](https://github.com/mcous/gerber-to-svg/blob/master/API.md#options) to `true` when converting the outline gerber. If the board outline still doesn't work, please open an issue to see if we can improve the masking process.
 
 #### create element and include namespace
 
