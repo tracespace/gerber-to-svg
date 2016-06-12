@@ -1,7 +1,7 @@
 // function to generate a board style node
 'use strict'
 
-module.exports = function boardStyle(prefix, side, layerColors, outMask) {
+module.exports = function boardStyle(prefix, side, layerColors, outMask, element) {
   var colors = {
     fr4: '#666',
     cu: '#ccc',
@@ -36,5 +36,7 @@ module.exports = function boardStyle(prefix, side, layerColors, outMask) {
     styles.push('#' + prefix + side + '_out path {fill: #fff; stroke-width: 0;}')
   }
 
-  return '<style>/* <![CDATA[ */' + styles.join('\n') + '/* ]]> */</style>'
+  var stylesString = '/* <![CDATA[ */' + styles.join('\n') + '/* ]]> */'
+
+  return element('style', {}, [stylesString])
 }

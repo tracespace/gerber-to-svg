@@ -2,6 +2,7 @@
 'use strict'
 
 var isString = require('lodash.isstring')
+var xmlElementString = require('xml-element-string')
 
 var sortLayers = require('./sort-layers')
 var stackLayers = require('./stack-layers')
@@ -60,10 +61,13 @@ module.exports = function pcbStackupCore(layers, opts) {
   var options = parseOptions(opts)
   var sorted = sortLayers(layers)
   var id = options.id
+  var color = options.color
+  var maskWithOutline = options.maskWithOutline
+  var element = options.createElement || xmlElementString
 
   return SIDES.reduce(function(result, side) {
-    var style = boardStyle(options.id + '_', side, options.color, options.maskWithOutline)
-    var stack = stackLayers(id, side, sorted[side], sorted.mech, options.maskWithOutline)
+    var style = boardStyle(id + '_', side, color, maskWithOutline, element)
+    var stack = stackLayers(id, side, sorted[side], sorted.mech, maskWithOutline, element)
 
     var box = (stack.box.length === 4) ? stack.box : [0, 0, 0, 0]
     var svg = svgNode(id, side, box, stack.units)

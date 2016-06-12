@@ -1,14 +1,13 @@
 // wrap a layer in a group given the layer's converter object
 'use strict'
 
-module.exports = function wrapLayer(id, converter, scale) {
+module.exports = function wrapLayer(element, id, converter, scale) {
   var layer = converter.layer
-  var node = '<g id="' + id + '"'
+  var attr = {id: id}
 
   if (scale && (scale !== 1)) {
-    node += ' transform="scale(' + scale + ',' + scale + ')"'
+    attr.transform = 'scale(' + scale + ',' + scale + ')'
   }
-  node += '>'
 
-  return node + layer + '</g>'
+  return element('g', attr, layer)
 }

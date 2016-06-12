@@ -26,26 +26,25 @@ var addScaled = function(source, dest, scale) {
   return add(source, scaledDest)
 }
 
-var rect = function(source, className, fill) {
+var rect = function(element, source, className, fill) {
   source = (source.length !== 0) ? source : [0, 0, 0, 0]
-  
-  var result = [
-    '<rect',
-    'x="' + source[0] + '"',
-    'y="' + source[1] + '"',
-    'width="' + source[2] + '"',
-    'height="' + source[3] + '"'
-  ].join(' ')
+
+  var attr = {
+    x: source[0],
+    y: source[1],
+    width: source[2],
+    height: source[3]
+  }
 
   if (className) {
-    result += ' class="' + className + '"'
+    attr.class = className
   }
 
   if (fill) {
-    result += ' fill="' + fill + '"'
+    attr.fill = fill
   }
 
-  return result + '/>'
+  return element('rect', attr)
 }
 
 module.exports = {

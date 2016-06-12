@@ -73,6 +73,7 @@
     "zuul": "^3.10.1"
   },
   "dependencies": {
-    "lodash.isstring": "^4.0.1"
+    "lodash.isstring": "^4.0.1",
+    "xml-element-string": "^1.0.0"
   }
 }

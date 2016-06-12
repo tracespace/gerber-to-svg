@@ -5,14 +5,17 @@ var sinon = require('sinon')
 var chai = require('chai')
 var sinonChai = require('sinon-chai')
 var proxyquire = require('proxyquire')
+var xmlElementString = require('xml-element-string')
 var expect = chai.expect
 
 chai.use(sinonChai)
 
+var elementSpy = sinon.spy(xmlElementString)
 var sortLayersSpy = sinon.spy(require('../lib/sort-layers'))
 var stackLayersStub = sinon.stub()
 
 var pcbStackupCore = proxyquire('../lib', {
+  'xml-element-string': elementSpy,
   './sort-layers': sortLayersSpy,
   './stack-layers': stackLayersStub
 })
@@ -47,12 +50,10 @@ describe('pcb stackup function', function() {
 
   it('should need an id as an option', function() {
     var result1 = pcbStackupCore([], 'foo')
+    var result2 = pcbStackupCore([], {id: 'bar'})
 
     expect(result1.top).to.contain('id="foo_top"')
     expect(result1.bottom).to.contain('id="foo_bottom"')
-
-    var result2 = pcbStackupCore([], {id: 'bar'})
-
     expect(result2.top).to.contain('id="bar_top"')
     expect(result2.bottom).to.contain('id="bar_bottom"')
 

@@ -8,7 +8,7 @@
 
 If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out [pcb-stackup](https://github.com/tracespace/pcb-stackup) first.
 
-This is the low-level module that powers the rendering of `pcb-stackup`.  It take individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
+This is the low-level module that powers the rendering of `pcb-stackup`.  It takes individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
 
 Install with:
 
@@ -26,16 +26,39 @@ $ npm run example
 
 ## usage
 
-This module is designed to work in Node or in the browser with Browserify or Webpack. The  function takes two parameters: an array of layer objects and an options object. It returns an object with a `top` key and a `bottom` key, each of which contain the SVG string for that side of the board.
+This module is designed to work in Node or in the browser with Browserify or Webpack. The  function takes two parameters: an array of layer objects and an options object. It returns an object with a `top` key and a `bottom` key, each of which contains the SVG element and various properties of the render.
 
 ``` javascript
 var pcbStackupCore = require('pcb-stackup-core')
 var options = {id: 'my-board'}
 var stackup = pcbStackupCore(layersArray, options)
 
-console.log(stackup.top) // logs "<svg id="my-board_top"...</svg>"
-console.log(stackup.bottom) // logs "<svg id="my-board_bottom"...</svg>"
+// stackup =>
+// {
+//   top: {
+//     svg: '<svg...',
+//     defs: [DEFS_ARRAY...],
+//     layer: [LAYER_ARRAY...],
+//     viewBox: [X_MIN_X_1000, Y_MIN_X_1000, WIDTH_X_1000, HEIGHT_X_1000],
+//     width: WIDTH,
+//     height: HEIGHT,
+//     units: UNITS
+//   },
+//   bottom: {
+//     svg: '<svg...',
+//     defs: [DEFS_ARRAY...],
+//     layer: [LAYER_ARRAY...],
+//     viewBox: [X_MIN_X_1000, Y_MIN_X_1000, WIDTH_X_1000, HEIGHT_X_1000],
+//     width: WIDTH,
+//     height: HEIGHT,
+//     units: UNITS
+//   }
+// }
 ```
+
+`svg` is the SVG element (by default as an XML string). The rest of the properties all correspond to the [public properties of a gerber-to-svg-converter](https://github.com/mcous/gerber-to-svg/blob/master/API.md#public-properties). `units` is a string value of 'in' or 'mm'. `viewBox` is the minimum x value, minimum y value, width, and height in thousandths of (1000x) `units`. `width` and `height` are the width and height in `units`. `defs` and `layer` are arrays of XML elements that are used as children of the `defs` node and the SVG's main `g` node.
+
+Astute readers will notice this is the same interface as `gerber-to-svg` converters, and this means the [render](https://github.com/mcous/gerber-to-svg/blob/master/API.md#render) and [clone](https://github.com/mcous/gerber-to-svg/blob/master/API.md#clone) static methods of `gerber-to-svg` will also work on the `pcb-stackup-core` renders.
 
 ### layers array
 
@@ -60,11 +83,13 @@ var stackup1 = pcbStackupCore(layers, 'my-unique-board-id')
 var stackup2 = pcbStackupCore(layers, {id: 'my-unique-board-id'})
 ```
 
-key             | default   | description
-----------------|-----------|-----------------------------------------------------------
-id              | N/A       | Unique board identifier
-color           | see below | Colors to apply to the board render by layer type
-maskWithOutline | false     | Use the board outline layer as a mask for the board shape
+key              | default   | description
+-----------------|-----------|-----------------------------------------------------------
+id               | N/A       | Unique board identifier
+color            | see below | Colors to apply to the board render by layer type
+maskWithOutline  | false     | Use the board outline layer as a mask for the board shape
+createElement    | see below | Function used to create the XML element nodes
+includeNamespace | true      | Whether or not to include the `xmlns` attribute in the top level SVG node
 
 #### id
 
@@ -117,6 +142,14 @@ out   | id + `_out` | `.my-board_out {color: #000;}`
 When constructing the stackup, a "mechanical mask" is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will also add the board outline to this mechanical mask, effectively (but not literally) using the outline layer as a [clipping path](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) for the final image.
 
 `maskWithOutline` works best if the outline layer is one or more fully-enclosed loops. If your board outline is not working, please open an issue to see if we can improve the masking process.
+
+#### create element and include namespace
+
+Both `gerber-to-svg` and `pcb-stackup-core` take a `createElement` function as an option. It defaults to [`xml-element-string`](https://github.com/tracespace/xml-element-string), which outputs a string. However, any function that takes a tag name, attributes object, and children array may be used. For example, you could pass in `React.createElement` and create virtual DOM nodes instead.
+
+If you choose to use this option, the function you pass into `pcb-stackup-core` must be the same one you passed into `gerber-to-svg`.
+
+The `includeNamespace` option specifies whether or not to include the `xmlns` attribute in the top level SVG node. Some VDOM implementations get angry when you pass the `xmlns` attribute, so you may need to set it to false.
 
 ### layer types
 
