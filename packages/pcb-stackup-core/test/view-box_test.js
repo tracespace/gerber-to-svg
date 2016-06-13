@@ -1,13 +1,20 @@
 // tests for view-box helper functions
 'use strict'
 
-var expect = require('chai').expect
+var chai = require('chai')
+var sinon = require('sinon')
+var sinonChai = require('sinon-chai')
+var xmlElementString = require('xml-element-string')
+var expect = chai.expect
+
+chai.use(sinonChai)
 
 var box = require('../lib/view-box')
 
 describe('view box helper functions', function() {
   it('should be able to create a new empty viewbox', function() {
     var result = box.new()
+
     expect(result).to.eql([])
   })
 
@@ -29,22 +36,31 @@ describe('view box helper functions', function() {
 
   it('should be able to generate an SVG rectangle a classname', function() {
     var viewBox = [0, -1, 4, 5]
-    var result = box.rect(viewBox, 'foo')
+    var element = sinon.spy(xmlElementString)
+    var result = box.rect(element, viewBox, 'foo')
+    var expected = {x: 0, y: -1, width: 4, height: 5, class: 'foo'}
 
-    expect(result).to.equal('<rect x="0" y="-1" width="4" height="5" class="foo"/>')
+    expect(element).to.be.calledWith('rect', expected)
+    expect(result).to.equal(element.returnValues[0])
   })
 
   it('should be able to generate an SVG rectangle with a fill', function() {
     var viewBox = [0, -1, 4, 5]
-    var result = box.rect(viewBox, '', '#fff')
+    var element = sinon.spy(xmlElementString)
+    var result = box.rect(element, viewBox, '', '#fff')
+    var expected = {x: 0, y: -1, width: 4, height: 5, fill: '#fff'}
 
-    expect(result).to.equal('<rect x="0" y="-1" width="4" height="5" fill="#fff"/>')
+    expect(element).to.be.calledWith('rect', expected)
+    expect(result).to.equal(element.returnValues[0])
   })
 
   it('should output a 0 size rectangle if the array has no length', function() {
     var viewBox = []
-    var result = box.rect(viewBox, '', '#fff')
+    var element = sinon.spy(xmlElementString)
+    var result = box.rect(element, viewBox, '', '#fff')
+    var expected = {x: 0, y: 0, width: 0, height: 0, fill: '#fff'}
 
-    expect(result).to.equal('<rect x="0" y="0" width="0" height="0" fill="#fff"/>')
+    expect(element).to.be.calledWith('rect', expected)
+    expect(result).to.equal(element.returnValues[0])
   })
 })

@@ -1,17 +1,17 @@
 {
-  "name": "pcb-stackup",
-  "version": "0.1.0",
+  "name": "pcb-stackup-core",
+  "version": "0.0.0",
   "description": "Creates PCB stackup (top and bottom view) SVG renders from gerber-to-svg converters",
   "main": "lib/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "lint": "eslint lib/*.js test/*.js",
-    "test": "istanbul cover -x 'integration/*' -x 'example/*' --include-all-sources _mocha",
+    "lint": "eslint lib/*.js test/*.js integration/*.js example/*.js",
+    "test": "istanbul cover _mocha",
     "posttest": "npm run lint",
     "test:watch": "mocha --reporter dot --watch",
-    "pretest:integration": "browserify integration/client.js > integration/bundle.js",
+    "pretest:integration": "browserify integration/client.js > integration/public/bundle.js",
     "test:integration": "node integration/server.js",
     "test:browser": "zuul --local -- ./test/*_test.js",
     "test:sauce": "zuul -- ./test/*_test.js",
@@ -25,7 +25,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/tracespace/pcb-stackup.git"
+    "url": "git://github.com/tracespace/pcb-stackup-core.git"
   },
   "keywords": [
     "pcb",
@@ -36,15 +36,17 @@
     "circuit",
     "hardware"
   ],
-  "author": "Mike Cousins <mike@cousins.io> (http://cousins.io/)",
+  "contributors": [
+    "Mike Cousins <mike@cousins.io> (http://cousins.io/)"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tracespace/pcb-stackup/issues"
+    "url": "https://github.com/tracespace/pcb-stackup-core/issues"
   },
-  "homepage": "https://github.com/tracespace/pcb-stackup",
+  "homepage": "https://github.com/tracespace/pcb-stackup-core",
   "peerDependencies": {
-    "gerber-to-svg": "^1.0.0",
-    "whats-that-gerber": "^1.0.0"
+    "gerber-to-svg": "^2.0.0",
+    "whats-that-gerber": "^2.0.0"
   },
   "devDependencies": {
     "async": "^1.5.2",
@@ -53,9 +55,9 @@
     "coveralls": "^2.11.9",
     "domify": "^1.4.0",
     "eslint": "^2.9.0",
-    "gerber-to-svg": "^1.0.0",
-    "hapi": "^13.3.0",
-    "inert": "^3.2.0",
+    "gerber-to-svg": "^2.0.0",
+    "hapi": "^13.4.1",
+    "inert": "^4.0.0",
     "istanbul": "^0.4.3",
     "lodash.omit": "^4.2.1",
     "lodash.template": "^4.2.4",
@@ -66,16 +68,12 @@
     "shortid": "^2.2.6",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0",
-    "whats-that-gerber": "^1.0.0",
+    "whats-that-gerber": "^2.0.0",
     "xhr": "^2.2.0",
     "zuul": "^3.10.1"
   },
   "dependencies": {
-    "lodash.assign": "^4.0.8",
-    "lodash.countby": "^4.3.0",
-    "lodash.defaults": "^4.0.1",
     "lodash.isstring": "^4.0.1",
-    "lodash.mapvalues": "^4.3.0",
-    "lodash.reduce": "^4.3.0"
+    "xml-element-string": "^1.0.0"
   }
 }

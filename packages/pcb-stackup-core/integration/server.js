@@ -11,15 +11,16 @@ var async = require('async')
 var gerberToSvg = require('gerber-to-svg')
 var whatsThatGerber = require('whats-that-gerber')
 
-var pcbStackup = require('../lib/index')
+var pcbStackupCore = require('../lib/index')
 
 var PORT = 8001
 
 var server = new hapi.Server()
+
 server.connection({port: PORT})
 server.register(inert, function() {})
 
-// asynchronously map a gerber filename to a layer object expected by pcbStackup
+// asynchronously map a gerber filename to a layer object expected by pcbStackupCore
 var mapGerberToLayerObject = function(layer, done) {
   var filename = path.join(__dirname, layer.path)
   var type = whatsThatGerber(filename)
@@ -27,7 +28,7 @@ var mapGerberToLayerObject = function(layer, done) {
   var id = layer.id
   var converterOptions = {
     id: id,
-    plotAsOutline: (type.id === 'out')
+    plotAsOutline: (type === 'out')
   }
 
   console.log('converting: ' + id)
@@ -37,6 +38,7 @@ var mapGerberToLayerObject = function(layer, done) {
 
     if (error) {
       console.warn(filename + ' failed to convert')
+
       return done()
     }
 
@@ -46,6 +48,7 @@ var mapGerberToLayerObject = function(layer, done) {
   converter.on('warning', function(warning) {
     var msg = warning.message
     var line = warning.line
+
     console.warn('warning from ' + id + ' at ' + line + ': ' + msg)
   })
 }
@@ -55,7 +58,7 @@ server.route({
   path: '/{param*}',
   handler: {
     directory: {
-      path: __dirname,
+      path: path.join(__dirname, '/public'),
       redirectToSlash: true,
       index: true
     }
@@ -77,7 +80,7 @@ server.route({
       }
 
       console.log('building stackup for: ' + name)
-      reply(pcbStackup(results, {id: name, maskWithOutline: maskWithOutline}))
+      reply(pcbStackupCore(results, {id: name, maskWithOutline: maskWithOutline}))
     })
   }
 })
