@@ -17,7 +17,8 @@ var gerberPaths = [
   '../integration/boards/clockblock/clockblock-B_Mask.gbr',
   '../integration/boards/clockblock/clockblock-B_SilkS.gbr',
   '../integration/boards/clockblock/clockblock-Edge_Cuts.gbr',
-  '../integration/boards/clockblock/clockblock.drl'
+  '../integration/boards/clockblock/clockblock.drl',
+  '../integration/boards/clockblock/clockblock-NPTH.drl'
 ]
 
 // pcb-stackup-core takes an array of layer objects
@@ -53,11 +54,11 @@ var buildStackup = function(layers) {
 var gerbers = gerberPaths.map(function(gerberPath) {
   var filename = path.join(__dirname, gerberPath)
 
-  // we'll need a reabale stream to pass into gerber-to-svg
+  // we'll need a readable stream to pass into gerber-to-svg
   // we could also use a gerber file read into a string, if we so desired
   var file = fs.createReadStream(filename, {encoding: 'utf-8'})
 
-  // we need to know the layer type (i.e. top copper? bottom silkscreen)
+  // we need to know the layer type (i.e. top copper? bottom silkscreen?)
   // here, we use whats-that-gerber to try to identify it from the filename
   var type = whatsThatGerber(filename)
 
@@ -65,7 +66,7 @@ var gerbers = gerberPaths.map(function(gerberPath) {
   var id = shortId.generate()
 
   // id and file will be used by gerber-to-svg
-  // layerType will be used by pcb-stackup-core
+  // type will be used by pcb-stackup-core
   return {id: id, file: file, type: type}
 })
 
@@ -84,7 +85,7 @@ gerbers.forEach(function(gerberFile) {
   var type = gerberFile.type
   var options = {
     id: gerberFile.id,
-    // we want this option to ensure maskWithOutline in the stackup option works
+    // we want this option to ensure maskWithOutline in the stackup options works
     // setting this to true allows the plotter to do stuff like fill in small
     // gaps, remove duplicate segments, and rearrage segments into loops
     plotAsOutline: type === 'out'

@@ -101,6 +101,7 @@ BOARDS.forEach(function(board) {
   var boardContainer = domify(boardTemplate({name: name, mask: mask}))
   var topContainer = boardContainer.querySelector('[data-hook=top]')
   var bottomContainer = boardContainer.querySelector('[data-hook=bottom]')
+
   boardsContainer.appendChild(boardContainer)
 
   xhr.post({

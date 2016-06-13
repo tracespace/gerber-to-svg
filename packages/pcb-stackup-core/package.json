@@ -7,11 +7,11 @@
     "test": "test"
   },
   "scripts": {
-    "lint": "eslint lib/*.js test/*.js",
-    "test": "istanbul cover -x 'integration/*' -x 'example/*' --include-all-sources _mocha",
+    "lint": "eslint lib/*.js test/*.js integration/*.js example/*.js",
+    "test": "istanbul cover _mocha",
     "posttest": "npm run lint",
     "test:watch": "mocha --reporter dot --watch",
-    "pretest:integration": "browserify integration/client.js > integration/bundle.js",
+    "pretest:integration": "browserify integration/client.js > integration/public/bundle.js",
     "test:integration": "node integration/server.js",
     "test:browser": "zuul --local -- ./test/*_test.js",
     "test:sauce": "zuul -- ./test/*_test.js",
@@ -57,7 +57,7 @@
     "eslint": "^2.9.0",
     "gerber-to-svg": "^2.0.0",
     "hapi": "^13.4.1",
-    "inert": "^3.2.0",
+    "inert": "^4.0.0",
     "istanbul": "^0.4.3",
     "lodash.omit": "^4.2.1",
     "lodash.template": "^4.2.4",

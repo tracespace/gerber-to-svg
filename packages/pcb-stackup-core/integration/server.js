@@ -58,7 +58,7 @@ server.route({
   path: '/{param*}',
   handler: {
     directory: {
-      path: __dirname,
+      path: path.join(__dirname, '/public'),
       redirectToSlash: true,
       index: true
     }

@@ -8,7 +8,7 @@
 
 If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out [pcb-stackup](https://github.com/tracespace/pcb-stackup) first.
 
-This is the low-level module that powers the rendering of `pcb-stackup`.  It takes individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
+This is the low-level module that powers the rendering of pcb-stackup.  It takes individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and identified as PCB layer types by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
 
 Install with:
 
@@ -16,11 +16,17 @@ Install with:
 $ npm install --save pcb-stackup-core
 ```
 
-## example
+gerber-to-svg and whats-that-gerber are peer dependencies, so you'll probably want them, too:
 
 ```
-$ npm run example
+$ npm install --save gerber-to-svg whats-that-gerber
 ```
+
+## example
+
+1. `$ git clone tracespace/pcb-stackup-core`
+2. `$ cd pcb-stackup-core && npm install`
+3. `$ npm run example`
 
 [The example script](./example/clockblock.js) builds a render of the [clockblock](https://github.com/wileycousins/clockblock) PCB.
 
@@ -56,15 +62,15 @@ var stackup = pcbStackupCore(layersArray, options)
 // }
 ```
 
-`svg` is the SVG element (by default as an XML string). The rest of the properties all correspond to the [public properties of a gerber-to-svg-converter](https://github.com/mcous/gerber-to-svg/blob/master/API.md#public-properties). `units` is a string value of 'in' or 'mm'. `viewBox` is the minimum x value, minimum y value, width, and height in thousandths of (1000x) `units`. `width` and `height` are the width and height in `units`. `defs` and `layer` are arrays of XML elements that are used as children of the `defs` node and the SVG's main `g` node.
+`svg` is the SVG element (by default as an XML string). The rest of the properties all correspond to the [public properties of a gerber-to-svg converter](https://github.com/mcous/gerber-to-svg/blob/master/API.md#public-properties). `units` is a string value of 'in' or 'mm'. `viewBox` is the minimum x value, minimum y value, width, and height in thousandths of (1000x) `units`. `width` and `height` are the width and height in `units`. `defs` and `layer` are arrays of XML elements that are used as children of the `defs` node and the SVG's main `g` node.
 
-Astute readers will notice this is the same interface as `gerber-to-svg` converters, and this means the [render](https://github.com/mcous/gerber-to-svg/blob/master/API.md#render) and [clone](https://github.com/mcous/gerber-to-svg/blob/master/API.md#clone) static methods of `gerber-to-svg` will also work on the `pcb-stackup-core` renders.
+Astute readers will notice this is the same interface as gerber-to-svg converters, and this means the [render](https://github.com/mcous/gerber-to-svg/blob/master/API.md#render) and [clone](https://github.com/mcous/gerber-to-svg/blob/master/API.md#clone) static methods of gerber-to-svg will also work on the pcb-stackup-core renders.
 
 ### layers array
 
-The first parameter to the function is an array of layer objects. A layer object is an object with a `type` key and a `converter` key, where `type` is a Gerber filetype as output by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and `converter` is the converter object returned by gerber-to-svg for that Gerber file (note: this is the actual return value of gerber-to-svg, not the value that is emitted by the stream or passed to the callback).
+The first parameter to the function is an array of layer objects. A layer object is an object with a `type` key and a `converter` key, where `type` is a Gerber filetype string as output by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and `converter` is the converter object returned by gerber-to-svg for that Gerber file (note: this is the actual return value of gerber-to-svg, not the value that is emitted by the stream or passed to the callback).
 
-It is expected that the converters will have already finished before being passed to `pcbStackupCore`. This can be done by listening for the converter's `end` event or by using `gerber-to-svg` in callback mode, as shown in the example above.
+It is expected that the converters will have already finished before being passed to pcb-stackup-core. This can be done by listening for the converter's `end` event or by using gerber-to-svg in callback mode, as shown in the example.
 
 ``` javascript
 var topCopperLayer = {
@@ -75,7 +81,7 @@ var topCopperLayer = {
 
 ### options
 
-The second parameter of the pcbStackupCore function is an options object. The only required option is the `id` options. For ease, if no other options are being specified, the id string may be passed as the second parameter directly.
+The second parameter of the pcb-stackup-core function is an options object. The only required option is the `id` options. For ease, if no other options are being specified, the id string may be passed as the second parameter directly.
 
 ``` javascript
 // stackup 1 and 2 are equivalent
@@ -85,15 +91,15 @@ var stackup2 = pcbStackupCore(layers, {id: 'my-unique-board-id'})
 
 key              | default   | description
 -----------------|-----------|-----------------------------------------------------------
-id               | N/A       | Unique board identifier
+id               | N/A       | Unique board identifier (required)
 color            | see below | Colors to apply to the board render by layer type
-maskWithOutline  | false     | Use the board outline layer as a mask for the board shape
+maskWithOutline  | `false`   | Use the board outline layer as a mask for the board shape
 createElement    | see below | Function used to create the XML element nodes
-includeNamespace | true      | Whether or not to include the `xmlns` attribute in the top level SVG node
+includeNamespace | `true`    | Whether or not to include the `xmlns` attribute in the top level SVG node
 
 #### id
 
-The board ID is a string that is prefixed to `id` and `class` attributes of the internal nodes to the SVG documents. The IDs of any two stackups that may appear on the same web-page must be unique to avoid id collisions and potentially weird styling issues.
+The board ID is a string that is prefixed to `id` and `class` attributes of the internal nodes in the SVG documents. The IDs of any two stackups that may appear on the same web-page must be unique to avoid id collisions and potentially weird styling issues.
 
 This option is required and the function will throw if it is missing.
 
@@ -125,7 +131,7 @@ ss    | Silkscreen
 sp    | Solderpaste
 out   | Board outline
 
-If a value is falsey (e.g. an empty string), the layer will not be added to the style node. This is useful if you want to add styles with an external stylesheet. If applying colors with an external stylesheet, use the following classnames and specify the `color` attribute:
+If a value is falsey (e.g. an empty string), the layer will not be added to the style node. This is useful if you want to add styles with an external stylesheet. If applying colors with an external stylesheet, use the following class-names and specify the `color` attribute:
 
 layer | classname   | example (id = 'my-board')
 ------|-------------|-------------------------------------------------
@@ -139,7 +145,7 @@ out   | id + `_out` | `.my-board_out {color: #000;}`
 
 #### mask board shape with outline
 
-When constructing the stackup, a "mechanical mask" is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will also add the board outline to this mechanical mask, effectively (but not literally) using the outline layer as a [clipping path](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) and removing areas outside the outline from the final image.
+When constructing the stackup, a "mechanical mask" is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will _also_ add the board outline to this mechanical mask, effectively (but not literally) using the outline layer as a [clipping path](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) and removing areas outside the outline from the final image.
 
 setting           | result
 ------------------|-------------------------------------------------
@@ -152,11 +158,11 @@ To improve your chances of a board outline layer working for `maskWithOutline`, 
 
 #### create element and include namespace
 
-Both `gerber-to-svg` and `pcb-stackup-core` take a `createElement` function as an option. It defaults to [`xml-element-string`](https://github.com/tracespace/xml-element-string), which outputs a string. However, any function that takes a tag name, attributes object, and children array may be used. For example, you could pass in `React.createElement` and create virtual DOM nodes instead.
+Both gerber-to-svg and pcb-stackup-core take a `createElement` function as an option. It defaults to [xml-element-string](https://github.com/tracespace/xml-element-string), which outputs a string. However, any function that takes a tag name, attributes object, and children array may be used. For example, you could pass in [React.createElement](https://facebook.github.io/react/docs/top-level-api.html#react.createelement) and create virtual DOM nodes instead.
 
-If you choose to use this option, the function you pass into `pcb-stackup-core` must be the same one you passed into `gerber-to-svg`.
+If you choose to use this option, the function you pass into pcb-stackup-core __must__ be the same one you passed into gerber-to-svg.
 
-The `includeNamespace` option specifies whether or not to include the `xmlns` attribute in the top level SVG node. Some VDOM implementations get angry when you pass the `xmlns` attribute, so you may need to set it to false.
+The `includeNamespace` option specifies whether or not to include the `xmlns` attribute in the top level SVG node. Some VDOM implementations get angry when you pass the `xmlns` attribute, so you may need to set it to `false`.
 
 ### layer types
 
@@ -185,14 +191,14 @@ This module uses [Mocha](http://mochajs.org/) and [Chai](http://chaijs.com/) for
 
 ### integration testing
 
-The integration tests run the example code on a variety of gerber files to ensure proper interfacing with `gerber-to-svg` and proper rendering of different stackups.
+The integration tests run the example code on a variety of gerber files to ensure proper interfacing with gerber-to-svg and proper rendering of different stackups.
 
 1. `$ npm run test:integration`
 2. Open http://localhost:8001 in a browser
 
 ### browser testing
 
-Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and [Sauce Labs](https://saucelabs.com/opensauce/).
+Browser tests are run with [Zuul](https://github.com/defunctzombie/zuul) and [Sauce Labs](https://saucelabs.com/opensauce/) on the latest two versions of Chrome, Firefox, Safari, and Internet Explorer, as well as the latest version of Edge.
 
 * `$ npm run test:browser` - run the unit tests in a local browser
 * `$ npm run test:sauce` - run the units tests in several browsers using Open Sauce (Sauce Labs account and local [.zuulrc](https://github.com/defunctzombie/zuul/wiki/Zuulrc) required)
