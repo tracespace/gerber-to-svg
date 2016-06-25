@@ -1,8 +1,9 @@
 // stack layers function (where the magic happens)
 'use strict'
 
+var viewbox = require('viewbox')
+
 var wrapLayer = require('./wrap-layer')
-var viewBox = require('./view-box')
 
 var useLayer = function(element, id, className, mask) {
   var attr = {'xlink:href': '#' + id}
@@ -20,6 +21,20 @@ var useLayer = function(element, id, className, mask) {
   return element('use', attr)
 }
 
+var createRect = function(element, box, fill, className) {
+  var attr = viewbox.rect(box)
+
+  if (fill) {
+    attr.fill = fill
+  }
+
+  if (className) {
+    attr.class = className
+  }
+
+  return element('rect', attr)
+}
+
 var mechMask = function(element, id, box, mechIds, useOutline) {
   var mask = []
   var maskAttr = {id: id, fill: '#000', stroke: '#000'}
@@ -28,7 +43,7 @@ var mechMask = function(element, id, box, mechIds, useOutline) {
     mask.push(useLayer(element, mechIds.out))
   }
   else {
-    mask.push(viewBox.rect(element, box, '', '#fff'))
+    mask.push(createRect(element, box, '#fff'))
   }
 
   mask = Object.keys(mechIds).reduce(function(result, type) {
@@ -88,13 +103,13 @@ module.exports = function(element, id, side, converters, mechs, maskWithOutline)
 
     // only combine viewboxes if there's no outline layer, otherwise use outline
     if (!mechs.out || (mechs.out && type === 'out')) {
-      result.box = viewBox.addScaled(result.box, converter.viewBox, scale)
+      result.box = viewbox.add(result.box, viewbox.scale(converter.viewBox, scale))
     }
 
     result.defs = result.defs.concat(converter.defs)
 
     return result
-  }, {defs: [], box: viewBox.new()})
+  }, {defs: [], box: viewbox.create()})
 
   var defs = defsAndBox.defs
   var box = defsAndBox.box
@@ -120,7 +135,7 @@ module.exports = function(element, id, side, converters, mechs, maskWithOutline)
   defs.push(mechMask(element, mechMaskId, box, mechIds, maskWithOutline))
 
   // build the layer starting with an fr4 rectangle the size of the viewbox
-  var layer = [viewBox.rect(element, box, classPrefix + 'fr4', 'currentColor')]
+  var layer = [createRect(element, box, 'currentColor', classPrefix + 'fr4')]
 
   // add copper and copper finish
   if (layerIds.cu) {
@@ -128,7 +143,7 @@ module.exports = function(element, id, side, converters, mechs, maskWithOutline)
     var cfMaskAttr = {id: cfMaskId, fill: '#fff', stroke: '#fff'}
     var cfMaskShape = (layerIds.sm)
       ? [useLayer(element, layerIds.sm)]
-      : [viewBox.rect(element, box)]
+      : [createRect(element, box)]
 
     defs.push(element('mask', cfMaskAttr, cfMaskShape))
     layer.push(useLayer(element, layerIds.cu, classPrefix + 'cu'))
@@ -142,7 +157,7 @@ module.exports = function(element, id, side, converters, mechs, maskWithOutline)
     var smMaskId = idPrefix + 'sm-mask'
     var smMaskAttr = {id: smMaskId, fill: '#000', stroke: '#000'}
     var smMaskShape = [
-      viewBox.rect(element, box, '', '#fff'),
+      createRect(element, box, '#fff'),
       useLayer(element, layerIds.sm)
     ]
 
@@ -150,7 +165,7 @@ module.exports = function(element, id, side, converters, mechs, maskWithOutline)
 
     // add the layer that gets masked
     var smGroupAttr = {mask: 'url(#' + smMaskId + ')'}
-    var smGroupShape = [viewBox.rect(element, box, classPrefix + 'sm', 'currentColor')]
+    var smGroupShape = [createRect(element, box, 'currentColor', classPrefix + 'sm')]
 
     if (layerIds.ss) {
       smGroupShape.push(useLayer(element, layerIds.ss, classPrefix + 'ss'))
