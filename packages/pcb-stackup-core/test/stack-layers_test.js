@@ -31,8 +31,8 @@ var fakeLayers = [
 ]
 
 var fakeMechs = [
-  {type: 'drl', converter: converter(['<drl-d/>'], ['<drl/>'], [0, 0, 24500, 30480], 'mm')},
-  {type: 'drl', converter: converter(['<drl-d/>'], ['<drl/>'], [0, 0, 24500, 24500], 'mm')},
+  {type: 'drl', converter: converter(['<drl-1/>'], ['<drl1/>'], [0, 0, 25400, 30480], 'mm')},
+  {type: 'drl', converter: converter(['<drl-2/>'], ['<drl2/>'], [0, 0, 25400, 25400], 'mm')},
   {type: 'out', converter: converter(['<out-d/>'], ['<out/>'], [-50, -50, 1100, 1100], 'in')}
 ]
 
@@ -52,8 +52,8 @@ describe('stack layers function', function() {
         '<sm-d/>',
         '<ss-d/>',
         '<sp-d/>',
-        '<drl-d/>',
-        '<drl-d/>',
+        '<drl-1/>',
+        '<drl-2/>',
         '<out-d/>'
       ])
     })
@@ -130,10 +130,33 @@ describe('stack layers function', function() {
         {id: 'id_top_out'}
       ]
 
-      expect(element).to.be.calledWith('g', expected[0], ['<drl/>'])
-      expect(element).to.be.calledWith('g', expected[1], ['<drl/>'])
+      expect(element).to.be.calledWith('g', expected[0], ['<drl1/>'])
+      expect(element).to.be.calledWith('g', expected[1], ['<drl2/>'])
       expect(element).to.be.calledWith('g', expected[2], ['<out/>'])
       expect(result.defs).to.include.members(values.slice(4, 7))
+    })
+
+    it('should not add layers with externalId to defs', function() {
+      fakeLayers[0].externalId = 'foo'
+      fakeMechs[0].externalId = 'bar'
+
+      var result = stackLayers(element, 'id', 'top', fakeLayers, fakeMechs)
+
+      delete fakeLayers[0].externalId
+      delete fakeMechs[0].externalId
+
+      expect(result.defs).to.not.include.members(fakeLayers[0].converter.defs)
+      expect(result.defs).to.not.include.members(fakeMechs[0].converter.defs)
+      expect(element).to.not.be.calledWith(
+        'g',
+        sinon.match.object,
+        fakeLayers[0].converter.layer)
+      expect(element).to.not.be.calledWith(
+        'g',
+        sinon.match.object,
+        fakeMechs[0].converter.layer)
+
+      expect(result.box).to.eql([-50, -50, 1100, 1100])
     })
 
     it('should add a mech mask to the defs', function() {
@@ -364,6 +387,27 @@ describe('stack layers function', function() {
         fill: 'currentColor',
         stroke: 'currentColor'
       })
+    })
+
+    it('should use external ids for uses if given', function() {
+      fakeLayers[0].externalId = 'foo'
+      fakeMechs[0].externalId = 'bar'
+
+      stackLayers(element, 'id', 'top', fakeLayers, fakeMechs)
+
+      delete fakeLayers[0].externalId
+      delete fakeMechs[0].externalId
+
+      expect(element).to.be.calledWith('use', sinon.match.has('xlink:href', '#foo'))
+      expect(element).to.be.calledWith('use', sinon.match.has('xlink:href', '#bar'))
+
+      expect(element).to.not.be.calledWith(
+        'use',
+        sinon.match.has('xlink:href', '#id_top_cu'))
+
+      expect(element).to.not.be.calledWith(
+        'use',
+        sinon.match.has('xlink:href', '#id_top_drl2'))
     })
   })
 })

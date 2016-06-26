@@ -85,4 +85,24 @@ describe('sort layers function', function() {
     expect(result.top).to.be.empty
     expect(result.bottom).to.be.empty
   })
+
+  it('should include the externalId field of layers', function() {
+    var layers = [
+      {type: 'tcu', externalId: 'foo', converter: {}},
+      {type: 'bsm', externalId: 'bar', converter: {}},
+      {type: 'out', externalId: 'baz', converter: {}}
+    ]
+
+    var result = sortLayers(layers)
+
+    expect(result.top).to.eql([
+      {type: 'cu', externalId: 'foo', converter: layers[0].converter}
+    ])
+    expect(result.bottom).to.eql([
+      {type: 'sm', externalId: 'bar', converter: layers[1].converter}
+    ])
+    expect(result.mech).to.eql([
+      {type: 'out', externalId: 'baz', converter: layers[0].converter}
+    ])
+  })
 })

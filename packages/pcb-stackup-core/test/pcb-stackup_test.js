@@ -62,7 +62,7 @@ describe('pcb stackup function', function() {
     expect(function() {pcbStackupCore([])}).to.throw(/unique board ID/)
   })
 
-  it('should have a eateElement option that defaults to xml-element-string', function() {
+  it('should have a createElement option that defaults to xml-element-string', function() {
     var customElement = function() {
       return 'foo'
     }

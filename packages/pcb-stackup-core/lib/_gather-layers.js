@@ -36,7 +36,9 @@ module.exports = function(element, idPrefix, layers, mechLayers) {
   }
 
   allLayers.forEach(function(layer) {
-    defs = defs.concat(defs, layer.converter.defs)
+    if (!layer.externalId) {
+      defs = defs.concat(defs, layer.converter.defs)
+    }
 
     if (layer.type === 'out') {
       outline = layer
@@ -65,11 +67,15 @@ module.exports = function(element, idPrefix, layers, mechLayers) {
 
   var wrapConverterLayer = function(collection) {
     return function(layer) {
-      var id = getUniqueId(layer.type)
+      var id = layer.externalId
       var converter = layer.converter
 
+      if (!id) {
+        id = getUniqueId(layer.type)
+        defs.push(wrapLayer(element, id, converter, getScale(units, converter.units)))
+      }
+
       collection.push({type: layer.type, id: id})
-      defs.push(wrapLayer(element, id, converter, getScale(units, converter.units)))
     }
   }
 

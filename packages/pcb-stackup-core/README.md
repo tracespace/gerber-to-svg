@@ -79,6 +79,22 @@ var topCopperLayer = {
 }
 ```
 
+#### using externally defined layers
+
+In building the stackup, each converter's `<defs>` contents (`converter.defs`) are pushed to the `<defs>` node of each side render. The main `<g>` contents (`converter.layer`) are wrapped in a `<g>`, given an id, and also placed in the defs. The layers are then used in a board render's main `<g>` via `<use>`.
+
+If you will be displaying the individual layers in the same page as the board renders, you may want to store these `<defs>` in a different, shared SVG document. You could do this manually, without the use of `pcb-stackup-core`, the same way the stackup function does it (as described above), except using the shared SVG document's `<defs>`.
+
+You can tell the stackup function that a layer is stored externally by giving it a layer with an `externalId` attribute. This should be set to the `id` attribute of the layer's external `<g>`. This will prevent the stackup function from pushing the converters defs to the stackup image defs node.
+
+``` javascript
+var sharedLayer = {
+  type: GERBER_FILE_TYPE,
+  converter: FINISHED_GERBER_TO_SVG_CONVERTER,
+  externalId: ID_OF_THE_EXTERNALLY_STORED_LAYER_GROUP
+}
+```
+
 ### options
 
 The second parameter of the pcb-stackup-core function is an options object. The only required option is the `id` options. For ease, if no other options are being specified, the id string may be passed as the second parameter directly.
