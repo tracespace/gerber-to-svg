@@ -120,7 +120,7 @@ var getOpts = function(id) {
   }
 
   if (argv.format) {
-    opts.places = JSON.parse(argv['places-format'])
+    opts.places = JSON.parse(argv.format)
   }
 
   if (argv.zero) {
