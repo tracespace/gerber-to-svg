@@ -47,12 +47,12 @@ var createRect = function(element, box, fill, className) {
   return element('rect', attr)
 }
 
-var mechMask = function(element, id, box, mechLayers, useOutline) {
+var mechMask = function(element, id, box, drills, useOutline) {
   var maskAttr = {id: id, fill: '#000', stroke: '#000'}
   var children = []
   var maskCover
 
-  mechLayers.forEach(function(layer) {
+  drills.forEach(function(layer) {
     var use = useLayer(element, layer.id)
 
     if (layer.type === 'out') {
@@ -72,20 +72,20 @@ var mechMask = function(element, id, box, mechLayers, useOutline) {
   return element('mask', maskAttr, children)
 }
 
-module.exports = function(element, id, side, layers, mechLayers, maskWithOutline) {
+module.exports = function(element, id, side, layers, drills, outline, maskWithOutline) {
   var classPrefix = id + '_'
   var idPrefix = id + '_' + side + '_'
   var mechMaskId = idPrefix + 'mech-mask'
 
-  var layerProps = gatherLayers(element, idPrefix, layers, mechLayers)
+  var layerProps = gatherLayers(element, idPrefix, layers, drills, outline, maskWithOutline)
   var defs = layerProps.defs
   var box = layerProps.box
   var units = layerProps.units
 
   layers = layerProps.layerIds
-  mechLayers = layerProps.mechIds
+  drills = layerProps.drillIds
 
-  defs.push(mechMask(element, mechMaskId, box, mechLayers, maskWithOutline))
+  defs.push(mechMask(element, mechMaskId, box, drills, maskWithOutline))
 
   // build the layer starting with an fr4 rectangle the size of the viewbox
   var layer = [createRect(element, box, 'currentColor', classPrefix + 'fr4')]
@@ -93,7 +93,7 @@ module.exports = function(element, id, side, layers, mechLayers, maskWithOutline
   var smLayerId = findLayerId(layers, 'sm')
   var ssLayerId = findLayerId(layers, 'ss')
   var spLayerId = findLayerId(layers, 'sp')
-  var outMechId = findLayerId(mechLayers, 'out')
+  var outLayerId = layerProps.outlineId
 
   // add copper and copper finish
   if (cuLayerId) {
@@ -138,14 +138,15 @@ module.exports = function(element, id, side, layers, mechLayers, maskWithOutline
   }
 
   // add board outline if necessary
-  if (outMechId && !maskWithOutline) {
-    layer.push(useLayer(element, outMechId, classPrefix + 'out'))
+  if (outLayerId && !maskWithOutline) {
+    layer.push(useLayer(element, outLayerId, classPrefix + 'out'))
   }
 
   return {
     defs: defs,
     layer: layer,
     mechMaskId: mechMaskId,
+    outClipId: (outLayerId && maskWithOutline) ? outLayerId : null,
     box: box,
     units: units
   }

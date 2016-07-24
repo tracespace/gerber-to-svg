@@ -86,6 +86,7 @@ describe('pcb stackup function', function() {
         'stroke-linejoin': 'round',
         'stroke-width': 0,
         'fill-rule': 'evenodd',
+        'clip-rule': 'evenodd',
         viewBox: '0 0 0 0',
         width: '0',
         height: '0'
@@ -182,13 +183,15 @@ describe('pcb stackup function', function() {
       'this-id',
       'top',
       sorted.top,
-      sorted.mech)
+      sorted.drills,
+      sorted.outline)
     expect(stackLayersStub).to.have.been.calledWith(
       element,
       'this-id',
       'bottom',
       sorted.bottom,
-      sorted.mech)
+      sorted.drills,
+      sorted.outline)
   })
 
   it('should use stack to build result, add mech mask, flip as needed', function() {
@@ -276,6 +279,43 @@ describe('pcb stackup function', function() {
         units: 'in'
       }
     })
+  })
+
+  it('should add a clip path if stackLayers returns a outline clip id', function() {
+    stackLayersStub.withArgs(element, 'foobar', 'top').returns({
+      box: [0, 0, 1000, 1000],
+      units: 'mm',
+      layer: ['<top-group/>'],
+      defs: ['<top-defs/>'],
+      mechMaskId: 'foobar_top_mech-mask',
+      outClipId: 'foobar_top_out'
+    })
+    stackLayersStub.withArgs(element, 'foobar', 'bottom').returns({
+      box: [250, 250, 500, 500],
+      units: 'in',
+      layer: ['<bottom-group/>'],
+      defs: ['<bottom-defs/>'],
+      mechMaskId: 'foobar_bottom_mech-mask',
+      outClipId: 'foobar_bottom_out'
+    })
+
+    pcbStackupCore([], {id: 'foobar', maskWithOutline: true})
+
+    expect(element).to.be.calledWith(
+      'g',
+      {
+        mask: 'url(#foobar_top_mech-mask)',
+        'clip-path': 'url(#foobar_top_out)'
+      },
+      ['<top-group/>'])
+    expect(element).to.be.calledWith(
+      'g',
+      {
+        transform: 'translate(1000,0) scale(-1,1)',
+        mask: 'url(#foobar_bottom_mech-mask)',
+        'clip-path': 'url(#foobar_bottom_out)'
+      },
+      ['<bottom-group/>'])
   })
 
   it('should not put xmlns attr in nodes if includeNamespace is false', function() {

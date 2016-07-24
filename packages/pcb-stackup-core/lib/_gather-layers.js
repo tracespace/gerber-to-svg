@@ -17,14 +17,13 @@ var getScale = function(units, layerUnits) {
   return result
 }
 
-module.exports = function(element, idPrefix, layers, mechLayers) {
+module.exports = function(element, idPrefix, layers, drills, outline, maskWithOutline) {
   var defs = []
   var layerIds = []
-  var mechIds = []
+  var drillIds = []
   var units = ''
   var unitsCount = {in: 0, mm: 0}
-  var allLayers = layers.concat(mechLayers)
-  var outline
+  var allLayers = layers.concat(drills, outline || [])
 
   var drillCount = 0
   var getUniqueId = function(type) {
@@ -36,12 +35,12 @@ module.exports = function(element, idPrefix, layers, mechLayers) {
   }
 
   allLayers.forEach(function(layer) {
-    if (!layer.externalId) {
-      defs = defs.concat(defs, layer.converter.defs)
+    if (!layer) {
+      console.log(allLayers)
     }
 
-    if (layer.type === 'out') {
-      outline = layer
+    if (!layer.externalId) {
+      defs = defs.concat(defs, layer.converter.defs)
     }
 
     if (layer.converter.units === 'mm') {
@@ -80,13 +79,27 @@ module.exports = function(element, idPrefix, layers, mechLayers) {
   }
 
   layers.forEach(wrapConverterLayer(layerIds))
-  mechLayers.forEach(wrapConverterLayer(mechIds))
+  drills.forEach(wrapConverterLayer(drillIds))
+
+  var outlineId
+
+  // add the outline to defs if it's not defined externally or if we're using it to clip
+  if (outline && (!outline.externalId || maskWithOutline)) {
+    outlineId = getUniqueId(outline.type)
+    defs.push(wrapLayer(
+      element,
+      outlineId,
+      outline.converter,
+      getScale(units, outline.converter.units),
+      maskWithOutline ? 'clipPath' : 'g'))
+  }
 
   return {
     defs: defs,
     box: box,
     units: units,
     layerIds: layerIds,
-    mechIds: mechIds
+    drillIds: drillIds,
+    outlineId: outlineId
   }
 }

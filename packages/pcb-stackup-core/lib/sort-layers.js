@@ -9,10 +9,10 @@ module.exports = function sortLayers(layers) {
     var externalId = layer.externalId
 
     if (type === 'drl') {
-      result.mech.push(layer)
+      result.drills.push(layer)
     }
     else if (type === 'out') {
-      result.mech.push(layer)
+      result.outline = layer
     }
     else {
       layer = {type: subtype, converter: layer.converter}
@@ -30,5 +30,5 @@ module.exports = function sortLayers(layers) {
     }
 
     return result
-  }, {top: [], bottom: [], mech: []})
+  }, {top: [], bottom: [], drills: [], outline: null})
 }

@@ -22,6 +22,7 @@ var svgAttributes = function(id, side, box, units, includeNamespace) {
     'stroke-linejoin': 'round',
     'stroke-width': 0,
     'fill-rule': 'evenodd',
+    'clip-rule': 'evenodd',
     viewBox: box.join(' '),
     width: width,
     height: height
@@ -34,8 +35,13 @@ var svgAttributes = function(id, side, box, units, includeNamespace) {
   return attr
 }
 
-var groupAttributes = function(box, side, mechMaskId) {
+var groupAttributes = function(box, side, mechMaskId, outClipId) {
   var attr = {mask: 'url(#' + mechMaskId + ')'}
+
+  if (outClipId) {
+    attr['clip-path'] = 'url(#' + outClipId + ')'
+  }
+
 
   // flip the bottom render in the x
   if (side === 'bottom') {
@@ -76,13 +82,23 @@ module.exports = function pcbStackupCore(layers, opts) {
 
   return SIDES.reduce(function(result, side) {
     var style = boardStyle(element, id + '_', side, color, maskWithOutline)
-    var stack = stackLayers(element, id, side, sorted[side], sorted.mech, maskWithOutline)
+    var stack = stackLayers(
+      element,
+      id,
+      side,
+      sorted[side],
+      sorted.drills,
+      sorted.outline,
+      maskWithOutline)
 
     var units = stack.units
     var mechMaskId = stack.mechMaskId
+    var outClipId = stack.outClipId
     var box = (stack.box.length === 4) ? stack.box : [0, 0, 0, 0]
     var defs = [style].concat(stack.defs)
-    var layer = [element('g', groupAttributes(box, side, mechMaskId), stack.layer)]
+    var layer = [
+      element('g', groupAttributes(box, side, mechMaskId, outClipId), stack.layer)
+    ]
 
     var defsNode = element('defs', {}, defs)
     var layerNode = element('g', layerAttributes(box), layer)
