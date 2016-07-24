@@ -134,30 +134,6 @@ describe('pcb stackup function', function() {
     expect(result.bottom.svg).to.contain(styleSpy.returnValues[0])
   })
 
-  it('should override the outline fill and stroke if used as a mask', function() {
-    var result = pcbStackupCore([], {id: 'foobar', maskWithOutline: true})
-    var expectedStyle = function(side) {
-      return '/* <![CDATA[ */' + [
-        '.foobar_fr4 {color: #666;}',
-        '.foobar_cu {color: #ccc;}',
-        '.foobar_cf {color: #c93;}',
-        '.foobar_sm {color: rgba(00, 66, 00, 0.75);}',
-        '.foobar_ss {color: #fff;}',
-        '.foobar_sp {color: #999;}',
-        '.foobar_out {color: #000;}',
-        '#foobar_' + side + '_out path {fill: #fff; stroke-width: 0;}'
-      ].join('\n') + '/* ]]> */'
-    }
-
-    var topStyleSpy = element.withArgs('style', {}, [expectedStyle('top')])
-    var bottomStyleSpy = element.withArgs('style', {}, [expectedStyle('bottom')])
-
-    expect(topStyleSpy).to.be.calledOnce
-    expect(bottomStyleSpy).to.be.calledOnce
-    expect(result.top.svg).to.contain(topStyleSpy.returnValues[0])
-    expect(result.bottom.svg).to.contain(bottomStyleSpy.returnValues[0])
-  })
-
   it('should pass the layers to sort layers', function() {
     var files = [
       {type: 'tcu', converter: converter()},

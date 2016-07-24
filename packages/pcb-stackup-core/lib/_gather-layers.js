@@ -35,10 +35,6 @@ module.exports = function(element, idPrefix, layers, drills, outline, maskWithOu
   }
 
   allLayers.forEach(function(layer) {
-    if (!layer) {
-      console.log(allLayers)
-    }
-
     if (!layer.externalId) {
       defs = defs.concat(defs, layer.converter.defs)
     }
