@@ -47,37 +47,23 @@ var createRect = function(element, box, fill, className) {
   return element('rect', attr)
 }
 
-var mechMask = function(element, id, box, drills, useOutline) {
+var mechMask = function(element, id, box, drills) {
   var maskAttr = {id: id, fill: '#000', stroke: '#000'}
-  var children = []
-  var maskCover
-
-  drills.forEach(function(layer) {
-    var use = useLayer(element, layer.id)
-
-    if (layer.type === 'out') {
-      maskCover = (useOutline) ? use : null
-    }
-    else {
-      children.push(use)
-    }
+  var children = drills.map(function(layer) {
+    return useLayer(element, layer.id)
   })
 
-  if (!maskCover) {
-    maskCover = createRect(element, box, '#fff')
-  }
-
-  children.unshift(maskCover)
+  children.unshift(createRect(element, box, '#fff'))
 
   return element('mask', maskAttr, children)
 }
 
-module.exports = function(element, id, side, layers, drills, outline, maskWithOutline) {
+module.exports = function(element, id, side, layers, drills, outline, useOutline) {
   var classPrefix = id + '_'
   var idPrefix = id + '_' + side + '_'
   var mechMaskId = idPrefix + 'mech-mask'
 
-  var layerProps = gatherLayers(element, idPrefix, layers, drills, outline, maskWithOutline)
+  var layerProps = gatherLayers(element, idPrefix, layers, drills, outline, useOutline)
   var defs = layerProps.defs
   var box = layerProps.box
   var units = layerProps.units
@@ -85,7 +71,7 @@ module.exports = function(element, id, side, layers, drills, outline, maskWithOu
   layers = layerProps.layerIds
   drills = layerProps.drillIds
 
-  defs.push(mechMask(element, mechMaskId, box, drills, maskWithOutline))
+  defs.push(mechMask(element, mechMaskId, box, drills))
 
   // build the layer starting with an fr4 rectangle the size of the viewbox
   var layer = [createRect(element, box, 'currentColor', classPrefix + 'fr4')]
@@ -138,7 +124,7 @@ module.exports = function(element, id, side, layers, drills, outline, maskWithOu
   }
 
   // add board outline if necessary
-  if (outLayerId && !maskWithOutline) {
+  if (outLayerId && !useOutline) {
     layer.push(useLayer(element, outLayerId, classPrefix + 'out'))
   }
 
@@ -146,7 +132,7 @@ module.exports = function(element, id, side, layers, drills, outline, maskWithOu
     defs: defs,
     layer: layer,
     mechMaskId: mechMaskId,
-    outClipId: (outLayerId && maskWithOutline) ? outLayerId : null,
+    outClipId: (outLayerId && useOutline) ? outLayerId : null,
     box: box,
     units: units
   }

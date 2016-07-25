@@ -10,7 +10,7 @@ var boardStyle = require('./_board-style')
 
 var SIDES = ['top', 'bottom']
 
-var svgAttributes = function(id, side, box, units, includeNamespace) {
+var svgAttributes = function(id, side, box, units, includeNs, attributes) {
   var width = (box[2] / 1000) + units
   var height = (box[3] / 1000) + units
 
@@ -28,9 +28,13 @@ var svgAttributes = function(id, side, box, units, includeNamespace) {
     height: height
   }
 
-  if (includeNamespace || includeNamespace == null) {
+  if (includeNs || includeNs == null) {
     attr.xmlns = 'http://www.w3.org/2000/svg'
   }
+
+  Object.keys(attributes).forEach(function(key) {
+    attr[key] = attributes[key]
+  })
 
   return attr
 }
@@ -76,6 +80,7 @@ module.exports = function pcbStackupCore(layers, opts) {
   var sorted = sortLayers(layers)
   var id = options.id
   var color = options.color
+  var attributes = options.attributes || {}
   var maskWithOutline = options.maskWithOutline
   var element = options.createElement || xmlElementString
   var includeNamespace = options.includeNamespace
@@ -102,7 +107,13 @@ module.exports = function pcbStackupCore(layers, opts) {
 
     var defsNode = element('defs', {}, defs)
     var layerNode = element('g', layerAttributes(box), layer)
-    var svgAttr = svgAttributes(id, side, box, units, includeNamespace)
+    var svgAttr = svgAttributes(
+      id,
+      side,
+      box,
+      units,
+      includeNamespace,
+      attributes)
 
     result[side] = {
       svg: element('svg', svgAttr, [defsNode, layerNode]),

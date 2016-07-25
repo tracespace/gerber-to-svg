@@ -299,4 +299,10 @@ describe('pcb stackup function', function() {
 
     expect(element).to.not.be.calledWith('svg', sinon.match.has('xmlns'))
   })
+
+  it('should allow arbitrary stuff in the attributes', function() {
+    pcbStackupCore([], {id: 'foo', attributes: {bar: 'baz'}})
+
+    expect(element).to.be.calledWith('svg', sinon.match.has('bar', 'baz'))
+  })
 })
