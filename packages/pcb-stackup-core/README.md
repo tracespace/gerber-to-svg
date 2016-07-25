@@ -114,6 +114,7 @@ color            | see below | Colors to apply to the board render by layer type
 maskWithOutline  | `false`   | Use the board outline layer as a mask for the board shape
 createElement    | see below | Function used to create the XML element nodes
 includeNamespace | `true`    | Whether or not to include the `xmlns` attribute in the top level SVG node
+attributes       | `{}`      | Map of additional attributes (e.g. `class`) to apply to the SVG nodes
 
 #### id
 
@@ -181,6 +182,19 @@ Both gerber-to-svg and pcb-stackup-core take a `createElement` function as an op
 If you choose to use this option, the function you pass into pcb-stackup-core __must__ be the same one you passed into gerber-to-svg.
 
 The `includeNamespace` option specifies whether or not to include the `xmlns` attribute in the top level SVG node. Some VDOM implementations get angry when you pass the `xmlns` attribute, so you may need to set it to `false`.
+
+#### attributes
+
+If you want to add more attributes to the SVG nodes than are there by default, this is where you do it. For example, to add some classes:
+
+``` javascript
+var stackup = pcbStackupCore(layers, {
+  id: 'board-id',
+  attributes: {
+    class: 'w-100 h-100'
+  }
+})
+```
 
 ### layer types
 
