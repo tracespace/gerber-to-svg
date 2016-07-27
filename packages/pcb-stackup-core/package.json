@@ -69,7 +69,8 @@
     "sinon-chai": "^2.8.0",
     "whats-that-gerber": "^2.0.0",
     "xhr": "^2.2.0",
-    "zuul": "^3.10.1"
+    "zuul": "^3.10.1",
+    "zuul-ngrok": "^4.0.0"
   },
   "dependencies": {
     "lodash.isstring": "^4.0.1",
