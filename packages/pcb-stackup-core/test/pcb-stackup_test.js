@@ -36,7 +36,7 @@ var EXPECTED_DEFAULT_STYLE = [
   '.foobar_fr4 {color: #666;}',
   '.foobar_cu {color: #ccc;}',
   '.foobar_cf {color: #c93;}',
-  '.foobar_sm {color: rgba(00, 66, 00, 0.75);}',
+  '.foobar_sm {color: #004200; opacity: 0.75;}',
   '.foobar_ss {color: #fff;}',
   '.foobar_sp {color: #999;}',
   '.foobar_out {color: #000;}'
@@ -121,7 +121,7 @@ describe('pcb stackup function', function() {
       '.foobar_fr4 {color: #666;}',
       '.foobar_cu {color: #123;}',
       '.foobar_cf {color: #456;}',
-      '.foobar_sm {color: rgba(00, 66, 00, 0.75);}',
+      '.foobar_sm {color: #004200; opacity: 0.75;}',
       '.foobar_ss {color: #fff;}',
       '.foobar_sp {color: #789;}',
       '.foobar_out {color: #000;}'
