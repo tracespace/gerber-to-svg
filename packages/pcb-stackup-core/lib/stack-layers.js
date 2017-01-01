@@ -55,7 +55,9 @@ var mechMask = function(element, id, box, drills) {
 
   children.unshift(createRect(element, box, '#fff'))
 
-  return element('mask', maskAttr, children)
+  var group = [element('g', {}, children)]
+
+  return element('mask', maskAttr, group)
 }
 
 module.exports = function(element, id, side, layers, drills, outline, useOutline) {
@@ -88,8 +90,9 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
     var cfMaskShape = smLayerId
       ? [useLayer(element, smLayerId)]
       : [createRect(element, box)]
+    var cfMaskGroup = [element('g', {}, cfMaskShape)]
 
-    defs.push(element('mask', cfMaskAttr, cfMaskShape))
+    defs.push(element('mask', cfMaskAttr, cfMaskGroup))
     layer.push(useLayer(element, cuLayerId, classPrefix + 'cu'))
     layer.push(useLayer(element, cuLayerId, classPrefix + 'cf', cfMaskId))
   }
@@ -104,8 +107,9 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
       createRect(element, box, '#fff'),
       useLayer(element, smLayerId)
     ]
+    var smMaskGroup = [element('g', {}, smMaskShape)]
 
-    defs.push(element('mask', smMaskAttr, smMaskShape))
+    defs.push(element('mask', smMaskAttr, smMaskGroup))
 
     // add the layer that gets masked
     var smGroupAttr = {mask: 'url(#' + smMaskId + ')'}
