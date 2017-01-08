@@ -303,7 +303,7 @@ describe('stack layers function', function() {
       ]
       var result = stackLayers(element, 'id', 'top', converters, [])
       var values = expectXmlNodes(element, [
-        {tag: 'use', attr: {'xlink:href': '#id_top_sm'}},
+        {tag: 'use', attr: {'xlink:href': '#id_top_sm', fill: '#fff', stroke: '#fff'}},
         {tag: 'g', attr: {}, children: [0]},
         {
           tag: 'mask',
@@ -322,7 +322,7 @@ describe('stack layers function', function() {
       var result = stackLayers(element, 'id', 'top', converters, [])
       var values = expectXmlNodes(element, [
         {tag: 'rect', attr: {x: 0, y: 0, width: 500, height: 500, fill: '#fff'}},
-        {tag: 'use', attr: {'xlink:href': '#id_top_sm'}},
+        {tag: 'use', attr: {'xlink:href': '#id_top_sm', fill: '#000', stroke: '#000'}},
         {tag: 'g', attr: {}, children: [0, 1]},
         {
           tag: 'mask',

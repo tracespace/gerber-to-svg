@@ -88,7 +88,7 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
     var cfMaskId = idPrefix + 'cf-mask'
     var cfMaskAttr = {id: cfMaskId, fill: '#fff', stroke: '#fff'}
     var cfMaskShape = smLayerId
-      ? [useLayer(element, smLayerId)]
+      ? [element('use', {'xlink:href': '#' + smLayerId, fill: '#fff', stroke: '#fff'})]
       : [createRect(element, box)]
     var cfMaskGroup = [element('g', {}, cfMaskShape)]
 
@@ -105,7 +105,7 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
     var smMaskAttr = {id: smMaskId, fill: '#000', stroke: '#000'}
     var smMaskShape = [
       createRect(element, box, '#fff'),
-      useLayer(element, smLayerId)
+      element('use', {'xlink:href': '#' + smLayerId, fill: '#000', stroke: '#000'})
     ]
     var smMaskGroup = [element('g', {}, smMaskShape)]
 
