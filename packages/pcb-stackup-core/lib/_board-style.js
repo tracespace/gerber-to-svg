@@ -32,7 +32,7 @@ module.exports = function boardStyle(element, prefix, side, layerColors) {
     colorClass('out')
   ]
 
-  var stylesString = '/* <![CDATA[ */' + styles.join('\n') + '/* ]]> */'
+  var stylesString = styles.join('\n')
 
   return element('style', {}, [stylesString])
 }
