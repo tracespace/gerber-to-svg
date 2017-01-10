@@ -48,16 +48,16 @@ var createRect = function(element, box, fill, className) {
 }
 
 var mechMask = function(element, id, box, drills) {
-  var maskAttr = {id: id}
   var children = drills.map(function(layer) {
     return useLayer(element, layer.id)
   })
 
   children.unshift(createRect(element, box, '#fff'))
 
-  var group = [element('g', {fill: '#000', stroke: '#000'}, children)]
+  var groupAttr = {fill: '#000', stroke: '#000'}
+  var group = [element('g', groupAttr, children)]
 
-  return element('mask', maskAttr, group)
+  return element('mask', {id: id}, group)
 }
 
 module.exports = function(element, id, side, layers, drills, outline, useOutline) {
@@ -86,13 +86,13 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
   // add copper and copper finish
   if (cuLayerId) {
     var cfMaskId = idPrefix + 'cf-mask'
-    var cfMaskAttr = {id: cfMaskId}
     var cfMaskShape = smLayerId
       ? [element('use', {'xlink:href': '#' + smLayerId})]
       : [createRect(element, box)]
-    var cfMaskGroup = [element('g', {fill: '#fff', stroke: '#fff'}, cfMaskShape)]
+    var cfMaskGroupAttr =  {fill: '#fff', stroke: '#fff'}
+    var cfMaskGroup = [element('g', cfMaskGroupAttr, cfMaskShape)]
 
-    defs.push(element('mask', cfMaskAttr, cfMaskGroup))
+    defs.push(element('mask', {id: cfMaskId}, cfMaskGroup))
     layer.push(useLayer(element, cuLayerId, classPrefix + 'cu'))
     layer.push(useLayer(element, cuLayerId, classPrefix + 'cf', cfMaskId))
   }
@@ -102,14 +102,14 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
   if (smLayerId) {
     // solder mask is... a mask, so mask it
     var smMaskId = idPrefix + 'sm-mask'
-    var smMaskAttr = {id: smMaskId}
     var smMaskShape = [
       createRect(element, box, '#fff'),
       element('use', {'xlink:href': '#' + smLayerId})
     ]
-    var smMaskGroup = [element('g', {fill: '#000', stroke: '#000'}, smMaskShape)]
+    var smMaskGroupAtrr = {fill: '#000', stroke: '#000'}
+    var smMaskGroup = [element('g', smMaskGroupAtrr, smMaskShape)]
 
-    defs.push(element('mask', smMaskAttr, smMaskGroup))
+    defs.push(element('mask', {id: smMaskId}, smMaskGroup))
 
     // add the layer that gets masked
     var smGroupAttr = {mask: 'url(#' + smMaskId + ')'}
