@@ -48,14 +48,14 @@ var createRect = function(element, box, fill, className) {
 }
 
 var mechMask = function(element, id, box, drills) {
-  var maskAttr = {id: id, fill: '#000', stroke: '#000'}
+  var maskAttr = {id: id}
   var children = drills.map(function(layer) {
     return useLayer(element, layer.id)
   })
 
   children.unshift(createRect(element, box, '#fff'))
 
-  var group = [element('g', {}, children)]
+  var group = [element('g', {fill: '#000', stroke: '#000'}, children)]
 
   return element('mask', maskAttr, group)
 }
@@ -86,11 +86,11 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
   // add copper and copper finish
   if (cuLayerId) {
     var cfMaskId = idPrefix + 'cf-mask'
-    var cfMaskAttr = {id: cfMaskId, fill: '#fff', stroke: '#fff'}
+    var cfMaskAttr = {id: cfMaskId}
     var cfMaskShape = smLayerId
-      ? [element('use', {'xlink:href': '#' + smLayerId, fill: '#fff', stroke: '#fff'})]
+      ? [element('use', {'xlink:href': '#' + smLayerId})]
       : [createRect(element, box)]
-    var cfMaskGroup = [element('g', {}, cfMaskShape)]
+    var cfMaskGroup = [element('g', {fill: '#fff', stroke: '#fff'}, cfMaskShape)]
 
     defs.push(element('mask', cfMaskAttr, cfMaskGroup))
     layer.push(useLayer(element, cuLayerId, classPrefix + 'cu'))
@@ -102,12 +102,12 @@ module.exports = function(element, id, side, layers, drills, outline, useOutline
   if (smLayerId) {
     // solder mask is... a mask, so mask it
     var smMaskId = idPrefix + 'sm-mask'
-    var smMaskAttr = {id: smMaskId, fill: '#000', stroke: '#000'}
+    var smMaskAttr = {id: smMaskId}
     var smMaskShape = [
       createRect(element, box, '#fff'),
-      element('use', {'xlink:href': '#' + smLayerId, fill: '#000', stroke: '#000'})
+      element('use', {'xlink:href': '#' + smLayerId})
     ]
-    var smMaskGroup = [element('g', {}, smMaskShape)]
+    var smMaskGroup = [element('g', {fill: '#000', stroke: '#000'}, smMaskShape)]
 
     defs.push(element('mask', smMaskAttr, smMaskGroup))
 

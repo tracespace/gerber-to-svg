@@ -211,10 +211,10 @@ describe('stack layers function', function() {
         {tag: 'rect', attr: {x: -50, y: -50, width: 1100, height: 1100, fill: '#fff'}},
         {tag: 'use', attr: {'xlink:href': '#id_top_drl1'}},
         {tag: 'use', attr: {'xlink:href': '#id_top_drl2'}},
-        {tag: 'g', attr: {}, children: [0, 1, 2]},
+        {tag: 'g', attr: {fill: '#000', stroke: '#000'}, children: [0, 1, 2]},
         {
           tag: 'mask',
-          attr: {id: 'id_top_mech-mask', fill: '#000', stroke: '#000'},
+          attr: {id: 'id_top_mech-mask'},
           children: [3]
         }
       ])
@@ -228,10 +228,10 @@ describe('stack layers function', function() {
         {tag: 'rect', attr: {x: -10, y: -10, width: 1020, height: 1210, fill: '#fff'}},
         {tag: 'use', attr: {'xlink:href': '#id_top_drl1'}},
         {tag: 'use', attr: {'xlink:href': '#id_top_drl2'}},
-        {tag: 'g', attr: {}, children: [0, 1, 2]},
+        {tag: 'g', attr: {fill: '#000', stroke: '#000'}, children: [0, 1, 2]},
         {
           tag: 'mask',
-          attr: {id: 'id_top_mech-mask', fill: '#000', stroke: '#000'},
+          attr: {id: 'id_top_mech-mask'},
           children: [3]
         }
       ])
@@ -265,10 +265,10 @@ describe('stack layers function', function() {
       var result = stackLayers(element, 'id', 'top', converters, [])
       var values = expectXmlNodes(element, [
         {tag: 'rect', attr: {x: 0, y: 0, width: 1000, height: 1000}},
-        {tag: 'g', attr: {}, children: [0]},
+        {tag: 'g', attr: {fill: '#fff', stroke: '#fff'}, children: [0]},
         {
           tag: 'mask',
-          attr: {id: 'id_top_cf-mask', fill: '#fff', stroke: '#fff'},
+          attr: {id: 'id_top_cf-mask'},
           children: [1]
         },
         {
@@ -303,11 +303,11 @@ describe('stack layers function', function() {
       ]
       var result = stackLayers(element, 'id', 'top', converters, [])
       var values = expectXmlNodes(element, [
-        {tag: 'use', attr: {'xlink:href': '#id_top_sm', fill: '#fff', stroke: '#fff'}},
-        {tag: 'g', attr: {}, children: [0]},
+        {tag: 'use', attr: {'xlink:href': '#id_top_sm'}},
+        {tag: 'g', attr: {fill: '#fff', stroke: '#fff'}, children: [0]},
         {
           tag: 'mask',
-          attr: {id: 'id_top_cf-mask', fill: '#fff', stroke: '#fff'},
+          attr: {id: 'id_top_cf-mask'},
           children: [1]
         }
       ])
@@ -322,11 +322,11 @@ describe('stack layers function', function() {
       var result = stackLayers(element, 'id', 'top', converters, [])
       var values = expectXmlNodes(element, [
         {tag: 'rect', attr: {x: 0, y: 0, width: 500, height: 500, fill: '#fff'}},
-        {tag: 'use', attr: {'xlink:href': '#id_top_sm', fill: '#000', stroke: '#000'}},
-        {tag: 'g', attr: {}, children: [0, 1]},
+        {tag: 'use', attr: {'xlink:href': '#id_top_sm'}},
+        {tag: 'g', attr: {fill: '#000', stroke: '#000'}, children: [0, 1]},
         {
           tag: 'mask',
-          attr: {id: 'id_top_sm-mask', fill: '#000', stroke: '#000'},
+          attr: {id: 'id_top_sm-mask'},
           children: [2]},
         {
           tag: 'rect',
