@@ -2,6 +2,7 @@
 
 ![Version][version-badge]
 [![Build Status][build-badge]][build]
+[![Code Coverage][coverage-badge]][coverage]
 [![Code Style][code-style-badge]][code-style]
 
 > PCB visualization tools for Node.js and the browser
@@ -52,5 +53,9 @@ npm test
 
 [build]: https://travis-ci.org/tracespace/gerber-to-svg/branches
 [build-badge]: http://img.shields.io/travis/tracespace/gerber-to-svg/next.svg?style=flat-square
+
+[coverage]: https://codecov.io/gh/tracespace/gerber-to-svg/branches
+[coverage-badge]: https://img.shields.io/codecov/c/github/tracespace/gerber-to-svg/next.svg?style=flat-square
+
 [code-style]: https://standardjs.com
 [code-style-badge]: https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square

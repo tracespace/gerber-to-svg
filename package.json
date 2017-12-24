@@ -12,7 +12,8 @@
     "posttest": "npm run lint",
     "test:watch": "npm run _test -- --reporter=dot --watch",
     "lint": "standard --verbose | snazzy",
-    "ci": "npm test"
+    "ci": "npm test",
+    "postci": "nyc report --reporter=lcov && codecov"
   },
   "nyc": {
     "exclude": [
@@ -24,6 +25,7 @@
     "async": "^2.6.0",
     "browserify": "^14.5.0",
     "chai": "^4.1.2",
+    "codecov": "^3.0.0",
     "cz-conventional-changelog": "^2.1.0",
     "hapi": "^16.6.2",
     "inert": "^4.2.1",
