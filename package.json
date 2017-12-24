@@ -13,7 +13,9 @@
     "test:watch": "npm run _test -- --reporter=dot --watch",
     "lint": "standard --verbose | snazzy",
     "ci": "npm test",
-    "postci": "nyc report --reporter=lcov && codecov"
+    "postci": "nyc report --reporter=lcov && codecov",
+    "bench": "node bench",
+    "integration": "node integration/visual-test-server"
   },
   "nyc": {
     "exclude": [
@@ -22,15 +24,13 @@
     ]
   },
   "devDependencies": {
-    "async": "^2.6.0",
     "browserify": "^14.5.0",
     "chai": "^4.1.2",
     "codecov": "^3.0.0",
     "cz-conventional-changelog": "^2.1.0",
     "end-of-stream": "^1.4.0",
+    "express": "^4.16.2",
     "glob": "^7.1.2",
-    "hapi": "^16.6.2",
-    "inert": "^4.2.1",
     "into-stream": "^3.1.0",
     "lerna": "^2.5.1",
     "lodash": "^4.17.4",

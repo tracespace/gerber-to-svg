@@ -39,6 +39,24 @@ npm install
 npm test
 ```
 
+### tests
+
+```shell
+# run unit tests tests with coverage and linting
+npm test
+
+# run unit tests in watch mode (no coverage, no linting)
+npm run test:watch
+
+# visual integration test server for gerber-to-svg
+# allows you to open a browser and manually verify renders
+npm run integration
+
+# simple benchmarks for gerber-parser and gerber-plotter
+# records time to parse and plot real-world files
+npm run bench
+```
+
 [viewer]: http://viewer.tracespace.io
 [pcb-stackup]: https://github.com/tracespace/pcb-stackup
 [gerber-to-svg]: ./packages/gerber-to-svg

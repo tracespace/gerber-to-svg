@@ -6,13 +6,13 @@ const bench = require('nanobench')
 const intoStream = require('into-stream')
 const endOfStream = require('end-of-stream')
 
-const getLayers = require('../fixtures/get-layers')
+const getBoardLayers = require('../fixtures/get-board-layers')
 const gerberParser = require('../packages/gerber-parser')
 const gerberPlotter = require('../packages/gerber-plotter')
 
 const COUNT = 100
 
-getLayers((error, layers) => {
+getBoardLayers((error, layers) => {
   assert.ifError(error)
 
   layers.forEach(benchmarkLayer)
@@ -21,12 +21,12 @@ getLayers((error, layers) => {
 function benchmarkLayer (layer) {
   bench(
     `Parse ${layer.name} ${COUNT} times`,
-    benchStream.bind(null, layer.contents, gerberParser, false)
+    (b) => benchStream(layer.contents, gerberParser, false, b)
   )
 
   bench.skip(
     `Plot ${layer.name} ${COUNT} times`,
-    benchStream.bind(null, layer.parsed, gerberPlotter, true)
+    (b) => benchStream(layer.parsed, gerberPlotter, true, b)
   )
 }
 

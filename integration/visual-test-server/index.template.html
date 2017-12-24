@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/tachyons@4.9.0/css/tachyons.min.css"
+  />
+  <style>
+    .open-sans { font-family: 'Open Sans', sans-serif; }
+    .lh-none { line-height: 0; }
+  </style>
+</head>
+<body class='w-100 pa4 open-sans bg-light-gray'>
+  <h1 class='dib f1 lh-title mt0 mb3 mr3 normal'>
+    gerber-to-svg
+  </h1>
+  <p class='dib f3 lh-titlex ma0'>
+    visual test suite
+  </p>
+
+  <% suite.categories.forEach((category) => { %>
+  <section class=''>
+    <h2 class='f2 mt0 mb3 normal'>
+      <%- category %>
+    </h2>
+
+    <% suite.categoriesByName[category].forEach((test) => { %>
+    <div class='dib mb3 mr3 pa3 bg-white v-top'>
+      <h3 class='f3 mt0 mb2 normal tc'>
+        <%- test.name %>
+      </h3>
+
+      <div class='dib mr3 tc'>
+        <h4 class='f4 lh-title mt0 mb2 normal'>
+          gerber
+        </h4>
+        <div class='near-white bg-mid-gray pv1 ph2 tl'>
+          <% test.contents.split("\n").filter(_ => _).forEach((line, i) => { %>
+            <code class='db f7 lh-copy tracked'>
+              <span class='dib w1 tr light-red'>
+                <%- i + 1 %>
+              </span>
+              <%- line %>
+            </code>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class='dib v-top tc'>
+        <div>
+          <h4 class='f4 lh-title mt0 mb2 normal'>
+            render
+          </h4>
+          <div class='dib lh-none ba b--silver'>
+            <%= test.render %>
+          </div>
+        </div>
+
+        <div>
+          <h4 class='f4 lh-title mt3 mb2 normal'>
+            expected
+          </h4>
+          <%= test.expectedSvg %>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+
+  </section>
+  <% }) %>
+</body>
+</html>
