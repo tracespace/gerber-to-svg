@@ -1,0 +1,32 @@
+{
+  "layers": [
+    {
+      "name": "arduino-uno.cmp",
+      "format": "gerber"
+    },
+    {
+      "name": "arduino-uno.drd",
+      "format": "drill"
+    },
+    {
+      "name": "arduino-uno.gko",
+      "format": "gerber"
+    },
+    {
+      "name": "arduino-uno.plc",
+      "format": "gerber"
+    },
+    {
+      "name": "arduino-uno.sol",
+      "format": "gerber"
+    },
+    {
+      "name": "arduino-uno.stc",
+      "format": "gerber"
+    },
+    {
+      "name": "arduino-uno.sts",
+      "format": "gerber"
+    }
+  ]
+}

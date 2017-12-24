@@ -1,0 +1,44 @@
+{
+  "layers": [
+    {
+      "name": "clockblock-B_Cu.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-B_Mask.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-B_SilkS.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-Edge_Cuts.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-F_Cu.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-F_Mask.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-F_Paste.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-F_SilkS.gbr",
+      "format": "gerber"
+    },
+    {
+      "name": "clockblock-NPTH.drl",
+      "format": "drill"
+    },
+    {
+      "name": "clockblock.drl",
+      "format": "drill"
+    }
+  ]
+}
