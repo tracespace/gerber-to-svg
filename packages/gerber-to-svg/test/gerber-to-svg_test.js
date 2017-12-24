@@ -3,7 +3,7 @@
 
 var events = require('events')
 var proxyquire = require('proxyquire')
-var assign = require('lodash.assign')
+var assign = require('lodash/assign')
 var xmlElementString = require('xml-element-string')
 var sinon = require('sinon')
 var chai = require('chai')
@@ -242,7 +242,7 @@ describe('gerber to svg', function() {
 
     var converter = gerberToSvg('G04 a gerber file*\n', 'gbr')
 
-    expect(converter.filetype).to.be.falsey
+    expect(converter.filetype).to.not.be.ok
 
     parser.emit('end')
     expect(converter.filetype).to.equal('foobar')

@@ -7,9 +7,9 @@ var glob = require('glob')
 var hapi = require('hapi')
 var inert = require('inert')
 var async = require('async')
-var partial = require('lodash.partial')
-var template = require('lodash.template')
-var groupBy = require('lodash.groupby')
+var partial = require('lodash/partial')
+var template = require('lodash/template')
+var groupBy = require('lodash/groupBy')
 
 var gerberToSvg = require('../lib/gerber-to-svg')
 
@@ -30,7 +30,7 @@ var renderGerber = function(gerberFile, done) {
     id: path.basename(gerberFile),
     optimizePaths: true
   }
-  
+
   gerberToSvg(fs.createReadStream(gerberFile), renderOptions, done)
 }
 

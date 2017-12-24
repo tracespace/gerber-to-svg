@@ -18,19 +18,19 @@ var BANNER = [
   'converts printed circuit board Gerber and drill files to SVG',
   '',
   'usage:',
-  '  gerber2svg [options] -- gerber_files',
+  '  gerber-to-svg [options] -- gerber_files',
   '',
   'examples:',
   '  convert gerber.gbr and output to stdout',
-  '    $ gerber2svg gerber.gbr',
+  '    $ gerber-to-svg gerber.gbr',
   '  convert and output to out/gerber.svg',
-  '    $ gerber2svg --out out -- gerber.gb',
+  '    $ gerber-to-svg --out out -- gerber.gb',
   '  output to out/gerber.gbr.svg',
-  '    $ gerber2svg --out out --append-ext --  gerber.gbr',
+  '    $ gerber-to-svg --out out --append-ext --  gerber.gbr',
   '  plot edge-cuts.gbr as an outline',
-  '    $ gerber2svg --plot-as-outline -- edge-cuts.gbr',
+  '    $ gerber-to-svg --plot-as-outline -- edge-cuts.gbr',
   '  plot edge-cuts-with-big-gaps.gbr and fill gaps smaller than 0.011',
-  '    $ gerber2svg --plot-as-outline 0.011 -- edge-cuts-with-big-gaps.gbr',
+  '    $ gerber-to-svg --plot-as-outline 0.011 -- edge-cuts-with-big-gaps.gbr',
   ''
 ].join('\n')
 
@@ -59,7 +59,7 @@ var ALIAS_OPTS = OPTIONS.reduce(function(alias, opt) {
 }, {})
 
 var printVersion = function() {
-  console.log('gerber2svg version', VERSION)
+  console.log('gerber-to-svg version', VERSION)
 }
 
 var printBanner = function() {

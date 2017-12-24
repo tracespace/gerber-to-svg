@@ -2,7 +2,6 @@
 'use strict'
 
 var expect = require('chai').expect
-var partial = require('lodash.partial')
 var getNextBlock = require('../lib/get-next-block')
 
 describe('get next block', function() {
@@ -12,7 +11,7 @@ describe('get next block', function() {
   })
 
   describe('from gerber files', function() {
-    var getNext = partial(getNextBlock, 'gerber')
+    var getNext = getNextBlock.bind(null, 'gerber')
 
     it('should split at *', function() {
       var chunk = 'M02*'
@@ -80,7 +79,7 @@ describe('get next block', function() {
   })
 
   describe('from drill files', function() {
-    var getNext = partial(getNextBlock, 'drill')
+    var getNext = getNextBlock.bind(null, 'drill')
 
     it('should split at newlines', function() {
       var chunk = 'G90\nG05\nM72\nM30\n'

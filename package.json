@@ -1,0 +1,44 @@
+{
+  "name": "tracespace",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {
+    "postinstall": "lerna bootstrap",
+    "_test": "mocha 'packages/!(node_modules)/test/**/*.js'",
+    "test": "nyc npm run _test",
+    "test:watch": "npm run _test -- --reporter=dot --watch",
+    "lint": "standard --verbose | snazzy",
+    "ci": "npm test"
+  },
+  "nyc": {
+    "exclude": [
+      "**/test/**/*.js",
+      "build"
+    ]
+  },
+  "devDependencies": {
+    "async": "^2.6.0",
+    "browserify": "^14.5.0",
+    "chai": "^4.1.2",
+    "cz-conventional-changelog": "^2.1.0",
+    "hapi": "^16.6.2",
+    "inert": "^4.2.1",
+    "lerna": "^2.5.1",
+    "lodash": "^4.17.4",
+    "mocha": "^4.0.1",
+    "nyc": "^11.4.1",
+    "proxyquire": "^1.8.0",
+    "sinon": "^4.1.3",
+    "sinon-chai": "^2.14.0",
+    "snazzy": "^7.0.0",
+    "standard": "^10.0.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}

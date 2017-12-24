@@ -1,5 +1,6 @@
 // function to generate a board style node
 'use strict'
+
 var colorString = require('color-string')
 
 module.exports = function boardStyle (element, prefix, side, layerColors) {
@@ -25,7 +26,7 @@ module.exports = function boardStyle (element, prefix, side, layerColors) {
       var rgba = colorString.get.rgb(colors[layer])
 
       if (rgba) {
-        var hex = colorString.to.hex(rgba)
+        var hex = colorString.to.hex(rgba.slice(0, 3))
 
         style = 'color: ' + hex + '; opacity: ' + rgba[3] + ';'
       }

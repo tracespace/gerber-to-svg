@@ -1,7 +1,7 @@
 // test suite for the plotter to svg transform stream
 'use strict'
 
-var assign = require('lodash.assign')
+var assign = require('lodash/assign')
 var sinon = require('sinon')
 var chai = require('chai')
 var sinonChai = require('sinon-chai')

@@ -2,7 +2,7 @@
 'use strict'
 
 var xhr = require('xhr')
-var template = require('lodash.template')
+var template = require('lodash/template')
 var domify = require('domify')
 
 var boardTemplate = template([

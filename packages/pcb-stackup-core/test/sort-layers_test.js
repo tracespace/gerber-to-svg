@@ -1,4 +1,5 @@
 // test suite for the layer mapping function
+/* eslint-env mocha */
 'use strict'
 
 var expect = require('chai').expect
@@ -26,7 +27,7 @@ describe('sort layers function', function () {
     var result = sortLayers(layers)
 
     expect(result.bottom).to.be.empty
-    expect(result.drill).to.be.empty
+    expect(result.drills).to.be.empty
     expect(result.outline).to.be.null
     expect(result.top).to.eql([
       {type: 'cu', converter: layers[0].converter},

@@ -80,14 +80,14 @@ describe('gerber plotter', function() {
 
   describe('plotting options', function() {
     it('should have an optimize paths option that defaults to falsey', function() {
-      expect(p._optimizePaths).to.be.falsey
+      expect(p._optimizePaths).to.not.be.ok
 
       p = plotter({optimizePaths: true})
       expect(p._optimizePaths).to.be.true
     })
 
     it('should have an outline mode option that defaults to falsey', function() {
-      expect(p._plotAsOutline).to.be.falsey
+      expect(p._plotAsOutline).to.not.be.ok
 
       p = plotter({plotAsOutline: true})
       expect(p._plotAsOutline).to.be.true
@@ -1128,6 +1128,8 @@ describe('gerber plotter', function() {
         expect(p._box).to.eql([0, 0, 3, 3])
       })
 
+      // TODO(mc, 2017-12-23): floating point math makes these tests flakey
+      // use a close-to assertion or similar instead
       describe('arc strokes', function() {
         it('should determine the center and radius in single quadrant mode', function() {
           p.write({type: 'set', prop: 'arc', value: 's'})
@@ -1144,19 +1146,19 @@ describe('gerber plotter', function() {
           expect(p._path.traverse()).to.eql([
             {
               type: 'arc',
-              start: [0, 0, 2.158798930342464],
+              start: [0, 0, 2.1587989303424644],
               end: [2, 0, 0.982793723247329],
               center: [1, -1.5],
-              sweep: 1.1760052070951348,
+              sweep: 1.1760052070951352,
               radius: R,
               dir: 'cw'
             },
             {
               type: 'arc',
-              start: [2, 0, 4.124386376837123],
+              start: [2, 0, 4.124386376837122],
               end: [4, 0, 5.3003915839322575],
               center: [3, 1.5],
-              sweep: 1.1760052070951348,
+              sweep: 1.1760052070951352,
               radius: R,
               dir: 'ccw'
             },
@@ -1192,19 +1194,19 @@ describe('gerber plotter', function() {
           expect(p._path.traverse()).to.eql([
             {
               type: 'arc',
-              start: [0, 0, 2.158798930342464],
+              start: [0, 0, 2.1587989303424644],
               end: [2, 0, 0.982793723247329],
               center: [1, -1.5],
-              sweep: 1.1760052070951348,
+              sweep: 1.1760052070951352,
               radius: R,
               dir: 'cw'
             },
             {
               type: 'arc',
-              start: [2, 0, 4.124386376837123],
+              start: [2, 0, 4.124386376837122],
               end: [4, 0, 5.3003915839322575],
               center: [3, 1.5],
-              sweep: 1.1760052070951348,
+              sweep: 1.1760052070951352,
               radius: R,
               dir: 'ccw'
             }
@@ -1858,10 +1860,10 @@ describe('gerber plotter', function() {
     })
 
     it('should fill gaps in paths if in outline mode', function() {
-      expect(outPlotter._path._fillGaps).to.be.truthy
+      expect(outPlotter._path._fillGaps).to.be.ok
       outPlotter.write({type: 'op', op: 'int', coord: {x: 1, y: 3}})
       outPlotter._finishPath()
-      expect(outPlotter._path._fillGaps).to.be.truthy
+      expect(outPlotter._path._fillGaps).to.be.ok
     })
 
     it('should be able to set a custom max gap size', function() {
