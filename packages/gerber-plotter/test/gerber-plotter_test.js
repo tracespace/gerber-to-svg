@@ -7,6 +7,8 @@ var expect = require('chai').expect
 var plotter = require('../lib')
 var boundingBox = require('../lib/_box')
 
+var EPSILON = 0.000001
+
 describe('gerber plotter', function () {
   var p
   beforeEach(function () {
@@ -1136,8 +1138,6 @@ describe('gerber plotter', function () {
         expect(p._box).to.eql([0, 0, 3, 3])
       })
 
-      // TODO(mc, 2017-12-23): floating point math makes these tests flakey
-      // use a close-to assertion or similar instead
       describe('arc strokes', function () {
         it('should determine the center and radius in single quadrant mode', function () {
           p.write({type: 'set', prop: 'arc', value: 's'})
@@ -1151,44 +1151,43 @@ describe('gerber plotter', function () {
           p.write({type: 'op', op: 'int', coord: {x: 4, y: 0, i: 1.5, j: 1}})
 
           var R = Math.sqrt(Math.pow(1.5, 2) + 1)
-          expect(p._path.traverse()).to.eql([
-            {
-              type: 'arc',
-              start: [0, 0, 2.1587989303424644],
-              end: [2, 0, 0.982793723247329],
-              center: [1, -1.5],
-              sweep: 1.1760052070951352,
-              radius: R,
-              dir: 'cw'
-            },
-            {
-              type: 'arc',
-              start: [2, 0, 4.124386376837122],
-              end: [4, 0, 5.3003915839322575],
-              center: [3, 1.5],
-              sweep: 1.1760052070951352,
-              radius: R,
-              dir: 'ccw'
-            },
-            {
-              type: 'arc',
-              start: [4, 0, 0.5880026035475675],
-              end: [4, -2, 5.695182703632018],
-              center: [2.5, -1],
-              sweep: 1.176005207095135,
-              radius: R,
-              dir: 'cw'
-            },
-            {
-              type: 'arc',
-              start: [4, -2, 5.695182703632018],
-              end: [4, 0, 0.5880026035475675],
-              center: [2.5, -1],
-              sweep: 1.176005207095135,
-              radius: R,
-              dir: 'ccw'
-            }
-          ])
+          var arcs = p._path.traverse()
+
+          // first arc
+          expect(arcs[0]).to.deep.include({type: 'arc', dir: 'cw', center: [1, -1.5]})
+          expect(arcs[0].start.slice(0, 2)).to.eql([0, 0])
+          expect(arcs[0].start[2]).to.be.closeTo(2.158799, EPSILON)
+          expect(arcs[0].end.slice(0, 2)).to.eql([2, 0])
+          expect(arcs[0].end[2]).to.be.closeTo(0.982794, EPSILON)
+          expect(arcs[0].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[0].radius).to.be.closeTo(R, EPSILON)
+
+          // second arc
+          expect(arcs[1]).to.deep.include({type: 'arc', dir: 'ccw', center: [3, 1.5]})
+          expect(arcs[1].start.slice(0, 2)).to.eql([2, 0])
+          expect(arcs[1].start[2]).to.be.closeTo(4.124386, EPSILON)
+          expect(arcs[1].end.slice(0, 2)).to.eql([4, 0])
+          expect(arcs[1].end[2]).to.be.closeTo(5.300391, EPSILON)
+          expect(arcs[1].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[1].radius).to.be.closeTo(R, EPSILON)
+
+          // third arc
+          expect(arcs[2]).to.deep.include({type: 'arc', dir: 'cw', center: [2.5, -1]})
+          expect(arcs[2].start.slice(0, 2)).to.eql([4, 0])
+          expect(arcs[2].start[2]).to.be.closeTo(0.588002, EPSILON)
+          expect(arcs[2].end.slice(0, 2)).to.eql([4, -2])
+          expect(arcs[2].end[2]).to.be.closeTo(5.695182, EPSILON)
+          expect(arcs[2].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[2].radius).to.be.closeTo(R, EPSILON)
+
+          // fourth arc
+          expect(arcs[3]).to.deep.include({type: 'arc', dir: 'ccw', center: [2.5, -1]})
+          expect(arcs[3].start.slice(0, 2)).to.eql([4, -2])
+          expect(arcs[3].start[2]).to.be.closeTo(5.695183, EPSILON)
+          expect(arcs[3].end.slice(0, 2)).to.eql([4, 0])
+          expect(arcs[3].end[2]).to.be.closeTo(0.588003, EPSILON)
+          expect(arcs[3].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[3].radius).to.be.closeTo(R, EPSILON)
         })
 
         it('should use the actual offsets to get the center in multi-quadrant mode', function () {
@@ -1199,26 +1198,25 @@ describe('gerber plotter', function () {
           p.write({type: 'op', op: 'int', coord: {x: 4, y: 0, i: 1, j: 1.5}})
 
           var R = Math.sqrt(Math.pow(1.5, 2) + 1)
-          expect(p._path.traverse()).to.eql([
-            {
-              type: 'arc',
-              start: [0, 0, 2.1587989303424644],
-              end: [2, 0, 0.982793723247329],
-              center: [1, -1.5],
-              sweep: 1.1760052070951352,
-              radius: R,
-              dir: 'cw'
-            },
-            {
-              type: 'arc',
-              start: [2, 0, 4.124386376837122],
-              end: [4, 0, 5.3003915839322575],
-              center: [3, 1.5],
-              sweep: 1.1760052070951352,
-              radius: R,
-              dir: 'ccw'
-            }
-          ])
+          var arcs = p._path.traverse()
+
+          // first arc
+          expect(arcs[0]).to.deep.include({type: 'arc', dir: 'cw', center: [1, -1.5]})
+          expect(arcs[0].start.slice(0, 2)).to.eql([0, 0])
+          expect(arcs[0].start[2]).to.be.closeTo(2.158799, EPSILON)
+          expect(arcs[0].end.slice(0, 2)).to.eql([2, 0])
+          expect(arcs[0].end[2]).to.be.closeTo(0.982794, EPSILON)
+          expect(arcs[0].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[0].radius).to.be.closeTo(R, EPSILON)
+
+          // second arc
+          expect(arcs[1]).to.deep.include({type: 'arc', dir: 'ccw', center: [3, 1.5]})
+          expect(arcs[1].start.slice(0, 2)).to.eql([2, 0])
+          expect(arcs[1].start[2]).to.be.closeTo(4.124386, EPSILON)
+          expect(arcs[1].end.slice(0, 2)).to.eql([4, 0])
+          expect(arcs[1].end[2]).to.be.closeTo(5.300391, EPSILON)
+          expect(arcs[1].sweep).to.be.closeTo(1.176005, EPSILON)
+          expect(arcs[1].radius).to.be.closeTo(R, EPSILON)
         })
 
         it('should select the correct arc with an "a" coordinate', function () {
@@ -1227,26 +1225,23 @@ describe('gerber plotter', function () {
           p.write({type: 'set', prop: 'mode', value: 'ccw'})
           p.write({type: 'op', op: 'int', coord: {x: 4, y: 2, a: 1}})
 
-          expect(p._path.traverse()).to.eql([
-            {
-              type: 'arc',
-              start: [0, 0, 3.141592653589793],
-              end: [2, 2, 1.5707963267948966],
-              center: [2, 0],
-              sweep: 1.5707963267948966,
-              radius: 2,
-              dir: 'cw'
-            },
-            {
-              type: 'arc',
-              start: [2, 2, 3.141592653589793],
-              end: [4, 2, 0],
-              center: [3, 2],
-              sweep: 3.141592653589793,
-              radius: 1,
-              dir: 'ccw'
-            }
-          ])
+          var arcs = p._path.traverse()
+
+          // first arc
+          expect(arcs[0]).to.deep.include({type: 'arc', dir: 'cw', center: [2, 0], radius: 2})
+          expect(arcs[0].start.slice(0, 2)).to.eql([0, 0])
+          expect(arcs[0].start[2]).to.be.closeTo(3.141593, EPSILON)
+          expect(arcs[0].end.slice(0, 2)).to.eql([2, 2])
+          expect(arcs[0].end[2]).to.be.closeTo(1.570796, EPSILON)
+          expect(arcs[0].sweep).to.be.closeTo(1.570796, EPSILON)
+
+          // second arc
+          expect(arcs[1]).to.deep.include({type: 'arc', dir: 'ccw', center: [3, 2], radius: 1})
+          expect(arcs[1].start.slice(0, 2)).to.eql([2, 2])
+          expect(arcs[1].start[2]).to.be.closeTo(3.141593, EPSILON)
+          expect(arcs[1].end.slice(0, 2)).to.eql([4, 2])
+          expect(arcs[1].end[2]).to.be.closeTo(0, EPSILON)
+          expect(arcs[1].sweep).to.be.closeTo(3.141593, EPSILON)
         })
 
         it('should set the sweep to zero for matching start and end in single mode', function () {
