@@ -2,7 +2,7 @@
 // returns {next: '_', read: [chars read], lines: [lines read]}
 'use strict'
 
-var getNext = function(type, chunk, start) {
+var getNext = function (type, chunk, start) {
   if (type !== 'gerber' && type !== 'drill') {
     throw new Error('filetype to get next block must be "drill" or "gerber"')
   }
@@ -36,19 +36,16 @@ var getNext = function(type, chunk, start) {
       if (!paramStarted) {
         paramStarted = true
         found.push(c)
-      }
-      else {
+      } else {
         paramFound = true
         found.pop()
       }
-    }
-    else if (c === split) {
+    } else if (c === split) {
       splitFound = true
       if (paramStarted) {
         found.push(c)
       }
-    }
-    else if ((' ' <= c) && (c <= '~')) {
+    } else if ((c >= ' ') && (c <= '~')) {
       found.push(c)
     }
 

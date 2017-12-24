@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 // test suite for the main pcb stackup function
 'use strict'
 
@@ -57,8 +58,8 @@ describe('pcb stackup function', function () {
   })
 
   it('should need an id as an option', function () {
-    expect(function () { pcbStackupCore([], 'foo') }).to.not.throw
-    expect(function () { pcbStackupCore([], {id: 'bar'}) }).to.not.throw
+    expect(function () { pcbStackupCore([], 'foo') }).to.not.throw()
+    expect(function () { pcbStackupCore([], {id: 'bar'}) }).to.not.throw()
     expect(function () { pcbStackupCore([]) }).to.throw(/unique board ID/)
   })
 
@@ -106,7 +107,7 @@ describe('pcb stackup function', function () {
     var result = pcbStackupCore([], 'foobar')
     var styleSpy = element.withArgs('style', {}, [EXPECTED_DEFAULT_STYLE])
 
-    expect(styleSpy).to.be.calledTwice
+    expect(styleSpy).to.have.callCount(2)
     expect(result.top.svg).to.contain(styleSpy.returnValues[0])
     expect(result.bottom.svg).to.contain(styleSpy.returnValues[0])
   })
@@ -129,7 +130,7 @@ describe('pcb stackup function', function () {
 
     var styleSpy = element.withArgs('style', {}, [expectedStyle])
 
-    expect(styleSpy).to.be.calledTwice
+    expect(styleSpy).to.have.callCount(2)
     expect(result.top.svg).to.contain(styleSpy.returnValues[0])
     expect(result.bottom.svg).to.contain(styleSpy.returnValues[0])
   })

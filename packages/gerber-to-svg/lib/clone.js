@@ -10,8 +10,8 @@ var KEYS = [
   'units'
 ]
 
-module.exports = function cloneConverter(converter) {
-  return KEYS.reduce(function(result, key) {
+module.exports = function cloneConverter (converter) {
+  return KEYS.reduce(function (result, key) {
     var value = converter[key]
 
     if (value != null) {

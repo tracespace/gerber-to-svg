@@ -7,7 +7,7 @@ var padLeft = require('lodash.padleft')
 var padRight = require('lodash.padright')
 
 // function takes in the number string to be converted and the format object
-var normalizeCoord = function(number, format) {
+var normalizeCoord = function (number, format) {
   // make sure we're dealing with a string
   if (number == null) {
     return NaN
@@ -25,12 +25,11 @@ var normalizeCoord = function(number, format) {
   // check if the number has a decimal point or has been explicitely flagged
   // if it does, just split by the decimal point to get leading and trailing
   var hasDecimal = (numberString.indexOf('.') !== -1)
+
   if (hasDecimal || (format == null) || (format.zero == null)) {
     return Number(sign + numberString)
-  }
-
-  // otherwise we need to use the number format to split up the string
-  else {
+  } else {
+    // we need to use the number format to split up the string
     // make sure format is valid
     if (format.places == null || format.places.length !== 2) {
       return NaN
@@ -45,11 +44,9 @@ var normalizeCoord = function(number, format) {
     // pad according to trailing or leading zero suppression
     if (format.zero === 'T') {
       numberString = padRight(numberString, leading + trailing, '0')
-    }
-    else if (format.zero === 'L') {
+    } else if (format.zero === 'L') {
       numberString = padLeft(numberString, leading + trailing, '0')
-    }
-    else {
+    } else {
       return NaN
     }
   }

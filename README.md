@@ -1,6 +1,8 @@
 # tracespace
 
+![Version][version-badge]
 [![Build Status][build-badge]][build]
+[![Code Style][code-style-badge]][code-style]
 
 > PCB visualization tools for Node.js and the browser
 
@@ -46,5 +48,9 @@ npm test
 [monorepo]: https://github.com/babel/babel/blob/master/doc/design/monorepo.md
 [lerna]: https://lernajs.io/
 
-[build]: https://travis-ci.org/mcous/gerber-to-svg/branches
-[build-badge]: http://img.shields.io/travis/mcous/gerber-to-svg/next.svg?style=flat-square
+[version-badge]: https://img.shields.io/badge/dynamic/json.svg?style=flat-square&label=version&colorB=00bfff&query=$.version&uri=https%3A%2F%2Fraw.githubusercontent.com%2Ftracespace%2Fgerber-to-svg%2Fnext%2Flerna.json
+
+[build]: https://travis-ci.org/tracespace/gerber-to-svg/branches
+[build-badge]: http://img.shields.io/travis/tracespace/gerber-to-svg/next.svg?style=flat-square
+[code-style]: https://standardjs.com
+[code-style-badge]: https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square

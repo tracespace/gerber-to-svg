@@ -9,6 +9,7 @@
     "postinstall": "lerna bootstrap",
     "_test": "mocha 'packages/!(node_modules)/test/**/*.js'",
     "test": "nyc npm run _test",
+    "posttest": "npm run lint",
     "test:watch": "npm run _test -- --reporter=dot --watch",
     "lint": "standard --verbose | snazzy",
     "ci": "npm test"

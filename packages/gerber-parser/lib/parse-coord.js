@@ -7,14 +7,14 @@
 var normalize = require('./normalize-coord')
 
 var MATCH = [
-  {coord: 'x', test: /X([+-]?[\d\.]+)/},
-  {coord: 'y', test: /Y([+-]?[\d\.]+)/},
-  {coord: 'i', test: /I([+-]?[\d\.]+)/},
-  {coord: 'j', test: /J([+-]?[\d\.]+)/},
-  {coord: 'a', test: /A([\d\.]+)/}
+  {coord: 'x', test: /X([+-]?[\d.]+)/},
+  {coord: 'y', test: /Y([+-]?[\d.]+)/},
+  {coord: 'i', test: /I([+-]?[\d.]+)/},
+  {coord: 'j', test: /J([+-]?[\d.]+)/},
+  {coord: 'a', test: /A([\d.]+)/}
 ]
 
-var parse = function(coord, format) {
+var parse = function (coord, format) {
   if (coord == null) {
     return {}
   }
@@ -24,7 +24,7 @@ var parse = function(coord, format) {
   }
 
   // pull out the x, y, i, and j
-  var parsed = MATCH.reduce(function(result, matcher) {
+  var parsed = MATCH.reduce(function (result, matcher) {
     var coordMatch = coord.match(matcher.test)
 
     if (coordMatch) {

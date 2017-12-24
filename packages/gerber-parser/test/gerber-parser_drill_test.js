@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 // test suite for the top level gerber parser class
 // test subset - parsing drill files
 'use strict'
@@ -6,13 +7,13 @@ var expect = require('chai').expect
 
 var parser = require('../lib')
 
-describe('gerber parser with gerber files', function() {
+describe('gerber parser with gerber files', function () {
   var p
   var pFactory = parser.bind(null, {filetype: 'drill'})
 
   // convenience function to expect an array of results
-  var expectResults = function(expected, done) {
-    var handleData = function(res) {
+  var expectResults = function (expected, done) {
+    var handleData = function (res) {
       expect(res).to.eql(expected.shift())
       if (!expected.length) {
         return done()
@@ -22,25 +23,25 @@ describe('gerber parser with gerber files', function() {
     p.on('data', handleData)
   }
 
-  beforeEach(function() {
+  beforeEach(function () {
     p = pFactory()
   })
 
-  afterEach(function() {
+  afterEach(function () {
     p.removeAllListeners('data')
     p.removeAllListeners('warning')
     p.removeAllListeners('error')
   })
 
-  describe('comments', function() {
-    it('should do nothing with most comments', function(done) {
-      p.once('data', function(d) {
+  describe('comments', function () {
+    it('should do nothing with most comments', function (done) {
+      p.once('data', function (d) {
         throw new Error('should not have emitted: ' + d)
       })
-      p.once('warning', function(w) {
+      p.once('warning', function (w) {
         throw new Error('should not have warned: ' + w.message)
       })
-      p.once('error', function(e) {
+      p.once('error', function (e) {
         throw new Error('should not have errored: ' + e.message)
       })
 
@@ -53,9 +54,9 @@ describe('gerber parser with gerber files', function() {
       setTimeout(done, 1)
     })
 
-    describe('format hints', function() {
-      describe('kicad', function() {
-        it('should set format and suppresion if included', function() {
+    describe('format hints', function () {
+      describe('kicad', function () {
+        it('should set format and suppresion if included', function () {
           p.write(';FORMAT={3:3/ absolute / metric / suppress trailing zeros}\n')
           expect(p.format.zero).to.equal('T')
           expect(p.format.places).to.eql([3, 3])
@@ -68,7 +69,7 @@ describe('gerber parser with gerber files', function() {
           p = pFactory()
           p.write(';FORMAT={-:-/ absolute / inch / decimal}\n')
           expect(p.format.zero).to.equal('D')
-          expect(p.format.places).to.not.be.ok
+          expect(!p.format.places).to.equal(true)
 
           p = pFactory()
           p.write(';FORMAT={3:3/ absolute / metric / keep zeros}\n')
@@ -76,7 +77,7 @@ describe('gerber parser with gerber files', function() {
           expect(p.format.places).to.eql([3, 3])
         })
 
-        it('should set backupUnits and backupNota', function(done) {
+        it('should set backupUnits and backupNota', function (done) {
           var expected = [
             {type: 'set', line: 1, prop: 'backupNota', value: 'A'},
             {type: 'set', line: 1, prop: 'backupUnits', value: 'mm'},
@@ -90,14 +91,14 @@ describe('gerber parser with gerber files', function() {
         })
       })
 
-      describe('altium', function() {
-        it('should set format', function() {
+      describe('altium', function () {
+        it('should set format', function () {
           p.write(';FILE_FORMAT=4:4\n')
           expect(p.format.places).to.eql([4, 4])
         })
       })
 
-      it('should not overrite user set format with format hints', function() {
+      it('should not overrite user set format with format hints', function () {
         p.format.places = [2, 3]
         p.format.zero = 'T'
 
@@ -108,7 +109,7 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  it('should call done with M00 and M30', function(done) {
+  it('should call done with M00 and M30', function (done) {
     var expected = [
       {type: 'done', line: 1},
       {type: 'done', line: 2}
@@ -119,7 +120,7 @@ describe('gerber parser with gerber files', function() {
     p.write('M30\n')
   })
 
-  it('should set notation with G90 and G91', function(done) {
+  it('should set notation with G90 and G91', function (done) {
     var expected = [
       {type: 'set', line: 1, prop: 'nota', value: 'A'},
       {type: 'set', line: 2, prop: 'nota', value: 'I'}
@@ -130,8 +131,8 @@ describe('gerber parser with gerber files', function() {
     p.write('G91\n')
   })
 
-  describe('parsing unit set', function() {
-    it('should set units and suppression with INCH / METRIC', function(done) {
+  describe('parsing unit set', function () {
+    it('should set units and suppression with INCH / METRIC', function (done) {
       var expected = [
         {type: 'set', line: 1, prop: 'units', value: 'in'},
         {type: 'set', line: 2, prop: 'units', value: 'mm'},
@@ -146,7 +147,7 @@ describe('gerber parser with gerber files', function() {
       p.write('METRIC,LZ\n')
     })
 
-    it('should set units with M71 and M72', function(done) {
+    it('should set units with M71 and M72', function (done) {
       var expected = [
         {type: 'set', line: 1, prop: 'units', value: 'in'},
         {type: 'set', line: 2, prop: 'units', value: 'mm'}
@@ -157,7 +158,7 @@ describe('gerber parser with gerber files', function() {
       p.write('M71\n')
     })
 
-    it('should set places format when the units are set', function() {
+    it('should set places format when the units are set', function () {
       p.write('M71\n')
       expect(p.format.places).to.eql([3, 3])
 
@@ -174,7 +175,7 @@ describe('gerber parser with gerber files', function() {
       expect(p.format.places).to.eql([2, 4])
     })
 
-    it('should not overwrite places format', function() {
+    it('should not overwrite places format', function () {
       p.format.places = [3, 4]
 
       p.write('M71\n')
@@ -188,8 +189,8 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  describe('setting zero suppression', function() {
-    it('should set zero suppression if included with units', function() {
+  describe('setting zero suppression', function () {
+    it('should set zero suppression if included with units', function () {
       p.write('INCH,TZ\n')
       expect(p.format.zero).to.equal('L')
 
@@ -198,7 +199,7 @@ describe('gerber parser with gerber files', function() {
       expect(p.format.zero).to.equal('T')
     })
 
-    it('should not overwrite suppression', function() {
+    it('should not overwrite suppression', function () {
       p.format.zero = 'L'
       p.write('METRIC,LZ\n')
       p.write('INCH,LZ\n')
@@ -211,8 +212,8 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  describe('parsing tool definitions', function() {
-    it('should send a tool command', function(done) {
+  describe('parsing tool definitions', function () {
+    it('should send a tool command', function (done) {
       var expectedTools = [
         {shape: 'circle', params: [0.015], hole: []},
         {shape: 'circle', params: [0.142], hole: []}
@@ -227,7 +228,7 @@ describe('gerber parser with gerber files', function() {
       p.write('T13C0.142\n')
     })
 
-    it('should ignore feedrate and spindle speed', function(done) {
+    it('should ignore feedrate and spindle speed', function (done) {
       var expectedTools = [
         {shape: 'circle', params: [0.01], hole: []},
         {shape: 'circle', params: [0.02], hole: []},
@@ -245,7 +246,7 @@ describe('gerber parser with gerber files', function() {
       p.write('T3S65F200C0.03\n')
     })
 
-    it('should ignore leading zeros in tool name', function(done) {
+    it('should ignore leading zeros in tool name', function (done) {
       var expectedTools = [
         {shape: 'circle', params: [0.015], hole: []}
       ]
@@ -258,7 +259,7 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  it('should set the tool with a tool number', function(done) {
+  it('should set the tool with a tool number', function (done) {
     var expected = [
       {type: 'set', line: 1, prop: 'tool', value: '1'},
       {type: 'set', line: 2, prop: 'tool', value: '14'},
@@ -275,8 +276,8 @@ describe('gerber parser with gerber files', function() {
     p.write('T000S04\n')
   })
 
-  describe('parsing drill commands', function() {
-    it('should work with trailing suppression', function(done) {
+  describe('parsing drill commands', function () {
+    it('should work with trailing suppression', function (done) {
       p.format.places = [2, 4]
       p.format.zero = 'T'
 
@@ -290,8 +291,8 @@ describe('gerber parser with gerber files', function() {
       p.write('X-01795Y0108\n')
     })
 
-    it('should work with leading zeros suppressed', function(done) {
-      p.format.places = [2,4]
+    it('should work with leading zeros suppressed', function (done) {
+      p.format.places = [2, 4]
       p.format.zero = 'L'
 
       var expected = [
@@ -304,9 +305,9 @@ describe('gerber parser with gerber files', function() {
       p.write('X16850Y-3300\n')
     })
 
-    it('should parse with the places format', function(done) {
+    it('should parse with the places format', function (done) {
       var expected = [
-        {type: 'op', line: 1, op: 'flash', coord: {x: .755, y: 1.4}},
+        {type: 'op', line: 1, op: 'flash', coord: {x: 0.755, y: 1.4}},
         {type: 'op', line: 2, op: 'flash', coord: {x: 7.55, y: 0.014}},
         {type: 'op', line: 3, op: 'flash', coord: {x: 8, y: 1.24}},
         {type: 'op', line: 4, op: 'flash', coord: {x: 80, y: 12.4}}
@@ -314,24 +315,24 @@ describe('gerber parser with gerber files', function() {
 
       expectResults(expected, done)
 
-      p.format.places = [2,4]
+      p.format.places = [2, 4]
       p.format.zero = 'L'
       p.write('X7550Y14000\n')
 
-      p.format.places = [3,3]
+      p.format.places = [3, 3]
       p.write('X7550Y14\n')
 
       p.format.zero = 'T'
-      p.format.places = [2,4]
+      p.format.places = [2, 4]
       p.write('X08Y0124\n')
 
-      p.format.places = [3,3]
+      p.format.places = [3, 3]
       p.write('X08Y0124\n')
     })
 
-    it('should parse decimal coordinates', function(done) {
+    it('should parse decimal coordinates', function (done) {
       p.format.zero = 'L'
-      p.format.places = [2,4]
+      p.format.places = [2, 4]
 
       var expected = [
         {type: 'op', line: 1, op: 'flash', coord: {x: 0.755, y: 1.4}}
@@ -341,9 +342,9 @@ describe('gerber parser with gerber files', function() {
       p.write('X0.7550Y1.4000\n')
     })
 
-    it('should parse tool change at beginning / end of line', function(done) {
+    it('should parse tool change at beginning / end of line', function (done) {
       p.format.zero = 'T'
-      p.format.places = [2,4]
+      p.format.places = [2, 4]
 
       var expected = [
         {type: 'set', line: 1, prop: 'tool', value: '1'},
@@ -357,9 +358,9 @@ describe('gerber parser with gerber files', function() {
       p.write('X01Y01T01\n')
     })
 
-    it('should warn / assume trailing if missing', function(done) {
+    it('should warn / assume trailing if missing', function (done) {
       p.format.places = [2, 4]
-      p.once('warning', function(w) {
+      p.once('warning', function (w) {
         expect(w.message).to.match(/assuming trailing/)
         expect(p.format.zero).to.equal('T')
         done()
@@ -368,9 +369,9 @@ describe('gerber parser with gerber files', function() {
       p.write('X1Y1\n')
     })
 
-    it('should warn / assume [2, 4] places if missing', function(done) {
+    it('should warn / assume [2, 4] places if missing', function (done) {
       p.format.zero = 'L'
-      p.once('warning', function(w) {
+      p.once('warning', function (w) {
         expect(w.message).to.match(/assuming \[2, 4\]/)
         expect(p.format.places).to.eql([2, 4])
         done()
@@ -380,8 +381,8 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  describe('parsing slot commands', function() {
-    it('should parse the slot commands', function(done) {
+  describe('parsing slot commands', function () {
+    it('should parse the slot commands', function (done) {
       p.format.places = [2, 4]
       p.format.zero = 'T'
 
@@ -406,13 +407,13 @@ describe('gerber parser with gerber files', function() {
     })
   })
 
-  describe('drill file routing', function() {
-    beforeEach(function() {
+  describe('drill file routing', function () {
+    beforeEach(function () {
       p.format.places = [1, 2]
       p.format.zero = 'T'
     })
 
-    it('should handle turning route mode on', function(done) {
+    it('should handle turning route mode on', function (done) {
       var expected = [
         {type: 'op', line: 1, op: 'move', coord: {x: 0.12, y: 3.45}},
         {type: 'op', line: 2, op: 'move', coord: {x: 0.67, y: 8.90}}
@@ -423,7 +424,7 @@ describe('gerber parser with gerber files', function() {
       p.write('G00X067Y890\n')
     })
 
-    it('should handle linear routing', function(done) {
+    it('should handle linear routing', function (done) {
       var expected = [
         {type: 'op', line: 1, op: 'move', coord: {x: 1, y: 1}},
         {type: 'set', line: 2, prop: 'mode', value: 'i'},
@@ -438,8 +439,8 @@ describe('gerber parser with gerber files', function() {
       p.write('X300Y300\n')
     })
 
-    describe('arc routing', function() {
-      it('should handle cw arc routing with offsets', function(done) {
+    describe('arc routing', function () {
+      it('should handle cw arc routing with offsets', function (done) {
         var coords = [
           {x: 2, y: 2, i: 0.5, j: 0.5},
           {x: 3, y: 3, i: 0.5, j: 0.5}
@@ -458,7 +459,7 @@ describe('gerber parser with gerber files', function() {
         p.write('X300Y300I050J050\n')
       })
 
-      it('should handle ccw arc routing with offsets', function(done) {
+      it('should handle ccw arc routing with offsets', function (done) {
         var coords = [
           {x: 2, y: 2, i: 0.5, j: 0.5},
           {x: 3, y: 3, i: 0.5, j: 0.5}
@@ -477,7 +478,7 @@ describe('gerber parser with gerber files', function() {
         p.write('X300Y300I050J050\n')
       })
 
-      it('should handle cw arc routing with radius', function(done) {
+      it('should handle cw arc routing with radius', function (done) {
         var coords = [
           {x: 2, y: 2, a: 1},
           {x: 3, y: 3, a: 1}
@@ -496,7 +497,7 @@ describe('gerber parser with gerber files', function() {
         p.write('X300Y300A100\n')
       })
 
-      it('should handle ccw arc routing with radius', function(done) {
+      it('should handle ccw arc routing with radius', function (done) {
         var coords = [
           {x: 2, y: 2, a: 1},
           {x: 3, y: 3, a: 1}

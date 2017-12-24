@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 // test suite for the wrap layer function
 'use strict'
 

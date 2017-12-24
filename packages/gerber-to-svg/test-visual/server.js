@@ -21,11 +21,11 @@ var TEMPLATE = 'index.html.template'
 var compiledTemplate = template(fs.readFileSync(path.join(__dirname, TEMPLATE)))
 var server = new hapi.Server()
 
-var readGerber = function(gerberFile, done) {
+var readGerber = function (gerberFile, done) {
   fs.readFile(gerberFile, 'utf8', done)
 }
 
-var renderGerber = function(gerberFile, done) {
+var renderGerber = function (gerberFile, done) {
   var renderOptions = {
     id: path.basename(gerberFile),
     optimizePaths: true
@@ -34,20 +34,20 @@ var renderGerber = function(gerberFile, done) {
   gerberToSvg(fs.createReadStream(gerberFile), renderOptions, done)
 }
 
-var getExpected = function(dirname, basename, done) {
+var getExpected = function (dirname, basename, done) {
   var dir = dirname.replace(GERBER_DIR + '/', EXPECTED_DIR + '/')
   var expected = path.join(__dirname, dir, basename + '.svg')
 
   fs.readFile(expected, 'utf8', done)
 }
 
-var renderTestFiles = function(done) {
-  glob('**/*.@(gbr|drl)', {cwd: __dirname}, function(error, files) {
+var renderTestFiles = function (done) {
+  glob('**/*.@(gbr|drl)', {cwd: __dirname}, function (error, files) {
     if (error) {
       return done(error)
     }
 
-    async.map(files, function(file, next) {
+    async.map(files, function (file, next) {
       var dir = path.dirname(file)
       var category = path.basename(dir).split('-').join(' ')
       var ext = path.extname(file)
@@ -60,7 +60,7 @@ var renderTestFiles = function(done) {
         gerber: partial(readGerber, file),
         render: partial(renderGerber, file),
         expected: partial(getExpected, dir, base)
-      }, function(error, results) {
+      }, function (error, results) {
         if (error) {
           console.error('Error with ' + file + ' : ' + error.message)
           results = {gerber: '', render: '', expected: ''}
@@ -71,7 +71,7 @@ var renderTestFiles = function(done) {
         next(null, results)
       })
     },
-    function(error, results) {
+    function (error, results) {
       if (error) {
         return done(error)
       }
@@ -85,7 +85,7 @@ server.connection({
   port: PORT
 })
 
-server.register(inert, function(error) {
+server.register(inert, function (error) {
   if (error) {
     throw error
   }
@@ -93,8 +93,8 @@ server.register(inert, function(error) {
   server.route({
     method: 'GET',
     path: '/',
-    handler: function(request, reply) {
-      renderTestFiles(function(error, suite) {
+    handler: function (request, reply) {
+      renderTestFiles(function (error, suite) {
         if (error) {
           return reply(error)
         }
@@ -111,7 +111,7 @@ server.register(inert, function(error) {
     }
   })
 
-  server.start(function() {
+  server.start(function () {
     console.log('visual test server running at:', server.info.uri)
   })
 })

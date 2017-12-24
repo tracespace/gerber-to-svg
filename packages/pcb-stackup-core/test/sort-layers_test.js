@@ -1,5 +1,5 @@
-// test suite for the layer mapping function
 /* eslint-env mocha */
+// test suite for the layer mapping function
 'use strict'
 
 var expect = require('chai').expect
@@ -13,7 +13,7 @@ describe('sort layers function', function () {
     expect(result.top).to.eql([])
     expect(result.bottom).to.eql([])
     expect(result.drills).to.eql([])
-    expect(result.outline).to.be.null
+    expect(result.outline === null).to.equal(true)
   })
 
   it('should add top layers to the top array', function () {
@@ -26,9 +26,9 @@ describe('sort layers function', function () {
 
     var result = sortLayers(layers)
 
-    expect(result.bottom).to.be.empty
-    expect(result.drills).to.be.empty
-    expect(result.outline).to.be.null
+    expect(result.bottom).to.have.lengthOf(0)
+    expect(result.drills).to.have.lengthOf(0)
+    expect(result.outline === null).to.equal(true)
     expect(result.top).to.eql([
       {type: 'cu', converter: layers[0].converter},
       {type: 'sm', converter: layers[1].converter},
@@ -47,9 +47,9 @@ describe('sort layers function', function () {
 
     var result = sortLayers(layers)
 
-    expect(result.top).to.be.empty
-    expect(result.drills).to.be.empty
-    expect(result.outline).to.be.null
+    expect(result.top).to.have.lengthOf(0)
+    expect(result.drills).to.have.lengthOf(0)
+    expect(result.outline === null).to.equal(true)
     expect(result.bottom).to.eql([
       {type: 'cu', converter: layers[0].converter},
       {type: 'sm', converter: layers[1].converter},
@@ -67,8 +67,8 @@ describe('sort layers function', function () {
 
     var result = sortLayers(layers)
 
-    expect(result.top).to.be.empty
-    expect(result.bottom).to.be.empty
+    expect(result.top).to.have.lengthOf(0)
+    expect(result.bottom).to.have.lengthOf(0)
     expect(result.outline).to.eql({type: 'out', converter: layers[0].converter})
     expect(result.drills).to.eql([
       {type: 'drl', converter: layers[1].converter},
@@ -85,10 +85,10 @@ describe('sort layers function', function () {
 
     var result = sortLayers(layers)
 
-    expect(result.top).to.be.empty
-    expect(result.bottom).to.be.empty
-    expect(result.drills).to.be.empty
-    expect(result.outline).to.be.null
+    expect(result.top).to.have.lengthOf(0)
+    expect(result.bottom).to.have.lengthOf(0)
+    expect(result.drills).to.have.lengthOf(0)
+    expect(result.outline === null).to.equal(true)
   })
 
   it('should include the externalId field of layers', function () {

@@ -3,7 +3,7 @@
 
 var xmlElementString = require('xml-element-string')
 
-module.exports = function(converter, attr, createElement, includeNamespace) {
+module.exports = function (converter, attr, createElement, includeNamespace) {
   var element = createElement || xmlElementString
   var namespace = (includeNamespace == null || includeNamespace === true)
     ? 'http://www.w3.org/2000/svg'
@@ -22,7 +22,7 @@ module.exports = function(converter, attr, createElement, includeNamespace) {
     viewBox: converter.viewBox.join(' ')
   }
 
-  Object.keys(attr || {}).forEach(function(key) {
+  Object.keys(attr || {}).forEach(function (key) {
     var value = attr[key]
 
     if (value != null) {

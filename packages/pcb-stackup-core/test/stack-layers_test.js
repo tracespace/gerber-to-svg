@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 // test suite for stack layers function
 'use strict'
 

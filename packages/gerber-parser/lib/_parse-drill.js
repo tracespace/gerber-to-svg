@@ -9,16 +9,16 @@ var drillMode = require('./_drill-mode')
 var normalize = require('./normalize-coord')
 var parseCoord = require('./parse-coord')
 
-var reALTIUM_HINT = /;FILE_FORMAT=(\d):(\d)/
-var reKI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
+var RE_ALTIUM_HINT = /;FILE_FORMAT=(\d):(\d)/
+var RE_KI_HINT = /;FORMAT={(.):(.)\/ (absolute|.+)? \/ (metric|inch) \/.+(trailing|leading|decimal|keep)/
 
-var reUNITS = /(INCH|METRIC)(?:,([TL])Z)?/
-var reTOOL_DEF = /T0*(\d+)[\S]*C([\d.]+)/
-var reTOOL_SET = /T0*(\d+)(?![\S]*C)/
-var reCOORD = /((?:[XYIJA][+-]?[\d.]+){1,4})(?:G85((?:[XY][+-]?[\d.]+){1,2}))?/
-var reROUTE = /^G0([01235])/
+var RE_UNITS = /(INCH|METRIC)(?:,([TL])Z)?/
+var RE_TOOL_DEF = /T0*(\d+)[\S]*C([\d.]+)/
+var RE_TOOL_SET = /T0*(\d+)(?![\S]*C)/
+var RE_COORD = /((?:[XYIJA][+-]?[\d.]+){1,4})(?:G85((?:[XY][+-]?[\d.]+){1,2}))?/
+var RE_ROUTE = /^G0([01235])/
 
-var setUnits = function(parser, units) {
+var setUnits = function (parser, units) {
   var format = (units === 'in') ? [2, 4] : [3, 3]
   if (!parser.format.places) {
     parser.format.places = format
@@ -26,11 +26,11 @@ var setUnits = function(parser, units) {
   return parser._push(commands.set('units', units))
 }
 
-var parseCommentForFormatHints = function(parser, block) {
+var parseCommentForFormatHints = function (parser, block) {
   var result = {}
 
-  if (reKI_HINT.test(block)) {
-    var kicadMatch = block.match(reKI_HINT)
+  if (RE_KI_HINT.test(block)) {
+    var kicadMatch = block.match(RE_KI_HINT)
     var leading = Number(kicadMatch[1])
     var trailing = Number(kicadMatch[2])
     var absolute = kicadMatch[3]
@@ -45,34 +45,28 @@ var parseCommentForFormatHints = function(parser, block) {
     // send backup notation
     if (absolute === 'absolute') {
       parser._push(commands.set('backupNota', 'A'))
-    }
-    else {
+    } else {
       parser._push(commands.set('backupNota', 'I'))
     }
 
     // send units
     if (unitSet === 'metric') {
       parser._push(commands.set('backupUnits', 'mm'))
-    }
-    else {
+    } else {
       parser._push(commands.set('backupUnits', 'in'))
     }
 
     // set zero suppression
     if (suppressionSet === 'leading' || suppressionSet === 'keep') {
       result.zero = 'L'
-    }
-    else if (suppressionSet === 'trailing') {
+    } else if (suppressionSet === 'trailing') {
       result.zero = 'T'
-    }
-    else {
+    } else {
       result.zero = 'D'
     }
-  }
-
-  // check for altium format hints if the format is not already set
-  else if (reALTIUM_HINT.test(block)) {
-    var altiumMatch = block.match(reALTIUM_HINT)
+  } else if (RE_ALTIUM_HINT.test(block)) {
+    // check for altium format hints if the format is not already set
+    var altiumMatch = block.match(RE_ALTIUM_HINT)
 
     result.places = [Number(altiumMatch[1]), Number(altiumMatch[2])]
   }
@@ -80,13 +74,13 @@ var parseCommentForFormatHints = function(parser, block) {
   return result
 }
 
-var parse = function(parser, block) {
+var parse = function (parser, block) {
   // parse comments for formatting hints and ignore the rest
   if (block[0] === ';') {
     // check for kicad format hints
     var formatHints = parseCommentForFormatHints(parser, block)
 
-    Object.keys(formatHints).forEach(function(key) {
+    Object.keys(formatHints).forEach(function (key) {
       if (!parser.format[key]) {
         parser.format[key] = formatHints[key]
       }
@@ -95,8 +89,8 @@ var parse = function(parser, block) {
     return
   }
 
-  if (reTOOL_DEF.test(block)) {
-    var toolMatch = block.match(reTOOL_DEF)
+  if (RE_TOOL_DEF.test(block)) {
+    var toolMatch = block.match(RE_TOOL_DEF)
     var toolCode = toolMatch[1]
     var toolDia = normalize(toolMatch[2])
     var toolDef = {shape: 'circle', params: [toolDia], hole: []}
@@ -105,15 +99,15 @@ var parse = function(parser, block) {
   }
 
   // tool set
-  if (reTOOL_SET.test(block)) {
-    var toolSet = block.match(reTOOL_SET)[1]
+  if (RE_TOOL_SET.test(block)) {
+    var toolSet = block.match(RE_TOOL_SET)[1]
 
     // allow tool set to fall through because it can happen on the
     // same line as a coordinate operation
     parser._push(commands.set('tool', toolSet))
   }
 
-  if (reCOORD.test(block)) {
+  if (RE_COORD.test(block)) {
     // ensure format is set properly
     if (!parser.format.zero) {
       parser.format.zero = 'T'
@@ -125,7 +119,7 @@ var parse = function(parser, block) {
       parser._warn('places format missing; assuming [2, 4]')
     }
 
-    var coordMatch = block.match(reCOORD)
+    var coordMatch = block.match(RE_COORD)
     var coord = parseCoord(coordMatch[1], parser.format)
 
     // if there's another match, then it was a slot
@@ -138,8 +132,8 @@ var parse = function(parser, block) {
     }
 
     // get the drill mode if a route command is present
-    if (reROUTE.test(block)) {
-      parser._drillMode = block.match(reROUTE)[1]
+    if (RE_ROUTE.test(block)) {
+      parser._drillMode = block.match(RE_ROUTE)[1]
     }
 
     switch (parser._drillMode) {
@@ -183,29 +177,23 @@ var parse = function(parser, block) {
     return parser._push(commands.set('nota', 'I'))
   }
 
-  if (reUNITS.test(block)) {
-    var unitsMatch = block.match(reUNITS)
+  if (RE_UNITS.test(block)) {
+    var unitsMatch = block.match(RE_UNITS)
     var units = unitsMatch[1]
     var suppression = unitsMatch[2]
 
     if (units === 'METRIC') {
       setUnits(parser, 'mm')
-    }
-    else {
+    } else {
       setUnits(parser, 'in')
     }
 
     if (suppression === 'T') {
       parser.format.zero = parser.format.zero || 'L'
-    }
-    else if (suppression === 'L') {
+    } else if (suppression === 'L') {
       parser.format.zero = parser.format.zero || 'T'
     }
-
-    return
   }
-
-  return
 }
 
 module.exports = parse

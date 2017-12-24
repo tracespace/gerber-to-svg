@@ -5,7 +5,7 @@ var isFinite = require('lodash.isfinite')
 
 var Parser = require('./parser')
 
-var verifyPlaces = function(p) {
+var verifyPlaces = function (p) {
   if (
     Array.isArray(p) &&
     (p.length === 2) &&
@@ -16,7 +16,7 @@ var verifyPlaces = function(p) {
   throw new Error('places must be an array of two whole numbers')
 }
 
-var verifyZero = function(z) {
+var verifyZero = function (z) {
   if ((z === 'T') || (z === 'L')) {
     return z
   }
@@ -24,7 +24,7 @@ var verifyZero = function(z) {
   throw new Error("zero suppression must be 'L' or 'T'")
 }
 
-var verifyFiletype = function(f) {
+var verifyFiletype = function (f) {
   if ((f === 'gerber') || (f === 'drill')) {
     return f
   }
@@ -32,7 +32,7 @@ var verifyFiletype = function(f) {
   throw new Error('filetype must be "drill" or "gerber"')
 }
 
-module.exports = function(options) {
+module.exports = function (options) {
   options = options || {}
 
   var places = (options.places) ? verifyPlaces(options.places) : null
