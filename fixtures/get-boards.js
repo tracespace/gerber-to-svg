@@ -12,7 +12,6 @@
 
 const fs = require('fs')
 const path = require('path')
-const flatten = require('lodash/flatten')
 const glob = require('glob')
 const runParallel = require('run-parallel')
 const runWaterfall = require('run-waterfall')
@@ -24,8 +23,7 @@ const MANIFEST_PATTERN = path.join(__dirname, 'boards/*/manifest.json')
 module.exports = function getBoardLayers (done) {
   runWaterfall([
     getManifestMatches,
-    getLayersFromMatches,
-    (allLayers, next) => next(null, flatten(allLayers))
+    getBoardsFromMatches
   ], done)
 }
 
@@ -33,17 +31,17 @@ function getManifestMatches (done) {
   glob(MANIFEST_PATTERN, done)
 }
 
-function getLayersFromMatches (matches, done) {
+function getBoardsFromMatches (matches, done) {
   runParallel(
-    matches.map((match) => (next) => matchToLayers(match, next)),
+    matches.map((match) => (next) => matchToBoard(match, next)),
     done
   )
 }
 
-function matchToLayers (match, done) {
+function matchToBoard (match, done) {
   runWaterfall([
     (next) => readManifest(match, next),
-    manifestToLayers
+    manifestToBoard
   ], done)
 }
 
@@ -52,17 +50,24 @@ function readManifest (filename, done) {
     if (error) return done(error)
 
     try {
-      done(null, Object.assign(JSON.parse(result), {filename}))
+      done(null, Object.assign(JSON.parse(result), {
+        filename,
+        name: path.basename(path.dirname(filename))
+      }))
     } catch (error) {
       done(error)
     }
   })
 }
 
-function manifestToLayers (manifest, done) {
+function manifestToBoard (manifest, done) {
   runParallel(
     manifest.layers.map((ly) => (next) => augmentLayer(manifest, ly, next)),
-    done
+    (error, layers) => {
+      if (error) return done(error)
+
+      done(null, Object.assign({}, manifest, {layers}))
+    }
   )
 }
 

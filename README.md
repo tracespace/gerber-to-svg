@@ -48,7 +48,7 @@ npm test
 # run unit tests in watch mode (no coverage, no linting)
 npm run test:watch
 
-# visual integration test server for gerber-to-svg
+# visual integration test servers for gerber-to-svg and pcb-stackup-core
 # allows you to open a browser and manually verify renders
 npm run integration
 

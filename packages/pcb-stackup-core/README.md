@@ -203,12 +203,3 @@ top / bottom silkscreen  | tss / bss
 top / bottom solderpaste | tsp / bsp
 board outline            | out      
 drill hits               | drl      
-
-## developing and contributing
-
-### integration testing
-
-The integration tests run the example code on a variety of gerber files to ensure proper interfacing with gerber-to-svg and proper rendering of different stackups.
-
-1. `$ npm run test:integration`
-2. Open http://localhost:8001 in a browser

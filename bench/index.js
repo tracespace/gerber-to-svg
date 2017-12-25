@@ -3,19 +3,20 @@
 
 const assert = require('assert')
 const bench = require('nanobench')
-const intoStream = require('into-stream')
 const endOfStream = require('end-of-stream')
+const flatMap = require('lodash/flatMap')
+const intoStream = require('into-stream')
 
-const getBoardLayers = require('../fixtures/get-board-layers')
+const getBoards = require('../fixtures/get-boards')
 const gerberParser = require('../packages/gerber-parser')
 const gerberPlotter = require('../packages/gerber-plotter')
 
 const COUNT = 100
 
-getBoardLayers((error, layers) => {
+getBoards((error, boards) => {
   assert.ifError(error)
 
-  layers.forEach(benchmarkLayer)
+  flatMap(boards, (b) => b.layers).forEach(benchmarkLayer)
 })
 
 function benchmarkLayer (layer) {
@@ -24,7 +25,7 @@ function benchmarkLayer (layer) {
     (b) => benchStream(layer.contents, gerberParser, false, b)
   )
 
-  bench.skip(
+  bench(
     `Plot ${layer.name} ${COUNT} times`,
     (b) => benchStream(layer.parsed, gerberPlotter, true, b)
   )

@@ -1,4 +1,4 @@
-// simple visual test server for tracespace projects
+// simple visual test server for gerber-to-svg
 'use strict'
 
 const fs = require('fs')
@@ -11,27 +11,33 @@ const runWaterfall = require('run-waterfall')
 const getGerbers = require('../../fixtures/get-gerbers')
 const gerberToSvg = require('../../packages/gerber-to-svg')
 
-const PORT = 8042
+const PORT = 8001
 const TEMPLATE = path.join(__dirname, 'index.template.html')
 
 const app = express()
 
 app.get('/', (request, response) => {
-  runWaterfall([
-    getGerbers,
-    readAllTestFiles,
-    runTemplate
-  ], (error, html) => {
+  handleTestRun((error, result) => {
     if (error) {
       console.error(error)
       return response.status(500).send({error: error.message})
     }
 
-    response.send(html)
+    response.send(result)
   })
 })
 
-app.listen(PORT, () => console.log(`Listening at http://localhost:${PORT}`))
+app.listen(PORT, () => {
+  console.log(`gerber-to-svg server listening at http://localhost:${PORT}`)
+})
+
+function handleTestRun (done) {
+  runWaterfall([
+    getGerbers,
+    readAllTestFiles,
+    runTemplate
+  ], done)
+}
 
 function readAllTestFiles (gerbers, done) {
   runParallel(

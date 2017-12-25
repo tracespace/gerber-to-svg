@@ -31,12 +31,8 @@
     "whats-that-gerber": "^2.0.0"
   },
   "devDependencies": {
-    "browserify": "^14.5.0",
-    "domify": "^1.4.0",
     "gerber-to-svg": "^4.0.0-next.0",
-    "shortid": "^2.2.6",
-    "whats-that-gerber": "^2.0.0",
-    "xhr": "^2.2.0"
+    "whats-that-gerber": "^2.0.0"
   },
   "dependencies": {
     "color-string": "^1.4.0",

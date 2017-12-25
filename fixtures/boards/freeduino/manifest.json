@@ -1,37 +1,32 @@
 {
   "layers": [
     {
-      "name": "arduino-uno.cmp",
+      "name": "freeduino.cmp",
       "format": "gerber",
       "type": "tcu"
     },
     {
-      "name": "arduino-uno.drd",
+      "name": "freeduino.drd",
       "format": "drill",
       "type": "drl"
     },
     {
-      "name": "arduino-uno.gko",
-      "format": "gerber",
-      "type": "out"
-    },
-    {
-      "name": "arduino-uno.plc",
+      "name": "freeduino.plc",
       "format": "gerber",
       "type": "tss"
     },
     {
-      "name": "arduino-uno.sol",
+      "name": "freeduino.sol",
       "format": "gerber",
       "type": "bcu"
     },
     {
-      "name": "arduino-uno.stc",
+      "name": "freeduino.stc",
       "format": "gerber",
       "type": "tsm"
     },
     {
-      "name": "arduino-uno.sts",
+      "name": "freeduino.sts",
       "format": "gerber",
       "type": "bsm"
     }
