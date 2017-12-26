@@ -1,12 +1,24 @@
 # gerber parser
 
-A printed circuit board Gerber and drill file parser. Implemented as a Node transform stream that takes a Gerber text stream and emits objects to be consumed by some sort of PCB plotter.
+> Streaming Gerber / NC drill file parser
 
-## how to
+A printed circuit board Gerber and drill file parser implemented as a Node transform stream. Takes a Gerber text stream and emits objects to be consumed by some sort of PCB plotter, like [gerber-plotter](../gerber-plotter).
 
-`$ npm install gerber-parser`
+## install
 
-``` javascript
+```shell
+npm install --save gerber-parser
+```
+
+`gerber-plotter` is a peer dependency, so you probably want to install it too:
+
+```shell
+npm install --save gerber-plotter
+```
+
+## example
+
+```js
 var fs = require('fs')
 var gerberParser = require('gerber-parser')
 

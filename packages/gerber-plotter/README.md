@@ -1,12 +1,24 @@
 # gerber plotter
 
-A printed circuit board Gerber and drill file plotter. Implemented as a Node transform stream that consumes plotter command objects (for example, those output by [mcous/gerber-parser](https://github.com/mcous/gerber-parser)) and outputs PCB image objects.
+> Streaming Gerber / NC drill layer image plotter
 
-## how to
+A printed circuit board Gerber and drill file plotter. Implemented as a Node transform stream that consumes objects output by [gerber-parser](../gerber-parser) and outputs PCB image objects.
 
-`$ npm install gerber-plotter`
+## install
 
-``` javascript
+```shell
+npm install --save gerber-plotter
+```
+
+`gerber-parser` is a peer dependency, so you probably want to install it too:
+
+```shell
+npm install --save gerber-parser
+```
+
+## example
+
+```js
 var fs = require('fs')
 var gerberParser = require('gerber-parser')
 var gerberPlotter = require('gerber-plotter')

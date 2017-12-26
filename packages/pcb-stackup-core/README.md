@@ -1,19 +1,21 @@
 # pcb stackup core
 
-If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out [pcb-stackup](https://github.com/tracespace/pcb-stackup) first.
+> Render PCB stackups from gerber-to-svg layer renders
 
-This is the low-level module that powers the rendering of pcb-stackup.  It takes individual printed circuit board layer converters as output by [gerber-to-svg](https://github.com/mcous/gerber-to-svg) and identified as PCB layer types by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
+If you're looking for an easy way to generate beautiful SVG renders of printed circuit boards, check out the higher-level [pcb-stackup](https://github.com/tracespace/pcb-stackup) tool first.
 
-Install with:
+`pcb-stackup-core` is the low-level module that powers the rendering of `pcb-stackup`.  It takes individual printed circuit board layer converters as output by [gerber-to-svg](../gerber-to-svg) and identified as PCB layer types by [whats-that-gerber](https://www.npmjs.com/package/whats-that-gerber) and uses them to build SVG renders of what the manufactured PCB will look like from the top and the bottom.
 
+## install
+
+``` shell
+npm install --save pcb-stackup-core
 ```
-$ npm install --save pcb-stackup-core
-```
 
-gerber-to-svg and whats-that-gerber are peer dependencies, so you'll probably want them, too:
+`gerber-to-svg` and `whats-that-gerber` are peer dependencies, so you'll want them, too:
 
-```
-$ npm install --save gerber-to-svg whats-that-gerber
+```shell
+npm install --save gerber-to-svg whats-that-gerber
 ```
 
 ## example
@@ -102,14 +104,14 @@ var stackup1 = pcbStackupCore(layers, 'my-unique-board-id')
 var stackup2 = pcbStackupCore(layers, {id: 'my-unique-board-id'})
 ```
 
-key              | default   | description
------------------|-----------|-----------------------------------------------------------
-id               | N/A       | Unique board identifier (required)
-color            | see below | Colors to apply to the board render by layer type
-maskWithOutline  | `false`   | Use the board outline layer as a mask for the board shape
-createElement    | see below | Function used to create the XML element nodes
-includeNamespace | `true`    | Whether or not to include the `xmlns` attribute in the top level SVG node
-attributes       | `{}`      | Map of additional attributes (e.g. `class`) to apply to the SVG nodes
+ key              | default   | description
+----------------- | --------- | ----------------------------------------------------------
+ id               | N/A       | Unique board identifier (required)
+ color            | see below | Colors to apply to the board render by layer type
+ maskWithOutline  | `false`   | Use the board outline layer as a mask for the board shape
+ createElement    | see below | Function used to create the XML element nodes
+ includeNamespace | `true`    | Whether or not to include the `xmlns` attribute in the top level SVG node
+ attributes       | `{}`      | Map of additional attributes (e.g. `class`) to apply to the SVG nodes
 
 #### id
 
@@ -135,36 +137,36 @@ var DEFAULT_COLOR = {
 
 The keys represent the following layers:
 
-layer | component        
-------|------------------
-fr4   | Substrate
-cu    | Copper
-cf    | Copper (finished)
-sm    | Soldermask
-ss    | Silkscreen
-sp    | Solderpaste
-out   | Board outline
+ layer | component        
+------ | -----------------
+ fr4   | Substrate
+ cu    | Copper
+ cf    | Copper (finished)
+ sm    | Soldermask
+ ss    | Silkscreen
+ sp    | Solderpaste
+ out   | Board outline
 
 If a value is falsey (e.g. an empty string), the layer will not be added to the style node. This is useful if you want to add styles with an external stylesheet. If applying colors with an external stylesheet, use the following class-names and specify the `color` attribute:
 
-layer | classname   | example (id = 'my-board')
-------|-------------|-------------------------------------------------
-fr4   | id + `_fr4` | `.my-board_fr4 {color: #666;}`
-cu    | id + `_cu`  | `.my-board_cu {color: #ccc;}`
-cf    | id + `_cf`  | `.my-board_cf {color: #c93;}`
-sm    | id + `_sm`  | `.my-board_sm {color: #rgba(0, 66, 0, 0.75);}`
-ss    | id + `_ss`  | `.my-board_ss {color: #fff;}`
-sp    | id + `_sp`  | `.my-board_sp {color: #999;}`
-out   | id + `_out` | `.my-board_out {color: #000;}`
+ layer | classname   | example (id = 'my-board')
+------ | ----------- | -----------------------------------------------
+ fr4   | id + `_fr4` | `.my-board_fr4 {color: #666;}`
+ cu    | id + `_cu`  | `.my-board_cu {color: #ccc;}`
+ cf    | id + `_cf`  | `.my-board_cf {color: #c93;}`
+ sm    | id + `_sm`  | `.my-board_sm {color: #rgba(0, 66, 0, 0.75);}`
+ ss    | id + `_ss`  | `.my-board_ss {color: #fff;}`
+ sp    | id + `_sp`  | `.my-board_sp {color: #999;}`
+ out   | id + `_out` | `.my-board_out {color: #000;}`
 
 #### mask board shape with outline
 
 When constructing the stackup, a `<mask>` of all the drill layers is built and applied to the final image to remove the image wherever there are drill hits. If the `maskWithOutline` option is passed as true, the stackup function will _also_ create a `<clipPath>` with the contents of any included outline layers, and use that to remove any part of the image that falls outside of the board outline.
 
-setting           | result
-------------------|-------------------------------------------------
-`false` (default) | Board shape is a rectangle that fits all layers
-`true`            | Board shape is the shape of the outline layer
+ setting           | result
+------------------ | ------------------------------------------------
+ `false` (default) | Board shape is a rectangle that fits all layers
+ `true`            | Board shape is the shape of the outline layer
 
 To work, the outline layer must be one or more fully-enclosed loops. If it isn't, setting `maskWithOutline` to true will likely result in the final image being incorrect (or non-existent), because the `<path>`s won't clip the image properly. See the [MDN's documentation of `<clipPath>`](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath) for more details.
 
@@ -195,11 +197,11 @@ var stackup = pcbStackupCore(layers, {
 
 The stackup can be made up of the following layer types:
 
-layer type               | abbreviation
--------------------------|--------------
-top / bottom copper      | tcu / bcu
-top / bottom soldermask  | tsm / bsm
-top / bottom silkscreen  | tss / bss
-top / bottom solderpaste | tsp / bsp
-board outline            | out      
-drill hits               | drl      
+ layer type               | abbreviation
+------------------------- | -------------
+ top / bottom copper      | tcu / bcu
+ top / bottom soldermask  | tsm / bsm
+ top / bottom silkscreen  | tss / bss
+ top / bottom solderpaste | tsp / bsp
+ board outline            | out
+ drill hits               | drl
