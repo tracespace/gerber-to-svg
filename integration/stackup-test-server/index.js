@@ -12,6 +12,7 @@ const template = require('lodash/template')
 const getBoards = require('../../fixtures/get-boards')
 const gerberToSvg = require('../../packages/gerber-to-svg')
 const pcbStackupCore = require('../../packages/pcb-stackup-core')
+const whatsThatGerber = require('../../packages/whats-that-gerber')
 
 const PORT = 8002
 const TEMPLATE = path.join(__dirname, 'index.template.html')
@@ -70,10 +71,17 @@ function renderStackup (board, done) {
 }
 
 function renderLayer (layer, done) {
-  const {type} = layer
+  const {name, type: realType} = layer
+  const type = whatsThatGerber(name)
   const options = {
     id: shortId.generate(),
     plotAsOutline: type === 'out'
+  }
+
+  if (type !== realType) {
+    return done(
+      new Error(`${name} is type ${realType}, but ${type} was inferred`)
+    )
   }
 
   const converter = gerberToSvg(layer.contents, options, (error) => {

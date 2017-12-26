@@ -11,12 +11,13 @@ tracespace is an open-source collection of tools to make looking at circuit boar
 
 ## tools
 
-*   [viewer][] - Online PCB viewer powered by `pcb-stackup`
+*   [tracespace viewer][viewer] - Online PCB viewer powered by `pcb-stackup`
 *   [pcb-stackup][] - Generate SVG renders of full PCBs
 *   [pcb-stackup-core][] - Core PCB building logic for `pcb-stackup`
-*   [gerber-to-svg][] - Generate SVG renders of individual Gerber and NC drill files
-*   [gerber-parser][] - Streaming Gerber/NC drill file parser
+*   [gerber-to-svg][] - Generate SVG renders of individual Gerber and drill files
+*   [gerber-parser][] - Streaming Gerber/drill file parser
 *   [gerber-plotter][] - Streaming layer image plotter (consumer of `gerber-parser`)
+*   [whats-that-gerber][] - Identify layer types of Gerber/drill filenames
 
 ## contributing
 
@@ -48,8 +49,7 @@ npm test
 # run unit tests in watch mode (no coverage, no linting)
 npm run test:watch
 
-# visual integration test servers for gerber-to-svg and pcb-stackup-core
-# allows you to open a browser and manually verify renders
+# visual integration test servers to manually verify renders in a browser
 npm run integration
 
 # simple benchmarks for gerber-parser and gerber-plotter
@@ -57,12 +57,22 @@ npm run integration
 npm run bench
 ```
 
+### ci
+
+The [CI server][build] runs unit tests on:
+
+*   Node.js v4
+*   Node.js v6
+*   Node.js v8
+*   Node.js latest
+
 [viewer]: http://viewer.tracespace.io
 [pcb-stackup]: https://github.com/tracespace/pcb-stackup
 [gerber-to-svg]: ./packages/gerber-to-svg
 [pcb-stackup-core]: ./packages/pcb-stackup-core
 [gerber-parser]: ./packages/gerber-parser
 [gerber-plotter]: ./packages/gerber-plotter
+[whats-that-gerber]: ./packages/whats-that-gerber
 
 [monorepo]: https://github.com/babel/babel/blob/master/doc/design/monorepo.md
 [lerna]: https://lernajs.io/

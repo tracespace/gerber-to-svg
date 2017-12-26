@@ -1,18 +1,11 @@
 {
   "name": "whats-that-gerber",
-  "version": "2.1.1",
+  "version": "4.0.0-next.0",
   "description": "Guesses the PCB layer type given a filename of a Gerber or drill file",
   "main": "index.js",
-  "scripts": {
-    "lint": "eslint index.js 'test/*js'",
-    "test": "nyc mocha",
-    "test:watch": "mocha --watch --reporter=dot",
-    "coverage": "nyc report",
-    "posttest": "npm run lint"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tracespace/whats-that-gerber.git"
+    "url": "git+https://github.com/tracespace/tracespace.git"
   },
   "keywords": [
     "pcb",
@@ -23,19 +16,12 @@
     "circuit"
   ],
   "contributors": [
-    "Mike Cousins <mike@cousins.io> (http://cousins.io)",
+    "Mike Cousins <mike@cousins.io> (http://mike.cousins.io)",
     "Kaspar Emanuel <kaspar@monostable.co.uk> (http://monostable.co.uk)"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tracespace/whats-that-gerber/issues"
+    "url": "https://github.com/tracespace/tracespace/issues"
   },
-  "homepage": "https://github.com/tracespace/whats-that-gerber#readme",
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "eslint": "^2.9.0",
-    "mocha": "^3.0.2",
-    "nyc": "^8.1.0"
-  },
-  "dependencies": {}
+  "homepage": "https://github.com/tracespace/tracespace#readme"
 }

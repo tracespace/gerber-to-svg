@@ -1,9 +1,10 @@
+/* eslint-env mocha */
 'use strict'
 
 var expect = require('chai').expect
 
 var whatsThatGerber = require('../')
-var filenamesByCad = require('./filenames-by-cad')
+var cadFilenames = require('../../../fixtures/cad-filenames.json')
 
 var typeNames = {
   drw: 'gerber drawing',
@@ -20,14 +21,14 @@ var typeNames = {
   drl: 'drill hits'
 }
 
-describe('whats-that-gerber', function() {
-  it('should default to a gerber drawing', function() {
+describe('whats-that-gerber', function () {
+  it('should default to a gerber drawing', function () {
     var result = whatsThatGerber('foobar')
 
     expect(result).to.equal('drw')
   })
 
-  it('should have a list of all layer types', function() {
+  it('should have a list of all layer types', function () {
     var allTypes = whatsThatGerber.getAllTypes()
 
     expect(allTypes).to.have.lengthOf(12)
@@ -46,42 +47,43 @@ describe('whats-that-gerber', function() {
       'drl')
   })
 
-  it('should know which types are valid', function() {
+  it('should know which types are valid', function () {
     var allTypes = whatsThatGerber.getAllTypes()
 
-    allTypes.forEach(function(type) {
-      expect(whatsThatGerber.isValidType(type)).to.be.true
+    allTypes.forEach(function (type) {
+      expect(whatsThatGerber.isValidType(type)).to.equal(true)
     })
   })
 
-  it('should know which types are invalid', function() {
+  it('should know which types are invalid', function () {
     var invalidTypes = ['foo', 'bar', 'baz', 'quux']
 
-    invalidTypes.forEach(function(type) {
-      expect(whatsThatGerber.isValidType(type)).to.be.false
+    invalidTypes.forEach(function (type) {
+      expect(whatsThatGerber.isValidType(type)).to.equal(false)
     })
   })
 
-  it('should have full names for all layer types', function() {
-    whatsThatGerber.getAllTypes().forEach(function(type) {
+  it('should have full names for all layer types', function () {
+    whatsThatGerber.getAllTypes().forEach(function (type) {
       expect(whatsThatGerber.getFullName(type)).to.equal(typeNames[type])
     })
   })
 
-  it('should return an empty string for names of unknown types / locales', function() {
+  it('should return an empty string for names of unknown types / locales', function () {
     expect(whatsThatGerber.getFullName('foo')).to.equal('')
     expect(whatsThatGerber.getFullName('tcu', 'bar')).to.equal('')
   })
 
-  filenamesByCad.forEach(function(cadSet) {
+  cadFilenames.forEach(function (cadSet) {
     var cad = cadSet.cad
     var files = cadSet.files
 
-    it('should identify ' + cad + ' files', function() {
-      files.forEach(function(file) {
-        var result = whatsThatGerber(file.name)
+    it('should identify ' + cad + ' files', function () {
+      files.forEach(function (file) {
+        var name = file.name
+        var result = whatsThatGerber(name)
 
-        expect(result).to.equal(file.type)
+        expect(result, 'Type of ' + name + ' incorrect').to.equal(file.type)
       })
     })
   })
