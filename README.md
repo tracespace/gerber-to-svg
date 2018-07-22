@@ -1,3 +1,9 @@
+# repository deprecated
+
+Development of `gerber-to-svg` has moved to [tracespace/tracespace][tracespace]!
+
+[tracespace]: https://github.com/tracespace/tracespace
+
 # gerber-to-svg
 
 [![Version](http://img.shields.io/npm/v/gerber-to-svg.svg?style=flat-square)](https://www.npmjs.org/package/gerber-to-svg)
